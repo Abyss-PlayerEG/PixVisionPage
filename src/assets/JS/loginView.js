@@ -15,7 +15,7 @@ const FIELD_RULES = {
   ],
   vCode: [
     { validator: (v) => !!v, message: "验证码不能为空" },
-    { validator: (v) => /^[A-Za-z0-9]{6}$/.test(v), message: "验证码为6位字母或数字" },
+    { validator: (v) => /^[A-Za-z0-9]{6}$/.test(v), message: "为6位字母/数字" },
   ],
 };
 
@@ -155,8 +155,8 @@ export const useLoginView = () => {
     aniEND = true;
   };
 
-  // 隐藏登录面板
-  const hideLoginPanel = () => {
+  // 隐藏表单面板
+  const hideFormPanel = () => {
     if (!aniEND) return;
 
     aniEND = false;
@@ -219,7 +219,7 @@ export const useLoginView = () => {
     loginForm,
     fieldStates,
     showLoginPanel,
-    hideLoginPanel,
+    hideFormPanel,
     validateField,
     validateAll,
     setFieldError,

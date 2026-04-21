@@ -10,9 +10,10 @@ const {
   loginForm,
   fieldStates,
   showLoginPanel,
-  hideLoginPanel,
+  hideFormPanel,
   validateField,
   handleLogin,
+  clearFieldState,
 } = useLoginView();
 </script>
 
@@ -52,7 +53,7 @@ const {
     </section>
 
     <!-- 隐藏LoginFormZone的Zone -->
-     <section id="hideLFZ" ref="hideLFZ" @click="hideLoginPanel"></section>
+     <section id="hideFZ" ref="hideFZ" @click="hideFormPanel"></section>
 
     <section id="titleSlider">
       <div class="title1" ref="title1">
