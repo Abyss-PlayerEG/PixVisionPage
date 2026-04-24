@@ -1,5 +1,5 @@
 <script setup>
-import "@/assets/JS/mainIndex.js"
+import "@/composables/mainIndex.js"
 import { useRouter } from "vue-router"
 
 //组件引用

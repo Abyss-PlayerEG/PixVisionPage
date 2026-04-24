@@ -1,6 +1,6 @@
 import { gsap } from "gsap";
 import { useRouter } from "vue-router";
-import { ref, reactive } from "vue";
+import { ref, reactive, onMounted } from "vue";
 
 // 登录表单字段验证规则
 const FIELD_RULES = {
@@ -95,6 +95,58 @@ export const useLoginView = () => {
     fieldStates[fieldName].message = "";
   };
 
+  /*
+  GSAP动画时间轴
+  */
+  let tl_showpass1 = null;
+  let tl_showpass2 = null;
+  onMounted(() => {
+    //忘记密码01
+    tl_showpass1 = gsap.timeline({
+      paused: true,//暂停
+      reversed: true,//反向状态
+    })
+    .to(
+      ".fadeIn_loginitem",
+      {
+        x: 100,
+        opacity: 0,
+        ease: "power2.in",
+      },
+      "<",
+    ).to(
+      ".fadeIn_loginInput",
+      {
+        x:100,
+        stagger: -0.1,
+        opacity: 0,
+        duration: 0.5,
+        ease: "power2.out",
+      },
+    ).fromTo(
+      "#Zzone",
+      {
+        x: "-70%",
+        opacity: 0,
+      },
+      {
+        x: "-50%",
+        opacity: 1,
+        delay: 0.5,
+        duration: 1,
+        ease: "power2.out",
+        pointerEvents: "auto",
+      },
+      '<'
+    );
+    
+    //忘记密码02
+    tl_showpass2 = gsap.timeline();
+  })
+
+  /*
+  执行GSAP动画
+  */
   // 显示登录面板
   const showLoginPanel = () => {
     const tl = gsap.timeline();
@@ -141,7 +193,7 @@ export const useLoginView = () => {
     );
 
     tl.from(
-      ".auth_inputarea",
+      ".fadeIn_loginInput",
       {
         y: 100,
         opacity: 0,
@@ -203,6 +255,56 @@ export const useLoginView = () => {
     aniEND = false;
   };
 
+  // 忘记密码01
+  const showPasswordPanel = (play) =>{
+    if(play){
+      tl_showpass1.play();
+    }
+    else{
+      tl_showpass1.reverse();
+    }
+  }
+
+  // 忘记密码02
+  const showPasswordPanel2 = () =>{
+    const tl = gsap.timeline();
+
+    tl.to(
+      ".s1",
+      {
+        x: "50%",
+        opacity: 0,
+        duration: 1,
+        ease: "power2.out",
+        pointerEvents: "auto",
+      }
+    ),
+    tl.to(
+      ".s2",
+      {
+        delay: 0.2,
+        x: "100%",
+        opacity: 1,
+        duration: 1,
+        ease: "power2.out",
+        pointerEvents: "auto",
+      },
+      '<'
+    ),
+    tl.to(
+      ".pr-2",
+      {
+        x: "80%",
+        color: "#fff",
+        opacity: 1,
+        duration: 1,
+        ease: "power2.out",
+        pointerEvents: "auto",
+      },
+      '<'
+    )
+  }
+
   const handleLogin = () => {
     if (validateAll()) {
         loginForm.vCode = loginForm.vCode.toUpperCase();
@@ -225,5 +327,7 @@ export const useLoginView = () => {
     setFieldError,
     clearFieldState,
     handleLogin,
+    showPasswordPanel,
+    showPasswordPanel2,
   };
 };
