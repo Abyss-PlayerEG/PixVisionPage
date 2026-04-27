@@ -2,23 +2,6 @@ import { gsap } from "gsap";
 import { useRouter } from "vue-router";
 import { ref, reactive, onMounted } from "vue";
 
-// 登录表单字段验证规则
-const FIELD_RULES = {
-  usernameOrEmail: [
-    { validator: (v) => !!v, message: "用户名/邮箱不能为空" },
-    { validator: (v) => v.length >= 6, message: "用户名必须大于6位" },
-    { validator: (v) => v.includes("@") ? /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v) : true, message: "邮箱格式不正确" },
-  ],
-  password: [
-    { validator: (v) => !!v, message: "密码不能为空" },
-    { validator: (v) => v.length >= 8, message: "密码长度必须大于8位" },
-  ],
-  vCode: [
-    { validator: (v) => !!v, message: "验证码不能为空" },
-    { validator: (v) => /^[A-Za-z0-9]{6}$/.test(v), message: "为6位字母/数字" },
-  ],
-};
-
 export const useLoginView = () => {
   const router = useRouter();
 
@@ -41,6 +24,11 @@ export const useLoginView = () => {
    tl_showpass1 = gsap.timeline({
       paused: true,
       reversed: true,
+      onComplete: () => { // 显示动画完成后，确保#Zzone交互启用
+        gsap.set("#Zzone", { pointerEvents: "auto" });
+        gsap.set(".s1", { pointerEvents: "auto" });
+        gsap.set(".s2", { pointerEvents: "none" });
+      }
     })
     .to(
       ".fadeIn_loginItem",
@@ -86,11 +74,31 @@ export const useLoginView = () => {
     );
 
     //忘记密码01 - 返回（独立动画，非reverse）
-    tl_backtopass1 = gsap.timeline({ paused: true })
+    tl_backtopass1 = gsap.timeline({
+  paused: true,
+  onComplete: () => {
+    // 1. 重置tl_backtopass1进度为0，回到初始暂停状态
+    tl_backtopass1.progress(0).pause();
+    // 2. 重置tl_showpass1为反向初始状态（确保下次play能正常触发）
+    tl_showpass1.reverse().progress(0).pause();
+    // 3. 恢复#Zzone的初始样式（清除行内样式，回归CSS默认）
+      gsap.set("#Zzone", {
+          x: "-70%",
+          opacity: 0,
+          pointerEvents: "none"
+        });
+        gsap.set(".s1", { x: 0, opacity: 1 });
+        gsap.set(".s2", { x: "100%", opacity: 0 });
+      }
+    })
+    .to(".s1, .s2", {
+      pointerEvents: "none", // 立即禁用s1/s2的交互，避免拦截点击
+      duration: 0, // 0秒执行，无动画，不影响视觉
+    }, 0) // 0表示时间轴的第0秒就执行
     .to("#Zzone", {
       x: "-100%",
       opacity: 0,
-      duration: 0.5,
+      duration: 0.8,
       ease: "power3.in",
     })
     .to(
@@ -131,25 +139,38 @@ export const useLoginView = () => {
     tl_showpass2 = gsap.timeline({
       paused: true,
       reversed: true,
+      onComplete: () => {
+        // 点击下一步：禁用s1，启用s2
+        gsap.set(".s1", { pointerEvents: "none" });
+        gsap.set(".s2", { pointerEvents: "auto" });
+      },
+      onReverseComplete: () => { 
+        // 点击上一步：禁用s2，启用s1
+        gsap.set(".s2", { pointerEvents: "none" });
+        gsap.set(".s1", { pointerEvents: "auto" });
+        tl_showpass2.progress(0).pause();
+      }
     }).to(
       ".s1",
       {
-        x: "50%",
+        x: "100%",
         opacity: 0,
         duration: 1,
         ease: "power2.inOut",
-        pointerEvents: "auto",
       }
     )
-    .to(
+    .fromTo(
       ".s2",
+      {
+        x: "0%",
+        opacity: 0,
+      },
       {
         delay: 0.2,
         x: "100%",
         opacity: 1,
         duration: 1,
         ease: "power2.inOut",
-        pointerEvents: "auto",
       },
       "<"
     )
@@ -161,7 +182,6 @@ export const useLoginView = () => {
         opacity: 1,
         duration: 1,
         ease: "power2.inOut", 
-        pointerEvents: "auto",
       },
       "<"
     );
@@ -173,6 +193,23 @@ export const useLoginView = () => {
     // 忘记密码01
     const showPasswordPanel = (play) =>{
       if(play){
+        // 1. 强制重置tl_showpass2到动画起点并暂停
+        tl_showpass2.progress(0).pause();
+        // 2. 复位s1样式（显示、初始位置、可交互）
+        gsap.set(".s1", { 
+          pointerEvents: "auto !important",
+          x: 0,
+          opacity: 1
+        });
+        // 3. 复位s2样式（隐藏、初始位置、不可交互）
+        gsap.set(".s2", { 
+          pointerEvents: "none",
+          x: "100%",
+          opacity: 0
+        });
+        // 4. 复位进度条样式
+        gsap.set(".pr-2", { x: "0%", color: "#4e4e4e" });
+        // =============================================
         tl_showpass1.play();
       }
       else{
@@ -313,6 +350,23 @@ export const useLoginView = () => {
 /*
 登录表单数据
 */
+// 登录表单字段验证规则
+const FIELD_RULES = {
+  usernameOrEmail: [
+    { validator: (v) => !!v, message: "用户名/邮箱不能为空" },
+    { validator: (v) => v.length >= 6, message: "用户名必须大于6位" },
+    { validator: (v) => v.includes("@") ? /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v) : true, message: "邮箱格式不正确" },
+  ],
+  password: [
+    { validator: (v) => !!v, message: "密码不能为空" },
+    { validator: (v) => v.length >= 8, message: "密码长度必须大于8位" },
+  ],
+  vCode: [
+    { validator: (v) => !!v, message: "验证码不能为空" },
+    { validator: (v) => /^[A-Za-z0-9]{6}$/.test(v), message: "为6位字母/数字" },
+  ],
+};
+
 const loginForm = reactive({
   usernameOrEmail: "",
   password: "",

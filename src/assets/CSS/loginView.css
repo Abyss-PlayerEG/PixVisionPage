@@ -365,7 +365,7 @@ img {
         z-index: 2;
         height: 100%;
         /* left: 25%; */
-        left: 1%;
+        /* left: 1%; */
         transform: translateX(-3px);
         background-color: #1a1a1a;
         border: 3px solid #000;
