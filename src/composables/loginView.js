@@ -29,88 +29,33 @@ export const useLoginView = () => {
   const title2 = ref(null);
   const loginFormZone = ref(null);
 
-  // 登录表单数据
-  const loginForm = reactive({
-    usernameOrEmail: "",
-    password: "",
-    vCode: "",
-  });
-
-  // 登录表单字段状态
-  // idle: 未验证
-  // error: 验证失败
-  // success: 验证成功
-  const fieldStates = reactive({
-    usernameOrEmail: { status: "idle", message: "" },
-    password: { status: "idle", message: "" },
-    vCode: { status: "idle", message: "" },
-  });
-
-  // 验证登录表单字段
-  // 返回验证是否通过
-  const validateField = (fieldName) => {
-    const value = loginForm[fieldName];
-    const rules = FIELD_RULES[fieldName] || [];
-
-    // 验证规则
-    for (const rule of rules) {
-      if (!rule.validator(value)) {
-        fieldStates[fieldName].status = "error";
-        fieldStates[fieldName].message = rule.message;
-        return false;
-      }
-    }
-
-    // 验证通过
-    fieldStates[fieldName].status = "success";
-    fieldStates[fieldName].message = "";
-    return true;
-  };
-
-  // 验证登录表单所有字段
-  // 返回验证是否通过
-  const validateAll = () => {
-    let allPassed = true;
-
-    // 验证所有字段
-    for (const fieldName in FIELD_RULES) {
-      if (!validateField(fieldName)) {
-        allPassed = false;
-      }
-    }
-
-    return allPassed;
-  };
-
-  // 设置登录表单字段验证错误信息
-  const setFieldError = (fieldName, message) => {
-    fieldStates[fieldName].status = "error";
-    fieldStates[fieldName].message = message;
-  };
   
-  // 清除登录表单字段验证状态
-  // 用于在登录表单数据改变时调用
-  const clearFieldState = (fieldName) => {
-    fieldStates[fieldName].status = "idle";
-    fieldStates[fieldName].message = "";
-  };
-
   /*
   GSAP动画时间轴
   */
-  let tl_showpass1 = null;
-  let tl_showpass2 = null;
-  onMounted(() => {
-    //忘记密码01
-    tl_showpass1 = gsap.timeline({
-      paused: true,//暂停
-      reversed: true,//反向状态
+ let tl_showpass1 = null;
+ let tl_showpass2 = null;
+ let tl_backtopass1 = null;
+ onMounted(() => {
+   //忘记密码01 - 显示
+   tl_showpass1 = gsap.timeline({
+      paused: true,
+      reversed: true,
     })
     .to(
-      ".fadeIn_loginitem",
+      ".fadeIn_loginItem",
       {
         x: 100,
         opacity: 0,
+        ease: "power2.in",
+      },
+      "<",
+    ).to(
+      ".fadeIn_loginBt",
+      {
+        x: 100,
+        opacity: 0,
+        duration: 0.6,
         ease: "power2.in",
       },
       "<",
@@ -121,7 +66,7 @@ export const useLoginView = () => {
         stagger: -0.1,
         opacity: 0,
         duration: 0.5,
-        ease: "power2.out",
+        ease: "power2.inOut",
       },
     ).fromTo(
       "#Zzone",
@@ -134,32 +79,130 @@ export const useLoginView = () => {
         opacity: 1,
         delay: 0.5,
         duration: 1,
-        ease: "power2.out",
+        ease: "power3.out",
         pointerEvents: "auto",
       },
       '<'
     );
-    
-    //忘记密码02
-    tl_showpass2 = gsap.timeline();
-  })
 
+    //忘记密码01 - 返回（独立动画，非reverse）
+    tl_backtopass1 = gsap.timeline({ paused: true })
+    .to("#Zzone", {
+      x: "-100%",
+      opacity: 0,
+      duration: 0.5,
+      ease: "power3.in",
+    })
+    .to(
+      ".fadeIn_loginInput",
+      {
+        x: 0,
+        opacity: 1,
+        stagger: 0.1,
+        duration: 0.6,
+        ease: "power2.out",
+      },
+      "-=0.2"
+    )
+    .to(
+      ".fadeIn_loginBt",
+      {
+        delay: 0.1,
+        x: 0,
+        opacity: 1,
+        duration: 0.6,
+        ease: "power2.out",
+      },
+      "<"
+    )
+    .to(
+      ".fadeIn_loginItem",
+      {
+        delay: .5,
+        x: 0,
+        opacity: 1,
+        duration: 0.6,
+        ease: "power2.out",
+      },
+      "<"
+    );
+
+    //忘记密码02
+    tl_showpass2 = gsap.timeline({
+      paused: true,
+      reversed: true,
+    }).to(
+      ".s1",
+      {
+        x: "50%",
+        opacity: 0,
+        duration: 1,
+        ease: "power2.inOut",
+        pointerEvents: "auto",
+      }
+    )
+    .to(
+      ".s2",
+      {
+        delay: 0.2,
+        x: "100%",
+        opacity: 1,
+        duration: 1,
+        ease: "power2.inOut",
+        pointerEvents: "auto",
+      },
+      "<"
+    )
+    .to(
+      ".pr-2",
+      {
+        x: "80%",
+        color: "#fff",
+        opacity: 1,
+        duration: 1,
+        ease: "power2.inOut", 
+        pointerEvents: "auto",
+      },
+      "<"
+    );
+  })
+  
   /*
   执行GSAP动画
   */
-  // 显示登录面板
-  const showLoginPanel = () => {
-    const tl = gsap.timeline();
+    // 忘记密码01
+    const showPasswordPanel = (play) =>{
+      if(play){
+        tl_showpass1.play();
+      }
+      else{
+        tl_backtopass1.play();
+      }
+    }
 
-    aniEND = false;
+    // 忘记密码02
+    const showPasswordPanel2 = (play) =>{
+      if(play){
+        tl_showpass2.play();
+      }
+      else{
+        tl_showpass2.reverse();
+      }
+    }
 
-    tl.to(title1.value, {
-      y: -250,
-      opacity: 0,
-      duration: 0.4,
-      ease: "power2.out",
+ // 显示登录面板
+ const showLoginPanel = () => {
+   const tl = gsap.timeline();
+   
+   aniEND = false;
+   
+   tl.to(title1.value, {
+     y: -250,
+     opacity: 0,
+     duration: 0.4,
+     ease: "power2.out",
     });
-
+    
     tl.to(
       title2.value,
       {
@@ -180,7 +223,7 @@ export const useLoginView = () => {
       },
       "<"
     );
-
+    
     tl.to(
       bgimg.value,
       {
@@ -206,14 +249,14 @@ export const useLoginView = () => {
 
     aniEND = true;
   };
-
+  
   // 隐藏表单面板
   const hideFormPanel = () => {
     if (!aniEND) return;
 
     aniEND = false;
     const tl = gsap.timeline();
-
+    
     tl.to(loginFormZone.value, {
       bottom: -700,
       duration: 0.5,
@@ -255,64 +298,88 @@ export const useLoginView = () => {
     aniEND = false;
   };
 
-  // 忘记密码01
-  const showPasswordPanel = (play) =>{
-    if(play){
-      tl_showpass1.play();
-    }
-    else{
-      tl_showpass1.reverse();
-    }
-  }
-
-  // 忘记密码02
-  const showPasswordPanel2 = () =>{
-    const tl = gsap.timeline();
-
-    tl.to(
-      ".s1",
-      {
-        x: "50%",
-        opacity: 0,
-        duration: 1,
-        ease: "power2.out",
-        pointerEvents: "auto",
-      }
-    ),
-    tl.to(
-      ".s2",
-      {
-        delay: 0.2,
-        x: "100%",
-        opacity: 1,
-        duration: 1,
-        ease: "power2.out",
-        pointerEvents: "auto",
-      },
-      '<'
-    ),
-    tl.to(
-      ".pr-2",
-      {
-        x: "80%",
-        color: "#fff",
-        opacity: 1,
-        duration: 1,
-        ease: "power2.out",
-        pointerEvents: "auto",
-      },
-      '<'
-    )
-  }
-
+  // 登录处理（打印信息）
   const handleLogin = () => {
     if (validateAll()) {
         loginForm.vCode = loginForm.vCode.toUpperCase();
         console.log("登录信息:", loginForm);
-    }
-  };
+      }
+    };
+    
 
-  return {
+
+
+
+/*
+登录表单数据
+*/
+const loginForm = reactive({
+  usernameOrEmail: "",
+  password: "",
+  vCode: "",
+});
+
+// 登录表单字段状态
+// idle: 未验证
+// error: 验证失败
+// success: 验证成功
+const fieldStates = reactive({
+  usernameOrEmail: { status: "idle", message: "" },
+  password: { status: "idle", message: "" },
+  vCode: { status: "idle", message: "" },
+});
+
+// 验证登录表单字段
+// 返回验证是否通过
+const validateField = (fieldName) => {
+  const value = loginForm[fieldName];
+  const rules = FIELD_RULES[fieldName] || [];
+
+  // 验证规则
+  for (const rule of rules) {
+    if (!rule.validator(value)) {
+      fieldStates[fieldName].status = "error";
+      fieldStates[fieldName].message = rule.message;
+      return false;
+    }
+  }
+
+  // 验证通过
+  fieldStates[fieldName].status = "success";
+  fieldStates[fieldName].message = "";
+  return true;
+};
+
+// 验证登录表单所有字段
+// 返回验证是否通过
+const validateAll = () => {
+  let allPassed = true;
+
+  // 验证所有字段
+  for (const fieldName in FIELD_RULES) {
+    if (!validateField(fieldName)) {
+      allPassed = false;
+    }
+  }
+
+  return allPassed;
+};
+
+// 设置登录表单字段验证错误信息
+const setFieldError = (fieldName, message) => {
+  fieldStates[fieldName].status = "error";
+  fieldStates[fieldName].message = message;
+};
+
+// 清除登录表单字段验证状态
+// 用于在登录表单数据改变时调用
+const clearFieldState = (fieldName) => {
+  fieldStates[fieldName].status = "idle";
+  fieldStates[fieldName].message = "";
+};
+
+// 导出数据
+return{
     router,
     bgimg,
     title1,
