@@ -1,5 +1,6 @@
 <script setup>
 import { useLoginView } from "../composables/loginView.js";
+
 const LV = useLoginView();
 
 const {
@@ -10,12 +11,16 @@ const {
   lfzTitle,
   loginFormZone,
   loginForm,
+  regForm,
   fieldStates,
+  regFieldStates,
   showLoginPanel,
   showRegisterPanel,
   hideFormPanel,
   validateField,
+  validateRegField,
   handleLogin,
+  handleRegister,
   clearFieldState,
   showPasswordPanel,
   showPasswordPanel2,
@@ -105,7 +110,46 @@ const {
     
     <!-- 注册页面 -->
     <section id="Xzone">
-      注册
+      <div class="xzone_title">注册</div>
+      <div class="xzone_back" @click="hideFormPanel">
+      </div>
+      <div class="xzone_content">
+        <div class="xzone_input fadeIn_regInput" :class="regFieldStates.nickname.status">
+          <svg class="icon" viewBox="0 0 1024 1024" width="20" height="20"><path d="M512 128c-141.44 0-256 114.56-256 256s114.56 256 256 256 256-114.56 256-256-114.56-256-256-256z" fill="#5A5A68" p-id="1680"></path><path d="M512 192c-105.6 0-192 86.4-192 192s86.4 192 192 192 192-86.4 192-192-86.4-192-192-192z" fill="#5A5A68" p-id="1681"></path><path d="M512 384c-52.8 0-96 43.2-96 96s43.2 96 96 96 96-43.2 96-96-43.2-96-96-96z" fill="#5A5A68" p-id="1682"></path><path d="M512 512c-35.2 0-64 28.8-64 64s28.8 64 64 64 64-28.8 64-64-28.8-64-64-64z" fill="#5A5A68" p-id="1683"></path></svg>
+          <input type="text" v-model="regForm.nickname" @blur="validateRegField('nickname')" placeholder="请输入昵称【可选】">
+          <span class="error-msg">{{ regFieldStates.nickname.message }}</span>
+        </div>
+        <div class="xzone_input fadeIn_regInput" :class="regFieldStates.username.status">
+          <svg class="icon" viewBox="0 0 1024 1024" width="20" height="20"><path d="M864 256H704V192c0-70.4-57.6-128-128-128s-128 57.6-128 128v64H160c-88 0-160 72-160 160v352c0 88 72 160 160 160h704c88 0 160-72 160-160V416c0-88-72-160-160-160z m-448 0H288v64c0 35.2 28.8 64 64 64s64-28.8 64-64v-64h64v192c0 35.2-28.8 64-64 64s-64-28.8-64-64V256z" fill="#5A5A68" p-id="1684"></path></svg>
+          <input type="text" v-model="regForm.username" @blur="validateRegField('username')" placeholder="请输入用户名">
+          <span class="error-msg">{{ regFieldStates.username.message }}</span>
+        </div>
+        <div class="xzone_input fadeIn_regInput" :class="regFieldStates.password.status">
+          <svg class="icon" viewBox="0 0 1024 1024" width="20" height="20"><path d="M204.8 390.4A19.2 19.2 0 0 0 185.6 409.6v409.6c0 10.5984 8.6016 19.2 19.2 19.2h614.4a19.2 19.2 0 0 0 19.2-19.2V409.6A19.2 19.2 0 0 0 819.2 390.4H204.8z m96-64V204.8c0-45.9264 37.2736-83.2 83.2-83.2h256c45.9264 0 83.2 37.2736 83.2 83.2v121.6H819.2c45.9264 0 83.2 37.2736 83.2 83.2v409.6c0 45.9264-37.2736 83.2-83.2 83.2H204.8A83.2 83.2 0 0 1 121.6 819.2V409.6c0-45.9264 37.2736-83.2 83.2-83.2h96z m64 0h294.4V204.8a19.2 19.2 0 0 0-19.2-19.2h-256A19.2 19.2 0 0 0 364.8 204.8v121.6z" fill="#5A5A68" p-id="1685"></path><path d="M358.4 646.4a32 32 0 1 1 0-64h307.2a32 32 0 1 1 0 64H358.4z" fill="#5A5A68" p-id="1686"></path></svg>
+          <input type="password" v-model="regForm.password" @blur="validateRegField('password')" placeholder="请输入登录密码">
+          <span class="error-msg">{{ regFieldStates.password.message }}</span>
+        </div>
+        <div class="xzone_input fadeIn_regInput" :class="regFieldStates.confirmPassword.status">
+          <svg class="icon" viewBox="0 0 1024 1024" width="20" height="20"><path d="M204.8 390.4A19.2 19.2 0 0 0 185.6 409.6v409.6c0 10.5984 8.6016 19.2 19.2 19.2h614.4a19.2 19.2 0 0 0 19.2-19.2V409.6A19.2 19.2 0 0 0 819.2 390.4H204.8z m96-64V204.8c0-45.9264 37.2736-83.2 83.2-83.2h256c45.9264 0 83.2 37.2736 83.2 83.2v121.6H819.2c45.9264 0 83.2 37.2736 83.2 83.2v409.6c0 45.9264-37.2736 83.2-83.2 83.2H204.8A83.2 83.2 0 0 1 121.6 819.2V409.6c0-45.9264 37.2736-83.2 83.2-83.2h96z m64 0h294.4V204.8a19.2 19.2 0 0 0-19.2-19.2h-256A19.2 19.2 0 0 0 364.8 204.8v121.6z" fill="#5A5A68" p-id="1687"></path><path d="M358.4 646.4a32 32 0 1 1 0-64h307.2a32 32 0 1 1 0 64H358.4z" fill="#5A5A68" p-id="1688"></path></svg>
+          <input type="password" v-model="regForm.confirmPassword" @blur="validateRegField('confirmPassword')" placeholder="请再次输入密码">
+          <span class="error-msg">{{ regFieldStates.confirmPassword.message }}</span>
+        </div>
+        <div class="xzone_input fadeIn_regInput" :class="regFieldStates.email.status">
+          <svg class="icon" viewBox="0 0 1024 1024" width="20" height="20"><path d="M853.333333 170.666667H170.666667c-46.933333 0-85.333333 38.4-85.333333 85.333333v512c0 46.933333 38.4 85.333333 85.333333 85.333333h682.666667c46.933333 0 85.333333-38.4 85.333333-85.333333v-512c0-46.933333-38.4-85.333333-85.333333-85.333333z m-682.666666 85.333333V768L426.666667 512 170.666667 768V256z m682.666666 426.666666L512 512l-341.333333 170.666667V256L512 426.666667 853.333333 256v426.666666z" fill="#5A5A68" p-id="1689"></path></svg>
+          <input type="text" v-model="regForm.email" @blur="validateRegField('email')" placeholder="请输入邮箱地址">
+          <span class="error-msg">{{ regFieldStates.email.message }}</span>
+        </div>
+        <div class="xzone_input_vcode fadeIn_regInput" :class="regFieldStates.vCode.status">
+          <svg class="icon" viewBox="0 0 1024 1024" width="20" height="20"><path d="M270.933333 597.333333h-10.666666c-44.8 0-81.066667-36.266667-81.066667-81.066666v-10.666667c0-44.8 36.266667-81.066667 81.066667-81.066667h10.666666c44.8 0 81.066667 36.266667 81.066667 81.066667v10.666667c0 44.8-36.266667 81.066667-81.066667 81.066666zM512 597.333333c-46.933333 0-85.333333-38.4-85.333333-85.333333s38.4-85.333333 85.333333-85.333333 85.333333 38.4 85.333333 85.333333-38.4 85.333333-85.333333 85.333333zM757.333333 597.333333c-46.933333 0-85.333333-38.4-85.333333-85.333333s38.4-85.333333 85.333333-85.333333 85.333333 38.4 85.333334 85.333333-38.4 85.333333-85.333334 85.333333z" fill="#5A5A68" p-id="1690"></path></svg>
+          <input type="text" v-model="regForm.vCode" @blur="validateRegField('vCode')" placeholder="请输入验证码">
+          <button class="getCodeBt">获取验证码</button>
+          <span class="error-msg">{{ regFieldStates.vCode.message }}</span>
+        </div>
+        <button class="xzone_registerBt fadeIn_regInput" @click="handleRegister">注册</button>
+        <div class="xzone_tips fadeIn_regInput">
+          已有账号?<span @click="hideFormPanel">立即登录</span>
+        </div>
+      </div>
     </section>
 
     <!-- 隐藏LoginFormZone的Zone -->

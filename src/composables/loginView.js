@@ -91,6 +91,11 @@ export const useLoginView = () => {
         });
         gsap.set(".s1", { x: 0, opacity: 1 });
         gsap.set(".s2", { x: "100%", opacity: 0 });
+
+        //clearProps:all 清除所有行内样式，回归CSS默认
+        gsap.set(".fadeIn_loginBt", { clearProps: "all" });
+        gsap.set(".fadeIn_loginInput", { clearProps: "all" });
+        gsap.set(".fadeIn_loginItem", { clearProps: "all" });
       }
     })
     .to(".s1, .s2", {
@@ -293,6 +298,12 @@ export const useLoginView = () => {
  const showRegisterPanel = () =>{
   const tl = gsap.timeline();
   activePanel.value = "register";
+
+  tl.set(".xzone_registerBt", { y: 20, opacity: 0 });
+  tl.set(".xzone_tips", { y: 20, opacity: 0 });
+  tl.set(".xzone_input", { y: 30, opacity: 0 });
+  tl.set(".xzone_input_vcode", { y: 30, opacity: 0 });
+
   tl.to(
     lfzTitle.value,
     {
@@ -309,6 +320,52 @@ export const useLoginView = () => {
     },
     "<"
   )
+
+  tl.to(
+    ".xzone_input",
+    {
+      y: 0,
+      opacity: 1,
+      duration: 0.4,
+      stagger: 0.06,
+      ease: "power2.out",
+    },
+    "-=0.2"
+  )
+
+  tl.to(
+    ".xzone_input_vcode",
+    {
+      y: 0,
+      opacity: 1,
+      duration: 0.4,
+      ease: "power2.out",
+    },
+    "-=0.4"
+  )
+
+  tl.to(
+    ".xzone_registerBt",
+    {
+      y: 0,
+      opacity: 1,
+      duration: 0.4,
+      ease: "power2.inOut",
+    },
+    "<"
+  )
+
+  tl.to(
+    ".xzone_tips",
+    {
+      delay: 0.1,
+      y: 0,
+      opacity: 1,
+      duration: 0.4,
+      ease: "power2.out",
+    },
+    // "<"
+  )
  }
 
   // 隐藏表单面板
@@ -321,8 +378,15 @@ export const useLoginView = () => {
           duration: 0.4,
           ease: "power2.in",
           onComplete: () => {
-            gsap.set("#Xzone", { bottom: -700 });
-          }
+            gsap.set("#Xzone", { bottom: -600 });
+            // 清理注册表单
+            for (const key in regForm) {
+              regForm[key] = "";
+            }
+            for (const key in regFieldStates) {
+              regFieldStates[key] = { status: "idle", message: "" };
+            }
+          },
         });
         activePanel.value = "login";
         return;
@@ -358,7 +422,7 @@ export const useLoginView = () => {
       tl.to(title2.value, { y: 0, opacity: 1, duration: 0.5, ease: "power2.out" }, 0.2);
 
       tl.set(loginFormZone.value, { bottom: -700 });
-      tl.set("#Xzone", { bottom: -700 });
+      tl.set("#Xzone", { bottom: -600 });
 
       aniEND = false;
     };
@@ -397,19 +461,63 @@ const FIELD_RULES = {
   ],
 };
 
+// 注册表单验证规则
+const REG_FIELD_RULES = {
+  nickname: [
+    { validator: (v) => !v || v.length <= 20, message: "昵称最多20位" },
+  ],
+  username: [
+    { validator: (v) => !!v, message: "用户名不能为空" },
+    { validator: (v) => /^[a-zA-Z0-9_]{4,16}$/.test(v), message: "用户名4-16位字母/数字/下划线" },
+  ],
+  password: [
+    { validator: (v) => !!v, message: "密码不能为空" },
+    { validator: (v) => v.length >= 8, message: "密码长度至少8位" },
+    { validator: (v) => /[A-Z]/.test(v) && /[a-z]/.test(v) && /[0-9]/.test(v), message: "需包含大小写字母和数字" },
+  ],
+  confirmPassword: [
+    { validator: (v) => !!v, message: "请再次输入密码" },
+    { validator: (v) => v === regForm.password, message: "两次密码不一致" },
+  ],
+  email: [
+    { validator: (v) => !!v, message: "邮箱不能为空" },
+    { validator: (v) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v), message: "邮箱格式不正确" },
+  ],
+  vCode: [
+    { validator: (v) => !!v, message: "验证码不能为空" },
+    { validator: (v) => /^[A-Za-z0-9]{6}$/.test(v), message: "为6位字母/数字" },
+  ],
+};
+
 const loginForm = reactive({
   usernameOrEmail: "",
   password: "",
   vCode: "",
 });
 
+const regForm = reactive({
+  nickname: "",
+  username: "",
+  password: "",
+  confirmPassword: "",
+  email: "",
+  vCode: "",
+});
+
 // 登录表单字段状态
-// idle: 未验证
-// error: 验证失败
-// success: 验证成功
 const fieldStates = reactive({
   usernameOrEmail: { status: "idle", message: "" },
   password: { status: "idle", message: "" },
+  vCode: { status: "idle", message: "" },
+});
+
+// 注册表单字段状态
+const regFieldStates = reactive({
+  nickname: { status: "idle", message: "" },
+  username: { status: "idle", message: "" },
+  password: { status: "idle", message: "" },
+  confirmPassword: { status: "idle", message: "" },
+  email: { status: "idle", message: "" },
   vCode: { status: "idle", message: "" },
 });
 
@@ -462,6 +570,50 @@ const clearFieldState = (fieldName) => {
   fieldStates[fieldName].message = "";
 };
 
+// 验证注册表单字段
+const validateRegField = (fieldName) => {
+  const value = regForm[fieldName];
+  const rules = REG_FIELD_RULES[fieldName] || [];
+
+  for (const rule of rules) {
+    if (!rule.validator(value)) {
+      regFieldStates[fieldName].status = "error";
+      regFieldStates[fieldName].message = rule.message;
+      return false;
+    }
+  }
+
+  regFieldStates[fieldName].status = "success";
+  regFieldStates[fieldName].message = "";
+  return true;
+};
+
+// 验证注册表单所有字段
+const validateRegAll = () => {
+  let allPassed = true;
+
+  for (const fieldName in REG_FIELD_RULES) {
+    if (!validateRegField(fieldName)) {
+      allPassed = false;
+    }
+  }
+
+  return allPassed;
+};
+
+// 清除注册表单字段验证状态
+const clearRegFieldState = (fieldName) => {
+  regFieldStates[fieldName].status = "idle";
+  regFieldStates[fieldName].message = "";
+};
+
+// 注册处理
+const handleRegister = () => {
+  if (validateRegAll()) {
+    console.log("注册信息:", regForm);
+  }
+};
+
 // 导出数据
 return{
     router,
@@ -471,15 +623,21 @@ return{
     lfzTitle,
     loginFormZone,
     loginForm,
+    regForm,
     fieldStates,
+    regFieldStates,
     showLoginPanel,
     showRegisterPanel,
     hideFormPanel,
     validateField,
     validateAll,
+    validateRegField,
+    validateRegAll,
     setFieldError,
     clearFieldState,
+    clearRegFieldState,
     handleLogin,
+    handleRegister,
     showPasswordPanel,
     showPasswordPanel2,
   };
