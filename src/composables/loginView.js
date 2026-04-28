@@ -6,8 +6,10 @@ export const useLoginView = () => {
   const router = useRouter();
 
   let aniEND = false;
+  const activePanel = ref("");
 
   const bgimg = ref(null);
+  const lfzTitle = ref(null);
   const title1 = ref(null);
   const title2 = ref(null);
   const loginFormZone = ref(null);
@@ -75,8 +77,8 @@ export const useLoginView = () => {
 
     //忘记密码01 - 返回（独立动画，非reverse）
     tl_backtopass1 = gsap.timeline({
-  paused: true,
-  onComplete: () => {
+    paused: true,
+    onComplete: () => {
     // 1. 重置tl_backtopass1进度为0，回到初始暂停状态
     tl_backtopass1.progress(0).pause();
     // 2. 重置tl_showpass1为反向初始状态（确保下次play能正常触发）
@@ -178,7 +180,6 @@ export const useLoginView = () => {
       ".pr-2",
       {
         x: "80%",
-        color: "#fff",
         opacity: 1,
         duration: 1,
         ease: "power2.inOut", 
@@ -232,6 +233,7 @@ export const useLoginView = () => {
    const tl = gsap.timeline();
    
    aniEND = false;
+   activePanel.value = "login";
    
    tl.to(title1.value, {
      y: -250,
@@ -287,53 +289,81 @@ export const useLoginView = () => {
     aniEND = true;
   };
   
-  // 隐藏表单面板
-  const hideFormPanel = () => {
-    if (!aniEND) return;
+ // 显示注册面板
+ const showRegisterPanel = () =>{
+  const tl = gsap.timeline();
+  activePanel.value = "register";
+  tl.to(
+    lfzTitle.value,
+    {
+      opacity: .1,
+      duration: 0.6,
+      ease: "power2.Out",
+    }
+  )
 
-    aniEND = false;
-    const tl = gsap.timeline();
-    
-    tl.to(loginFormZone.value, {
-      bottom: -700,
+  tl.to('#Xzone', {
+      bottom: 0,
       duration: 0.5,
-      ease: "power2.in",
-    });
+      ease: "power2.out",
+    },
+    "<"
+  )
+ }
 
-    tl.to(
-      bgimg.value,
-      {
+  // 隐藏表单面板
+    const hideFormPanel = () => {
+      // 优先：如果注册面板打开 → 只关闭注册，直接 return
+      if (activePanel.value === "register") {
+        gsap.to(lfzTitle.value, { opacity: 1, duration: 0.4, ease: "power2.out" });
+        gsap.to("#Xzone", {
+          bottom: -700,
+          duration: 0.4,
+          ease: "power2.in",
+          onComplete: () => {
+            gsap.set("#Xzone", { bottom: -700 });
+          }
+        });
+        activePanel.value = "login";
+        return;
+      }
+
+      // 关闭登录面板
+      if (!aniEND) return;
+
+      const tl = gsap.timeline({
+        onComplete: () => {
+          aniEND = true;
+          activePanel.value = "";
+        }
+      });
+
+      // 关闭登录
+      tl.to(loginFormZone.value, {
+        bottom: -700,
+        duration: 0.5,
+        ease: "power2.in",
+      }, 0);
+
+      // 恢复背景
+      tl.to(bgimg.value, {
         width: "120vw",
         height: "120vh",
         duration: 0.5,
         ease: "power2.in",
-      },
-      "<"
-    );
+      }, 0);
 
-    tl.to(
-      title1.value,
-      {
-        y: 0,
-        opacity: 1,
-        duration: 0.8,
-        ease: "power2.out",
-      }
-    );
+      // 恢复文字
+      tl.to(title1.value, { y: 0, opacity: 1, duration: 0.8, ease: "power2.out" }, 0.2);
+      tl.to(title2.value, { y: 0, opacity: 1, duration: 0.5, ease: "power2.out" }, 0.2);
 
-    tl.to(
-      title2.value,
-      {
-        y: 0,
-        opacity: 1,
-        duration: 0.5,
-        ease: "power2.out",
-      },
-      "<"
-    );
+      tl.set(loginFormZone.value, { bottom: -700 });
+      tl.set("#Xzone", { bottom: -700 });
 
-    aniEND = false;
-  };
+      aniEND = false;
+    };
+
+    
 
   // 登录处理（打印信息）
   const handleLogin = () => {
@@ -438,10 +468,12 @@ return{
     bgimg,
     title1,
     title2,
+    lfzTitle,
     loginFormZone,
     loginForm,
     fieldStates,
     showLoginPanel,
+    showRegisterPanel,
     hideFormPanel,
     validateField,
     validateAll,
