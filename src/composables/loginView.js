@@ -442,7 +442,7 @@ export const useLoginView = () => {
 
 
 /*
-登录表单数据
+表单校验数据
 */
 // 登录表单字段验证规则
 const FIELD_RULES = {
