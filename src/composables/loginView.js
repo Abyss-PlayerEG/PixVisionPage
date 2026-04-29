@@ -1079,6 +1079,10 @@ export const useLoginView = () => {
             if (statusCode === 200) {
                 console.log('✅ 注册成功');
 
+                // 保存用户名和密码，用于自动填充登录表单
+                const registeredUsername = regForm.username;
+                const registeredPassword = regForm.password;
+
                 // 清除验证码倒计时
                 clearCountdown();
 
@@ -1109,6 +1113,15 @@ export const useLoginView = () => {
 
                         // 切换到登录面板
                         hideFormPanel();
+                        
+                        // 等待动画完成后，显示登录面板并填充用户名和密码
+                        setTimeout(() => {
+                            showLoginPanel();
+                            // 自动填充用户名和密码
+                            loginForm.usernameOrEmail = registeredUsername;
+                            loginForm.password = registeredPassword;
+                            console.log('已自动填充登录信息:', { username: registeredUsername });
+                        }, 600); // 等待 hideFormPanel 动画完成
                     }
                 }, 1000);
             } else {
