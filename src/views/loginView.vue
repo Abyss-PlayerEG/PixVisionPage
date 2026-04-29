@@ -19,6 +19,7 @@ const {
   vCodeButtonState,
   registerButtonState,
   forgotPasswordVCodeButtonState,
+  forgotPasswordSubmitButtonState,
   showLoginPanel,
   showRegisterPanel,
   hideFormPanel,
@@ -35,6 +36,7 @@ const {
   clearCountdown,
   clearForgotPasswordCountdown,
   handleForgotPasswordSubmit,
+  handleForgotPasswordFinalSubmit,
 } = useLoginView();
 
 // 忘记密码 - 下一步处理
@@ -43,8 +45,9 @@ const handleForgotPasswordNext = () => {
   const isNewPasswordValid = validateForgotPasswordField('newPassword');
   const isConfirmPasswordValid = validateForgotPasswordField('confirmPassword');
   
-  // 只有两个字段都验证通过，才进入下一步
+  // 只有两个字段都验证通过，才进入步骤2
   if (isNewPasswordValid && isConfirmPasswordValid) {
+    // 显示步骤2（输入用户名/邮箱和验证码）
     showPasswordPanel2(true);
   }
 };
@@ -124,7 +127,7 @@ const handleForgotPasswordNext = () => {
               <button class="getCodeBt" @click="sendForgotPasswordCode" :disabled="forgotPasswordVCodeButtonState.disabled">{{ forgotPasswordVCodeButtonState.text }}</button>
               <span class="error-msg">{{ forgotPasswordFieldStates.vCode.message }}</span>
             </div>
-            <button class="loginBt" @click="handleForgotPasswordSubmit">确定</button>
+            <button class="loginBt" @click="handleForgotPasswordSubmit" :disabled="forgotPasswordSubmitButtonState.disabled">{{ forgotPasswordSubmitButtonState.text }}</button>
           </div>
         </div>
       </section>

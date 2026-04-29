@@ -589,9 +589,16 @@ export const useLoginView = () => {
         countdown: 0,
     });
 
+// 忘记密码确定按钮状态
+    const forgotPasswordSubmitButtonState = reactive({
+        text: "确定",
+        disabled: false,
+    });
+
     let countdownTimer = null;
     let registerCountdownTimer = null;
     let forgotPasswordCountdownTimer = null;
+    let forgotPasswordSubmitCountdownTimer = null;
 
 // 验证登录表单字段
 // 返回验证是否通过
@@ -991,7 +998,7 @@ export const useLoginView = () => {
         }
     };
 
-// 处理忘记密码步骤1提交
+// 处理忘记密码步骤1提交（步骤2的确定按钮）
     const handleForgotPasswordSubmit = async () => {
         // 验证用户名/邮箱和验证码
         const isUsernameOrEmailValid = validateForgotPasswordField('usernameOrEmail');
@@ -1003,10 +1010,114 @@ export const useLoginView = () => {
             return;
         }
 
-        console.log('忘记密码步骤1验证通过，准备进入步骤2');
+        console.log('忘记密码步骤2验证通过，准备提交请求');
 
-        // 显示步骤2（设置新密码）
-        showPasswordPanel2(true);
+        // 调用最终提交函数
+        await handleForgotPasswordFinalSubmit();
+    };
+
+// 处理忘记密码最终提交（步骤2）
+    const handleForgotPasswordFinalSubmit = async () => {
+        // 验证所有字段
+        const isNewPasswordValid = validateForgotPasswordField('newPassword');
+        const isConfirmPasswordValid = validateForgotPasswordField('confirmPassword');
+        const isUsernameOrEmailValid = validateForgotPasswordField('usernameOrEmail');
+        const isVCodeValid = validateForgotPasswordField('vCode');
+
+        // 如果任何字段验证失败，则不继续
+        if (!isNewPasswordValid || !isConfirmPasswordValid || !isUsernameOrEmailValid || !isVCodeValid) {
+            console.log('表单验证失败');
+            return;
+        }
+
+        // 验证两次密码是否一致
+        if (forgotPasswordForm.newPassword !== forgotPasswordForm.confirmPassword) {
+            setForgotPasswordFieldError('confirmPassword', '两次密码不一致');
+            return;
+        }
+
+        try {
+            // 构建请求参数
+            const params = new URLSearchParams();
+            params.append('usernameOrEmail', forgotPasswordForm.usernameOrEmail);
+            params.append('newPassword', forgotPasswordForm.newPassword);
+            params.append('confirmPassword', forgotPasswordForm.confirmPassword);
+            params.append('vCode', forgotPasswordForm.vCode.toUpperCase()); // 验证码转为大写
+
+            console.log('发送忘记密码请求数据:', {
+                usernameOrEmail: forgotPasswordForm.usernameOrEmail,
+                newPassword: '(已加密)',
+                confirmPassword: '(已加密)',
+                vCode: forgotPasswordForm.vCode.toUpperCase(),
+            });
+
+            // 调用后端忘记密码接口
+            const response = await fetch('http://localhost:9090/api/user/password/forgot', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: params,
+            });
+
+            const result = await response.json();
+
+            // 打印后端返回的响应
+            console.log('忘记密码接口响应:', JSON.stringify(result, null, 2));
+
+            // 根据业务状态码处理（兼容 code 和 recode 字段）
+            const statusCode = result.code || result.recode;
+            if (statusCode === 200) {
+                console.log('✅ 密码重置成功');
+
+                // 清除验证码倒计时
+                clearForgotPasswordCountdown();
+
+                // 清空忘记密码表单所有输入内容
+                for (const key in forgotPasswordForm) {
+                    forgotPasswordForm[key] = '';
+                }
+                // 清空字段验证状态
+                for (const key in forgotPasswordFieldStates) {
+                    forgotPasswordFieldStates[key] = {status: 'idle', message: ''};
+                }
+
+                // 开始确定按钮倒计时
+                let seconds = 3;
+                forgotPasswordSubmitButtonState.text = `重置成功，${seconds}秒后返回登录页面`;
+                forgotPasswordSubmitButtonState.disabled = true;
+
+                forgotPasswordSubmitCountdownTimer = setInterval(() => {
+                    seconds--;
+                    if (seconds > 0) {
+                        forgotPasswordSubmitButtonState.text = `重置成功，${seconds}秒后返回登录页面`;
+                    } else {
+                        // 倒计时结束
+                        clearInterval(forgotPasswordSubmitCountdownTimer);
+                        forgotPasswordSubmitCountdownTimer = null;
+                        forgotPasswordSubmitButtonState.text = '确定';
+                        forgotPasswordSubmitButtonState.disabled = false;
+
+                        // 隐藏忘记密码面板，返回登录页面
+                        showPasswordPanel(false);
+                    }
+                }, 1000);
+            } else {
+                console.error('❌ 密码重置失败:', result.message);
+            }
+
+            return result;
+
+        } catch (error) {
+            console.error('网络请求失败:', error);
+            alert('网络错误，请稍后重试');
+        }
+    };
+
+// 设置忘记密码表单字段验证错误信息
+    const setForgotPasswordFieldError = (fieldName, message) => {
+        forgotPasswordFieldStates[fieldName].status = "error";
+        forgotPasswordFieldStates[fieldName].message = message;
     };
 
 // 导出数据
@@ -1026,6 +1137,7 @@ export const useLoginView = () => {
         vCodeButtonState,
         registerButtonState,
         forgotPasswordVCodeButtonState,
+        forgotPasswordSubmitButtonState,
         showLoginPanel,
         showRegisterPanel,
         hideFormPanel,
@@ -1040,6 +1152,7 @@ export const useLoginView = () => {
         clearRegFieldState,
         clearForgotPasswordFieldState,
         setRegFieldError,
+        setForgotPasswordFieldError,
         handleLogin,
         handleRegister,
         showPasswordPanel,
@@ -1049,5 +1162,6 @@ export const useLoginView = () => {
         clearCountdown,
         clearForgotPasswordCountdown,
         handleForgotPasswordSubmit,
+        handleForgotPasswordFinalSubmit,
     };
 };
