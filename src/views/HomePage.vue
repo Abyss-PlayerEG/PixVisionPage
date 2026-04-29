@@ -5,9 +5,11 @@
 <script setup lang="js">
 import { ref, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
+import { getAvatarUrl } from '../config/api';
 
 const router = useRouter();
 const username = ref('');
+const avatarUrl = ref('');
 
 onMounted(() => {
   // 从 localStorage 获取用户信息
@@ -21,6 +23,10 @@ onMounted(() => {
       // 优先显示昵称，如果没有则显示用户名
       username.value = userInfo.nickname || userInfo.username || '用户';
       console.log('当前登录用户:', username.value);
+      
+      // 获取头像 URL
+      avatarUrl.value = getAvatarUrl(userInfo.avatar_url);
+      console.log('头像 URL:', avatarUrl.value);
     } catch (error) {
       console.error('解析用户信息失败:', error);
       username.value = '用户';
@@ -43,11 +49,26 @@ const handleLogout = () => {
   // 跳转到登录页
   router.push('/login');
 };
+
+// 头像加载失败处理
+const handleAvatarError = (e) => {
+  console.error('头像加载失败，使用默认头像');
+  e.target.src = getAvatarUrl(null); // 使用默认头像
+};
 </script>
 
 <template>
   <div class="home-page">
-    <h1>欢迎，{{ username }}！</h1>
+    <div class="user-info">
+      <img 
+        v-if="avatarUrl" 
+        :src="avatarUrl" 
+        :alt="username + '的头像'"
+        class="avatar"
+        @error="handleAvatarError"
+      />
+      <h1>欢迎，{{ username }}！</h1>
+    </div>
     <p>您已成功登录</p>
     <button @click="handleLogout">退出登录</button>
   </div>
@@ -62,6 +83,29 @@ const handleLogout = () => {
   min-height: 100vh;
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   color: white;
+}
+
+.user-info {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.avatar {
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  border: 4px solid rgba(255, 255, 255, 0.3);
+  object-fit: cover;
+  margin-bottom: 1.5rem;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.avatar:hover {
+  transform: scale(1.05);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25);
 }
 
 h1 {

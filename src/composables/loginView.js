@@ -1,6 +1,7 @@
 import {gsap} from "gsap";
 import {useRouter} from "vue-router";
 import {ref, reactive, onMounted} from "vue";
+import { AUTH_API, MAIL_API, PASSWORD_API } from '../config/api';
 
 export const useLoginView = () => {
     const router = useRouter();
@@ -456,7 +457,7 @@ export const useLoginView = () => {
             });
 
             // 调用后端登录接口
-            const response = await fetch('http://localhost:9090/api/user/auth/login', {
+            const response = await fetch(AUTH_API.LOGIN, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/x-www-form-urlencoded',
@@ -880,7 +881,7 @@ export const useLoginView = () => {
             register: {
                 validateFn: validateRegField,
                 fieldName: 'email',
-                apiUrl: 'http://localhost:9090/api/mail/send-register-code',
+                apiUrl: MAIL_API.SEND_REGISTER_CODE,
                 params: { email: regForm.email, username: regForm.username },
                 buttonState: vCodeButtonState,
                 needCountdown: true,
@@ -890,7 +891,7 @@ export const useLoginView = () => {
             login: {
                 validateFn: validateField,
                 fieldName: 'usernameOrEmail',
-                apiUrl: 'http://localhost:9090/api/mail/send-login-code',
+                apiUrl: MAIL_API.SEND_LOGIN_CODE,
                 params: { usernameOrEmail: loginForm.usernameOrEmail },
                 buttonState: loginVCodeButtonState,
                 needCountdown: true,
@@ -900,7 +901,7 @@ export const useLoginView = () => {
             forgotPassword: {
                 validateFn: validateForgotPasswordField,
                 fieldName: 'usernameOrEmail',
-                apiUrl: 'http://localhost:9090/api/mail/send-forget-password-code',
+                apiUrl: MAIL_API.SEND_FORGET_PASSWORD_CODE,
                 params: { usernameOrEmail: forgotPasswordForm.usernameOrEmail },
                 buttonState: forgotPasswordVCodeButtonState,
                 needCountdown: true,
@@ -1060,7 +1061,7 @@ export const useLoginView = () => {
             });
 
             // 调用后端注册接口
-            const response = await fetch('http://localhost:9090/api/user/auth/register', {
+            const response = await fetch(AUTH_API.REGISTER, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/x-www-form-urlencoded',
@@ -1176,7 +1177,7 @@ export const useLoginView = () => {
             });
 
             // 调用后端忘记密码接口
-            const response = await fetch('http://localhost:9090/api/user/password/forgot', {
+            const response = await fetch(PASSWORD_API.FORGOT, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/x-www-form-urlencoded',
