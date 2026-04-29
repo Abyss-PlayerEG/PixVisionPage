@@ -451,10 +451,9 @@ export const useLoginView = () => {
     const FIELD_RULES = {
         usernameOrEmail: [
             {validator: (v) => !!v, message: "用户名/邮箱不能为空"},
-            {validator: (v) => v.length >= 5, message: "用户名必须大于5位"},
             {
-                validator: (v) => v.includes("@") ? /^[a-zA-Z0-9_-]+@[a-zA-Z0-9_-]+(\.[a-zA-Z0-9_-]+)+$/.test(v) : true,
-                message: "格式不正确"
+                validator: (v) => /^[a-zA-Z0-9_]{5,16}$/.test(v) || /^[a-zA-Z0-9_-]+@[a-zA-Z0-9_-]+(\.[a-zA-Z0-9_-]+)+$/.test(v),
+                message: "用户名或邮箱不正确"
             },
         ],
         password: [
@@ -482,7 +481,7 @@ export const useLoginView = () => {
         ],
         confirmPassword: [
             {validator: (v) => !!v, message: "请再次输入密码"},
-            {validator: (v) => /^[a-zA-Z0-9_.]{6,16}$/.test(v), message: "6-16位，只允许字母、数字、\"_\"、\".\""},
+            {validator: (v) => /^[a-zA-Z0-9_.]{6,16}$/.test(v), message: "6-16位，2只允许字母、数字、\"_\"、\".\""},
             {validator: (v) => v === regForm.password, message: "两次密码不一致"},
         ],
         email: [
@@ -501,7 +500,7 @@ export const useLoginView = () => {
             {validator: (v) => !!v, message: "用户名/邮箱不能为空"},
             {
                 validator: (v) => /^[a-zA-Z0-9_]{5,16}$/.test(v) || /^[a-zA-Z0-9_-]+@[a-zA-Z0-9_-]+(\.[a-zA-Z0-9_-]+)+$/.test(v),
-                message: "用户名或邮箱格式不正确"
+                message: "用户名或邮箱不正确"
             },
         ],
         newPassword: [
