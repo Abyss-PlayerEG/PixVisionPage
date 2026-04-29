@@ -435,11 +435,69 @@ export const useLoginView = () => {
     };
 
 
-    // 登录处理（打印信息）
-    const handleLogin = () => {
-        if (validateAll()) {
-            loginForm.vCode = loginForm.vCode.toUpperCase();
-            console.log("登录信息:", loginForm);
+    // 登录处理
+    const handleLogin = async () => {
+        // 验证所有字段
+        if (!validateAll()) {
+            return;
+        }
+
+        try {
+            // 构建表单数据
+            const formData = new URLSearchParams();
+            formData.append('usernameOrEmail', loginForm.usernameOrEmail);
+            formData.append('password', loginForm.password);
+            formData.append('vCode', loginForm.vCode.toUpperCase()); // 验证码转为大写
+
+            console.log('发送登录请求数据:', {
+                usernameOrEmail: loginForm.usernameOrEmail,
+                password: '(已加密)',
+                vCode: loginForm.vCode.toUpperCase(),
+            });
+
+            // 调用后端登录接口
+            const response = await fetch('http://localhost:9090/api/user/auth/login', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: formData,
+            });
+
+            const result = await response.json();
+
+            // 打印后端返回的响应
+            console.log('登录接口响应:', JSON.stringify(result, null, 2));
+
+            // 根据业务状态码处理（兼容 code 和 recode 字段）
+            const statusCode = result.code || result.recode;
+            if (statusCode === 200 && result.data) {
+                console.log('✅ 登录成功');
+                
+                // 保存 Token 到 localStorage
+                if (result.data.token) {
+                    localStorage.setItem('token', result.data.token);
+                    console.log('Token 已保存:', result.data.token);
+                }
+                
+                // 保存用户信息到 localStorage
+                if (result.data.user) {
+                    localStorage.setItem('userInfo', JSON.stringify(result.data.user));
+                    console.log('用户信息已保存:', result.data.user);
+                }
+
+                // 跳转到 HomePage
+                router.push('/home');
+            } else {
+                console.error('❌ 登录失败:', result.message);
+                alert(result.message || '登录失败，请检查用户名、密码和验证码');
+            }
+
+            return result;
+
+        } catch (error) {
+            console.error('网络请求失败:', error);
+            alert('网络错误，请稍后重试');
         }
     };
 
@@ -575,6 +633,12 @@ export const useLoginView = () => {
         countdown: 0,
     });
 
+// 登录验证码按钮状态
+    const loginVCodeButtonState = reactive({
+        text: "获取验证码",
+        disabled: false,
+    });
+
 // 注册按钮状态
     const registerButtonState = reactive({
         text: "注册",
@@ -595,6 +659,7 @@ export const useLoginView = () => {
     });
 
     let countdownTimer = null;
+    let loginCountdownTimer = null;
     let registerCountdownTimer = null;
     let forgotPasswordCountdownTimer = null;
     let forgotPasswordSubmitCountdownTimer = null;
@@ -728,62 +793,135 @@ export const useLoginView = () => {
         forgotPasswordFieldStates[fieldName].message = "";
     };
 
-// 发送注册验证码
-    const sendRegisterCode = async () => {
-        // 验证邮箱格式
-        const isEmailValid = validateRegField('email');
+// 通用验证码发送函数
+    const sendVerificationCode = async (options) => {
+        const {
+            validateFn,           // 验证函数
+            fieldName,            // 要验证的字段名
+            apiUrl,               // API 地址
+            params,               // 请求参数对象
+            buttonState,          // 按钮状态对象
+            needCountdown = false, // 是否需要倒计时
+            countdownFn = null,   // 倒计时函数
+            showSuccessAlert = true, // 是否显示成功提示
+            successMessage = "验证码已发送到您的邮箱，请查收",
+            errorMessagePrefix = "验证码发送失败"
+        } = options;
 
-        // 验证用户名格式
-        const isUsernameValid = validateRegField('username');
-
-        // 如果邮箱或用户名验证失败，则不发送验证码
-        if (!isEmailValid || !isUsernameValid) {
-            return;
+        // 验证字段
+        if (validateFn && fieldName) {
+            const isValid = validateFn(fieldName);
+            if (!isValid) {
+                return;
+            }
         }
 
-        // 打印即将发送的数据
-        console.log('发送验证码请求数据:', {
-            email: regForm.email,
-            username: regForm.username,
-        });
+        console.log('发送验证码请求数据:', params);
 
         try {
             // 设置按钮状态为发送中
-            vCodeButtonState.disabled = true;
-            vCodeButtonState.text = "发送中";
+            buttonState.disabled = true;
+            buttonState.text = "发送中";
 
-            // 调用后端接口发送验证码 - 只传递用户名和邮箱
-            const response = await fetch(
-                `http://localhost:9090/api/mail/send-register-code?email=${encodeURIComponent(regForm.email)}&username=${encodeURIComponent(regForm.username)}`,
-                {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                }
-            );
+            // 构建 URL 参数
+            const queryString = Object.keys(params)
+                .map(key => `${encodeURIComponent(key)}=${encodeURIComponent(params[key])}`)
+                .join('&');
+
+            // 调用后端接口发送验证码
+            const response = await fetch(`${apiUrl}?${queryString}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+            });
 
             const result = await response.json();
 
             // 打印后端返回的响应
             console.log('发送验证码响应:', JSON.stringify(result, null, 2));
 
-            if (result.data === true) {
-                // 发送成功，开始倒计时
-                startCountdown();
-                console.log("验证码发送成功");
+            if (result.data === true || result.code === 200 || result.recode === 200) {
+                console.log("✅ 验证码发送成功");
+                
+                if (needCountdown && countdownFn) {
+                    // 需要倒计时
+                    countdownFn();
+                } else if (showSuccessAlert) {
+                    // 不需要倒计时，但显示提示并恢复按钮
+                    alert(successMessage);
+                    buttonState.disabled = false;
+                    buttonState.text = "获取验证码";
+                }
+                // 如果既不需要倒计时也不需要显示提示，则保持按钮为“发送中”状态
             } else {
                 // 发送失败，恢复按钮状态
-                vCodeButtonState.disabled = false;
-                vCodeButtonState.text = "获取验证码";
-                console.error("验证码发送失败:", result);
+                buttonState.disabled = false;
+                buttonState.text = "获取验证码";
+                console.error(`❌ ${errorMessagePrefix}:`, result.message);
+                alert(result.message || errorMessagePrefix);
             }
         } catch (error) {
             // 网络错误，恢复按钮状态
-            vCodeButtonState.disabled = false;
-            vCodeButtonState.text = "获取验证码";
+            buttonState.disabled = false;
+            buttonState.text = "获取验证码";
             console.error("发送验证码请求失败:", error);
+            alert("网络错误，请稍后重试");
         }
+    };
+
+// 通用的获取验证码按钮点击处理函数
+    const handleGetVerificationCode = async (type) => {
+        const configs = {
+            register: {
+                validateFn: validateRegField,
+                fieldName: 'email',
+                apiUrl: 'http://localhost:9090/api/mail/send-register-code',
+                params: { email: regForm.email, username: regForm.username },
+                buttonState: vCodeButtonState,
+                needCountdown: true,
+                countdownFn: startCountdown,
+                showSuccessAlert: false,
+            },
+            login: {
+                validateFn: validateField,
+                fieldName: 'usernameOrEmail',
+                apiUrl: 'http://localhost:9090/api/mail/send-login-code',
+                params: { usernameOrEmail: loginForm.usernameOrEmail },
+                buttonState: loginVCodeButtonState,
+                needCountdown: true,
+                countdownFn: startLoginCountdown,
+                showSuccessAlert: false,
+            },
+            forgotPassword: {
+                validateFn: validateForgotPasswordField,
+                fieldName: 'usernameOrEmail',
+                apiUrl: 'http://localhost:9090/api/mail/send-forget-password-code',
+                params: { usernameOrEmail: forgotPasswordForm.usernameOrEmail },
+                buttonState: forgotPasswordVCodeButtonState,
+                needCountdown: true,
+                countdownFn: startForgotPasswordCountdown,
+                showSuccessAlert: false,
+            }
+        };
+
+        const config = configs[type];
+        if (!config) {
+            console.error(`未知的验证码类型: ${type}`);
+            return;
+        }
+
+        await sendVerificationCode(config);
+    };
+
+// 发送注册验证码
+    const sendRegisterCode = async () => {
+        await handleGetVerificationCode('register');
+    };
+
+// 发送登录验证码
+    const sendLoginCode = async () => {
+        await handleGetVerificationCode('login');
     };
 
 // 开始倒计时
@@ -816,57 +954,40 @@ export const useLoginView = () => {
         vCodeButtonState.countdown = 0;
     };
 
+// 开始登录验证码倒计时
+    const startLoginCountdown = () => {
+        loginVCodeButtonState.countdown = 60;
+        loginVCodeButtonState.text = "60s";
+
+        loginCountdownTimer = setInterval(() => {
+            loginVCodeButtonState.countdown--;
+
+            if (loginVCodeButtonState.countdown > 0) {
+                loginVCodeButtonState.text = `${loginVCodeButtonState.countdown}s`;
+            } else {
+                // 倒计时结束
+                clearInterval(loginCountdownTimer);
+                loginCountdownTimer = null;
+                loginVCodeButtonState.disabled = false;
+                loginVCodeButtonState.text = "获取验证码";
+            }
+        }, 1000);
+    };
+
+// 清除登录验证码倒计时定时器
+    const clearLoginCountdown = () => {
+        if (loginCountdownTimer) {
+            clearInterval(loginCountdownTimer);
+            loginCountdownTimer = null;
+        }
+        loginVCodeButtonState.disabled = false;
+        loginVCodeButtonState.text = "获取验证码";
+        loginVCodeButtonState.countdown = 0;
+    };
+
 // 发送忘记密码验证码
     const sendForgotPasswordCode = async () => {
-        // 验证用户名/邮箱格式
-        const isUsernameOrEmailValid = validateForgotPasswordField('usernameOrEmail');
-
-        // 如果验证失败，则不发送验证码
-        if (!isUsernameOrEmailValid) {
-            return;
-        }
-
-        console.log('发送忘记密码验证码请求数据:', {
-            usernameOrEmail: forgotPasswordForm.usernameOrEmail,
-        });
-
-        try {
-            // 设置按钮状态为发送中
-            forgotPasswordVCodeButtonState.disabled = true;
-            forgotPasswordVCodeButtonState.text = "发送中";
-
-            // 调用后端接口发送验证码
-            const response = await fetch(
-                `http://localhost:9090/api/mail/send-forget-password-code?usernameOrEmail=${encodeURIComponent(forgotPasswordForm.usernameOrEmail)}`,
-                {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                }
-            );
-
-            const result = await response.json();
-
-            // 打印后端返回的响应
-            console.log('发送忘记密码验证码响应:', JSON.stringify(result, null, 2));
-
-            if (result.data === true || result.code === 200 || result.recode === 200) {
-                // 发送成功，开始倒计时
-                startForgotPasswordCountdown();
-                console.log("验证码发送成功");
-            } else {
-                // 发送失败，恢复按钮状态
-                forgotPasswordVCodeButtonState.disabled = false;
-                forgotPasswordVCodeButtonState.text = "获取验证码";
-                console.error("验证码发送失败:", result.message);
-            }
-        } catch (error) {
-            // 网络错误，恢复按钮状态
-            forgotPasswordVCodeButtonState.disabled = false;
-            forgotPasswordVCodeButtonState.text = "获取验证码";
-            console.error("发送验证码请求失败:", error);
-        }
+        await handleGetVerificationCode('forgotPassword');
     };
 
 // 开始忘记密码倒计时
@@ -1134,6 +1255,7 @@ export const useLoginView = () => {
         regFieldStates,
         forgotPasswordFieldStates,
         vCodeButtonState,
+        loginVCodeButtonState,
         registerButtonState,
         forgotPasswordVCodeButtonState,
         forgotPasswordSubmitButtonState,
@@ -1157,8 +1279,11 @@ export const useLoginView = () => {
         showPasswordPanel,
         showPasswordPanel2,
         sendRegisterCode,
+        sendLoginCode,
         sendForgotPasswordCode,
+        handleGetVerificationCode,
         clearCountdown,
+        clearLoginCountdown,
         clearForgotPasswordCountdown,
         handleForgotPasswordSubmit,
         handleForgotPasswordFinalSubmit,

@@ -17,6 +17,7 @@ const {
   regFieldStates,
   forgotPasswordFieldStates,
   vCodeButtonState,
+  loginVCodeButtonState,
   registerButtonState,
   forgotPasswordVCodeButtonState,
   forgotPasswordSubmitButtonState,
@@ -32,8 +33,11 @@ const {
   showPasswordPanel,
   showPasswordPanel2,
   sendRegisterCode,
+  sendLoginCode,
   sendForgotPasswordCode,
+  handleGetVerificationCode,
   clearCountdown,
+  clearLoginCountdown,
   clearForgotPasswordCountdown,
   handleForgotPasswordSubmit,
   handleForgotPasswordFinalSubmit,
@@ -77,7 +81,7 @@ const handleForgotPasswordNext = () => {
       <div class="auth_inputarea fadeIn_loginInput" :class="fieldStates.vCode.status">
         <svg t="1775718366251" class="icon" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" p-id="3659" width="20" height="20"><path d="M874.666667 896H149.333333c-83.2 0-149.333333-66.133333-149.333333-149.333333V277.333333c0-83.2 66.133333-149.333333 149.333333-149.333333h725.333334c83.2 0 149.333333 66.133333 149.333333 149.333333v469.333334c0 83.2-66.133333 149.333333-149.333333 149.333333zM149.333333 213.333333c-36.266667 0-64 27.733333-64 64v469.333334c0 36.266667 27.733333 64 64 64h725.333334c36.266667 0 64-27.733333 64-64V277.333333c0-36.266667-27.733333-64-64-64H149.333333z" p-id="3660" fill="#2c2c2c"></path><path d="M270.933333 597.333333h-10.666666c-44.8 0-81.066667-36.266667-81.066667-81.066666v-10.666667c0-44.8 36.266667-81.066667 81.066667-81.066667h10.666666c44.8 0 81.066667 36.266667 81.066667 81.066667v10.666667c0 44.8-36.266667 81.066667-81.066667 81.066666zM512 597.333333c-46.933333 0-85.333333-38.4-85.333333-85.333333s38.4-85.333333 85.333333-85.333333 85.333333 38.4 85.333333 85.333333-38.4 85.333333-85.333333 85.333333zM757.333333 597.333333c-46.933333 0-85.333333-38.4-85.333333-85.333333s38.4-85.333333 85.333333-85.333333 85.333333 38.4 85.333334 85.333333-38.4 85.333333-85.333334 85.333333z" fill="#2c2c2c" p-id="3661"></path></svg>
         <input type="text" v-model="loginForm.vCode" @blur="validateField('vCode')" placeholder="请输入验证码">
-        <button class="getCodeBt">获取验证码</button>
+        <button class="getCodeBt" @click="sendLoginCode" :disabled="loginVCodeButtonState.disabled">{{ loginVCodeButtonState.text }}</button>
         <span class="error-msg">{{ fieldStates.vCode.message }}</span>
       </div>
       

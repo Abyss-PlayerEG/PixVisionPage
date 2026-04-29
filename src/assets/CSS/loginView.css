@@ -260,6 +260,17 @@ img {
       border: 1px solid #555;
       background-color: #1a1a1a;
       color: #ffffff;
+      cursor: pointer;
+      transition: background-color 0.2s, opacity 0.2s;
+
+      &:hover:not(:disabled){
+        background-color: #2a2a2a;
+      }
+
+      &:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+      }
     }
   }
 
