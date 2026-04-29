@@ -15,6 +15,7 @@ const {
   fieldStates,
   regFieldStates,
   vCodeButtonState,
+  registerButtonState,
   showLoginPanel,
   showRegisterPanel,
   hideFormPanel,
@@ -113,7 +114,7 @@ const {
     
     <!-- 注册页面 -->
     <section id="Xzone">
-      <div class="xzone_title">注册</div>
+      <div class="xzone_title">- JoinUs -</div>
       <div class="xzone_back" @click="hideFormPanel">
       </div>
       <div class="xzone_content">
@@ -148,7 +149,7 @@ const {
           <button class="getCodeBt" @click="sendRegisterCode" :disabled="vCodeButtonState.disabled">{{ vCodeButtonState.text }}</button>
           <span class="error-msg">{{ regFieldStates.vCode.message }}</span>
         </div>
-        <button class="xzone_registerBt fadeIn_regInput" @click="handleRegister">注册</button>
+        <button class="xzone_registerBt fadeIn_regInput" @click="handleRegister" :disabled="registerButtonState.disabled">{{ registerButtonState.text }}</button>
         <div class="xzone_tips fadeIn_regInput">
           已有账号?<span @click="hideFormPanel">立即登录</span>
         </div>
@@ -165,9 +166,9 @@ const {
       </div>
 
       <div class="title2" ref="title2">
-        <div class="button" @click="() => router.push('/')">返回</div>
+        <div class="button" @click="() => router.push('/')">Back</div>
         <div class="button" @click="showLoginPanel">Start</div>
-        <div class="button" @click="showRegisterPanel">注册</div>
+        <div class="button" @click="showRegisterPanel">Join</div>
       </div>
     </section>
   </section>

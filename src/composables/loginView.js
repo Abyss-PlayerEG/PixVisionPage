@@ -388,6 +388,13 @@ export const useLoginView = () => {
             }
             // 清除验证码倒计时
             clearCountdown();
+            // 清除注册按钮倒计时
+            if (registerCountdownTimer) {
+              clearInterval(registerCountdownTimer);
+              registerCountdownTimer = null;
+            }
+            registerButtonState.text = '注册';
+            registerButtonState.disabled = false;
           },
         });
         activePanel.value = "login";
@@ -529,7 +536,14 @@ const vCodeButtonState = reactive({
   countdown: 0,
 });
 
+// 注册按钮状态
+const registerButtonState = reactive({
+  text: "注册",
+  disabled: false,
+});
+
 let countdownTimer = null;
+let registerCountdownTimer = null;
 
 // 验证登录表单字段
 // 返回验证是否通过
@@ -617,6 +631,12 @@ const clearRegFieldState = (fieldName) => {
   regFieldStates[fieldName].message = "";
 };
 
+// 设置注册表单字段验证错误信息
+const setRegFieldError = (fieldName, message) => {
+  regFieldStates[fieldName].status = "error";
+  regFieldStates[fieldName].message = message;
+};
+
 // 发送注册验证码
 const sendRegisterCode = async () => {
   // 验证邮箱格式
@@ -629,18 +649,21 @@ const sendRegisterCode = async () => {
   if (!isEmailValid || !isUsernameValid) {
     return;
   }
-
-  // 获取用于邮件展示的昵称：优先使用用户输入的昵称，其次使用用户名
-  const nicknameForEmail = regForm.nickname || regForm.username || '用户';
+  
+  // 打印即将发送的数据
+  console.log('发送验证码请求数据:', {
+    email: regForm.email,
+    username: regForm.username,
+  });
   
   try {
     // 设置按钮状态为发送中
     vCodeButtonState.disabled = true;
     vCodeButtonState.text = "发送中";
 
-    // 调用后端接口发送验证码
+    // 调用后端接口发送验证码 - 只传递用户名和邮箱
     const response = await fetch(
-      `http://localhost:9090/api/mail/send-register-code?email=${encodeURIComponent(regForm.email)}&username=${encodeURIComponent(nicknameForEmail)}`,
+      `http://localhost:9090/api/mail/send-register-code?email=${encodeURIComponent(regForm.email)}&username=${encodeURIComponent(regForm.username)}`,
       {
         method: 'POST',
         headers: {
@@ -650,6 +673,9 @@ const sendRegisterCode = async () => {
     );
 
     const result = await response.json();
+    
+    // 打印后端返回的响应
+    console.log('发送验证码响应:', JSON.stringify(result, null, 2));
 
     if (result.data === true) {
       // 发送成功，开始倒计时
@@ -700,9 +726,100 @@ const clearCountdown = () => {
 };
 
 // 注册处理
-const handleRegister = () => {
-  if (validateRegAll()) {
-    console.log("注册信息:", regForm);
+const handleRegister = async () => {
+  // 验证所有字段
+  if (!validateRegAll()) {
+    return;
+  }
+
+  // 验证两次密码是否一致
+  if (regForm.password !== regForm.confirmPassword) {
+    setRegFieldError('confirmPassword', '两次密码不一致');
+    return;
+  }
+
+  try {
+    // 构建表单数据
+    const formData = new URLSearchParams();
+    formData.append('username', regForm.username);
+    formData.append('password', regForm.password);
+    formData.append('confirmPassword', regForm.confirmPassword);
+    
+    // 昵称可选，如果为空则不传（后端会自动生成）
+    if (regForm.nickname && regForm.nickname.trim()) {
+      formData.append('nickname', regForm.nickname);
+    }
+    
+    formData.append('email', regForm.email);
+    formData.append('vCode', regForm.vCode.toUpperCase()); // 验证码转为大写
+
+    // 打印即将发送的数据（调试用）
+    console.log('发送注册数据:', {
+      username: regForm.username,
+      nickname: regForm.nickname || '(未填写，后端将自动生成)',
+      email: regForm.email,
+    });
+
+    // 调用后端注册接口
+    const response = await fetch('http://localhost:9090/api/user/auth/register', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+      body: formData,
+    });
+
+    const result = await response.json();
+
+    // 打印后端返回的JSON
+    console.log('注册接口响应:', JSON.stringify(result, null, 2));
+
+    // 根据业务状态码处理（兼容 code 和 recode 字段）
+    const statusCode = result.code || result.recode;
+    if (statusCode === 200) {
+      console.log('✅ 注册成功');
+      
+      // 清除验证码倒计时
+      clearCountdown();
+      
+      // 清空注册表单所有输入内容
+      for (const key in regForm) {
+        regForm[key] = '';
+      }
+      // 清空字段验证状态
+      for (const key in regFieldStates) {
+        regFieldStates[key] = { status: 'idle', message: '' };
+      }
+      
+      // 开始注册按钮倒计时
+      let seconds = 3;
+      registerButtonState.text = `注册成功，${seconds}秒后返回登录页面`;
+      registerButtonState.disabled = true;
+      
+      registerCountdownTimer = setInterval(() => {
+        seconds--;
+        if (seconds > 0) {
+          registerButtonState.text = `注册成功，${seconds}秒后返回登录页面`;
+        } else {
+          // 倒计时结束
+          clearInterval(registerCountdownTimer);
+          registerCountdownTimer = null;
+          registerButtonState.text = '注册';
+          registerButtonState.disabled = false;
+          
+          // 切换到登录面板
+          hideFormPanel();
+        }
+      }, 1000);
+    } else {
+      console.error('❌ 注册失败:', result.message);
+    }
+
+    return result;
+    
+  } catch (error) {
+    console.error('网络请求失败:', error);
+    alert('网络错误，请稍后重试');
   }
 };
 
@@ -719,6 +836,7 @@ return{
     fieldStates,
     regFieldStates,
     vCodeButtonState,
+    registerButtonState,
     showLoginPanel,
     showRegisterPanel,
     hideFormPanel,
@@ -729,6 +847,7 @@ return{
     setFieldError,
     clearFieldState,
     clearRegFieldState,
+    setRegFieldError,
     handleLogin,
     handleRegister,
     showPasswordPanel,

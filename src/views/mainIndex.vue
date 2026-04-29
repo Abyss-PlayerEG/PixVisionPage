@@ -46,9 +46,9 @@ const scrollToTop = () => {
                 <p>Join us and become a creator of beauty.</p>
             </div>
             <div class="title2">
-                <div class="button" @click="scrollToTop()">返回</div>
+                <div class="button" @click="scrollToTop()">Back</div>
                 <div class="button" @click="()=>router.push('/login')">Login</div>
-                <div class="button" @click="()=>router.push('/login')">注册</div>
+                <div class="button" @click="()=>router.push('/login')">Join</div>
             </div>
         </section>
     </section>
