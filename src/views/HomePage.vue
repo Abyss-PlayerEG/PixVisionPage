@@ -1,3 +1,7 @@
+<!--
+登录跳转测试页面
+-->
+
 <script setup lang="js">
 import { ref, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
@@ -8,12 +12,15 @@ const username = ref('');
 onMounted(() => {
   // 从 localStorage 获取用户信息
   const userInfoStr = localStorage.getItem('userInfo');
+  console.log('HomePage 加载，localStorage 中的 userInfo:', userInfoStr);
+  
   if (userInfoStr) {
     try {
       const userInfo = JSON.parse(userInfoStr);
+      console.log('解析后的用户信息:', userInfo);
       // 优先显示昵称，如果没有则显示用户名
       username.value = userInfo.nickname || userInfo.username || '用户';
-      console.log('当前登录用户:', userInfo);
+      console.log('当前登录用户:', username.value);
     } catch (error) {
       console.error('解析用户信息失败:', error);
       username.value = '用户';
@@ -21,6 +28,7 @@ onMounted(() => {
   } else {
     // 如果没有用户信息，跳转到登录页
     console.warn('未找到用户信息，跳转到登录页');
+    console.log('localStorage 中的所有键:', Object.keys(localStorage));
     router.push('/login');
   }
 });

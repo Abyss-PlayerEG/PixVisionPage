@@ -473,18 +473,22 @@ export const useLoginView = () => {
             const statusCode = result.code || result.recode;
             if (statusCode === 200 && result.data) {
                 console.log('✅ 登录成功');
+                console.log('完整的 result.data:', JSON.stringify(result.data, null, 2));
                 
                 // 保存 Token 到 localStorage
                 if (result.data.token) {
                     localStorage.setItem('token', result.data.token);
                     console.log('Token 已保存:', result.data.token);
+                } else {
+                    console.warn('⚠️ result.data 中没有 token 字段');
                 }
                 
                 // 保存用户信息到 localStorage
-                if (result.data.user) {
-                    localStorage.setItem('userInfo', JSON.stringify(result.data.user));
-                    console.log('用户信息已保存:', result.data.user);
-                }
+                // 后端返回的用户信息直接在 result.data 中，需要排除 token 字段
+                const userInfo = { ...result.data };
+                delete userInfo.token; // 移除 token，只保存用户信息
+                localStorage.setItem('userInfo', JSON.stringify(userInfo));
+                console.log('用户信息已保存:', userInfo);
 
                 // 跳转到 HomePage
                 router.push('/home');
