@@ -386,6 +386,8 @@ export const useLoginView = () => {
             for (const key in regFieldStates) {
               regFieldStates[key] = { status: "idle", message: "" };
             }
+            // 清除验证码倒计时
+            clearCountdown();
           },
         });
         activePanel.value = "login";
@@ -448,16 +450,16 @@ export const useLoginView = () => {
 const FIELD_RULES = {
   usernameOrEmail: [
     { validator: (v) => !!v, message: "用户名/邮箱不能为空" },
-    { validator: (v) => v.length >= 6, message: "用户名必须大于6位" },
-    { validator: (v) => v.includes("@") ? /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v) : true, message: "邮箱格式不正确" },
+    { validator: (v) => v.length >= 5, message: "用户名必须大于5位" },
+    { validator: (v) => v.includes("@") ? /^[a-zA-Z0-9_-]+@[a-zA-Z0-9_-]+(\.[a-zA-Z0-9_-]+)+$/.test(v) : true, message: "邮箱格式不正确" },
   ],
   password: [
     { validator: (v) => !!v, message: "密码不能为空" },
-    { validator: (v) => v.length >= 8, message: "密码长度必须大于8位" },
+    { validator: (v) => /^[a-zA-Z0-9_.]{6,16}$/.test(v), message: "密码6-16位，只允许字母、数字、下划线、英文句号" },
   ],
   vCode: [
     { validator: (v) => !!v, message: "验证码不能为空" },
-    { validator: (v) => /^[A-Za-z0-9]{6}$/.test(v), message: "为6位字母/数字" },
+    { validator: (v) => /^[0-9A-Z]{6}$/.test(v), message: "验证码为6位大写字母或数字" },
   ],
 };
 
@@ -468,12 +470,11 @@ const REG_FIELD_RULES = {
   ],
   username: [
     { validator: (v) => !!v, message: "用户名不能为空" },
-    { validator: (v) => /^[a-zA-Z0-9_]{4,16}$/.test(v), message: "用户名4-16位字母/数字/下划线" },
+    { validator: (v) => /^[a-zA-Z0-9_]{5,16}$/.test(v), message: "用户名5-16位，只允许字母、数字和下划线" },
   ],
   password: [
     { validator: (v) => !!v, message: "密码不能为空" },
-    { validator: (v) => v.length >= 8, message: "密码长度至少8位" },
-    { validator: (v) => /[A-Z]/.test(v) && /[a-z]/.test(v) && /[0-9]/.test(v), message: "需包含大小写字母和数字" },
+    { validator: (v) => /^[a-zA-Z0-9_.]{6,16}$/.test(v), message: "密码6-16位，只允许字母、数字、下划线、英文句号" },
   ],
   confirmPassword: [
     { validator: (v) => !!v, message: "请再次输入密码" },
@@ -481,11 +482,11 @@ const REG_FIELD_RULES = {
   ],
   email: [
     { validator: (v) => !!v, message: "邮箱不能为空" },
-    { validator: (v) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v), message: "邮箱格式不正确" },
+    { validator: (v) => /^[a-zA-Z0-9_-]+@[a-zA-Z0-9_-]+(\.[a-zA-Z0-9_-]+)+$/.test(v), message: "邮箱格式不正确" },
   ],
   vCode: [
     { validator: (v) => !!v, message: "验证码不能为空" },
-    { validator: (v) => /^[A-Za-z0-9]{6}$/.test(v), message: "为6位字母/数字" },
+    { validator: (v) => /^[0-9A-Za-z]{6}$/.test(v), message: "验证码为6位大写字母或数字" },
   ],
 };
 
@@ -520,6 +521,15 @@ const regFieldStates = reactive({
   email: { status: "idle", message: "" },
   vCode: { status: "idle", message: "" },
 });
+
+// 验证码按钮状态
+const vCodeButtonState = reactive({
+  text: "获取验证码",
+  disabled: false,
+  countdown: 0,
+});
+
+let countdownTimer = null;
 
 // 验证登录表单字段
 // 返回验证是否通过
@@ -607,6 +617,88 @@ const clearRegFieldState = (fieldName) => {
   regFieldStates[fieldName].message = "";
 };
 
+// 发送注册验证码
+const sendRegisterCode = async () => {
+  // 验证邮箱格式
+  const isEmailValid = validateRegField('email');
+  
+  // 验证用户名格式
+  const isUsernameValid = validateRegField('username');
+  
+  // 如果邮箱或用户名验证失败，则不发送验证码
+  if (!isEmailValid || !isUsernameValid) {
+    return;
+  }
+
+  // 获取用于邮件展示的昵称：优先使用用户输入的昵称，其次使用用户名
+  const nicknameForEmail = regForm.nickname || regForm.username || '用户';
+  
+  try {
+    // 设置按钮状态为发送中
+    vCodeButtonState.disabled = true;
+    vCodeButtonState.text = "发送中";
+
+    // 调用后端接口发送验证码
+    const response = await fetch(
+      `http://localhost:9090/api/mail/send-register-code?email=${encodeURIComponent(regForm.email)}&username=${encodeURIComponent(nicknameForEmail)}`,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      }
+    );
+
+    const result = await response.json();
+
+    if (result.data === true) {
+      // 发送成功，开始倒计时
+      startCountdown();
+      console.log("验证码发送成功");
+    } else {
+      // 发送失败，恢复按钮状态
+      vCodeButtonState.disabled = false;
+      vCodeButtonState.text = "获取验证码";
+      console.error("验证码发送失败:", result);
+    }
+  } catch (error) {
+    // 网络错误，恢复按钮状态
+    vCodeButtonState.disabled = false;
+    vCodeButtonState.text = "获取验证码";
+    console.error("发送验证码请求失败:", error);
+  }
+};
+
+// 开始倒计时
+const startCountdown = () => {
+  vCodeButtonState.countdown = 60;
+  vCodeButtonState.text = "60s";
+  
+  countdownTimer = setInterval(() => {
+    vCodeButtonState.countdown--;
+    
+    if (vCodeButtonState.countdown > 0) {
+      vCodeButtonState.text = `${vCodeButtonState.countdown}s`;
+    } else {
+      // 倒计时结束
+      clearInterval(countdownTimer);
+      vCodeButtonState.disabled = false;
+      vCodeButtonState.text = "获取验证码";
+    }
+  }, 1000);
+};
+
+// 清除倒计时定时器
+const clearCountdown = () => {
+  if (countdownTimer) {
+    clearInterval(countdownTimer);
+    countdownTimer = null;
+  }
+  vCodeButtonState.disabled = false;
+  vCodeButtonState.text = "获取验证码";
+  vCodeButtonState.countdown = 0;
+};
+
 // 注册处理
 const handleRegister = () => {
   if (validateRegAll()) {
@@ -626,6 +718,7 @@ return{
     regForm,
     fieldStates,
     regFieldStates,
+    vCodeButtonState,
     showLoginPanel,
     showRegisterPanel,
     hideFormPanel,
@@ -640,5 +733,7 @@ return{
     handleRegister,
     showPasswordPanel,
     showPasswordPanel2,
+    sendRegisterCode,
+    clearCountdown,
   };
 };

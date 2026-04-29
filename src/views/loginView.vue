@@ -14,6 +14,7 @@ const {
   regForm,
   fieldStates,
   regFieldStates,
+  vCodeButtonState,
   showLoginPanel,
   showRegisterPanel,
   hideFormPanel,
@@ -24,6 +25,8 @@ const {
   clearFieldState,
   showPasswordPanel,
   showPasswordPanel2,
+  sendRegisterCode,
+  clearCountdown,
 } = useLoginView();
 </script>
 
@@ -142,7 +145,7 @@ const {
         <div class="xzone_input_vcode fadeIn_regInput" :class="regFieldStates.vCode.status">
           <svg class="icon" viewBox="0 0 1024 1024" width="20" height="20"><path d="M270.933333 597.333333h-10.666666c-44.8 0-81.066667-36.266667-81.066667-81.066666v-10.666667c0-44.8 36.266667-81.066667 81.066667-81.066667h10.666666c44.8 0 81.066667 36.266667 81.066667 81.066667v10.666667c0 44.8-36.266667 81.066667-81.066667 81.066666zM512 597.333333c-46.933333 0-85.333333-38.4-85.333333-85.333333s38.4-85.333333 85.333333-85.333333 85.333333 38.4 85.333333 85.333333-38.4 85.333333-85.333333 85.333333zM757.333333 597.333333c-46.933333 0-85.333333-38.4-85.333333-85.333333s38.4-85.333333 85.333333-85.333333 85.333333 38.4 85.333334 85.333333-38.4 85.333333-85.333334 85.333333z" fill="#5A5A68" p-id="1690"></path></svg>
           <input type="text" v-model="regForm.vCode" @blur="validateRegField('vCode')" placeholder="请输入验证码">
-          <button class="getCodeBt">获取验证码</button>
+          <button class="getCodeBt" @click="sendRegisterCode" :disabled="vCodeButtonState.disabled">{{ vCodeButtonState.text }}</button>
           <span class="error-msg">{{ regFieldStates.vCode.message }}</span>
         </div>
         <button class="xzone_registerBt fadeIn_regInput" @click="handleRegister">注册</button>
