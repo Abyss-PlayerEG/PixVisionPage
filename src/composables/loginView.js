@@ -1,13 +1,16 @@
-import {gsap} from "gsap";
-import {useRouter} from "vue-router";
-import {ref, reactive, onMounted} from "vue";
+import { gsap } from "gsap";
+import { useRouter } from "vue-router";
+import { ref, reactive, onMounted } from "vue";
 import { AUTH_API, MAIL_API, PASSWORD_API } from '../config/api';
 
 export const useLoginView = () => {
     const router = useRouter();
 
-    let aniEND = false;
+    let aniEND = false; // 登录面板打开/关闭状态
     const activePanel = ref("");
+
+    // ✅ 新增：登录面板的打开/关闭状态 (true=打开, false=关闭)
+    const isLoginPanelOpen = ref(false);
 
     const bgimg = ref(null);
     const lfzTitle = ref(null);
@@ -28,9 +31,9 @@ export const useLoginView = () => {
             paused: true,
             reversed: true,
             onComplete: () => { // 显示动画完成后，确保#Zzone交互启用
-                gsap.set("#Zzone", {pointerEvents: "auto"});
-                gsap.set(".s1", {pointerEvents: "auto"});
-                gsap.set(".s2", {pointerEvents: "none"});
+                gsap.set("#Zzone", { pointerEvents: "auto" });
+                gsap.set(".s1", { pointerEvents: "auto" });
+                gsap.set(".s2", { pointerEvents: "none" });
             }
         })
             .to(
@@ -90,13 +93,13 @@ export const useLoginView = () => {
                     opacity: 0,
                     pointerEvents: "none"
                 });
-                gsap.set(".s1", {x: 0, opacity: 1});
-                gsap.set(".s2", {x: "100%", opacity: 0});
+                gsap.set(".s1", { x: 0, opacity: 1 });
+                gsap.set(".s2", { x: "100%", opacity: 0 });
 
                 //clearProps:all 清除所有行内样式，回归CSS默认
-                gsap.set(".fadeIn_loginBt", {clearProps: "all"});
-                gsap.set(".fadeIn_loginInput", {clearProps: "all"});
-                gsap.set(".fadeIn_loginItem", {clearProps: "all"});
+                gsap.set(".fadeIn_loginBt", { clearProps: "all" });
+                gsap.set(".fadeIn_loginInput", { clearProps: "all" });
+                gsap.set(".fadeIn_loginItem", { clearProps: "all" });
             }
         })
             .to(".s1, .s2", {
@@ -149,13 +152,13 @@ export const useLoginView = () => {
             reversed: true,
             onComplete: () => {
                 // 点击下一步：禁用s1，启用s2
-                gsap.set(".s1", {pointerEvents: "none"});
-                gsap.set(".s2", {pointerEvents: "auto"});
+                gsap.set(".s1", { pointerEvents: "none" });
+                gsap.set(".s2", { pointerEvents: "auto" });
             },
             onReverseComplete: () => {
                 // 点击上一步：禁用s2，启用s1
-                gsap.set(".s2", {pointerEvents: "none"});
-                gsap.set(".s1", {pointerEvents: "auto"});
+                gsap.set(".s2", { pointerEvents: "none" });
+                gsap.set(".s1", { pointerEvents: "auto" });
                 tl_showpass2.progress(0).pause();
             }
         }).to(
@@ -215,7 +218,7 @@ export const useLoginView = () => {
                 opacity: 0
             });
             // 4. 复位进度条样式
-            gsap.set(".pr-2", {x: "0%", color: "#4e4e4e"});
+            gsap.set(".pr-2", { x: "0%", color: "#4e4e4e" });
             // =============================================
             tl_showpass1.play();
         } else {
@@ -238,6 +241,8 @@ export const useLoginView = () => {
 
         aniEND = false;
         activePanel.value = "login";
+        isLoginPanelOpen.value = true; // ✅ 设置登录面板为打开状态
+        console.log("登录面板状态：" + isLoginPanelOpen.value);
 
         tl.to(title1.value, {
             y: -250,
@@ -298,10 +303,10 @@ export const useLoginView = () => {
         const tl = gsap.timeline();
         activePanel.value = "register";
 
-        tl.set(".xzone_registerBt", {y: 20, opacity: 0});
-        tl.set(".xzone_tips", {y: 20, opacity: 0});
-        tl.set(".xzone_input", {y: 30, opacity: 0});
-        tl.set(".xzone_input_vcode", {y: 30, opacity: 0});
+        tl.set(".xzone_registerBt", { y: 20, opacity: 0 });
+        tl.set(".xzone_tips", { y: 20, opacity: 0 });
+        tl.set(".xzone_input", { y: 30, opacity: 0 });
+        tl.set(".xzone_input_vcode", { y: 30, opacity: 0 });
 
         tl.to(
             lfzTitle.value,
@@ -313,10 +318,10 @@ export const useLoginView = () => {
         )
 
         tl.to('#Xzone', {
-                bottom: 0,
-                duration: 0.5,
-                ease: "power2.out",
-            },
+            bottom: 0,
+            duration: 0.5,
+            ease: "power2.out",
+        },
             "<"
         )
 
@@ -371,19 +376,19 @@ export const useLoginView = () => {
     const hideFormPanel = () => {
         // 优先：如果注册面板打开 → 只关闭注册，直接 return
         if (activePanel.value === "register") {
-            gsap.to(lfzTitle.value, {opacity: 1, duration: 0.4, ease: "power2.out"});
+            gsap.to(lfzTitle.value, { opacity: 1, duration: 0.4, ease: "power2.out" });
             gsap.to("#Xzone", {
                 bottom: -700,
                 duration: 0.4,
                 ease: "power2.in",
                 onComplete: () => {
-                    gsap.set("#Xzone", {bottom: -600});
+                    gsap.set("#Xzone", { bottom: -600 });
                     // 清理注册表单
                     for (const key in regForm) {
                         regForm[key] = "";
                     }
                     for (const key in regFieldStates) {
-                        regFieldStates[key] = {status: "idle", message: ""};
+                        regFieldStates[key] = { status: "idle", message: "" };
                     }
                     // 清除验证码倒计时
                     clearCountdown();
@@ -407,6 +412,8 @@ export const useLoginView = () => {
             onComplete: () => {
                 aniEND = true;
                 activePanel.value = "";
+                isLoginPanelOpen.value = false; // ✅ 设置登录面板为关闭状态
+                console.log("登录面板状态：" + isLoginPanelOpen.value);
             }
         });
 
@@ -426,11 +433,11 @@ export const useLoginView = () => {
         }, 0);
 
         // 恢复文字
-        tl.to(title1.value, {y: 0, opacity: 1, duration: 0.8, ease: "power2.out"}, 0.2);
-        tl.to(title2.value, {y: 0, opacity: 1, duration: 0.5, ease: "power2.out"}, 0.2);
+        tl.to(title1.value, { y: 0, opacity: 1, duration: 0.8, ease: "power2.out" }, 0.2);
+        tl.to(title2.value, { y: 0, opacity: 1, duration: 0.5, ease: "power2.out" }, 0.2);
 
-        tl.set(loginFormZone.value, {bottom: -700});
-        tl.set("#Xzone", {bottom: -600});
+        tl.set(loginFormZone.value, { bottom: -700 });
+        tl.set("#Xzone", { bottom: -600 });
 
         aniEND = false;
     };
@@ -475,7 +482,7 @@ export const useLoginView = () => {
             if (statusCode === 200 && result.data) {
                 console.log('✅ 登录成功');
                 console.log('完整的 result.data:', JSON.stringify(result.data, null, 2));
-                
+
                 // 保存 Token 到 localStorage
                 if (result.data.token) {
                     localStorage.setItem('token', result.data.token);
@@ -483,7 +490,7 @@ export const useLoginView = () => {
                 } else {
                     console.warn('⚠️ result.data 中没有 token 字段');
                 }
-                
+
                 // 保存用户信息到 localStorage
                 // 后端返回的用户信息直接在 result.data 中，需要排除 token 字段
                 const userInfo = { ...result.data };
@@ -510,74 +517,74 @@ export const useLoginView = () => {
     /*
     表单校验数据
     */
-// 登录表单字段验证规则
+    // 登录表单字段验证规则
     const FIELD_RULES = {
         usernameOrEmail: [
-            {validator: (v) => !!v, message: "用户名/邮箱不能为空"},
+            { validator: (v) => !!v, message: "用户名/邮箱不能为空" },
             {
                 validator: (v) => /^[a-zA-Z0-9_]{5,16}$/.test(v) || /^[a-zA-Z0-9_-]+@[a-zA-Z0-9_-]+(\.[a-zA-Z0-9_-]+)+$/.test(v),
                 message: "用户名或邮箱不正确"
             },
         ],
         password: [
-            {validator: (v) => !!v, message: "密码不能为空"},
-            {validator: (v) => /^[a-zA-Z0-9_.]{6,16}$/.test(v), message: "6-16位，只允许字母、数字、\"_\"、\".\""},
+            { validator: (v) => !!v, message: "密码不能为空" },
+            { validator: (v) => /^[a-zA-Z0-9_.]{6,16}$/.test(v), message: "6-16位，只允许字母、数字、\"_\"、\".\"" },
         ],
         vCode: [
-            {validator: (v) => !!v, message: "验证码不能为空"},
-            {validator: (v) => /^[0-9A-Z]{6}$/.test(v), message: "6位字母和数字"},
+            { validator: (v) => !!v, message: "验证码不能为空" },
+            { validator: (v) => /^[0-9A-Z]{6}$/.test(v), message: "6位字母和数字" },
         ],
     };
 
-// 注册表单验证规则
+    // 注册表单验证规则
     const REG_FIELD_RULES = {
         nickname: [
-            {validator: (v) => !v || v.length <= 20, message: "昵称最多20位"},
+            { validator: (v) => !v || v.length <= 20, message: "昵称最多20位" },
         ],
         username: [
-            {validator: (v) => !!v, message: "用户名不能为空"},
-            {validator: (v) => /^[a-zA-Z0-9_]{5,16}$/.test(v), message: "5-16位, 只允许字母、数字和\"_\""},
+            { validator: (v) => !!v, message: "用户名不能为空" },
+            { validator: (v) => /^[a-zA-Z0-9_]{5,16}$/.test(v), message: "5-16位, 只允许字母、数字和\"_\"" },
         ],
         password: [
-            {validator: (v) => !!v, message: "密码不能为空"},
-            {validator: (v) => /^[a-zA-Z0-9_.]{6,16}$/.test(v), message: "6-16位，只允许字母、数字、\"_\"、\".\""},
+            { validator: (v) => !!v, message: "密码不能为空" },
+            { validator: (v) => /^[a-zA-Z0-9_.]{6,16}$/.test(v), message: "6-16位，只允许字母、数字、\"_\"、\".\"" },
         ],
         confirmPassword: [
-            {validator: (v) => !!v, message: "请再次输入密码"},
-            {validator: (v) => /^[a-zA-Z0-9_.]{6,16}$/.test(v), message: "6-16位，2只允许字母、数字、\"_\"、\".\""},
-            {validator: (v) => v === regForm.password, message: "两次密码不一致"},
+            { validator: (v) => !!v, message: "请再次输入密码" },
+            { validator: (v) => /^[a-zA-Z0-9_.]{6,16}$/.test(v), message: "6-16位，2只允许字母、数字、\"_\"、\".\"" },
+            { validator: (v) => v === regForm.password, message: "两次密码不一致" },
         ],
         email: [
-            {validator: (v) => !!v, message: "邮箱不能为空"},
-            {validator: (v) => /^[a-zA-Z0-9_-]+@[a-zA-Z0-9_-]+(\.[a-zA-Z0-9_-]+)+$/.test(v), message: "邮箱格式不正确"},
+            { validator: (v) => !!v, message: "邮箱不能为空" },
+            { validator: (v) => /^[a-zA-Z0-9_-]+@[a-zA-Z0-9_-]+(\.[a-zA-Z0-9_-]+)+$/.test(v), message: "邮箱格式不正确" },
         ],
         vCode: [
-            {validator: (v) => !!v, message: "验证码不能为空"},
-            {validator: (v) => /^[0-9A-Za-z]{6}$/.test(v), message: "6位字母和数字"},
+            { validator: (v) => !!v, message: "验证码不能为空" },
+            { validator: (v) => /^[0-9A-Za-z]{6}$/.test(v), message: "6位字母和数字" },
         ],
     };
 
-// 忘记密码表单验证规则
+    // 忘记密码表单验证规则
     const FORGOT_PASSWORD_FIELD_RULES = {
         usernameOrEmail: [
-            {validator: (v) => !!v, message: "用户名/邮箱不能为空"},
+            { validator: (v) => !!v, message: "用户名/邮箱不能为空" },
             {
                 validator: (v) => /^[a-zA-Z0-9_]{5,16}$/.test(v) || /^[a-zA-Z0-9_-]+@[a-zA-Z0-9_-]+(\.[a-zA-Z0-9_-]+)+$/.test(v),
                 message: "用户名或邮箱不正确"
             },
         ],
         newPassword: [
-            {validator: (v) => !!v, message: "新密码不能为空"},
-            {validator: (v) => /^[a-zA-Z0-9_.]{6,16}$/.test(v), message: "6-16位，只允许字母、数字、\"_\"、\".\""},
+            { validator: (v) => !!v, message: "新密码不能为空" },
+            { validator: (v) => /^[a-zA-Z0-9_.]{6,16}$/.test(v), message: "6-16位，只允许字母、数字、\"_\"、\".\"" },
         ],
         confirmPassword: [
-            {validator: (v) => !!v, message: "请再次输入密码"},
-            {validator: (v) => /^[a-zA-Z0-9_.]{6,16}$/.test(v), message: "6-16位，只允许字母、数字、\"_\"、\".\""},
-            {validator: (v) => v === forgotPasswordForm.newPassword, message: "两次密码不一致"},
+            { validator: (v) => !!v, message: "请再次输入密码" },
+            { validator: (v) => /^[a-zA-Z0-9_.]{6,16}$/.test(v), message: "6-16位，只允许字母、数字、\"_\"、\".\"" },
+            { validator: (v) => v === forgotPasswordForm.newPassword, message: "两次密码不一致" },
         ],
         vCode: [
-            {validator: (v) => !!v, message: "验证码不能为空"},
-            {validator: (v) => /^[0-9A-Z]{6}$/.test(v), message: "6位字母和数字"},
+            { validator: (v) => !!v, message: "验证码不能为空" },
+            { validator: (v) => /^[0-9A-Z]{6}$/.test(v), message: "6位字母和数字" },
         ],
     };
 
@@ -606,58 +613,58 @@ export const useLoginView = () => {
         vCode: "",
     });
 
-// 登录表单字段状态
+    // 登录表单字段状态
     const fieldStates = reactive({
-        usernameOrEmail: {status: "idle", message: ""},
-        password: {status: "idle", message: ""},
-        vCode: {status: "idle", message: ""},
+        usernameOrEmail: { status: "idle", message: "" },
+        password: { status: "idle", message: "" },
+        vCode: { status: "idle", message: "" },
     });
 
-// 注册表单字段状态
+    // 注册表单字段状态
     const regFieldStates = reactive({
-        nickname: {status: "idle", message: ""},
-        username: {status: "idle", message: ""},
-        password: {status: "idle", message: ""},
-        confirmPassword: {status: "idle", message: ""},
-        email: {status: "idle", message: ""},
-        vCode: {status: "idle", message: ""},
+        nickname: { status: "idle", message: "" },
+        username: { status: "idle", message: "" },
+        password: { status: "idle", message: "" },
+        confirmPassword: { status: "idle", message: "" },
+        email: { status: "idle", message: "" },
+        vCode: { status: "idle", message: "" },
     });
 
-// 忘记密码表单字段状态
+    // 忘记密码表单字段状态
     const forgotPasswordFieldStates = reactive({
-        usernameOrEmail: {status: "idle", message: ""},
-        newPassword: {status: "idle", message: ""},
-        confirmPassword: {status: "idle", message: ""},
-        vCode: {status: "idle", message: ""},
+        usernameOrEmail: { status: "idle", message: "" },
+        newPassword: { status: "idle", message: "" },
+        confirmPassword: { status: "idle", message: "" },
+        vCode: { status: "idle", message: "" },
     });
 
-// 验证码按钮状态
+    // 验证码按钮状态
     const vCodeButtonState = reactive({
         text: "获取验证码",
         disabled: false,
         countdown: 0,
     });
 
-// 登录验证码按钮状态
+    // 登录验证码按钮状态
     const loginVCodeButtonState = reactive({
         text: "获取验证码",
         disabled: false,
     });
 
-// 注册按钮状态
+    // 注册按钮状态
     const registerButtonState = reactive({
         text: "注册",
         disabled: false,
     });
 
-// 忘记密码验证码按钮状态
+    // 忘记密码验证码按钮状态
     const forgotPasswordVCodeButtonState = reactive({
         text: "获取验证码",
         disabled: false,
         countdown: 0,
     });
 
-// 忘记密码确定按钮状态
+    // 忘记密码确定按钮状态
     const forgotPasswordSubmitButtonState = reactive({
         text: "确定",
         disabled: false,
@@ -669,8 +676,8 @@ export const useLoginView = () => {
     let forgotPasswordCountdownTimer = null;
     let forgotPasswordSubmitCountdownTimer = null;
 
-// 验证登录表单字段
-// 返回验证是否通过
+    // 验证登录表单字段
+    // 返回验证是否通过
     const validateField = (fieldName) => {
         const value = loginForm[fieldName];
         const rules = FIELD_RULES[fieldName] || [];
@@ -690,8 +697,8 @@ export const useLoginView = () => {
         return true;
     };
 
-// 验证登录表单所有字段
-// 返回验证是否通过
+    // 验证登录表单所有字段
+    // 返回验证是否通过
     const validateAll = () => {
         let allPassed = true;
 
@@ -705,20 +712,20 @@ export const useLoginView = () => {
         return allPassed;
     };
 
-// 设置登录表单字段验证错误信息
+    // 设置登录表单字段验证错误信息
     const setFieldError = (fieldName, message) => {
         fieldStates[fieldName].status = "error";
         fieldStates[fieldName].message = message;
     };
 
-// 清除登录表单字段验证状态
-// 用于在登录表单数据改变时调用
+    // 清除登录表单字段验证状态
+    // 用于在登录表单数据改变时调用
     const clearFieldState = (fieldName) => {
         fieldStates[fieldName].status = "idle";
         fieldStates[fieldName].message = "";
     };
 
-// 验证注册表单字段
+    // 验证注册表单字段
     const validateRegField = (fieldName) => {
         const value = regForm[fieldName];
         const rules = REG_FIELD_RULES[fieldName] || [];
@@ -736,7 +743,7 @@ export const useLoginView = () => {
         return true;
     };
 
-// 验证注册表单所有字段
+    // 验证注册表单所有字段
     const validateRegAll = () => {
         let allPassed = true;
 
@@ -749,19 +756,19 @@ export const useLoginView = () => {
         return allPassed;
     };
 
-// 清除注册表单字段验证状态
+    // 清除注册表单字段验证状态
     const clearRegFieldState = (fieldName) => {
         regFieldStates[fieldName].status = "idle";
         regFieldStates[fieldName].message = "";
     };
 
-// 设置注册表单字段验证错误信息
+    // 设置注册表单字段验证错误信息
     const setRegFieldError = (fieldName, message) => {
         regFieldStates[fieldName].status = "error";
         regFieldStates[fieldName].message = message;
     };
 
-// 验证忘记密码表单字段
+    // 验证忘记密码表单字段
     const validateForgotPasswordField = (fieldName) => {
         const value = forgotPasswordForm[fieldName];
         const rules = FORGOT_PASSWORD_FIELD_RULES[fieldName] || [];
@@ -779,7 +786,7 @@ export const useLoginView = () => {
         return true;
     };
 
-// 验证忘记密码表单所有字段
+    // 验证忘记密码表单所有字段
     const validateForgotPasswordAll = () => {
         let allPassed = true;
 
@@ -792,13 +799,13 @@ export const useLoginView = () => {
         return allPassed;
     };
 
-// 清除忘记密码表单字段验证状态
+    // 清除忘记密码表单字段验证状态
     const clearForgotPasswordFieldState = (fieldName) => {
         forgotPasswordFieldStates[fieldName].status = "idle";
         forgotPasswordFieldStates[fieldName].message = "";
     };
 
-// 通用验证码发送函数
+    // 通用验证码发送函数
     const sendVerificationCode = async (options) => {
         const {
             validateFn,           // 验证函数
@@ -848,7 +855,7 @@ export const useLoginView = () => {
 
             if (result.data === true || result.code === 200 || result.recode === 200) {
                 console.log("✅ 验证码发送成功");
-                
+
                 if (needCountdown && countdownFn) {
                     // 需要倒计时
                     countdownFn();
@@ -875,7 +882,7 @@ export const useLoginView = () => {
         }
     };
 
-// 通用的获取验证码按钮点击处理函数
+    // 通用的获取验证码按钮点击处理函数
     const handleGetVerificationCode = async (type) => {
         const configs = {
             register: {
@@ -919,17 +926,17 @@ export const useLoginView = () => {
         await sendVerificationCode(config);
     };
 
-// 发送注册验证码
+    // 发送注册验证码
     const sendRegisterCode = async () => {
         await handleGetVerificationCode('register');
     };
 
-// 发送登录验证码
+    // 发送登录验证码
     const sendLoginCode = async () => {
         await handleGetVerificationCode('login');
     };
 
-// 开始倒计时
+    // 开始倒计时
     const startCountdown = () => {
         vCodeButtonState.countdown = 60;
         vCodeButtonState.text = "60s";
@@ -948,7 +955,7 @@ export const useLoginView = () => {
         }, 1000);
     };
 
-// 清除倒计时定时器
+    // 清除倒计时定时器
     const clearCountdown = () => {
         if (countdownTimer) {
             clearInterval(countdownTimer);
@@ -959,7 +966,7 @@ export const useLoginView = () => {
         vCodeButtonState.countdown = 0;
     };
 
-// 开始登录验证码倒计时
+    // 开始登录验证码倒计时
     const startLoginCountdown = () => {
         loginVCodeButtonState.countdown = 60;
         loginVCodeButtonState.text = "60s";
@@ -979,7 +986,7 @@ export const useLoginView = () => {
         }, 1000);
     };
 
-// 清除登录验证码倒计时定时器
+    // 清除登录验证码倒计时定时器
     const clearLoginCountdown = () => {
         if (loginCountdownTimer) {
             clearInterval(loginCountdownTimer);
@@ -990,12 +997,12 @@ export const useLoginView = () => {
         loginVCodeButtonState.countdown = 0;
     };
 
-// 发送忘记密码验证码
+    // 发送忘记密码验证码
     const sendForgotPasswordCode = async () => {
         await handleGetVerificationCode('forgotPassword');
     };
 
-// 开始忘记密码倒计时
+    // 开始忘记密码倒计时
     const startForgotPasswordCountdown = () => {
         forgotPasswordVCodeButtonState.countdown = 60;
         forgotPasswordVCodeButtonState.text = "60s";
@@ -1014,7 +1021,7 @@ export const useLoginView = () => {
         }, 1000);
     };
 
-// 清除忘记密码倒计时定时器
+    // 清除忘记密码倒计时定时器
     const clearForgotPasswordCountdown = () => {
         if (forgotPasswordCountdownTimer) {
             clearInterval(forgotPasswordCountdownTimer);
@@ -1025,7 +1032,7 @@ export const useLoginView = () => {
         forgotPasswordVCodeButtonState.countdown = 0;
     };
 
-// 注册处理
+    // 注册处理
     const handleRegister = async () => {
         // 验证所有字段
         if (!validateRegAll()) {
@@ -1092,8 +1099,13 @@ export const useLoginView = () => {
                 }
                 // 清空字段验证状态
                 for (const key in regFieldStates) {
-                    regFieldStates[key] = {status: 'idle', message: ''};
+                    regFieldStates[key] = { status: 'idle', message: '' };
                 }
+
+                // ✅ 先填充登录表单的用户名和密码
+                loginForm.usernameOrEmail = registeredUsername;
+                loginForm.password = registeredPassword;
+                console.log('已自动填充登录信息:', { username: registeredUsername });
 
                 // 开始注册按钮倒计时
                 let seconds = 3;
@@ -1112,16 +1124,14 @@ export const useLoginView = () => {
                         registerButtonState.disabled = false;
 
                         // 切换到登录面板
-                        hideFormPanel();
-                        
-                        // 等待动画完成后，显示登录面板并填充用户名和密码
-                        setTimeout(() => {
-                            showLoginPanel();
-                            // 自动填充用户名和密码
-                            loginForm.usernameOrEmail = registeredUsername;
-                            loginForm.password = registeredPassword;
-                            console.log('已自动填充登录信息:', { username: registeredUsername });
-                        }, 600); // 等待 hideFormPanel 动画完成
+                        hideFormPanel(); // 先关闭/切换表单面板
+
+                        // 等待动画完成后，显示登录面板
+                        if (!isLoginPanelOpen.value) {
+                            setTimeout(() => {
+                                showLoginPanel(); // ✅ 直接打开登录面板（数据已预先填充）
+                            }, 600); // 等待 hideFormPanel 动画完成
+                        }
                     }
                 }, 1000);
             } else {
@@ -1136,7 +1146,7 @@ export const useLoginView = () => {
         }
     };
 
-// 处理忘记密码步骤1提交（步骤2的确定按钮）
+    // 处理忘记密码步骤1提交（步骤2的确定按钮）
     const handleForgotPasswordSubmit = async () => {
         // 验证用户名/邮箱和验证码
         const isUsernameOrEmailValid = validateForgotPasswordField('usernameOrEmail');
@@ -1154,7 +1164,7 @@ export const useLoginView = () => {
         await handleForgotPasswordFinalSubmit();
     };
 
-// 处理忘记密码最终提交（步骤2）
+    // 处理忘记密码最终提交（步骤2）
     const handleForgotPasswordFinalSubmit = async () => {
         // 验证所有字段
         const isNewPasswordValid = validateForgotPasswordField('newPassword');
@@ -1217,7 +1227,7 @@ export const useLoginView = () => {
                 }
                 // 清空字段验证状态
                 for (const key in forgotPasswordFieldStates) {
-                    forgotPasswordFieldStates[key] = {status: 'idle', message: ''};
+                    forgotPasswordFieldStates[key] = { status: 'idle', message: '' };
                 }
 
                 // 开始确定按钮倒计时
@@ -1252,13 +1262,13 @@ export const useLoginView = () => {
         }
     };
 
-// 设置忘记密码表单字段验证错误信息
+    // 设置忘记密码表单字段验证错误信息
     const setForgotPasswordFieldError = (fieldName, message) => {
         forgotPasswordFieldStates[fieldName].status = "error";
         forgotPasswordFieldStates[fieldName].message = message;
     };
 
-// 导出数据
+    // 导出数据
     return {
         router,
         bgimg,
@@ -1277,6 +1287,7 @@ export const useLoginView = () => {
         registerButtonState,
         forgotPasswordVCodeButtonState,
         forgotPasswordSubmitButtonState,
+        isLoginPanelOpen, // ✅ 导出登录面板状态
         showLoginPanel,
         showRegisterPanel,
         hideFormPanel,

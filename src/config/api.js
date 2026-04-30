@@ -31,7 +31,7 @@ export const PASSWORD_API = {
 export const getAvatarUrl = (avatarPath) => {
   if (!avatarPath) {
     // 默认头像
-    return `${AVATAR_API}?filePath=default/16.png`;
+    return `${AVATAR_API}?filePath=default/1.png`;
   }
   return `${AVATAR_API}?filePath=${encodeURIComponent(avatarPath)}`;
 };
