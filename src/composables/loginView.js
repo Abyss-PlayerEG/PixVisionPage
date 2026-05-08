@@ -499,7 +499,7 @@ export const useLoginView = () => {
                 console.log('用户信息已保存:', userInfo);
 
                 // 跳转到 HomePage
-                router.push('/home');
+                router.push('/');
             } else {
                 console.error('❌ 登录失败:', result.message);
                 alert(result.message || '登录失败，请检查用户名、密码和验证码');
@@ -878,6 +878,7 @@ export const useLoginView = () => {
             buttonState.disabled = false;
             buttonState.text = "获取验证码";
             console.error("发送验证码请求失败:", error);
+
             alert("网络错误，请稍后重试");
         }
     };

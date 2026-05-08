@@ -4,7 +4,7 @@
  */
 
 // 后端 API 基础 URL
-export const API_BASE_URL = 'http://localhost:9090';
+export const API_BASE_URL = 'http://172.18.8.66:9090';
 
 // 头像获取接口
 export const AVATAR_API = `${API_BASE_URL}/api/image/avatar/get`;
