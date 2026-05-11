@@ -52,7 +52,6 @@ const scrollToTop = () => {
             </div>
         </section>
     </section>
-    
 </template>
 
 <style>
