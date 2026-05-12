@@ -13,7 +13,7 @@ let mouseLeaveTimer = null;
 const handleScroll = () => {
   const scrollTop = window.scrollY || document.documentElement.scrollTop;
   
-  if (scrollTop > 900) {
+  if (scrollTop > 1900) {
     isScrolled.value = true;
   } else {
     // 滚回顶部
@@ -185,7 +185,7 @@ onUnmounted(() => {
     border-radius: 15px;
     color: rgba(255, 255, 255, 0.3);
     backdrop-filter: blur(10px);
-    background: rgba(255, 255, 255, 0.15); 
+    /* background: rgba(255, 255, 255, 0.15);  */
     border: 1px solid rgba(255, 255, 255, 0.3); /* 玻璃边 */
     box-shadow: 0 4px 24px rgba(0, 0, 0, 0.1); /* 柔光阴影 */
 }
