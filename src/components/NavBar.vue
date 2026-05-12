@@ -1,5 +1,7 @@
 <script setup>
 import { ref, onMounted, onUnmounted } from 'vue';
+import { useRouter } from 'vue-router';
+const router = useRouter();
 
 const isScrolled = ref(false);
 const isHovered = ref(false);
@@ -89,7 +91,7 @@ onUnmounted(() => {
         <!-- 右侧个人选项 -->
         <section class="navTag n3_cont">
             <div class="show_zone"></div>
-            <div class="login_btn">JoinUs</div>
+            <div class="login_btn" @click="$router.push('/login')">JoinUs</div>
         </section>
     </section>
 </template>
@@ -120,7 +122,7 @@ onUnmounted(() => {
     
     /* 默认状态：在可视区域外 */
     transform: translateY(-100%);
-    transition: transform 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    transition: transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
 }
 
 /* 显示状态：滑入可视区域 */

@@ -1,21 +1,32 @@
 <script setup>
-import "@/composables/mainIndex.js"
+import { onMounted, onUnmounted } from 'vue'
 import { useRouter } from "vue-router"
 
 //组件引用
 import NavBar from "@/components/NavBar.vue";
 
+// 引入 composable
+import { useCopyAnimation, useArrowAnimation } from "@/composables/mainIndex.js"
+
 //依赖申明
 const router = useRouter()
 
-//====功能实现===============================================
-//0.滚到顶部
-const scrollToTop = () => {
-  window.scrollTo({
-    top: 0,
-    behavior: 'smooth'
-  })
-}
+// 初始化文案动画
+const { initCopyAnimation, cleanupCopyAnimation } = useCopyAnimation()
+
+// 初始化箭头动画
+const { triggerArrowAnimation, cleanupArrowAnimation } = useArrowAnimation()
+
+onMounted(() => {
+  // 启动文案动画
+  initCopyAnimation()
+})
+
+onUnmounted(() => {
+  // 清理动画和定时器
+  cleanupCopyAnimation()
+  cleanupArrowAnimation()
+})
 </script>
 
 <template>
@@ -28,29 +39,21 @@ const scrollToTop = () => {
         playsinline
         disablePictureInPicture
         controlslist="nodownload nofullscreen noremoteplayback"></video>
+
+        <!-- 01.文案展示 -->
+        <div class="n1_showCopy1"></div>
+        <div class="n1_showCopy2"></div>
+        <div class="n1_btn" @mouseenter="triggerArrowAnimation">
+            <div class="n1_btn_arrow">
+                <svg t="1778551186497" class="icon" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" p-id="1800" width="20" height="20"><path d="M292.571429 209.334857a65.828571 65.828571 0 0 1 14.482285-41.472 55.881143 55.881143 0 0 1 82.870857-5.997714l321.462858 302.665143 5.485714 5.924571a66.194286 66.194286 0 0 1-5.485714 89.014857L389.851429 862.061714a51.492571 51.492571 0 0 1-17.334858 11.337143 60.489143 60.489143 0 0 1-21.284571 4.315429C318.829714 877.714286 292.571429 849.481143 292.571429 814.592V209.334857z" p-id="1801" fill="#e6e6e6"></path></svg>
+            </div>
+            <p>我们为什么要制作&nbsp;</p>
+            <p>pixel - vision</p>
+        </div>
     </section>
 
-    <section id="Bg">
-        <img 
-          src="../assets/IMG/dark.jpg" 
-          alt="" 
-        >
-
-        <div class="round"></div>
-        <div class="round"></div>
-        <div class="round"></div>
-
-        <section id="titleSlider">
-            <div class="title1">
-                <p>加入我们，成为美的缔造者</p>
-                <p>Join us and become a creator of beauty.</p>
-            </div>
-            <div class="title2">
-                <div class="button" @click="scrollToTop()">Back</div>
-                <div class="button" @click="()=>router.push('/login')">Login</div>
-                <div class="button" @click="()=>router.push('/login')">Join</div>
-            </div>
-        </section>
+    <section id="num2z">
+        
     </section>
 </template>
 
