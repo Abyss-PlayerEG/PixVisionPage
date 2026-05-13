@@ -18,6 +18,7 @@ const {
   forgotPasswordFieldStates,
   vCodeButtonState,
   loginVCodeButtonState,
+  loginButtonState,  // ✅ 登录按钮状态
   registerButtonState,
   forgotPasswordVCodeButtonState,
   forgotPasswordSubmitButtonState,
@@ -85,7 +86,7 @@ const handleForgotPasswordNext = () => {
         <span class="error-msg">{{ fieldStates.vCode.message }}</span>
       </div>
       
-      <button class="loginBt fadeIn_loginBt" @click="handleLogin">登录</button>
+      <button class="loginBt fadeIn_loginBt" @click="handleLogin" :disabled="loginButtonState.disabled">{{ loginButtonState.text }}</button>
       <div class="lfz_tips fadeIn_loginItem">
         <p @click="showPasswordPanel">忘记密码?</p>
         <p @click="showRegisterPanel">没有账号?</p>

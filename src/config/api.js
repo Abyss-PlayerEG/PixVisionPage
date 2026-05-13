@@ -4,15 +4,15 @@
  */
 
 // 后端 API 基础 URL
-export const API_BASE_URL = 'http://172.18.8.66:9090';
+export const API_BASE_URL = 'http://127.0.0.1:9090';
 
 // 头像获取接口
 export const AVATAR_API = `${API_BASE_URL}/api/image/avatar/get`;
 
 // 用户认证相关接口
 export const AUTH_API = {
-  LOGIN: `${API_BASE_URL}/api/user/auth/login`,
-  REGISTER: `${API_BASE_URL}/api/user/auth/register`,
+  LOGIN: `${API_BASE_URL}/api/auth/login`,
+  REGISTER: `${API_BASE_URL}/api/auth/register`,
 };
 
 // 邮件验证码相关接口

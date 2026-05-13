@@ -461,9 +461,38 @@ export const useLoginView = () => {
         const result = await apiHandleLogin(loginForm);
         
         if (result.success) {
-            // 跳转到 HomePage
-            router.push('/');
+            console.log('✅ 登录成功');
+            
+            // 清空登录表单（可选，根据需求决定）
+            // for (const key in loginForm) {
+            //     loginForm[key] = '';
+            // }
+            // for (const key in fieldStates) {
+            //     fieldStates[key] = { status: 'idle', message: '' };
+            // }
+
+            // 开始登录按钮倒计时
+            let seconds = 3;
+            loginButtonState.text = `登录成功，${seconds}秒后跳转`;
+            loginButtonState.disabled = true;
+
+            loginSuccessCountdownTimer = setInterval(() => {
+                seconds--;
+                if (seconds > 0) {
+                    loginButtonState.text = `登录成功，${seconds}秒后跳转`;
+                } else {
+                    // 倒计时结束
+                    clearInterval(loginSuccessCountdownTimer);
+                    loginSuccessCountdownTimer = null;
+                    loginButtonState.text = '登录';
+                    loginButtonState.disabled = false;
+
+                    // 跳转到 HomePage
+                    router.push('/');
+                }
+            }, 1000);
         } else {
+            console.error('❌ 登录失败:', result.message);
             alert(result.message || '登录失败，请检查用户名、密码和验证码');
         }
     };
@@ -606,6 +635,12 @@ export const useLoginView = () => {
         disabled: false,
     });
 
+    // 登录按钮状态
+    const loginButtonState = reactive({
+        text: "登录",
+        disabled: false,
+    });
+
     // 注册按钮状态
     const registerButtonState = reactive({
         text: "注册",
@@ -630,6 +665,7 @@ export const useLoginView = () => {
     let registerCountdownTimer = null;
     let forgotPasswordCountdownTimer = null;
     let forgotPasswordSubmitCountdownTimer = null;
+    let loginSuccessCountdownTimer = null;  // 登录成功倒计时定时器
 
     // 验证登录表单字段
     // 返回验证是否通过
@@ -1152,6 +1188,7 @@ export const useLoginView = () => {
         forgotPasswordFieldStates,
         vCodeButtonState,
         loginVCodeButtonState,
+        loginButtonState,  // ✅ 导出登录按钮状态
         registerButtonState,
         forgotPasswordVCodeButtonState,
         forgotPasswordSubmitButtonState,
