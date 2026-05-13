@@ -1,0 +1,3701 @@
+{
+  "openapi": "3.0.1",
+  "info": {
+    "title": "像素视觉",
+    "description": "像素视觉后端服务器",
+    "version": "DEV-2.0.0"
+  },
+  "servers": [
+    {
+      "url": "http://localhost:9090",
+      "description": "Generated server url"
+    }
+  ],
+  "tags": [
+    {
+      "name": "图像接口",
+      "description": "提供头像、作品、Logo 等图片资源的访问接口"
+    }
+  ],
+  "paths": {
+    "/api/work/update": {
+      "post": {
+        "tags": [
+          "作品接口"
+        ],
+        "summary": "修改作品信息接口",
+        "description": "# 修改作品信息（需要登录认证 + 角色权限[22,77]）\n\n## 特性\n- Token 认证（支持 Header 和 URL 参数两种方式）\n- 支持部分字段修改（所有参数可选）\n- 支持重新上传图片（MultipartFile）\n- SQL 层面权限验证（只能修改自己的作品）\n- 动态更新非空字段\n- 完整的参数校验\n- 自动删除旧图片文件\n\n## 参数说明：\n- Authorization: Header 中的 Token，格式为 `Bearer <token>`，或通过 URL 参数 `?token=<token>` 传递\n- workId: **作品 ID**，Integer 类型，必填\n- workTitle: **作品标题**，String 类型，可选，最多 16 个中文字符（48 字节）\n- file: **新的图片文件**，MultipartFile 类型，可选，仅支持 JPG/JPEG/PNG 格式，最大 32MB\n- seriesId: **系列 ID**，Integer 类型，可选，传入 0 表示不属于任何系列（清空系列），传入正整数表示关联到对应系列\n- isOriginal: **是否原创**，Boolean 类型，可选，下拉框选择（true=原创，false=转载）\n- outUrl: **外部转载链接**，String 类型，可选，isOriginal=false 时必填\n\n## 返回说明：\n- **修改成功**：返回 **{\"data\": true}** 和“作品修改成功”提示\n- **无修改内容**：返回 **{\"data\": null}** 和“无修改内容”提示（所有参数均为空）\n- **Token 不存在**：返回 **{\"data\": null}** 和“Token 不存在”提示\n- **Token 已失效**：返回 **{\"data\": null}** 和“Token 已失效”提示\n- **作品 ID 无效**：返回 **{\"data\": false}** 和“作品 ID 无效”提示\n- **无权修改**：返回 **{\"data\": false}** 和“无权修改该作品”提示（作品不属于当前用户）\n- **作品不存在**：返回 **{\"data\": false}** 和“作品不存在或已删除”提示\n- **标题过长**：返回 **{\"data\": false}** 和“作品标题过长”提示\n- **文件格式错误**：返回 **{\"data\": false}** 和“不支持的文件格式”提示\n- **文件大小超限**：返回 **{\"data\": false}** 和“文件大小超出限制”提示\n- **原创作品填写链接**：返回 **{\"data\": false}** 和“原创作品不能填写外部链接”提示\n- **转载缺少链接**：返回 **{\"data\": false}** 和“转载作品必须提供外部链接”提示\n- **URL 格式错误**：返回 **{\"data\": false}** 和“外部链接格式不正确”提示\n\n## 业务逻辑：\n1. 从请求头或 URL 参数中提取 Token（支持 Bearer 前缀）\n2. 验证 Token 是否在白名单中\n3. 从 Token 中解析用户 ID\n4. 校验作品 ID 参数有效性\n5. 检查是否所有修改参数都为空，如果是则返回\"无修改内容\"\n6. 查询作品信息并验证所有权（只能修改自己的作品）\n7. **如果提供了新图片文件**：\n   - 验证文件格式（JPG/JPEG/PNG）\n   - 验证文件大小（最大 32MB）\n   - 验证图片真实性（魔数检查）\n   - 生成唯一文件名（UUID）并保存\n   - 删除旧图片文件（重命名为 .del）\n8. **验证作品标题**（如果提供）：\n   - 长度不超过 48 字节（16 个中文字符）\n   - 去除首尾空格\n9. **处理系列 ID**（如果提供）：\n   - **seriesId = 0**：将作品的 series_id 设置为 NULL（不属于任何系列）\n   - **seriesId > 0**：验证系列是否存在且属于当前用户，然后关联到该系列\n   - **seriesId = null**：不修改系列 ID\n10. **处理原创/转载逻辑**：\n   - **设置为原创（isOriginal=true）**：\n     * 不能填写 outUrl，否则报错\n     * 自动将 outUrl 清空为空字符串 \"\"（即使原来有转载链接）\n   - **设置为转载（isOriginal=false）**：\n     * 必须提供有效的 outUrl\n     * 验证 URL 格式\n   - **不修改原创状态（isOriginal=null）**：\n     * 可以单独修改 outUrl\n     * 如果提供了 outUrl，验证 URL 格式\n11. 执行动态更新（只更新非空字段）\n12. 返回修改结果\n\n## 注意事项：\n- **需要携带有效的 Token 才能修改作品**\n- Token 必须在白名单中（未过期、未登出）\n- **用户只能修改自己的作品**，无法修改他人的作品\n- 所有参数都是可选的，可以只修改部分字段\n- **如果所有参数都为空或空字符串，将返回\"无修改内容\"**\n- 作品标题限制：**最多 16 个中文字符**（48 字节）\n- 图片文件仅支持：**JPG、JPEG、PNG** 格式\n- 图片文件大小限制：**最大 32MB**\n- **系列 ID 特殊规则**：\n  * seriesId = 0：将作品从系列中移除（series_id 设为 NULL）\n  * seriesId > 0：必须验证系列存在且属于当前用户\n  * seriesId = null：不修改系列 ID\n- **原创与转载链接约束**：\n  * 原创作品（isOriginal=true）：不能填写 outUrl，系统会自动清空原有的转载链接\n  * 转载作品（isOriginal=false）：必须提供有效的 outUrl\n- 采用动态更新机制，只提供要修改的字段即可\n- 上传新图片后，旧图片会被自动删除（重命名为 .del）\n- 修改成功后，update_time 和 update_user 会自动更新\n- isOriginal 参数使用下拉框选择，避免输入错误\n",
+        "operationId": "updateWork",
+        "parameters": [
+          {
+            "name": "workId",
+            "in": "query",
+            "description": "作品 ID",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            },
+            "example": 1
+          },
+          {
+            "name": "workTitle",
+            "in": "query",
+            "description": "作品标题（可选，最多 16 个中文字符）",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "example": "我的新作品"
+          },
+          {
+            "name": "seriesId",
+            "in": "query",
+            "description": "系列 ID（可选，0 表示不属于任何系列）",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            },
+            "example": 5
+          },
+          {
+            "name": "isOriginal",
+            "in": "query",
+            "description": "是否原创",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "description": "是否原创",
+              "example": true,
+              "enum": [
+                "true",
+                "false"
+              ]
+            },
+            "example": true
+          },
+          {
+            "name": "outUrl",
+            "in": "query",
+            "description": "外部转载链接（可选，isOriginal=false 时必填）",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "example": "https://example.com"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "file": {
+                    "type": "string",
+                    "description": "新的图片文件（可选，仅支持 JPG/JPEG/PNG，最大 32MB）",
+                    "format": "binary"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResponsePojoBoolean"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/work/series/update": {
+      "post": {
+        "tags": [
+          "作品合集接口"
+        ],
+        "summary": "更新系列信息接口",
+        "description": "# 更新系列信息（需要登录认证 + 角色权限[22,77]）\n\n## 特性\n- Token 认证（支持 Header 和 URL 参数两种方式）\n- 支持部分字段修改（所有参数可选）\n- SQL 层面权限验证（只能修改自己的系列）\n- 动态更新非空字段\n- 完整的参数校验\n- 标题唯一性检查（同一用户下不能重复）\n\n## 参数说明：\n- Authorization: Header 中的 Token，格式为 `Bearer <token>`，或通过 URL 参数 `?token=<token>` 传递\n- seriesId: **系列 ID**，Integer 类型，必填\n- seriesTitle: **系列标题**，String 类型，可选，最多 16 个中文字符\n- aboutText: **系列描述**，String 类型，可选，最多 24 个中文字符\n\n## 返回说明：\n- **修改成功**：返回 **{\"data\": true}** 和“系列信息更新成功”提示\n- **Token 不存在**：返回 **{\"data\": null}** 和“Token 不存在”提示\n- **Token 已失效**：返回 **{\"data\": null}** 和“Token 已失效”提示\n- **系列 ID 无效**：返回 **{\"data\": false}** 和“系列 ID 无效”提示\n- **无修改内容**：返回 **{\"data\": false}** 和“无修改内容”提示\n- **系列不存在**：返回 **{\"data\": false}** 和“系列不存在或已删除”提示\n- **无权修改**：返回 **{\"data\": false}** 和“无权修改该系列”提示\n- **标题过长**：返回 **{\"data\": false}** 和“系列标题长度不能超过 16 个字符”提示\n- **描述过长**：返回 **{\"data\": false}** 和“系列描述长度不能超过 24 个字符”提示\n- **标题重复**：返回 **{\"data\": false}** 和“系列标题已存在，请使用其他标题”提示\n\n## 业务逻辑：\n1. 从请求头或 URL 参数中提取 Token（支持 Bearer 前缀）\n2. 验证 Token 是否在白名单中\n3. 从 Token 中解析用户 ID\n4. 校验系列 ID 参数有效性\n5. 检查是否至少有一个参数不为空\n6. 查询系列信息并验证所有权（只能修改自己的系列）\n7. 如果提供了新标题，验证长度并检查是否与当前标题不同且未被其他系列使用\n8. 如果提供了新描述，验证长度并检查是否与当前描述不同\n9. 执行动态更新（只更新非空且发生变化的字段）\n10. 自动更新 update_time 和 update_user\n11. 返回修改结果\n\n## 注意事项：\n- **需要携带有效的 Token 才能修改系列**\n- Token 必须在白名单中（未过期、未登出）\n- **用户只能修改自己的系列**，无法修改他人的系列\n- 所有参数都是可选的，可以只修改部分字段\n- **如果所有参数都为空或与当前值相同，将返回“无修改内容”**\n- 系列标题限制：**最多 16 个字符**\n- 系列描述限制：**最多 24 个字符**\n- **同一用户下系列标题不能重复**（修改时也会检查）\n- 采用动态更新机制，只提供要修改的字段即可\n- 修改成功后，update_time 和 update_user 会自动更新\n",
+        "operationId": "updateSeriesInfo",
+        "parameters": [
+          {
+            "name": "seriesId",
+            "in": "query",
+            "description": "系列 ID",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            },
+            "example": 1
+          },
+          {
+            "name": "seriesTitle",
+            "in": "query",
+            "description": "系列标题（可选），最多 16 个中文字符",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "aboutText",
+            "in": "query",
+            "description": "系列描述（可选），最多 24 个中文字符",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResponsePojoBoolean"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/work/series/delete": {
+      "post": {
+        "tags": [
+          "作品合集接口"
+        ],
+        "summary": "删除作品系列接口",
+        "description": "# 删除作品系列（需要登录认证 + 角色权限[22,77]）\n\n## 特性\n- Token 认证（支持 Header 和 URL 参数两种方式）\n- 支持选择是否删除系列内的作品\n- SQL 层面权限验证（只能删除自己的系列）\n- 逻辑删除（数据不真正从数据库移除）\n- 如果选择删除作品，会将作品文件重命名为 .del 后缀\n\n## 参数说明：\n- Authorization: Header 中的 Token，格式为 `Bearer <token>`，或通过 URL 参数 `?token=<token>` 传递\n- seriesId: 系列 ID，Integer 类型，必填\n- deleteWorks: 是否删除系列内的作品，Boolean 类型，必填\n  * true: 删除系列及其所有作品（作品文件重命名为 .del）\n  * false: 仅删除系列，作品保留但 series_id 置空\n\n## 返回说明：\n- **删除成功**：返回 **{\"data\": true}** 和“系列删除成功”提示\n- **Token 不存在**：返回 **{\"data\": null}** 和“Token 不存在”提示\n- **Token 已失效**：返回 **{\"data\": null}** 和“Token 已失效”提示\n- **系列 ID 无效**：返回 **{\"data\": false}** 和“系列 ID 无效”提示\n- **无权删除**：返回 **{\"data\": false}** 和“无权删除该系列”提示（系列不属于当前用户）\n- **系列不存在**：返回 **{\"data\": false}** 和“系列不存在或已删除”提示\n- **删除失败**：返回 **{\"data\": false}** 和“系列删除失败”提示\n\n## 业务逻辑：\n1. 从请求头或 URL 参数中提取 Token（支持 Bearer 前缀）\n2. 验证 Token 是否在白名单中\n3. 从 Token 中解析用户 ID\n4. 校验系列 ID 参数有效性\n5. 查询系列信息并验证所有权（只能删除自己的系列）\n6. 根据 deleteWorks 参数处理系列内的作品：\n   - 如果 deleteWorks=true：查询系列下所有作品，重命名文件为 .del，执行逻辑删除\n   - 如果 deleteWorks=false：将系列下所有作品的 series_id 置空\n7. 执行系列的逻辑删除（SQL 层面验证 user_id）\n8. 返回删除结果\n\n## 注意事项：\n- **需要携带有效的 Token 才能删除系列**\n- Token 必须在白名单中（未过期、未登出）\n- **用户只能删除自己的系列**，无法删除他人的系列\n- 采用逻辑删除方式，数据不会真正从数据库中移除\n- 如果选择删除作品，作品文件会被重命名为 .del 后缀（如 123.png → 123.png.del）\n- 如果选择保留作品，这些作品的 series_id 会被置空，但仍存在于系统中\n- 删除系列后，这些系列在查询接口中将不再显示\n- 建议先确认系列内是否有重要作品，再决定是否删除\n",
+        "operationId": "deleteSeries",
+        "parameters": [
+          {
+            "name": "seriesId",
+            "in": "query",
+            "description": "系列 ID",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            },
+            "example": 1
+          },
+          {
+            "name": "deleteWorks",
+            "in": "query",
+            "description": "是否删除系列内的作品（true=删除作品，false=保留作品）",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "description": "是否删除系列内的作品（true=删除作品，false=保留作品）",
+              "example": false,
+              "enum": [
+                "true",
+                "false"
+              ]
+            },
+            "example": false
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResponsePojoBoolean"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/work/series/add": {
+      "post": {
+        "tags": [
+          "作品合集接口"
+        ],
+        "summary": "新增作品系列接口",
+        "description": "# 新增作品系列（需要登录认证 + 角色权限[22,77]）\n\n## 特性\n- Token 认证（支持 Header 和 URL 参数两种方式）\n- 系列标题长度限制（≤16 个中文字符）\n- 系列描述长度限制（≤24 个中文字符）\n- 自动关联当前登录用户\n\n## 参数说明：\n- Authorization: Header 中的 Token，格式为 `Bearer <token>`，或通过 URL 参数 `?token=<token>` 传递\n- seriesTitle: 系列标题，字符串类型，必填，长度不超过 16 个中文字符\n- aboutText: 系列描述文本，字符串类型，可选，长度不超过 24 个中文字符\n\n## 返回说明：\n- **成功**：返回 **{\"data\": Series 对象}** 和提示信息\n- **Token 失效**：返回 **{\"data\": null}** 和 \"Token 已失效\" 提示\n- **标题为空**：返回 **{\"data\": false}** 和 \"系列标题不能为空\" 提示\n- **标题过长**：返回 **{\"data\": false}** 和 \"系列标题长度不能超过 16 个字符\" 提示\n- **描述过长**：返回 **{\"data\": false}** 和 \"系列描述长度不能超过 24 个字符\" 提示\n- **标题重复**：返回 **{\"data\": false}** 和 \"系列标题已存在，请使用其他标题\" 提示\n\n## 业务逻辑：\n1. 从请求中提取并验证 Token\n2. 检查 Token 是否在白名单中\n3. 从 Token 中解析用户 ID\n4. 校验系列标题和描述的长度\n5. **检查系列标题是否已存在（同一用户下不能重复）**\n6. 创建系列对象并设置用户 ID、时间戳等信息\n7. 插入数据库并返回结果\n\n## 注意事项：\n- 系列标题**必填**，长度不超过 16 个字符\n- 系列描述**可选**，长度不超过 24 个字符\n- **同一用户下系列标题不能重复**\n- 系统自动记录创建者 ID 和创建时间\n- 返回的 Series 对象包含自动生成的 series_id\n",
+        "operationId": "addSeries",
+        "parameters": [
+          {
+            "name": "seriesTitle",
+            "in": "query",
+            "description": "系列标题，最多 16 个中文字符",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "我的作品集"
+          },
+          {
+            "name": "aboutText",
+            "in": "query",
+            "description": "系列描述文本，最多 24 个中文字符",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "default": ""
+            },
+            "example": "这是一个展示我作品的系列"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResponsePojoBoolean"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/work/delete": {
+      "post": {
+        "tags": [
+          "作品接口"
+        ],
+        "summary": "删除作品接口",
+        "description": "# 删除作品（需要登录认证 + 角色权限[22,77]）\n\n## 特性\n- Token 认证（支持 Header 和 URL 参数两种方式）\n- 支持单条/批量删除\n- SQL 层面权限验证（只能删除自己的作品）\n- 逻辑删除（数据不真正从数据库移除）\n- 文件重命名（将 .png/.jpg 改为 .del）\n\n## 参数说明：\n- Authorization: Header 中的 Token，格式为 `Bearer <token>`，或通过 URL 参数 `?token=<token>` 传递\n- workIds: 要删除的作品 ID 列表，整形数组类型，必填\n  * 单条删除：传入 [1]\n  * 批量删除：传入 [1, 2, 3]\n\n## 返回说明：\n- **删除成功**：返回 **{\"data\": true}** 和“作品删除成功”提示\n- **Token 不存在**：返回 **{\"data\": null}** 和“Token 不存在”提示\n- **Token 已失效**：返回 **{\"data\": null}** 和“Token 已失效”提示\n- **作品 ID 列表为空**：返回 **{\"data\": false}** 和“作品 ID 列表不能为空”提示\n- **无权删除**：返回 **{\"data\": false}** 和“部分或全部作品无权删除”提示（作品不属于当前用户）\n- **删除失败**：返回 **{\"data\": false}** 和“作品删除失败”提示\n\n## 业务逻辑：\n1. 从请求头或 URL 参数中提取 Token（支持 Bearer 前缀）\n2. 验证 Token 是否在白名单中\n3. 从 Token 中解析用户 ID\n4. 校验作品 ID 列表参数有效性\n5. 检查用户是否存在\n6. 查询作品信息并验证所有权（只能删除自己的作品）\n7. 将作品文件后缀名改为 .del（如 123.png → 123.png.del）\n8. 执行批量逻辑删除（SQL 层面验证 user_id，确保只能删除自己的作品）\n9. 返回删除结果\n\n## 注意事项：\n- **需要携带有效的 Token 才能删除作品**\n- Token 必须在白名单中（未过期、未登出）\n- **用户只能删除自己的作品**，无法删除他人的作品\n- 采用逻辑删除方式，数据不会真正从数据库中移除\n- 作品文件会被重命名为 .del 后缀（如 123.png → 123.png.del）\n- 如果部分作品不属于当前用户，只会删除属于当前用户的作品\n- 删除后，这些作品在查询接口中将不再显示\n- 建议单次批量删除不超过 100 个作品\n- 单条删除时传入单个元素的数组，如 [1]\n",
+        "operationId": "deleteWorks",
+        "parameters": [
+          {
+            "name": "workIds",
+            "in": "query",
+            "description": "要删除的作品 ID 列表（支持单条或多条）",
+            "required": true,
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "integer",
+                "format": "int32"
+              }
+            },
+            "example": "1,2,3"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResponsePojoBoolean"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/user/profile/nickname/change": {
+      "post": {
+        "tags": [
+          "用户基础资料接口"
+        ],
+        "summary": "修改用户昵称接口",
+        "description": "# 修改用户昵称（需要登录认证）\n\n## 特性\n- Token 认证（支持 Header 和 URL 参数两种方式）\n- 昵称长度限制校验（1-20字符）\n- 支持中文、英文、数字和特殊字符\n\n## 参数说明：\n- Authorization: Header 中的 Token，格式为 `Bearer <token>`，或通过 URL 参数 `?token=<token>` 传递\n- nickname: 新昵称，字符串类型，必填，长度 1-20 个字符\n\n## 返回说明：\n- **修改成功**：返回 **{\"data\": true}** 和\"昵称修改成功\"提示\n- **Token 不存在**：返回 **{\"data\": null}** 和\"Token 不存在\"提示\n- **Token 已失效**：返回 **{\"data\": null}** 和\"Token 已失效\"提示\n- **昵称为空**：返回 **{\"data\": null}** 和\"昵称不能为空\"提示\n- **昵称长度错误**：返回 **{\"data\": null}** 和\"昵称长度必须在 1-20 个字符之间\"提示\n- **修改失败**：返回 **{\"data\": false}** 和\"昵称修改失败\"提示\n\n## 业务逻辑：\n1. 从请求头或 URL 参数中提取 Token（支持 Bearer 前缀）\n2. 验证 Token 是否在白名单中\n3. 从 Token 中解析用户 ID\n4. 校验昵称参数（非空、长度 1-20）\n5. 调用服务层更新用户昵称\n6. 返回修改结果\n\n## 注意事项：\n- 需要携带有效的 Token 才能修改昵称\n- Token 必须在白名单中（未过期、未登出）\n- 昵称长度限制：**1-20 个字符**\n- 昵称可以包含中文、英文、数字和特殊字符\n- 修改成功后，下次登录时会看到新昵称\n",
+        "operationId": "updateNickname",
+        "parameters": [
+          {
+            "name": "nickname",
+            "in": "query",
+            "description": "新昵称，长度 1-20 个字符",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "新昵称"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResponsePojoBoolean"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/user/profile/email/change": {
+      "post": {
+        "tags": [
+          "用户基础资料接口"
+        ],
+        "summary": "更改账号绑定邮箱接口",
+        "description": "# 更改账号绑定邮箱（需要登录认证）\n\n## 特性\n- Token 认证（支持 Header 和 URL 参数两种方式）\n- 邮箱格式校验\n- 邮箱验证码验证\n- 邮箱唯一性检查\n- 自动清除旧验证码\n\n## 参数说明：\n- Authorization: Header 中的 Token，格式为 `Bearer <token>`，或通过 URL 参数 `?token=<token>` 传递\n- newEmail: 新邮箱地址，字符串类型，必填，需符合标准邮箱格式\n- vCode: 邮箱验证码，6 位大写字母或数字，字符串类型，必填\n\n## 返回说明：\n- **修改成功**：返回 **{\"data\": true}** 和“邮箱修改成功”提示\n- **Token 不存在**：返回 **{\"data\": null}** 和“Token 不存在”提示\n- **Token 已失效**：返回 **{\"data\": null}** 和“Token 已失效”提示\n- **新邮箱为空**：返回 **{\"data\": null}** 和“新邮箱不能为空”提示\n- **邮箱格式错误**：返回 **{\"data\": null}** 和“邮箱格式错误”提示\n- **验证码为空**：返回 **{\"data\": null}** 和“验证码不能为空”提示\n- **验证码格式错误**：返回 **{\"data\": null}** 和“验证码格式错误”提示\n- **验证码错误**：返回 **{\"data\": false}** 和“验证码错误或已过期”提示\n- **邮箱已被使用**：返回 **{\"data\": false}** 和“该邮箱已被其他账号使用”提示\n- **修改失败**：返回 **{\"data\": false}** 和“邮箱修改失败”提示\n\n## 业务逻辑：\n1. 从请求头或 URL 参数中提取 Token（支持 Bearer 前缀）\n2. 验证 Token 是否在白名单中\n3. 从 Token 中解析用户 ID\n4. 校验新邮箱参数（非空、格式正确）\n5. 校验验证码参数（非空、格式正确）\n6. 检查新邮箱是否已被其他用户使用\n7. 验证邮箱验证码（使用新邮箱作为 key）\n8. 调用服务层更新用户邮箱\n9. 返回修改结果\n\n## 注意事项：\n- 需要携带有效的 Token 才能修改邮箱\n- Token 必须在白名单中（未过期、未登出）\n- 新邮箱必须符合标准邮箱格式\n- 新邮箱不能被其他账号使用\n- 需要先通过 `/api/mail/send-change-email-code` 接口发送验证码到新邮箱\n- 验证码有效期为 **5 分钟**\n- 验证码验证成功后会自动失效（一次性使用）\n- 修改成功后，下次登录时需要使用新邮箱\n",
+        "operationId": "updateEmail",
+        "parameters": [
+          {
+            "name": "newEmail",
+            "in": "query",
+            "description": "新邮箱地址，需符合标准邮箱格式",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "newemail@example.com"
+          },
+          {
+            "name": "vCode",
+            "in": "query",
+            "description": "邮箱验证码，6 位大写字母或数字",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "ABC123"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResponsePojoBoolean"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/user/password/forgot": {
+      "post": {
+        "tags": [
+          "账号密码接口"
+        ],
+        "summary": "忘记密码",
+        "description": "# 忘记密码（无需登录认证）\n\n## 特性\n- 公开接口（无需 Token 认证）\n- 支持用户名或邮箱找回\n- 邮箱验证码验证\n- SHA-256 密码加密\n- 强制所有设备下线（移除所有 Token）\n\n## 参数说明：\n- usernameOrEmail: **用户名**或**邮箱地址**，字符串类型，必填\n- newPassword: 新密码，字符串类型，必填，建议使用强密码组合\n- confirmPassword: 确认新密码，字符串类型，必填，需与新密码一致\n- vCode: 邮箱验证码，6 位大写字母或数字，字符串类型，必填\n\n## 返回说明：\n- **重置成功**：返回 **{\"data\": true}** 和\"密码重置成功，请使用新密码重新登录\"提示\n- **用户名或邮箱格式错误**：返回 **{\"data\": false}** 和\"用户名或邮箱格式错误\"提示\n- **验证码格式错误**：返回 **{\"data\": false}** 和\"验证码格式错误\"提示\n- **验证码错误**：返回 **{\"data\": false}** 和\"验证码错误\"提示\n- **用户不存在**：返回 **{\"data\": false}** 和\"用户不存在\"提示\n- **两次密码不一致**：返回 **{\"data\": false}** 和\"两次输入的密码不一致\"提示\n- **重置失败**：返回 **{\"data\": false}** 和\"密码重置失败\"提示\n\n## 业务逻辑：\n1. 校验用户名格式、邮箱格式、验证码格式\n2. 验证邮箱验证码是否正确（如提供用户名则先查询邮箱）\n3. 根据用户名或邮箱查询用户信息\n4. 校验两次输入的新密码是否一致\n5. 对新密码进行 SHA-256 哈希加密处理\n6. 更新数据库中的密码（不验证旧密码）\n7. **移除该用户的所有 Token**（强制所有设备下线）\n8. 返回重置结果\n\n## 注意事项：\n- 此接口**无需登录**即可调用\n- 验证码发送到用户的注册邮箱\n- 密码会使用 **SHA-256** 进行加密存储\n- 支持使用用户名**或**邮箱找回密码\n- 建议使用强密码组合（大小写字母 + 数字 + 特殊字符）\n- 验证码有效期由 Redis 配置决定（默认 5 分钟）\n- **密码重置后，该用户的所有 Token 会被立即移除**，所有设备需要重新登录\n",
+        "operationId": "forgotPassword",
+        "parameters": [
+          {
+            "name": "usernameOrEmail",
+            "in": "query",
+            "description": "用户名或邮箱，6-16 位字母/数字/下划线或标准邮箱格式",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "dev_user"
+          },
+          {
+            "name": "newPassword",
+            "in": "query",
+            "description": "新密码，会使用 SHA-256 加密存储",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": 123456789
+          },
+          {
+            "name": "confirmPassword",
+            "in": "query",
+            "description": "确认新密码，需与新密码一致",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": 123456789
+          },
+          {
+            "name": "vCode",
+            "in": "query",
+            "description": "邮箱验证码，6 位大写字母或数字",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "ABCDEF"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResponsePojoBoolean"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/user/password/change": {
+      "post": {
+        "tags": [
+          "账号密码接口"
+        ],
+        "summary": "更换密码",
+        "description": "# 更换密码（需要登录认证）\n\n## 特性\n- Token 认证（支持 Header 和 URL 参数两种方式）\n- 邮箱验证码验证\n- SHA-256 密码加密\n- 新旧密码一致性校验\n- 强制所有设备下线（移除所有 Token）\n\n## 参数说明：\n- Authorization: Header 中的 Token，格式为 `Bearer <token>`，或通过 URL 参数 `?token=<token>` 传递\n- newPassword: 新密码，字符串类型，必填\n- confirmPassword: 确认新密码，字符串类型，必填，需与新密码一致\n- vCode: 邮箱验证码，6 位大写字母或数字，字符串类型，必填\n\n## 返回说明：\n- **修改成功**：返回 **{\"data\": true}** 和\"修改成功\"提示，同时当前 Token 失效\n- **验证码错误**：返回 **{\"data\": false}** 和\"验证码错误\"提示\n- **新旧密码一致**：返回 **{\"data\": false}** 和\"新旧密码不能一致\"提示\n- **修改失败**：返回 **{\"data\": false}** 和\"修改失败\"提示\n\n## 业务逻辑：\n1. 从请求的 Token 中提取用户 ID\n2. 根据用户 ID 从数据库查询用户信息（邮箱等）\n3. 校验验证码格式和正确性\n4. 校验两次输入的新密码是否一致\n5. 校验新密码与旧密码是否相同\n6. 对密码进行 SHA-256 哈希加密\n7. 更新数据库中的密码\n8. **移除该用户的所有 Token**（强制所有设备下线）\n9. 返回修改结果\n\n## 注意事项：\n- **必须携带有效的 Token** 才能调用此接口\n- 验证码发送到用户的注册邮箱\n- 密码修改成功后，**该用户的所有 Token 会被立即移除**，所有设备需要重新登录\n- 建议使用强密码组合（大小写字母 + 数字 + 特殊字符）\n- 验证码有效期由 Redis 配置决定（默认 5 分钟）\n",
+        "operationId": "changeUserPassword",
+        "parameters": [
+          {
+            "name": "newPassword",
+            "in": "query",
+            "description": "新密码",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": 123456789
+          },
+          {
+            "name": "confirmPassword",
+            "in": "query",
+            "description": "确认新密码",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": 123456789
+          },
+          {
+            "name": "vCode",
+            "in": "query",
+            "description": "邮箱验证码，6 位大写字母或数字",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "ABCDEF"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResponsePojoBoolean"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/user/data/delete": {
+      "post": {
+        "tags": [
+          "用户拓展数据接口"
+        ],
+        "summary": "删除用户拓展数据接口",
+        "description": "# 删除用户拓展数据（需要登录认证）\n\n## 特性\n- Token 认证（支持 Header 和 URL 参数两种方式）\n- 支持单条/批量删除\n- SQL 层面权限验证（只能删除自己的数据）\n- 逻辑删除（数据不真正从数据库移除）\n\n## 参数说明：\n- Authorization: Header 中的 Token，格式为 `Bearer <token>`，或通过 URL 参数 `?token=<token>` 传递\n- dataIds: 要删除的数据 ID 列表，整形数组类型，必填\n  * 单条删除：传入 [1]\n  * 批量删除：传入 [1, 2, 3]\n\n## 返回说明：\n- **删除成功**：返回 **{\"data\": true}** 和\"用户拓展数据删除成功\"提示\n- **Token 不存在**：返回 **{\"data\": null}** 和\"Token 不存在\"提示\n- **Token 已失效**：返回 **{\"data\": null}** 和\"Token 已失效\"提示\n- **数据 ID 列表为空**：返回 **{\"data\": false}** 和\"数据 ID 列表不能为空\"提示\n- **无权删除**：返回 **{\"data\": false}** 和\"部分或全部数据无权删除\"提示（数据不属于当前用户）\n- **删除失败**：返回 **{\"data\": false}** 和\"用户拓展数据删除失败\"提示\n\n## 业务逻辑：\n1. 从请求头或 URL 参数中提取 Token（支持 Bearer 前缀）\n2. 验证 Token 是否在白名单中\n3. 从 Token 中解析用户 ID\n4. 校验数据 ID 列表参数有效性\n5. 检查用户是否存在\n6. 执行批量逻辑删除（SQL 层面验证 user_id，确保只能删除自己的数据）\n7. 返回删除结果\n\n## 注意事项：\n- **需要携带有效的 Token 才能删除拓展数据**\n- Token 必须在白名单中（未过期、未登出）\n- **用户只能删除自己的拓展数据**，无法删除他人的数据\n- 采用逻辑删除方式，数据不会真正从数据库中移除\n- 如果部分数据不属于当前用户，只会删除属于当前用户的数据\n- 删除后，这些数据在查询接口中将不再显示\n- 建议单次批量删除不超过 100 条数据\n- 单条删除时传入单个元素的数组，如 [1]\n",
+        "operationId": "deleteUserData",
+        "parameters": [
+          {
+            "name": "dataIds",
+            "in": "query",
+            "description": "要删除的数据 ID 列表（支持单条或多条）",
+            "required": true,
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "integer",
+                "format": "int32"
+              }
+            },
+            "example": "1,2,3"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResponsePojoBoolean"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/user/data/add": {
+      "post": {
+        "tags": [
+          "用户拓展数据接口"
+        ],
+        "summary": "新增用户拓展数据接口",
+        "description": "# 新增用户拓展数据（需要登录认证）\n\n## 特性\n- Token 认证（支持 Header 和 URL 参数两种方式）\n- 数据长度限制校验（名称≤26字符，内容≤96字符）\n- 1对n关系（同一用户可添加多条拓展数据）\n\n## 参数说明：\n- Authorization: Header 中的 Token，格式为 `Bearer <token>`，或通过 URL 参数 `?token=<token>` 传递\n- dataName: 数据名称，字符串类型，必填，长度不超过 26 个字符（如：电话、邮箱、网站、微信等）\n- dataContent: 数据内容，字符串类型，必填，长度不超过 96 个字符（如：具体的电话号码、邮箱地址、网站 url 等）\n\n## 返回说明：\n- **添加成功**：返回 **{\"data\": true}** 和\"用户拓展数据添加成功\"提示\n- **Token 不存在**：返回 **{\"data\": null}** 和\"Token 不存在\"提示\n- **Token 已失效**：返回 **{\"data\": null}** 和\"Token 已失效\"提示\n- **数据名称为空**：返回 **{\"data\": null}** 和\"数据名称不能为空\"提示\n- **数据名称过长**：返回 **{\"data\": null}** 和\"数据名称长度不能超过 26 个字符\"提示\n- **数据内容为空**：返回 **{\"data\": null}** 和\"数据内容不能为空\"提示\n- **数据内容过长**：返回 **{\"data\": null}** 和\"数据内容长度不能超过 96 个字符\"提示\n- **添加失败**：返回 **{\"data\": false}** 和\"用户拓展数据添加失败\"提示\n\n## 业务逻辑：\n1. 从请求头或 URL 参数中提取 Token（支持 Bearer 前缀）\n2. 验证 Token 是否在白名单中\n3. 从 Token 中解析用户 ID\n4. 校验数据名称和数据内容参数（非空、长度限制）\n5. 检查用户是否存在\n6. 调用服务层新增用户拓展数据\n7. 返回添加结果\n\n## 注意事项：\n- 需要携带有效的 Token 才能添加拓展数据\n- Token 必须在白名单中（未过期、未登出）\n- 数据名称长度限制：**不超过 26 个字符**\n- 数据内容长度限制：**不超过 96 个字符**\n- 同一用户可以添加多条拓展数据（1 对 n 关系）\n- 常见的数据名称示例：电话、邮箱、网站、微信、QQ 等\n",
+        "operationId": "addUserData",
+        "parameters": [
+          {
+            "name": "dataName",
+            "in": "query",
+            "description": "数据名称，长度不超过 26 个字符",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "电话"
+          },
+          {
+            "name": "dataContent",
+            "in": "query",
+            "description": "数据内容，长度不超过 96 个字符",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": 13800138000
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResponsePojoBoolean"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/mail/verify-email-code-test": {
+      "post": {
+        "tags": [
+          "邮件服务接口"
+        ],
+        "summary": "验证\"验证码\" - 测试",
+        "description": "# 验证用户输入的邮箱验证码是否正确（无需登录认证｜测试）\n\n## 特性\n- 公开接口（无需认证）\n- Redis 验证码比对\n- 验证后自动清除验证码\n- 已废弃（@Deprecated）\n\n## 参数说明：\n- email: 用户邮箱地址，格式为标准邮箱格式\n- inputVCode: 用户输入的验证码，通常为 6 位大写字母或数字组合\n\n## 返回说明：\n- **验证成功**：返回 **\"data\": true** 和\"验证成功\"提示\n- **验证失败**：返回 **\"data\": false** 和\"验证失败\"提示\n- **格式错误**：返回 **\"data\": false** 和相应的\"邮箱或验证码格式错误\"提示\n\n## 业务逻辑：\n1. 校验邮箱格式是否合法\n2. 校验验证码格式是否合法\n3. 从 Redis 中获取该邮箱对应的验证码进行比对\n4. 验证成功后会自动清除 Redis 中的验证码\n",
+        "operationId": "verifyEmailCode",
+        "parameters": [
+          {
+            "name": "email",
+            "in": "query",
+            "description": "用户邮箱",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "test@example.com"
+          },
+          {
+            "name": "inputVCode",
+            "in": "query",
+            "description": "验证码",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "ABCDEF"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResponsePojoBoolean"
+                }
+              }
+            }
+          }
+        },
+        "deprecated": true
+      }
+    },
+    "/api/mail/send-register-code": {
+      "post": {
+        "tags": [
+          "邮件服务接口"
+        ],
+        "summary": "发送注册验证码邮件",
+        "description": "# 发送注册验证码邮件（无需登录认证）\n\n## 特性\n- 邮箱格式验证\n- Redis 验证码存储\n- HTML 邮件模板渲染\n- 自动生成6位随机验证码\n- 内置邮件主题\n\n## 参数说明：\n- email: 邮箱地址，字符串类型，必填，必须是标准邮箱格式\n- username: 用户昵称，字符串类型，必填，用于邮件内容展示\n\n## 返回说明：\n- **发送成功**：返回 **{\"data\": true}** 和“邮件发送成功”提示\n- **发送失败**：返回 **{\"data\": false}** 和“邮件发送失败”提示\n- **邮箱格式错误**：返回 **{\"data\": false}** 和“邮箱格式错误”提示\n- **用户名格式错误**：返回 **{\"data\": false}** 和“用户名格式错误”提示\n\n## 业务逻辑：\n1. 验证邮箱地址格式是否正确\n2. 验证用户名格式是否正确（6-16位字母/数字/下划线）\n3. 生成6位随机验证码并存入Redis\n4. 使用HTML邮件模板渲染邮件内容\n5. 发送邮件并将验证码与邮箱绑定存储\n\n## 注意事项：\n- 验证码默认有效期由Redis配置决定（默认5分钟）\n- 用户名格式：6-16位字母、数字、下划线\n- 邮箱格式：标准邮箱格式\n- 建议设置合理的邮件发送频率限制\n- 邮件主题已内置为“PixVision 注册验证码”\n",
+        "operationId": "sendRegisterCode",
+        "parameters": [
+          {
+            "name": "email",
+            "in": "query",
+            "description": "收件人邮箱地址",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "test@example.com"
+          },
+          {
+            "name": "username",
+            "in": "query",
+            "description": "用户昵称",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "dev_user"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResponsePojoBoolean"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/mail/send-login-code": {
+      "post": {
+        "tags": [
+          "邮件服务接口"
+        ],
+        "summary": "发送登录验证码邮件",
+        "description": "# 发送登录验证码邮件（无需登录认证）\n\n## 特性\n- 支持用户名或邮箱作为收件人\n- 自动从数据库查询用户信息\n- Redis 验证码存储\n- HTML 邮件模板渲染\n- 内置邮件主题\n\n## 参数说明：\n- usernameOrEmail: 用户名或邮箱地址，字符串类型，必填\n  - 支持用户名格式：6-16位字母/数字/下划线\n  - 支持邮箱格式：标准邮箱格式\n  - 系统会自动识别并查询对应的邮箱地址\n\n## 返回说明：\n- **发送成功**：返回 **{\"data\": true}** 和“邮件发送成功”提示\n- **发送失败**：返回 **{\"data\": false}** 和“邮件发送失败”提示\n- **用户不存在**：返回 **{\"data\": false}** 和“用户不存在，请先注册”提示\n- **格式错误**：返回 **{\"data\": false}** 和“用户名或邮箱格式错误”提示\n\n## 业务逻辑：\n1. 判断usernameOrEmail参数是用户名还是邮箱\n2. 从数据库查询用户信息，获取用户名和邮箱\n3. 验证用户是否存在\n4. 生成6位随机验证码并存入Redis\n5. 使用HTML邮件模板渲染邮件内容\n6. 发送邮件并将验证码与邮箱绑定存储\n\n## 注意事项：\n- 验证码默认有效期由Redis配置决定（默认5分钟）\n- 如果usernameOrEmail是用户名，系统会自动查询对应的邮箱\n- 如果usernameOrEmail是邮箱，直接使用\n- 用户必须已注册才能发送登录验证码\n- 邮件主题已内置为\"PixVision 登录验证码\"\n",
+        "operationId": "sendLoginCode",
+        "parameters": [
+          {
+            "name": "usernameOrEmail",
+            "in": "query",
+            "description": "用户名或邮箱地址",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "dev_user"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResponsePojoBoolean"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/mail/send-forget-password-code": {
+      "post": {
+        "tags": [
+          "邮件服务接口"
+        ],
+        "summary": "发送重置密码验证码邮件",
+        "description": "# 发送重置密码验证码邮件（无需登录认证）\n\n## 特性\n- 支持用户名或邮箱作为收件人\n- 自动从数据库查询用户信息\n- Redis 验证码存储\n- HTML 邮件模板渲染\n- 内置邮件主题\n\n## 参数说明：\n- usernameOrEmail: 用户名或邮箱地址，字符串类型，必填\n  - 支持用户名格式：6-16位字母/数字/下划线\n  - 支持邮箱格式：标准邮箱格式\n  - 系统会自动识别并查询对应的邮箱地址\n\n## 返回说明：\n- **发送成功**：返回 **{\"data\": true}** 和“邮件发送成功”提示\n- **发送失败**：返回 **{\"data\": false}** 和“邮件发送失败”提示\n- **用户不存在**：返回 **{\"data\": false}** 和“用户不存在，请先注册”提示\n- **格式错误**：返回 **{\"data\": false}** 和“用户名或邮箱格式错误”提示\n\n## 业务逻辑：\n1. 判断usernameOrEmail参数是用户名还是邮箱\n2. 从数据库查询用户信息，获取用户名和邮箱\n3. 验证用户是否存在\n4. 生成6位随机验证码并存入Redis\n5. 使用HTML邮件模板渲染邮件内容\n6. 发送邮件并将验证码与邮箱绑定存储\n\n## 注意事项：\n- 验证码默认有效期由Redis配置决定（默认5分钟）\n- 如果usernameOrEmail是用户名，系统会自动查询对应的邮箱\n- 如果usernameOrEmail是邮箱，直接使用\n- 用户必须已注册才能发送改密验证码\n- 此接口用于忘记重置密码场景\n- 邮件主题已内置为\"PixVision 重置密码验证码\"\n",
+        "operationId": "sendForgetPasswordCode",
+        "parameters": [
+          {
+            "name": "usernameOrEmail",
+            "in": "query",
+            "description": "用户名或邮箱地址",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "dev_user"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResponsePojoBoolean"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/mail/send-delete-account-code": {
+      "post": {
+        "tags": [
+          "邮件服务接口"
+        ],
+        "summary": "发送注销账户验证码邮件",
+        "description": "# 发送注销账户验证码邮件（需要登录认证）\n\n## 特性\n- Token 认证（支持 Header 和 URL 参数两种方式）\n- 从 Token 自动获取用户信息\n- Redis 验证码存储\n- HTML 邮件模板渲染\n- 内置邮件主题\n- 需要登录（受保护接口）\n\n## 参数说明：\n- Authorization: Header 中的 Token，格式为 `Bearer <token>`，或通过 URL 参数 `?token=<token>` 传递\n\n## 返回说明：\n- **发送成功**：返回 **{\"data\": true}** 和“邮件发送成功”提示\n- **发送失败**：返回 **{\"data\": false}** 和“邮件发送失败”提示\n- **Token 不存在**：返回 **{\"data\": false}** 和“Token 不存在”提示\n- **Token 无效**：返回 **{\"data\": false}** 和“Token 无效”提示\n- **用户不存在**：返回 **{\"data\": false}** 和“用户不存在”提示\n\n## 业务逻辑：\n1. 从请求头或 URL 参数中提取 Token\n2. 从 Token 中解析用户 ID\n3. 根据用户 ID 查询用户信息，获取用户名和邮箱\n4. 验证用户是否存在\n5. 生成6位随机验证码并存入Redis\n6. 使用HTML邮件模板渲染邮件内容\n7. 发送邮件并将验证码与邮箱绑定存储\n\n## 注意事项：\n- 验证码默认有效期由Redis配置决定（默认5分钟）\n- 用户信息从 Token 中自动获取，无需传入\n- 此接口用于**已登录用户注销账户**场景\n- 邮件主题已内置为\"PixVision 注销账户验证码\"\n- 需要携带有效的 Token 才能调用\n- 注销操作不可逆，请谨慎操作\n",
+        "operationId": "sendDeleteAccountCode",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResponsePojoBoolean"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/mail/send-change-password-code": {
+      "post": {
+        "tags": [
+          "邮件服务接口"
+        ],
+        "summary": "发送修改密码验证码邮件",
+        "description": "# 发送修改密码验证码邮件（需要登录认证）\n\n## 特性\n- Token 认证（支持 Header 和 URL 参数两种方式）\n- 从 Token 自动获取用户信息\n- Redis 验证码存储\n- HTML 邮件模板渲染\n- 内置邮件主题\n- 需要登录（受保护接口）\n\n## 参数说明：\n- Authorization: Header 中的 Token，格式为 `Bearer <token>`，或通过 URL 参数 `?token=<token>` 传递\n\n## 返回说明：\n- **发送成功**：返回 **{\"data\": true}** 和“邮件发送成功”提示\n- **发送失败**：返回 **{\"data\": false}** 和“邮件发送失败”提示\n- **Token 不存在**：返回 **{\"data\": false}** 和“Token 不存在”提示\n- **Token 无效**：返回 **{\"data\": false}** 和“Token 无效”提示\n- **用户不存在**：返回 **{\"data\": false}** 和“用户不存在”提示\n\n## 业务逻辑：\n1. 从请求头或 URL 参数中提取 Token\n2. 从 Token 中解析用户 ID\n3. 根据用户 ID 查询用户信息，获取用户名和邮箱\n4. 验证用户是否存在\n5. 生成6位随机验证码并存入Redis\n6. 使用HTML邮件模板渲染邮件内容\n7. 发送邮件并将验证码与邮箱绑定存储\n\n## 注意事项：\n- 验证码默认有效期由Redis配置决定（默认5分钟）\n- 用户信息从 Token 中自动获取，无需传入\n- 此接口用于**已登录用户修改密码**场景\n- 邮件主题已内置为\"PixVision 修改密码验证码\"\n- 需要携带有效的 Token 才能调用\n",
+        "operationId": "sendChangePasswordCode",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResponsePojoBoolean"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/mail/send-change-email-code": {
+      "post": {
+        "tags": [
+          "邮件服务接口"
+        ],
+        "summary": "发送更改邮箱验证码邮件",
+        "description": "# 发送更改邮箱验证码邮件（需要登录认证）\n\n## 特性\n- Token 认证（支持 Header 和 URL 参数两种方式）\n- 从 Token 自动获取用户信息\n- 新邮箱格式校验\n- 新邮箱唯一性检查\n- Redis 验证码存储\n- HTML 邮件模板渲染\n- 内置邮件主题\n- 需要登录（受保护接口）\n\n## 参数说明：\n- Authorization: Header 中的 Token，格式为 `Bearer <token>`，或通过 URL 参数 `?token=<token>` 传递\n- newEmail: 新邮箱地址，字符串类型，必填，需符合标准邮箱格式\n\n## 返回说明：\n- **发送成功**：返回 **{\"data\": true}** 和“邮件发送成功”提示\n- **发送失败**：返回 **{\"data\": false}** 和“邮件发送失败”提示\n- **Token 不存在**：返回 **{\"data\": false}** 和“Token 不存在”提示\n- **Token 无效**：返回 **{\"data\": false}** 和“Token 无效”提示\n- **用户不存在**：返回 **{\"data\": false}** 和“用户不存在”提示\n- **新邮箱为空**：返回 **{\"data\": false}** 和“新邮箱不能为空”提示\n- **邮箱格式错误**：返回 **{\"data\": false}** 和“邮箱格式错误”提示\n- **邮箱已被使用**：返回 **{\"data\": false}** 和“该邮箱已被其他账号使用”提示\n\n## 业务逻辑：\n1. 从请求头或 URL 参数中提取 Token\n2. 从 Token 中解析用户 ID\n3. 根据用户 ID 查询用户信息，获取用户名和当前邮箱\n4. 验证用户是否存在\n5. 校验新邮箱格式是否正确\n6. 检查新邮箱是否已被其他用户使用\n7. 生成6位随机验证码并存入Redis（使用新邮箱作为 key）\n8. 使用HTML邮件模板渲染邮件内容\n9. 发送邮件并将验证码与新邮箱绑定存储\n\n## 注意事项：\n- 验证码默认有效期由Redis配置决定（默认5分钟）\n- 用户信息从 Token 中自动获取，无需传入\n- 此接口用于**已登录用户更改绑定邮箱**场景\n- 邮件主题已内置为“PixVision 更改邮箱验证码”\n- 需要携带有效的 Token 才能调用\n- 新邮箱不能被其他账号使用\n- 验证码会发送到**新邮箱**，而不是当前绑定的邮箱\n- 收到验证码后，调用 `/api/user/profile/change/email` 接口完成邮箱修改\n",
+        "operationId": "sendChangeEmailCode",
+        "parameters": [
+          {
+            "name": "newEmail",
+            "in": "query",
+            "description": "新邮箱地址，需符合标准邮箱格式",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "newemail@example.com"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResponsePojoBoolean"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/image/work/upload": {
+      "post": {
+        "tags": [
+          "图像接口"
+        ],
+        "summary": "上传作品图片",
+        "description": "# 上传作品图片（需要登录认证 + 角色权限[22,77]）\n\n## 特性\n- Token 认证（通过拦截器自动验证）\n- 角色权限控制（仅创作者和系统管理员）\n- 文件格式校验（JPG/JPEG/PNG）\n- 文件大小限制（最大 32MB）\n- 图片真实性校验（魔数检查）\n- 系列归属验证（可选，不填则不属于任何系列）\n- 事务一致性保证（文件保存 + 数据库插入）\n\n## 权限要求\n- **角色代码 22**：创作者\n- **角色代码 77**：系统管理员\n- 其他角色访问将返回 **403 Forbidden**\n\n## 参数说明：\n- file: **作品图片文件**，MultipartFile 类型，必填\n- workTitle: **作品标题**，字符串类型，必填，最多 16 个中文字符（48 字节）\n- seriesId: **系列 ID**，整数类型，可选，**不填或为 0 则不属于任何系列**\n- isOriginal: **是否原创**，布尔类型，必填，true-原创，false-转载\n- outUrl: **外部转载链接**，字符串类型，转载时必填，原创时可选\n\n## 返回说明：\n- **上传成功**：返回 200 状态码和 **{\"data\": 作品 ID}**\n- **未授权**：返回 401 状态码（Token 无效或不存在）\n- **权限不足**：返回 403 状态码（角色不符合要求）\n- **文件格式不支持**：返回 400 状态码\n- **文件大小超限**：返回 400 状态码（最大 32MB）\n- **标题过长**：返回 400 状态码（超过 16 个中文字符）\n- **系列不存在**：返回 400 状态码\n- **无权操作该系列**：返回 403 状态码\n- **转载缺少链接**：返回 400 状态码\n- **服务器错误**：返回 500 状态码\n\n## 业务逻辑：\n1. 从 Token 中获取当前登录用户的 ID\n2. 验证文件格式（仅支持 jpg/jpeg/png）\n3. 验证文件大小（最大 32MB）\n4. 读取上传的图片数据并验证真实性（魔数检查）\n5. 验证作品标题长度（最多 16 个中文字符）\n6. 验证系列 ID（如果 > 0，则检查是否存在且属于当前用户；否则设置为 NULL）\n7. 验证转载链接（isOriginal=false 时 outUrl 必填）\n8. 生成唯一的文件名（UUID.原始扩展名）\n9. 保存文件到 ~/.pix_vision/data/works/ 目录\n10. 构建 Works 对象并插入数据库\n11. 如果数据库插入失败，删除已上传的文件（事务回滚）\n12. 返回新创建的作品 ID\n\n## 注意事项：\n- 该接口**需要认证**，必须在请求头中携带有效的 Token\n- **仅角色代码 22（创作者）和 77（系统管理员）**可以访问\n- **仅支持 JPG、JPEG、PNG 格式**的图片上传\n- **不要求正方形图片**，保持原始比例和尺寸\n- 图片**不会被缩放或压缩**，保持原始质量\n- 文件名使用 UUID 生成，保留原始扩展名，避免冲突\n- 文件大小限制为 **32MB**（比头像的 5MB 宽松）\n- **seriesId 可选**，不填或为 0 则作品不属于任何系列（数据库存储为 NULL）；如填写具体系列 ID，必须是自己拥有的系列\n- 转载作品必须提供外部链接，原创作品的 outUrl 可为空\n- 数据库字段默认值：like_count=0, star_count=0, view_count=0\n",
+        "operationId": "uploadWork",
+        "parameters": [
+          {
+            "name": "workTitle",
+            "in": "query",
+            "description": "作品标题，最多16个中文字符",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "春日樱花"
+          },
+          {
+            "name": "seriesId",
+            "in": "query",
+            "description": "系列 ID（0 表示不属于任何系列）",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 0
+            },
+            "example": 1
+          },
+          {
+            "name": "isOriginal",
+            "in": "query",
+            "description": "是否原创",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "description": "是否原创",
+              "example": true,
+              "enum": [
+                "true",
+                "false"
+              ]
+            },
+            "example": true
+          },
+          {
+            "name": "outUrl",
+            "in": "query",
+            "description": "外部转载链接（仅转载时必填）",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "example": "https://example.com/original"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "required": [
+                  "file"
+                ],
+                "type": "object",
+                "properties": {
+                  "file": {
+                    "type": "string",
+                    "description": "作品图片文件",
+                    "format": "binary"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResponsePojoBoolean"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/image/avatar/upload": {
+      "post": {
+        "tags": [
+          "图像接口"
+        ],
+        "summary": "上传用户头像",
+        "description": "# 上传用户头像（需要登录认证）\n\n## 特性\n- Token 认证（通过拦截器自动验证）\n- 文件格式校验（JPG/JPEG/PNG）\n- 文件大小限制（最大5MB）\n- 正方形图片校验\n- 自动缩放至600x600 PNG格式\n- UUID 唯一文件名生成\n\n## 参数说明：\n- file: **头像文件**，MultipartFile 类型，必填\n\n## 返回说明：\n- **上传成功**：返回 200 状态码和成功消息\n- **未授权**：返回 401 状态码（Token 无效或不存在）\n- **文件格式不支持**：返回 400 状态码\n- **文件大小超限**：返回 400 状态码（最大 5MB）\n- **图像不是正方形**：返回 400 状态码\n- **服务器错误**：返回 500 状态码\n\n## 业务逻辑：\n1. 从 Token 中获取当前登录用户的 ID\n2. 验证文件格式（仅支持 jpg/jpeg/png）\n3. 验证文件大小（最大 5MB）\n4. 读取上传的图片数据\n5. 验证图像是否为正方形（宽高必须相等）\n6. 使用 ImageUtils.resizeImage() 将图片缩放为 600x600 的 PNG 格式\n7. 生成唯一的文件名（UUID.png）\n8. 保存文件到 ~/.pix_vision/data/avatar/ 目录\n9. 更新数据库中的用户头像路径\n\n## 注意事项：\n- 该接口**需要认证**，必须在请求头中携带有效的 Token\n- **仅支持 JPG、JPEG、PNG 格式**的图片上传\n- **头像必须是正方形图片**（宽高相等），如：800x800、1200x1200\n- 图片会被自动缩放为 **600x600** 像素的 PNG 格式\n- 文件名使用 UUID 生成，避免冲突\n- 旧头像文件不会被自动删除，建议定期清理\n- 文件大小限制为 **5MB**\n",
+        "operationId": "uploadAvatar",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "required": [
+                  "file"
+                ],
+                "type": "object",
+                "properties": {
+                  "file": {
+                    "type": "string",
+                    "description": "头像文件",
+                    "format": "binary"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResponsePojoString"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/history/delete": {
+      "post": {
+        "tags": [
+          "历史记录接口"
+        ],
+        "summary": "批量删除访问历史记录",
+        "description": "# 批量删除访问历史记录（需要登录认证）\n\n## 特性\n- 需要 Token 认证\n- 支持单条/批量删除\n- SQL 层面权限验证（只能删除自己的历史记录）\n- 逻辑删除（数据不真正从数据库移除）\n\n## 参数说明：\n- Authorization: Header 中的 Token，格式为 `Bearer <token>`，或通过 URL 参数 `?token=<token>` 传递\n- workIds: 要删除的作品 ID 列表，整形数组类型，必填\n  * 单条删除：传入 [1]\n  * 批量删除：传入 [1, 2, 3]\n\n## 返回说明：\n- **删除成功**：返回 **{\"data\": true}** 和“历史记录删除成功”提示\n- **Token 不存在**：返回 **{\"data\": null}** 和“Token 不存在”提示\n- **Token 已失效**：返回 **{\"data\": null}** 和“Token 已失效”提示\n- **作品 ID 列表为空**：返回 **{\"data\": false}** 和“作品 ID 列表不能为空”提示\n- **删除失败**：返回 **{\"data\": false}** 和“历史记录删除失败”提示\n\n## 业务逻辑：\n1. 从请求头或 URL 参数中提取 Token\n2. 验证 Token 是否在白名单中\n3. 从 Token 中解析用户 ID\n4. 校验作品 ID 列表参数有效性\n5. 执行批量逻辑删除（SQL 层面验证 user_id，确保只能删除自己的历史记录）\n6. 返回删除结果\n\n## 注意事项：\n- **需要携带有效的 Token 才能删除历史记录**\n- Token 必须在白名单中（未过期、未登出）\n- **用户只能删除自己的历史记录**\n- 采用逻辑删除方式，数据不会真正从数据库中移除\n- 建议单次批量删除不超过 100 个记录\n",
+        "operationId": "deleteHistory",
+        "parameters": [
+          {
+            "name": "workIds",
+            "in": "query",
+            "description": "要删除的作品 ID 列表（支持单条或多条）",
+            "required": true,
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "integer",
+                "format": "int32"
+              }
+            },
+            "example": "1,2,3"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResponsePojoBoolean"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/comment/add": {
+      "post": {
+        "tags": [
+          "评论接口"
+        ],
+        "summary": "新增评论接口",
+        "description": "# 新增评论（需要登录认证 + 角色权限[11,22,55,66,77]）\n\n## 特性\n- Token 认证（支持 Header 和 URL 参数两种方式）\n- 支持一级评论（对作品评论）和二级评论（回复其他评论）\n- 评论内容长度限制（最多 125 个汉字）\n- 严格的参数校验和逻辑验证\n\n## 参数说明：\n- Authorization: Header 中的 Token，格式为 `Bearer <token>`，或通过 URL 参数 `?token=<token>` 传递\n- workId: **作品 ID**，Integer 类型，必填\n- parentCommentId: **父评论 ID**，Integer 类型，可选（二级评论时必填）\n- commentFloor: **评论层级**，Integer 类型，必填（1 - 作品评论、2 - 二级评论）\n- commentText: **评论内容**，String 类型，必填，最多 125 个汉字\n\n## 返回说明：\n- **新增成功**：返回 **{\"data\": true}** 和\"评论新增成功\"提示\n- **Token 不存在**：返回 **{\"data\": null}** 和\"Token 不存在\"提示\n- **Token 已失效**：返回 **{\"data\": null}** 和\"Token 已失效\"提示\n- **参数缺失**：返回 **{\"data\": false}** 和\"缺少必要参数\"提示\n- **评论层级无效**：返回 **{\"data\": false}** 和\"评论层级无效，必须为 1 或 2\"提示\n- **评论内容过长**：返回 **{\"data\": false}** 和\"评论内容不能超过 125 个汉字\"提示\n- **二级评论缺少父评论ID**：返回 **{\"data\": false}** 和\"二级评论必须提供父评论ID\"提示\n- **一级评论不应有父评论ID**：返回 **{\"data\": false}** 和\"一级评论不应提供父评论ID\"提示\n- **父评论不存在**：返回 **{\"data\": false}** 和\"父评论不存在\"提示\n- **父评论不属于当前作品**：返回 **{\"data\": false}** 和\"父评论不属于当前作品\"提示\n- **新增失败**：返回 **{\"data\": false}** 和\"评论新增失败\"提示\n\n## 业务逻辑：\n1. 从请求头或 URL 参数中提取 Token（支持 Bearer 前缀）\n2. 验证 Token 是否在白名单中\n3. 从 Token 中解析用户 ID\n4. 校验所有必要参数（workId, commentFloor, commentText）\n5. 验证评论层级（必须为 1 或 2）\n6. 验证评论内容长度（不超过 125 个汉字）\n7. 如果评论层级为 2，验证 parentCommentId 不为空\n8. 如果评论层级为 1，验证 parentCommentId 为空\n9. 如果是二级评论，验证父评论是否存在且属于同一作品\n10. 创建评论对象并插入数据库\n11. 返回新增结果\n\n## 注意事项：\n- **需要携带有效的 Token 才能新增评论**\n- Token 必须在白名单中（未过期、未登出）\n- 所有用户角色（11, 22, 55, 66, 77）都可以发表评论\n- 评论内容限制：**最多 125 个汉字**\n- 评论层级只能为 1（对作品评论）或 2（回复其他评论）\n- 二级评论必须提供父评论 ID\n- 一级评论不应提供父评论 ID\n- 父评论必须存在且属于同一作品\n- 评论会自动关联到当前登录用户\n",
+        "operationId": "addComment",
+        "parameters": [
+          {
+            "name": "workId",
+            "in": "query",
+            "description": "作品 ID",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            },
+            "example": 1
+          },
+          {
+            "name": "parentCommentId",
+            "in": "query",
+            "description": "父评论 ID（二级评论时必填）",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            },
+            "example": 5
+          },
+          {
+            "name": "commentFloor",
+            "in": "query",
+            "description": "评论层级（1 - 作品评论、2 - 二级评论）",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "description": "评论层级（1 - 作品评论、2 - 二级评论）",
+              "example": 1,
+              "enum": [
+                "1",
+                "2"
+              ]
+            },
+            "example": 1
+          },
+          {
+            "name": "commentText",
+            "in": "query",
+            "description": "评论内容（最多 125 个汉字）",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "这是一条测试评论"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResponsePojoBoolean"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/auth/register": {
+      "post": {
+        "tags": [
+          "认证接口"
+        ],
+        "summary": "注册接口",
+        "description": "# 注册（无需登录验证）\n\n## 特性\n- 用户名/邮箱唯一性校验\n- 邮箱验证码验证（Redis 存储）\n- SHA-256 密码加密\n- 自动生成随机昵称（可选）\n- 密码二次确认\n\n## 参数说明：\n- username: 用户名，6-16 位，只允许字母、数字和下划线，字符串类型，必填\n- password: 登录密码，字符串类型，必填，建议使用强密码组合\n- confirmPassword: 确认密码，必须与 password 一致，字符串类型，必填\n- nickname: 用户昵称，字符串类型，**可为空**，为空时自动生成随机昵称，长度 **1-20 个字符**\n- email: 邮箱地址，字符串类型，必填，用于接收验证码和后续找回密码\n- vCode: 邮箱验证码，6 位大写字母或数字，字符串类型，必填\n\n## 返回说明：\n- **注册成功**：返回 **{\"data\": {User 对象}}** 和“注册成功”提示\n- **用户名格式错误**：返回 **{\"data\": null}** 和“用户名格式错误”提示\n- **邮箱格式错误**：返回 **{\"data\": null}** 和“邮箱格式错误”提示\n- **验证码格式错误**：返回 **{\"data\": null}** 和“验证码格式错误”提示\n- **两次密码不一致**：返回 **{\"data\": null}** 和“两次输入的密码不一致”提示\n- **验证码错误**：返回 **{\"data\": null}** 和“验证码错误”提示\n- **昵称长度错误**：返回 **{\"data\": null}** 和“昵称长度必须在 1-20 个字符之间”提示\n- **注册失败**：返回 **{\"data\": null}** 和“注册失败：该用户名或邮箱已注册”提示\n\n## 业务逻辑：\n1. 校验用户名格式是否符合规范（6-16 位字母、数字、下划线）\n2. 校验邮箱格式是否正确\n3. 校验验证码格式是否正确（6 位大写字母或数字）\n4. 验证两次输入的密码是否一致\n5. 验证邮箱验证码是否与 Redis 中存储的一致\n6. 如果昵称为空，生成随机默认昵称（格式：user+ 随机词）\n7. **如果昵称不为空，验证长度是否在 1-20 个字符之间**\n8. 对密码进行 SHA-256 哈希加密处理\n9. 创建用户并保存到数据库\n10. 返回用户信息和成功提示\n\n## 注意事项：\n- 昵称参数为**可选参数**，不传或为空时自动生成\n- 验证码有效期由 Redis 配置决定（默认 5 分钟）\n- 密码会使用 **SHA-256** 进行加密存储\n- **用户名**和**邮箱**不可重复注册\n- 建议使用强密码组合（大小写字母 + 数字 + 特殊字符）\n- 两次输入的密码必须完全一致\n",
+        "operationId": "register",
+        "parameters": [
+          {
+            "name": "username",
+            "in": "query",
+            "description": "用户名，6-16 位字母/数字/下划线",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "dev_user"
+          },
+          {
+            "name": "password",
+            "in": "query",
+            "description": "登录密码，会使用 SHA-256 加密存储",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": 123456
+          },
+          {
+            "name": "confirmPassword",
+            "in": "query",
+            "description": "确认密码，必须与密码一致",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": 123456
+          },
+          {
+            "name": "nickname",
+            "in": "query",
+            "description": "用户昵称（可选，为空时自动生成）",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "example": "测试用户"
+          },
+          {
+            "name": "email",
+            "in": "query",
+            "description": "邮箱地址，用于接收验证码",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "test@example.com"
+          },
+          {
+            "name": "vCode",
+            "in": "query",
+            "description": "邮箱验证码，6 位大写字母或数字",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "ABCDEF"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResponsePojoUser"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/auth/logout": {
+      "post": {
+        "tags": [
+          "认证接口"
+        ],
+        "summary": "登出接口",
+        "description": "# 登出（需要登录认证）\n\n## 特性\n- Token 认证（支持 Header 和 URL 参数两种方式）\n- Token 白名单移除（立即失效）\n- 剩余有效期检测\n- 单设备登出（不影响其他设备）\n\n## 参数说明：\n- Authorization: Header 中的 Token，格式为 `Bearer <token>`，或通过 URL 参数 `?token=<token>` 传递\n\n## 返回说明：\n- **登出成功**：返回 **{\"data\": true}** 和\"登出成功，Token 已被禁用\"提示\n- **Token 不存在**：返回 **{\"data\": false}** 和\"Token 不存在\"提示\n- **Token 已失效**：返回 **{\"data\": false}** 和\"Token 已失效\"提示（Token 不在白名单中）\n- **Token 已过期**：返回 **{\"data\": false}** 和\"Token 已过期\"提示\n\n## 业务逻辑：\n1. 从请求头或 URL 参数中提取 Token（支持 Bearer 前缀）\n2. 检查 Token 是否在白名单中\n3. 获取 Token 剩余有效期\n4. 将 Token 从白名单移除\n5. 记录登出日志\n6. 该 Token 将无法再访问任何受保护接口\n\n## 注意事项：\n- Token 从白名单移除后，立即失效\n- 需要携带有效的 Token 才能登出\n- 如果 Token 已过期或不在白名单中，会返回相应提示\n- 同一用户的其他设备 Token 不受影响\n- Token 有效期为 **7 天**\n",
+        "operationId": "logout",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResponsePojoBoolean"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/auth/login": {
+      "post": {
+        "tags": [
+          "认证接口"
+        ],
+        "summary": "登录接口",
+        "description": "# 登录（无需登录认证）\n\n## 特性\n- 支持用户名或邮箱登录\n- JWT Token 生成（有效期 7 天）\n- Token 白名单管理\n- SHA-256 密码验证\n- 账户状态检查\n\n## 参数说明：\n- usernameOrEmail: **用户名**或**邮箱地址**，字符串类型，必填\n- password: 登录密码，字符串类型，必填\n- vCode: 邮箱验证码（6 位大写字母或数字），字符串类型，必填\n\n## 返回说明：\n- **登录成功**：返回 **{\"data\": UserLogin 对象}** ，包含用户信息和 JWT Token\n- **用户名或邮箱格式错误**：返回 **{\"data\": null}** 和\"用户名或邮箱格式错误\"提示\n- **验证码格式错误**：返回 **{\"data\": null}** 和\"验证码格式错误\"提示\n- **验证码错误**：返回 **{\"data\": null}** 和\"验证码错误\"提示\n- **用户不存在**：返回 **{\"data\": null}** 和\"用户不存在\"提示\n- **用户名或密码错误**：返回 **{\"data\": null}** 和\"用户名或密码错误\"提示\n- **账户异常**：返回 **{\"data\": null}** 和\"账户已被禁用\"提示\n\n## 业务逻辑：\n1. 校验用户名格式、邮箱格式、验证码格式\n2. 验证邮箱验证码是否正确（如提供用户名则先查询邮箱）\n3. 根据用户名或邮箱查询用户信息\n4. 验证密码是否正确（比对 SHA-256 哈希值）\n5. 检查用户状态是否正常（status=10 表示正常）\n6. 生成 JWT Token（有效期 7 天）\n7. 将 Token 加入白名单\n8. 返回用户信息和 Token\n\n## 注意事项：\n- Token 有效期为 **7 天**\n- Token 需要保存在客户端，后续请求需在 Header 中携带\n- 建议使用 **HTTPS** 传输以保障安全\n- 密码会自动进行 SHA-256 哈希加密处理后再比对\n- 支持使用用户名**或**邮箱登录\n\n## Token 使用方式：\n- Header 中添加：`Authorization: Bearer <token>`\n- 或者 URL 参数：`?token=<token>`\n",
+        "operationId": "login",
+        "parameters": [
+          {
+            "name": "usernameOrEmail",
+            "in": "query",
+            "description": "用户名或邮箱，6-16 位字母/数字/下划线或标准邮箱格式",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "dev_user"
+          },
+          {
+            "name": "password",
+            "in": "query",
+            "description": "登录密码，会使用 SHA-256 加密后比对",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": 123456
+          },
+          {
+            "name": "vCode",
+            "in": "query",
+            "description": "邮箱验证码，6 位大写字母或数字",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "ABCDEF"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResponsePojoUserLogin"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/auth/delete-account": {
+      "post": {
+        "tags": [
+          "认证接口"
+        ],
+        "summary": "注销接口",
+        "description": "# 注销（需要登录认证）\n\n## 特性\n- Token 认证（支持 Header 和 URL 参数两种方式）\n- 邮箱验证码验证（Redis 存储）\n- 逻辑删除用户账户（is_delete=1）\n- 自动移除该用户所有 Token\n\n## 参数说明：\n- Authorization: Header 中的 Token，格式为 `Bearer <token>`，或通过 URL 参数 `?token=<token>` 传递\n- vCode: 邮箱验证码，6 位大写字母或数字，字符串类型，必填\n\n## 返回说明：\n- **注销成功**：返回 **{\"data\": true}** 和“账户注销成功”提示\n- **Token 不存在**：返回 **{\"data\": false}** 和“Token 不存在”提示\n- **验证码错误**：返回 **{\"data\": false}** 和“验证码错误”提示\n- **注销失败**：返回 **{\"data\": false}** 和“账户注销失败”提示\n\n## 业务逻辑：\n1. 从请求头或 URL 参数中提取 Token\n2. 从 Token 中解析用户 ID\n3. 查询用户信息获取邮箱\n4. 验证邮箱验证码是否正确\n5. 将该用户所有 Token 从白名单移除\n6. 逻辑删除用户账户（设置 is_delete=1）\n7. 记录注销日志\n\n## 注意事项：\n- 注销后账户将被逻辑删除，无法再登录\n- 需要提供正确的邮箱验证码\n- 注销操作不可逆，请谨慎操作\n- 注销后该用户的所有 Token 将立即失效\n- 建议注销前备份重要数据\n",
+        "operationId": "deleteAccount",
+        "parameters": [
+          {
+            "name": "vCode",
+            "in": "query",
+            "description": "邮箱验证码，6 位大写字母或数字",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "ABCDEF"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResponsePojoBoolean"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/admin/works/unban": {
+      "post": {
+        "tags": [
+          "系统管理员接口 - 作品管理"
+        ],
+        "summary": "解封作品接口 - 管理员",
+        "description": "## 功能说明：\n批量解封指定作品，将作品状态设置为正常状态。\n\n## 参数说明：\n- workIds: 要解封的作品 ID 列表，不能为空\n\n## 返回说明：\n- totalCount: 需要解封的作品总数\n- successCount: 成功解封的作品数量\n- failedWorkIds: 解封失败的作品 ID 列表\n\n## 业务逻辑：\n1. 验证当前用户是否为系统管理员（由拦截器自动验证）\n2. 校验作品 ID 列表不为空\n3. 逐个更新 tb_pending_reviews 表中对应作品的状态为 10（正常）\n4. 只更新 data_type = 100（作品类型）的记录\n5. 记录每个作品的操作结果，返回详细的统计信息\n\n## 注意事项：\n- 解封后作品将在前端重新可见\n- 此操作会立即生效，无需重启服务\n- 仅对已封禁的作品有效\n- 即使部分作品解封失败，其他作品仍会成功解封\n",
+        "operationId": "adminUnbanWorks",
+        "parameters": [
+          {
+            "name": "workIds",
+            "in": "query",
+            "description": "目标作品 ID 列表",
+            "required": true,
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "integer",
+                "format": "int32"
+              }
+            },
+            "example": "1,2,3"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResponsePojoAdminBatchOperateWorkResult"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/admin/works/banned": {
+      "post": {
+        "tags": [
+          "系统管理员接口 - 作品管理"
+        ],
+        "summary": "封禁作品接口 - 管理员",
+        "description": "## 功能说明：\n批量封禁指定作品，将作品状态设置为封禁状态。\n\n## 参数说明：\n- workIds: 要封禁的作品 ID 列表，不能为空\n\n## 返回说明：\n- totalCount: 需要封禁的作品总数\n- successCount: 成功封禁的作品数量\n- failedWorkIds: 封禁失败的作品 ID 列表\n\n## 业务逻辑：\n1. 验证当前用户是否为系统管理员（由拦截器自动验证）\n2. 校验作品 ID 列表不为空\n3. 逐个更新 tb_pending_reviews 表中对应作品的状态为 30（封禁）\n4. 只更新 data_type = 100（作品类型）的记录\n5. 记录每个作品的操作结果，返回详细的统计信息\n\n## 注意事项：\n- 封禁后作品将在前端不可见\n- 此操作会立即生效，无需重启服务\n- 建议谨慎使用，封禁前请确认作品确实违规\n- 即使部分作品封禁失败，其他作品仍会成功封禁\n",
+        "operationId": "adminBannedWorks",
+        "parameters": [
+          {
+            "name": "workIds",
+            "in": "query",
+            "description": "目标作品 ID 列表",
+            "required": true,
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "integer",
+                "format": "int32"
+              }
+            },
+            "example": "1,2,3"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResponsePojoAdminBatchOperateWorkResult"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/admin/user/update/user-role-status": {
+      "post": {
+        "tags": [
+          "系统管理员接口 - 用户管理"
+        ],
+        "summary": "批量更新用户信息",
+        "description": "# 批量更新用户信息（需要登录认证 + 角色权限[77]）\n\n## 特性\n- 仅系统管理员可调用\n- 支持批量修改用户的角色和/或状态\n- 自动清除被更新用户的角色缓存\n- 修改状态时自动移除该用户所有 Token，强制所有设备下线\n- 记录操作日志（update_user 字段设置为执行操作的管理员 ID）\n\n## 参数说明：\n- **userIds**: 目标用户 ID 列表（必填）\n- **newRole**: 新角色代码（可选），可选值：\n  - 11: 普通用户\n  - 22: 创作者\n  - 55: 审核员\n  - 66: 工单管理员\n  - 77: 系统管理员\n- **newStatus**: 新状态代码（可选），可选值：\n  - 10: 正常\n  - 20: 冻结\n  - 30: 封禁\n\n## 返回说明：\n- **成功**：返回 **{\"data\": {AdminBatchUpdateUserResult}}** 包含统计信息\n- **失败**：返回 **{\"data\": null}** 和错误提示\n\n## 业务逻辑：\n1. 验证当前用户是否为系统管理员（由拦截器自动验证）\n2. 从 Token 中获取当前管理员 ID\n3. 遍历用户 ID 列表，逐个执行更新逻辑\n4. 清除每个被更新用户的角色缓存\n5. 如果修改了状态，强制下线该用户的所有 Token\n6. 返回包含总数、成功数和失败 ID 列表的结果\n\n## 安全限制：\n- 管理员不能修改自己的信息\n- 目标用户必须存在且未被删除\n- 至少需要提供 newRole 或 newStatus 中的一个\n\n## 注意事项：\n- 修改角色后，目标用户下次请求时会自动获取新的角色信息\n- 修改状态后，会强制该用户所有设备下线\n- 建议谨慎分配高权限角色（如 77-系统管理员）\n",
+        "operationId": "batchUpdateUserInfo",
+        "parameters": [
+          {
+            "name": "userIds",
+            "in": "query",
+            "description": "目标用户 ID 列表",
+            "required": true,
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "integer",
+                "format": "int32"
+              }
+            },
+            "example": "123,456"
+          },
+          {
+            "name": "newRole",
+            "in": "query",
+            "description": "新角色代码（可选，11-普通用户, 22-创作者, 55-审核员, 66-工单管理员, 77-系统管理员）",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "description": "新角色代码（可选，11-普通用户, 22-创作者, 55-审核员, 66-工单管理员, 77-系统管理员）",
+              "example": 22,
+              "enum": [
+                "11",
+                "22",
+                "55",
+                "66",
+                "77"
+              ]
+            },
+            "example": 22
+          },
+          {
+            "name": "newStatus",
+            "in": "query",
+            "description": "新状态代码（可选，10-正常, 20-冻结, 30-封禁）",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "description": "新状态代码（可选，10-正常, 20-冻结, 30-封禁）",
+              "example": 20,
+              "enum": [
+                "10",
+                "20",
+                "30"
+              ]
+            },
+            "example": 20
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResponsePojoAdminBatchUpdateUserResult"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/admin/user/update/password": {
+      "post": {
+        "tags": [
+          "系统管理员接口 - 用户管理"
+        ],
+        "summary": "批量重置用户密码",
+        "description": "# 批量重置用户密码（需要登录认证 + 角色权限[77]）\n\n## 特性\n- **管理员专属接口**：仅系统管理员可调用\n- **批量处理**：支持一次性重置多个用户的密码\n- **自动生成随机密码**：使用安全随机算法生成 12 位临时密码\n- **强制所有设备下线**：移除用户所有 Token，确保账户安全\n- **邮件通知**：所有用户密码重置完成后，批量发送新密码到对应邮箱\n- **密码加密存储**：使用 SHA-256 加密后存储\n\n## 参数说明：\n- userIds: **用户 ID 列表**，Integer 数组类型，必填\n  * 单个用户：传入 [1]\n  * 批量用户：传入 [1, 2, 3]\n\n## 返回说明：\n- **重置成功**：返回 **{\"data\": true}** 和“批量重置密码成功，已发送邮件”提示\n- **用户 ID 列表为空**：返回 **{\"data\": false}** 和“用户 ID 列表不能为空”提示\n- **部分失败**：返回 **{\"data\": true}** 并提示实际成功的数量\n\n## 业务逻辑：\n1. 校验用户 ID 列表参数有效性\n2. 遍历用户 ID 列表，逐个处理：\n   a. 查询用户信息\n   b. 生成 12 位随机密码\n   c. 对密码进行 SHA-256 加密\n   d. 更新数据库中的用户密码\n   e. 强制移除用户所有 Token（使所有设备下线）\n3. 所有用户密码重置完成后，批量渲染邮件模板并发送\n4. 记录操作日志\n\n## 注意事项：\n- 这是一个**管理员接口**，需要管理员身份认证\n- 调用后用户的**所有登录会话将被强制终止**\n- 新生成的密码为**临时密码**，建议用户登录后立即修改\n- 密码以**明文形式**通过邮件发送，请确保邮件传输安全\n- 原密码会被覆盖，**无法恢复**\n- 如果某个用户不存在或处理失败，会跳过该用户并继续处理下一个\n",
+        "operationId": "batchUpdateUserPassword",
+        "parameters": [
+          {
+            "name": "userIds",
+            "in": "query",
+            "description": "目标用户 ID 列表",
+            "required": true,
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "integer",
+                "format": "int32"
+              }
+            },
+            "example": "1,2,3"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResponsePojoAdminResetPasswordResult"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/admin/user/refresh-permission-cache": {
+      "post": {
+        "tags": [
+          "系统管理员接口 - 用户管理"
+        ],
+        "summary": "刷新所有用户权限缓存",
+        "description": "# 刷新所有用户权限缓存（需要登录认证 + 角色权限[77]）\n\n## 特性\n- 仅系统管理员可调用\n- 清除所有用户的角色缓存（role:* 键）\n- 确保所有用户下次请求时获取最新的角色信息\n- 适用于批量修改用户角色后的缓存清理\n\n## 参数说明：\n- 无需参数\n\n## 返回说明：\n- **成功**：返回 **{\"data\": 清除数量}** 和\"权限缓存刷新成功\"提示\n- **失败**：返回 **{\"data\": null}** 和错误提示\n\n## 业务逻辑：\n1. 验证当前用户是否为系统管理员\n2. 使用 SCAN 命令查找所有 role: 前缀的键\n3. 批量删除所有匹配的角色缓存键\n4. 返回清除的缓存数量\n\n## 注意事项：\n- 此操作会影响所有在线用户的权限验证\n- 清除后，所有用户下次请求时会重新从数据库加载角色信息\n- 建议在批量修改用户角色后调用\n- 使用 SCAN 而非 KEYS，避免阻塞 Redis\n- 缓存会在后续请求中自动重建\n\n## 使用场景：\n- 批量修改多个用户角色后\n- 系统权限配置变更后\n- 需要强制所有用户重新验证权限时\n",
+        "operationId": "refreshPermissionCache",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResponsePojoInteger"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/admin/user/delete": {
+      "post": {
+        "tags": [
+          "系统管理员接口 - 用户管理"
+        ],
+        "summary": "批量删除用户账户",
+        "description": "# 批量删除用户账户（需要登录认证 + 角色权限[77]）\n\n## 特性\n- 仅系统管理员可调用\n- 支持批量逻辑删除用户账户（is_delete = 1）\n- 自动清除被删用户的所有 Token，强制所有设备下线\n- 清除被删用户的角色缓存\n- 记录操作日志（update_user 字段设置为执行操作的管理员 ID）\n\n## 参数说明：\n- **userIds**: 目标用户 ID 列表（必填）\n\n## 返回说明：\n- **成功**：返回 **{\"data\": {AdminBatchDeleteUserResult}}** 包含统计信息\n- **失败**：返回 **{\"data\": null}** 和错误提示\n\n## 业务逻辑：\n1. 验证当前用户是否为系统管理员（由拦截器自动验证）\n2. 从 Token 中获取当前管理员 ID\n3. 遍历用户 ID 列表，逐个执行逻辑删除\n4. 清除每个被删用户的所有 Token\n5. 清除每个被删用户的角色缓存\n6. 返回包含总数、成功数和失败 ID 列表的结果\n\n## 安全限制：\n- 管理员不能删除自己的账户\n- 目标用户必须存在且未被删除\n- 删除后用户无法登录，但数据保留在数据库中\n\n## 注意事项：\n- 这是逻辑删除，不是物理删除\n- 删除后用户的所有 Token 立即失效\n- 建议谨慎使用，确保有充分的理由\n",
+        "operationId": "batchDeleteUsers",
+        "parameters": [
+          {
+            "name": "userIds",
+            "in": "query",
+            "description": "目标用户 ID 列表",
+            "required": true,
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "integer",
+                "format": "int32"
+              }
+            },
+            "example": "123,456"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResponsePojoAdminBatchDeleteUserResult"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/admin/user/create": {
+      "post": {
+        "tags": [
+          "系统管理员接口 - 用户管理"
+        ],
+        "summary": "创建新用户",
+        "description": "# 创建新用户（需要登录认证 + 角色权限[77]）\n\n## 特性\n- 仅系统管理员可调用\n- 无需验证码验证\n- 自动加密密码（SHA-256）\n- 自动生成 UUID 和随机头像\n- 可指定角色和状态\n- 记录创建者（adminId）\n- 密码二次确认\n\n## 参数说明：\n- **username**: 用户名（必填，唯一）\n- **password**: 密码（必填，明文，将自动加密）\n- **confirmPassword**: 确认密码（必填，必须与 password 一致）\n- **nickname**: 昵称（必填）\n- **email**: 邮箱（必填，唯一）\n- **role**: 角色代码（可选，默认 11），可选值：\n  - 11: 普通用户\n  - 22: 创作者\n  - 55: 审核员\n  - 66: 工单管理员\n  - 77: 系统管理员\n- **status**: 状态代码（可选，默认 10），可选值：\n  - 10: 正常\n  - 20: 冻结\n  - 30: 封禁\n\n## 返回说明：\n- **成功**：返回 **{\"data\": {User 对象}}** 和\"用户创建成功\"提示\n- **两次密码不一致**：返回 **{\"data\": null}** 和\"两次输入的密码不一致\"提示\n- **失败**：返回 **{\"data\": null}** 和错误提示\n\n## 业务逻辑：\n1. 验证当前用户是否为系统管理员（由拦截器自动验证）\n2. 从 Token 中获取当前管理员 ID\n3. 验证参数合法性\n4. 验证两次输入的密码是否一致\n5. 检查用户名和邮箱是否已存在\n6. 加密密码（SHA-256）\n7. 生成 UUID 和随机头像\n8. 创建用户记录\n9. 返回创建的用户信息\n\n## 安全限制：\n- 用户名必须唯一\n- 邮箱必须唯一\n- 密码会自动加密，不会存储明文\n- 角色和状态代码必须在允许范围内\n- 两次输入的密码必须完全一致\n\n## 注意事项：\n- 管理员可以直接设置用户角色，包括高权限角色\n- 建议谨慎分配高权限角色（如 77-系统管理员）\n- 创建的用户初始状态为正常，可以立即登录\n- 密码在传输过程中建议使用 HTTPS 加密\n- 两次输入的密码必须完全一致\n",
+        "operationId": "createUser",
+        "parameters": [
+          {
+            "name": "username",
+            "in": "query",
+            "description": "用户名（必填，唯一）",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "new_user"
+          },
+          {
+            "name": "password",
+            "in": "query",
+            "description": "密码（必填，明文，将自动加密）",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": 123456
+          },
+          {
+            "name": "confirmPassword",
+            "in": "query",
+            "description": "确认密码（必填，必须与密码一致）",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": 123456
+          },
+          {
+            "name": "nickname",
+            "in": "query",
+            "description": "昵称（必填）",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "新用户"
+          },
+          {
+            "name": "email",
+            "in": "query",
+            "description": "邮箱（必填，唯一）",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "newuser@example.com"
+          },
+          {
+            "name": "role",
+            "in": "query",
+            "description": "角色代码（可选，默认 11-普通用户）",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "description": "角色代码（可选，默认 11-普通用户）",
+              "example": 11,
+              "enum": [
+                "11",
+                "22",
+                "55",
+                "66",
+                "77"
+              ]
+            },
+            "example": 11
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "description": "状态代码（可选，默认 10-正常）",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "description": "状态代码（可选，默认 10-正常）",
+              "example": 10,
+              "enum": [
+                "10",
+                "20",
+                "30"
+              ]
+            },
+            "example": 10
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResponsePojoBoolean"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/system-info": {
+      "get": {
+        "tags": [
+          "ServerRoot"
+        ],
+        "summary": "获取系统信息",
+        "description": "# 获取当前服务器的系统信息（无需登录认证）\n\n## 特性\n- 公开接口（无需认证）\n- 实时系统信息采集\n- Oshi 库支持\n- 多维度系统指标（JVM/OS/CPU/内存/磁盘）\n\n## 返回说明：\n- 成功：返回 **\"data\": {SystemInfo}** 和\"获取系统信息成功\"提示\n- 失败：返回 **\"data\": null** 和\"获取系统信息失败\"提示\n\n## 包含信息：\n- JVM 信息（版本、厂商、运行时间等）\n- 操作系统信息（名称、版本、架构等）\n- CPU 信息（核心数、使用率等）\n- 内存信息（总量、已用、可用等）\n- 磁盘信息（总空间、已用空间、可用空间等）\n\n## 注意事项：\n- 该接口不涉及敏感信息，无需认证\n- 数据实时获取，性能开销较小\n",
+        "operationId": "getSystemInfo",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResponsePojoSystemInfo"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/health": {
+      "get": {
+        "tags": [
+          "ServerRoot"
+        ],
+        "summary": "服务健康检查",
+        "description": "# 检查服务是否正常运行（无需登录认证）\n\n## 特性\n- 公开接口（无需认证）\n- HTTP 重定向\n- 服务状态监控页面\n\n## 功能说明：\n- 通过访问该接口判断应用是否启动成功\n- 跳转到服务运行状态监控页面\n\n## 返回说明：\n- 成功：重定向到 /server-status/running.html 页面\n- 可通过页面查看系统运行状态信息\n",
+        "operationId": "health",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/work/series/page/{userId}/{current}/{size}": {
+      "get": {
+        "tags": [
+          "作品合集接口"
+        ],
+        "summary": "分页查询用户作品系列接口",
+        "description": "# 分页查询用户作品系列（无需登录认证）\n\n## 特性\n- 公开接口（无需 Token 认证）\n- 支持分页查询\n- 自动过滤逻辑删除数据\n- 按创建时间倒序排列\n\n## 参数说明：\n- **userId**: 用户 ID，Integer 类型，必填\n- **current**: 当前页码，Integer 类型，必填，从 1 开始\n- **size**: 每页数量，Integer 类型，必填，范围 1-100\n\n## 返回说明：\n- **查询成功**：返回 **{\"data\": IPage<Series>}** ，包含分页信息和系列列表\n- **用户 ID 无效**：返回 **{\"data\": null}** 和“用户 ID 无效”提示\n\n## 业务逻辑：\n1. 校验用户 ID、页码和每页数量参数有效性\n2. 调用 Service 层进行分页查询\n3. 自动排除逻辑删除的数据（is_delete=0）\n4. 按创建时间倒序返回结果\n\n## 注意事项：\n- **此接口为公开接口，无需登录即可访问**\n- 如果用户没有作品系列，返回空列表 []\n- 建议合理设置每页数量（size），避免一次性加载过多数据\n",
+        "operationId": "getSeriesList",
+        "parameters": [
+          {
+            "name": "userId",
+            "in": "path",
+            "description": "用户 ID",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            },
+            "example": 1
+          },
+          {
+            "name": "current",
+            "in": "path",
+            "description": "当前页码，从 1 开始",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            },
+            "example": 1
+          },
+          {
+            "name": "size",
+            "in": "path",
+            "description": "每页数量，范围 1-100",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            },
+            "example": 10
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResponsePojoIPageSeries"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/work/page/{current}/{size}": {
+      "get": {
+        "tags": [
+          "作品接口"
+        ],
+        "summary": "分页查询作品列表",
+        "description": "# 分页查询作品列表（无需登录认证）\n\n## 特性\n- 公开接口（无需认证）\n- MyBatis-Plus 分页支持\n- 多条件组合查询（作品标题/用户 ID/系列 ID/是否原创）\n- 模糊匹配与精确匹配\n- 仅返回未删除的作品\n- 按创建时间倒序排列（最新作品优先）\n\n## 参数说明：\n- current: **当前页码**，Long 类型，必填，**从 1 开始**，默认为 1\n- size: **每页大小**，Long 类型，必填，范围 1-100，默认为 10\n- workTitle: **作品标题**（可选），String 类型，支持模糊查询\n- userId: **用户 ID**（可选），Integer 类型，支持精确查询\n- seriesId: **系列 ID**（可选），Integer 类型，支持精确查询\n- isOriginal: **是否原创**（可选），Boolean 类型，支持精确查询（true=原创，false=转载）\n\n## 返回说明：\n- **查询成功**：返回 **{\"data\": {IPage<Works>对象}}** ，包含作品列表和分页信息\n- **参数错误**：返回 **{\"data\": null}** 和\"页码或每页大小错误\"提示\n- **无数据**：返回 **{\"data\": null}** 和\"查询失败，返回结果为空\"提示\n\n## 业务逻辑：\n1. 校验页码和每页大小参数（current>=1, 1<=size<=100）\n2. 构建 MyBatis-Plus 分页对象\n3. 根据条件查询作品信息（支持多条件组合）\n4. 仅返回未删除的作品（is_delete = false）\n5. 按创建时间倒序排列（create_time DESC）\n6. 返回分页结果集（IPage<Works>）\n\n## 注意事项：\n- 所有查询条件均为**可选参数**，可不传\n- 支持多个条件组合查询\n- 作品标题支持**模糊匹配**\n- 用户 ID、系列 ID 和是否原创支持**精确匹配**\n- 默认返回完整 Works 实体字段\n- 已自动过滤逻辑删除的作品（is_delete=0）\n- 每页大小限制：**1-100**\n- 图片 URL 为文件名，完整访问路径为：`/api/image/works?filePath={img_url}`\n- 使用 **RESTful 风格**路径参数，格式：`/homepage/{current}/{size}`\n",
+        "operationId": "getHomepageWorks",
+        "parameters": [
+          {
+            "name": "current",
+            "in": "path",
+            "description": "当前页码，从 1 开始",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "example": 1
+          },
+          {
+            "name": "size",
+            "in": "path",
+            "description": "每页大小，范围 1-100",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "example": 10
+          },
+          {
+            "name": "workTitle",
+            "in": "query",
+            "description": "作品标题（可选），支持模糊查询",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "userId",
+            "in": "query",
+            "description": "用户 ID（可选），支持精确查询",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "seriesId",
+            "in": "query",
+            "description": "系列 ID（可选），支持精确查询",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "isOriginal",
+            "in": "query",
+            "description": "是否原创（可选）",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "description": "是否原创（可选）",
+              "enum": [
+                "true",
+                "false"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResponsePojoIPageWorks"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/work/detail/{workId}": {
+      "get": {
+        "tags": [
+          "作品接口"
+        ],
+        "summary": "查询单个作品",
+        "description": "# 查询单个作品（无需登录认证）\n\n## 特性\n- 公开接口（无需认证）\n- 根据作品 ID 精确查询\n- 仅返回未删除的作品\n- 返回完整的 Works 实体字段\n\n## 参数说明：\n- Authorization: Header 中的 Token（可选），格式为 `Bearer <token>`，或通过 URL 参数 `?token=<token>` 传递。如果提供有效 Token，将记录访问历史。\n- workId: **作品 ID**，Integer 类型，必填\n\n## 返回说明：\n- **查询成功**：返回 **{\"data\": {Works对象}}** ，包含作品详细信息\n- **作品不存在**：返回 **{\"data\": null}** 和\"作品不存在或已删除\"提示\n- **参数错误**：返回 **{\"data\": null}** 和\"作品 ID 无效\"提示\n\n## 业务逻辑：\n1. 校验作品 ID 参数有效性\n2. 查询作品信息\n3. 验证作品是否存在且未删除\n4. 返回作品详细信息\n\n## 注意事项：\n- 这是一个**公开接口**，无需 Token 认证\n- 只能查询**未删除**的作品（is_delete=0）\n- 图片 URL 为文件名，完整访问路径为：`/api/image/works?filePath={img_url}`\n- 如果作品不存在或已删除，返回 null\n",
+        "operationId": "getWorkById",
+        "parameters": [
+          {
+            "name": "workId",
+            "in": "path",
+            "description": "作品 ID",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            },
+            "example": 1
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResponsePojoWorks"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/user/profile/page/{current}/{size}": {
+      "get": {
+        "tags": [
+          "用户基础资料接口"
+        ],
+        "summary": "分页查询用户信息",
+        "description": "# 分页查询用户信息（无需登录认证）\n\n## 特性\n- Token 认证（通过拦截器自动验证）\n- MyBatis-Plus 分页支持\n- 关键词统一查询（同时搜索用户名/邮箱/昵称/UUID）\n- 模糊匹配与精确匹配\n- UUID 二进制转换\n\n## 参数说明：\n- current: 当前页码，**从 1 开始**，Long 类型，必填，默认为 1\n- size: 每页大小，Long 类型，必填，默认为 10，范围 1-100\n- keyword: **关键词**（可选），字符串类型\n  * 如果输入的是标准 UUID 格式，则进行**精确匹配**\n  * 否则同时对用户名、邮箱、昵称进行**模糊匹配**\n\n## 返回说明：\n- **查询成功**：返回 **{\"data\": {IPage<User>对象}}** ，包含用户列表和分页信息\n- **参数错误**：返回 **{\"data\": null}** 和\"页码或每页大小错误\"提示\n- **UUID 格式错误**：返回 **{\"data\": null}** 和\"UUID 格式错误\"提示\n\n## 业务逻辑：\n1. 校验页码和每页大小参数（current>=1, 1<=size<=100）\n2. 判断关键词类型：\n   - 如果是标准 UUID 格式，转换为 byte 数组进行精确查询\n   - 否则作为普通关键词，同时对用户名、邮箱、昵称进行模糊查询\n3. 构建 MyBatis-Plus 分页对象\n4. 根据条件查询用户信息\n5. 返回分页结果集\n\n## 注意事项：\n- **关键词为可选参数**，可不传\n- 如果关键词是标准 UUID 格式（如：550e8400-e29b-41d4-a716-446655440000），则进行**精确匹配**\n- 如果关键词不是 UUID 格式，则同时对用户名、邮箱、昵称进行**模糊匹配**\n- 默认返回 8 个核心字段（user_id, user_uuid, username, password, nickname, avatar_url, email, status）\n- 已自动过滤逻辑删除的用户（is_delete=0）\n- 每页大小限制：**1-100**\n",
+        "operationId": "getPageUserInfo",
+        "parameters": [
+          {
+            "name": "current",
+            "in": "path",
+            "description": "当前页码，从 1 开始",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "example": 1
+          },
+          {
+            "name": "size",
+            "in": "path",
+            "description": "每页大小，范围 1-100",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "example": 10
+          },
+          {
+            "name": "keyword",
+            "in": "query",
+            "description": "关键词（可选），支持 UUID 精确查询或用户名/邮箱/昵称模糊查询",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResponsePojoIPageUser"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/user/profile/page-by-role/{current}/{size}": {
+      "get": {
+        "tags": [
+          "用户基础资料接口"
+        ],
+        "summary": "按角色分页查询用户信息",
+        "description": "# 按角色分页查询用户信息（无需登录认证）\n\n## 特性\n- 公开接口（无需 Token 认证）\n- MyBatis-Plus 分页支持\n- 支持单个或多个角色筛选\n- 已自动过滤逻辑删除的用户\n\n## 参数说明：\n- current: 当前页码，**从 1 开始**，Long 类型，必填，默认为 1\n- size: 每页大小，Long 类型，必填，默认为 10，范围 1-100\n- userRoles: **用户角色列表**（可选），Integer 数组类型，支持传递多个角色\n  * 11-普通用户, 22-创作者, 55-审核员, 66-工单管理员, 77-系统管理员\n  * 可以传递单个角色或多个角色，如：?userRoles=11 或 ?userRoles=11&userRoles=22\n\n## 返回说明：\n- **查询成功**：返回 **{\"data\": {IPage<User>对象}}** ，包含用户列表和分页信息\n- **参数错误**：返回 **{\"data\": null}** 和\"页码或每页大小错误\"提示\n- **无符合条件的用户**：返回 **{\"data\": null}** 和\"查询失败，返回结果为空\"提示\n\n## 业务逻辑：\n1. 校验页码和每页大小参数（current>=1, 1<=size<=100）\n2. 如果提供了 userRoles 参数，则按角色筛选用户（支持多角色 OR 查询）\n3. 如果未提供 userRoles 参数，则查询所有用户\n4. 构建 MyBatis-Plus 分页对象\n5. 根据条件查询用户信息\n6. 将二进制 UUID 转换为字符串格式\n7. 返回分页结果集\n\n## 注意事项：\n- **userRoles 为可选参数**，可不传，不传则查询所有用户\n- 支持传递多个角色，多个角色之间是 OR 关系（满足任一角色即可）\n- 默认返回 8 个核心字段（user_id, user_uuid, username, password, nickname, avatar_url, email, status, user_role）\n- 已自动过滤逻辑删除的用户（is_delete=0）\n- 每页大小限制：**1-100**\n- 合法的角色代码：11-普通用户, 22-创作者, 55-审核员, 66-工单管理员, 77-系统管理员\n",
+        "operationId": "getPageUserInfoByRole",
+        "parameters": [
+          {
+            "name": "current",
+            "in": "path",
+            "description": "当前页码，从 1 开始",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "example": 1
+          },
+          {
+            "name": "size",
+            "in": "path",
+            "description": "每页大小，范围 1-100",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "example": 10
+          },
+          {
+            "name": "userRoles",
+            "in": "query",
+            "description": "用户角色列表（可选），支持多个角色",
+            "required": false,
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "integer",
+                "format": "int32"
+              }
+            },
+            "example": 11
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResponsePojoIPageUser"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/user/profile/info/{userId}": {
+      "get": {
+        "tags": [
+          "用户基础资料接口"
+        ],
+        "summary": "根据用户 ID 查询用户信息",
+        "description": "# 根据用户 ID 查询用户信息（无需登录认证）\n\n## 特性\n- 公开接口（无需 Token 认证）\n- 精确查询单个用户\n- 自动转换二进制 UUID 为字符串格式\n\n## 参数说明：\n- userId: **用户 ID**，Integer 类型，路径变量，必填\n\n## 返回说明：\n- **查询成功**：返回 **{\"data\": {User对象}}** ，包含用户详细信息\n- **用户 ID 无效**：返回 **{\"data\": null}** 和\"用户 ID 不能为空\"提示\n- **用户不存在**：返回 **{\"data\": null}** 和\"用户不存在\"提示\n\n## 业务逻辑：\n1. 校验用户 ID 参数有效性\n2. 根据用户 ID 查询用户信息\n3. 将二进制 UUID 转换为字符串格式\n4. 返回用户详细信息\n\n## 注意事项：\n- 这是一个**公开接口**，无需 Token 认证\n- 只返回**未删除**的用户（is_delete=0）\n- 返回完整的用户信息（包括密码字段，前端应自行决定是否展示）\n- 用户 ID 必须是有效的正整数\n",
+        "operationId": "getUserInfoById",
+        "parameters": [
+          {
+            "name": "userId",
+            "in": "path",
+            "description": "用户 ID",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            },
+            "example": 1
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResponsePojoUser"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/user/data/list": {
+      "get": {
+        "tags": [
+          "用户拓展数据接口"
+        ],
+        "summary": "查询用户所有拓展数据接口",
+        "description": "# 查询用户所有拓展数据（无需登录认证）\n\n## 特性\n- 公开接口（无需 Token 认证）\n- 自动过滤逻辑删除数据\n- 按创建时间倒序排列\n\n## 参数说明：\n- userId: 用户 ID，Integer 类型，必填\n\n## 返回说明：\n- **查询成功**：返回 **{\"data\": [UserData 列表]}** ，包含用户的所有拓展数据\n- **用户 ID 无效**：返回 **{\"data\": null}** 和\"用户 ID 无效\"提示\n- **用户不存在**：返回 **{\"data\": null}** 和\"用户不存在\"提示\n- **查询失败**：返回 **{\"data\": null}** 和\"查询失败\"提示\n\n## 业务逻辑：\n1. 校验用户 ID 参数有效性\n2. 检查用户是否存在\n3. 查询用户的所有拓展数据（自动排除逻辑删除的数据）\n4. 按创建时间倒序返回结果\n5. 返回拓展数据列表\n\n## 注意事项：\n- **此接口为公开接口，无需登录即可访问**\n- 自动过滤已逻辑删除的数据（is_delete=0）\n- 返回结果按创建时间倒序排列（最新的在前）\n- 如果用户没有拓展数据，返回空列表 []\n- 常见的数据名称示例：电话、邮箱、网站、微信、QQ 等\n",
+        "operationId": "getUserDataList",
+        "parameters": [
+          {
+            "name": "userId",
+            "in": "query",
+            "description": "用户 ID",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            },
+            "example": 1
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResponsePojoListUserData"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/image/work/get": {
+      "get": {
+        "tags": [
+          "图像接口"
+        ],
+        "summary": "获取作品图片",
+        "description": "# 获取作品图片（无需登录认证）\n\n## 特性\n- 公开接口（无需认证）\n- 路径安全校验（防目录遍历攻击）\n- 文件类型白名单（JPG/JPEG/PNG）\n- HTTP 缓存支持（1小时）\n- 多层子目录支持\n\n## 参数说明：\n- filePath: **图像相对路径**，字符串类型，必填，支持子目录结构\n\n## 返回说明：\n- **获取成功**：直接返回图片二进制数据，Content-Type 为 image/png 或 image/jpeg\n- **文件不存在**：返回 **404 Not Found**\n- **非法路径**：返回 **400 Bad Request**（包含 .. 或 / 开头）\n- **不支持的格式**：返回 **400 Bad Request**（非 JPG/JPEG/PNG 格式）\n- **路径越权**：返回 **403 Forbidden**（超出允许目录范围）\n- **服务器错误**：返回 **500 Internal Server Error**\n\n## 业务逻辑：\n1. 校验文件路径安全性（禁止 .. 和绝对路径）\n2. 检查文件扩展名是否在白名单中（jpg/jpeg/png）\n3. 构建完整文件路径并验证文件存在性\n4. 确保文件在允许的目录下（~/.pix_vision/data/works/）\n5. 设置响应头 Content-Type 和 Cache-Control\n6. 返回图片二进制数据\n\n## 注意事项：\n- 该接口**无需认证**，任何人都可以访问\n- 图片会自动缓存 **1 小时**（Cache-Control: max-age=3600）\n- 支持子目录结构，建议按日期或用户分类，如：`2024/04/artwork.png`\n- **仅支持 JPG、JPEG、PNG 格式**的图片\n- 文件路径相对于 `~/.pix_vision/data/works/` 目录\n- 适用于展示用户上传的作品图片\n",
+        "operationId": "getWorkImage",
+        "parameters": [
+          {
+            "name": "filePath",
+            "in": "query",
+            "description": "图像相对路径，支持子目录，如：2024/04/artwork.png",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "artwork_001.png"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/image/logo/get": {
+      "get": {
+        "tags": [
+          "图像接口"
+        ],
+        "summary": "获取Logo图片",
+        "description": "# 获取 Logo 图片（无需登录认证）\n\n## 特性\n- 公开接口（无需认证）\n- 路径安全校验（防目录遍历攻击）\n- 文件类型白名单（JPG/JPEG/PNG）\n- HTTP 缓存支持（1小时）\n- 静态资源访问\n\n## 参数说明：\n- filePath: **图像文件名**，字符串类型，必填\n\n## 返回说明：\n- **获取成功**：直接返回图片二进制数据，Content-Type 为 image/png 或 image/jpeg\n- **文件不存在**：返回 **404 Not Found**\n- **非法路径**：返回 **400 Bad Request**（包含 .. 或 / 开头）\n- **不支持的格式**：返回 **400 Bad Request**（非 JPG/JPEG/PNG 格式）\n- **路径越权**：返回 **403 Forbidden**（超出允许目录范围）\n- **服务器错误**：返回 **500 Internal Server Error**\n\n## 业务逻辑：\n1. 校验文件路径安全性（禁止 .. 和绝对路径）\n2. 检查文件扩展名是否在白名单中（jpg/jpeg/png）\n3. 构建完整文件路径并验证文件存在性\n4. 确保文件在允许的目录下（~/.pix_vision/data/logo-img/）\n5. 设置响应头 Content-Type 和 Cache-Control\n6. 返回图片二进制数据\n\n## 注意事项：\n- 该接口**无需认证**，任何人都可以访问\n- 图片会自动缓存 **1 小时**（Cache-Control: max-age=3600）\n- Logo 图片通常不包含子目录，直接使用文件名即可\n- **仅支持 JPG、JPEG、PNG 格式**的图片\n- 文件路径相对于 `~/.pix_vision/data/logo-img/` 目录\n- 适用于网站 Logo、品牌标识等静态图片资源\n",
+        "operationId": "getLogo",
+        "parameters": [
+          {
+            "name": "filePath",
+            "in": "query",
+            "description": "图像文件名，如：dark.png",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "dark.png"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/image/avatar/get": {
+      "get": {
+        "tags": [
+          "图像接口"
+        ],
+        "summary": "获取头像图片",
+        "description": "# 获取用户头像图片（无需登录认证）\n\n## 特性\n- 公开接口（无需认证）\n- 路径安全校验（防目录遍历攻击）\n- 文件类型白名单（JPG/JPEG/PNG）\n- HTTP 缓存支持（1小时）\n- 子目录结构支持\n\n## 参数说明：\n- filePath: **图像相对路径**，字符串类型，必填，支持子目录结构\n\n## 返回说明：\n- **获取成功**：直接返回图片二进制数据，Content-Type 为 image/png 或 image/jpeg\n- **文件不存在**：返回 **404 Not Found**\n- **非法路径**：返回 **400 Bad Request**（包含 .. 或 / 开头）\n- **不支持的格式**：返回 **400 Bad Request**（非 JPG/JPEG/PNG 格式）\n- **路径越权**：返回 **403 Forbidden**（超出允许目录范围）\n- **服务器错误**：返回 **500 Internal Server Error**\n\n## 业务逻辑：\n1. 校验文件路径安全性（禁止 .. 和绝对路径）\n2. 检查文件扩展名是否在白名单中（jpg/jpeg/png）\n3. 构建完整文件路径并验证文件存在性\n4. 确保文件在允许的目录下（~/.pix_vision/data/avatar/）\n5. 设置响应头 Content-Type 和 Cache-Control\n6. 返回图片二进制数据\n\n## 注意事项：\n- 该接口**无需认证**，任何人都可以访问\n- 图片会自动缓存 **1 小时**（Cache-Control: max-age=3600）\n- 支持子目录结构，如：`default/11.png`、`custom/user_avatar.jpg`\n- **仅支持 JPG、JPEG、PNG 格式**的图片\n- 文件路径相对于 `~/.pix_vision/data/avatar/` 目录\n",
+        "operationId": "getAvatar",
+        "parameters": [
+          {
+            "name": "filePath",
+            "in": "query",
+            "description": "图像相对路径，支持子目录，如：default/11.png",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "default/1.png"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/history/{current}/{size}": {
+      "get": {
+        "tags": [
+          "历史记录接口"
+        ],
+        "summary": "查看个人访问历史记录",
+        "description": "# 查看个人访问历史记录（需要登录认证 + 分页）\n\n## 特性\n- 需要 Token 认证\n- MyBatis-Plus 分页支持\n- 返回当前用户访问过的作品列表（每个作品只返回一条最新记录）\n- 仅返回未删除的作品\n- 按访问时间倒序排列（最新的在前）\n\n## 参数说明：\n- Authorization: Header 中的 Token，格式为 `Bearer <token>`，或通过 URL 参数 `?token=<token>` 传递\n- current: **当前页码**，Long 类型，必填，**从 1 开始**，默认为 1\n- size: **每页大小**，Long 类型，必填，范围 1-100，默认为 10\n\n## 返回说明：\n- **查询成功**：返回 **{\"data\": {IPage<History>对象}}** ，包含作品列表和分页信息\n- **Token 不存在或失效**：返回 **{\"data\": null}** 和错误提示\n- **无历史记录**：返回 **{\"data\": null}** 和空列表\n\n## 业务逻辑：\n1. 校验页码和每页大小参数\n2. 从请求头或 URL 参数中提取 Token\n3. 验证 Token 是否在白名单中\n4. 从 Token 中解析用户 ID\n5. 构建分页对象并调用 Service 层查询该用户的访问历史记录\n6. 对同一作品的多条记录进行去重，只保留访问时间最新的那条\n7. 按访问时间倒序返回结果\n8. 返回关联的作品详细信息分页列表\n\n## 注意事项：\n- **必须携带有效的 Token**\n- 只有已登录用户才能查看自己的历史记录\n- 如果作品已被删除，则不会出现在历史记录列表中\n- **每个作品只返回一条记录**（最近一次访问的记录）\n- 如果多次访问同一作品，只显示最新的那次访问记录\n- 每页大小限制：**1-100**\n",
+        "operationId": "getUserHistory",
+        "parameters": [
+          {
+            "name": "current",
+            "in": "path",
+            "description": "当前页码，从 1 开始",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "example": 1
+          },
+          {
+            "name": "size",
+            "in": "path",
+            "description": "每页大小，范围 1-100",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "example": 10
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResponsePojoIPageHistory"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/comment/list/{workId}": {
+      "get": {
+        "tags": [
+          "评论接口"
+        ],
+        "summary": "查询作品评论列表",
+        "description": "# 查询作品评论列表（无需登录认证）\n\n## 特性\n- 公开接口（无需认证）\n- 根据作品 ID 查询所有评论\n- 包含用户昵称和头像信息\n- 自动构建嵌套回复结构（一级评论包含子评论列表）\n- 支持一级评论按时间排序（最新/最早）\n- 二级评论始终按最早发布排列\n\n## 参数说明：\n- workId: **作品 ID**，Integer 类型，必填\n- orderBy: **排序方式**，String 类型，可选\n  - 'oldest': 一级评论按最早发布排列\n  - 其他值或 null: 一级评论按最新发布排列（默认）\n\n## 返回说明：\n- **查询成功**：返回 **{\"data\": [PrimaryComment列表]}** 和“查询成功”提示\n- **作品 ID 无效**：返回 **{\"data\": null}** 和“作品 ID 无效”提示\n- **无评论**：返回 **{\"data\": []}** 和“该作品暂无评论”提示\n- **查询失败**：返回 **{\"data\": null}** 和“查询失败”提示\n\n## 业务逻辑：\n1. 校验作品 ID 参数有效性\n2. 查询该作品的所有评论（排除已删除的评论）\n3. 批量查询所有评论用户的昵称和头像信息\n4. 将评论转换为响应对象，包含用户信息\n5. 构建两级结构：一级评论的 children 字段包含其所有二级评论（SecondaryComment）\n6. 一级评论按指定顺序排列，二级评论始终按最早发布排列\n7. 返回评论列表\n\n## 注意事项：\n- 这是一个**公开接口**，无需 Token 认证\n- 只返回**未删除**的评论（is_delete=0）\n- 一级评论支持两种排序：最新发布（默认）或最早发布\n- 二级评论始终按最早发布排列（conmment_id ASC）\n- 如果作品没有评论，返回空数组\n- 每个评论对象包含用户昵称（nickname）和头像路径（user_avatar）\n- 一级评论的 children 字段包含其所有二级评论（SecondaryComment类型）\n- 二级评论不再有 children 字段，结构清晰扁平化\n",
+        "operationId": "getCommentsByWorkId",
+        "parameters": [
+          {
+            "name": "workId",
+            "in": "path",
+            "description": "作品 ID",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            },
+            "example": 1
+          },
+          {
+            "name": "orderBy",
+            "in": "query",
+            "description": "排序方式：'oldest' - 按最早发布，其他值或 null - 按最新发布（默认）",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "description": "排序方式：'oldest' - 按最早发布，其他值或 null - 按最新发布（默认）",
+              "example": "newest",
+              "enum": [
+                "newest",
+                "oldest"
+              ]
+            },
+            "example": "newest"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResponsePojoListPrimaryComment"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/": {
+      "get": {
+        "tags": [
+          "ServerRoot"
+        ],
+        "summary": "后端首页",
+        "description": "# 访问服务端首页（无需登录认证）\n\n## 特性\n- 公开接口（无需认证）\n- HTTP 重定向\n- 静态资源访问\n\n## 功能说明：\n- 重定向到静态资源首页 index.html\n- 用于快速跳转 swagger-doc 和 swagger-ui 页面\n\n## 返回说明：\n- 成功：重定向到 /index.html 页面\n",
+        "operationId": "home",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/7e212056/require-auth": {
+      "get": {
+        "tags": [
+          "JWT 鉴权测试接口"
+        ],
+        "summary": "需要登录的测试接口",
+        "description": "# 测试接口（需要登录认证）\n\n## 特性\n- Token 认证（支持 Header 和 URL 参数两种方式）\n- 拦截器自动验证\n- 用户信息提取（userId/username）\n\n## 接口说明：\n- 此接口**需要登录**才能访问\n- 用于测试 JWT 拦截器是否正常工作\n\n## Token 使用方式：\n- Header: `Authorization: Bearer <token>`\n- 或 URL 参数：`?token=<token>`\n\n## 返回说明：\n- **验证通过**：返回当前登录用户的信息\n- **未授权**：返回 401 错误和提示信息\n",
+        "operationId": "requireAuth",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResponsePojoString"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/7e212056/no-auth": {
+      "get": {
+        "tags": [
+          "JWT 鉴权测试接口"
+        ],
+        "summary": "不需要登录的测试接口",
+        "description": "# 测试接口（无需登录认证）\n\n## 特性\n- 公开接口（无需认证）\n- 快速访问测试\n\n## 接口说明：\n- 此接口**不需要登录**即可访问\n- 用于对比测试 JWT 拦截器的效果\n\n## 返回说明：\n- 直接返回公开信息\n",
+        "operationId": "noAuth",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResponsePojoString"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "ResponsePojoBoolean": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "boolean",
+            "description": "响应数据"
+          },
+          "message": {
+            "type": "string",
+            "description": "响应说明信息"
+          },
+          "recode": {
+            "type": "integer",
+            "description": "响应状态码（200-成功；500-失败）",
+            "format": "int32"
+          },
+          "status": {
+            "type": "string",
+            "description": "响应状态"
+          },
+          "time_str": {
+            "type": "string",
+            "description": "响应时间"
+          }
+        },
+        "description": "响应数据类型"
+      },
+      "ResponsePojoString": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "string",
+            "description": "响应数据"
+          },
+          "message": {
+            "type": "string",
+            "description": "响应说明信息"
+          },
+          "recode": {
+            "type": "integer",
+            "description": "响应状态码（200-成功；500-失败）",
+            "format": "int32"
+          },
+          "status": {
+            "type": "string",
+            "description": "响应状态"
+          },
+          "time_str": {
+            "type": "string",
+            "description": "响应时间"
+          }
+        },
+        "description": "响应数据类型"
+      },
+      "ResponsePojoUser": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/User"
+          },
+          "message": {
+            "type": "string",
+            "description": "响应说明信息"
+          },
+          "recode": {
+            "type": "integer",
+            "description": "响应状态码（200-成功；500-失败）",
+            "format": "int32"
+          },
+          "status": {
+            "type": "string",
+            "description": "响应状态"
+          },
+          "time_str": {
+            "type": "string",
+            "description": "响应时间"
+          }
+        },
+        "description": "响应数据类型"
+      },
+      "User": {
+        "type": "object",
+        "properties": {
+          "user_id": {
+            "type": "integer",
+            "description": "用户 ID",
+            "format": "int32",
+            "example": 1
+          },
+          "user_uuid": {
+            "type": "array",
+            "description": "用户 UUID",
+            "example": "16字节二进制uuid",
+            "items": {
+              "type": "string",
+              "description": "用户 UUID",
+              "format": "byte",
+              "example": "MTblrZfoioLkuozov5vliLZ1dWlk"
+            }
+          },
+          "username": {
+            "type": "string",
+            "description": "用户名",
+            "example": "li_hua"
+          },
+          "password": {
+            "type": "string",
+            "description": "用户密码",
+            "example": "哈希256加密密码"
+          },
+          "nickname": {
+            "type": "string",
+            "description": "用户昵称",
+            "example": "李华"
+          },
+          "user_role": {
+            "type": "integer",
+            "description": "用户角色",
+            "format": "int32",
+            "example": 11
+          },
+          "avatar_url": {
+            "type": "string",
+            "description": "用户头像路径",
+            "example": "/avatar/uuid.png"
+          },
+          "email": {
+            "type": "string",
+            "description": "绑定邮箱",
+            "example": "lihua@example.com"
+          },
+          "is_delete": {
+            "type": "boolean",
+            "description": "删除标签",
+            "example": false
+          },
+          "status": {
+            "type": "integer",
+            "description": "账户状态",
+            "format": "int32",
+            "example": 10
+          },
+          "update_time": {
+            "type": "string",
+            "description": "更新时间",
+            "format": "date-time",
+            "example": "2026-03-29T12:00:00.003Z"
+          },
+          "update_user": {
+            "type": "integer",
+            "description": "更新人员 ID",
+            "format": "int32",
+            "example": 0
+          },
+          "create_time": {
+            "type": "string",
+            "description": "创建时间",
+            "format": "date-time",
+            "example": "2026-03-29T12:00:00.003Z"
+          },
+          "create_user": {
+            "type": "integer",
+            "description": "创建人员 ID",
+            "format": "int32",
+            "example": 0
+          },
+          "string_user_uuid": {
+            "type": "string",
+            "description": "用户 UUID 字符串",
+            "example": "字符串类型uuid"
+          }
+        },
+        "description": "用户实体"
+      },
+      "ResponsePojoUserLogin": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/UserLogin"
+          },
+          "message": {
+            "type": "string",
+            "description": "响应说明信息"
+          },
+          "recode": {
+            "type": "integer",
+            "description": "响应状态码（200-成功；500-失败）",
+            "format": "int32"
+          },
+          "status": {
+            "type": "string",
+            "description": "响应状态"
+          },
+          "time_str": {
+            "type": "string",
+            "description": "响应时间"
+          }
+        },
+        "description": "响应数据类型"
+      },
+      "UserLogin": {
+        "type": "object",
+        "properties": {
+          "user_id": {
+            "type": "integer",
+            "description": "用户 ID",
+            "format": "int32",
+            "example": 1
+          },
+          "user_uuid": {
+            "type": "array",
+            "description": "用户 UUID",
+            "example": "16字节二进制uuid",
+            "items": {
+              "type": "string",
+              "description": "用户 UUID",
+              "format": "byte",
+              "example": "MTblrZfoioLkuozov5vliLZ1dWlk"
+            }
+          },
+          "username": {
+            "type": "string",
+            "description": "用户名",
+            "example": "li_hua"
+          },
+          "password": {
+            "type": "string",
+            "description": "用户密码",
+            "example": "哈希256加密密码"
+          },
+          "nickname": {
+            "type": "string",
+            "description": "用户昵称",
+            "example": "李华"
+          },
+          "user_role": {
+            "type": "integer",
+            "description": "用户角色",
+            "format": "int32",
+            "example": 11
+          },
+          "avatar_url": {
+            "type": "string",
+            "description": "用户头像路径",
+            "example": "/avatar/uuid.png"
+          },
+          "email": {
+            "type": "string",
+            "description": "绑定邮箱",
+            "example": "lihua@example.com"
+          },
+          "is_delete": {
+            "type": "boolean",
+            "description": "删除标签",
+            "example": false
+          },
+          "status": {
+            "type": "integer",
+            "description": "账户状态",
+            "format": "int32",
+            "example": 10
+          },
+          "update_time": {
+            "type": "string",
+            "description": "更新时间",
+            "format": "date-time",
+            "example": "2026-03-29T12:00:00.003Z"
+          },
+          "update_user": {
+            "type": "integer",
+            "description": "更新人员 ID",
+            "format": "int32",
+            "example": 0
+          },
+          "create_time": {
+            "type": "string",
+            "description": "创建时间",
+            "format": "date-time",
+            "example": "2026-03-29T12:00:00.003Z"
+          },
+          "create_user": {
+            "type": "integer",
+            "description": "创建人员 ID",
+            "format": "int32",
+            "example": 0
+          },
+          "string_user_uuid": {
+            "type": "string",
+            "description": "用户 UUID 字符串",
+            "example": "字符串类型uuid"
+          },
+          "token": {
+            "type": "string",
+            "description": "JWT Token",
+            "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9"
+          }
+        },
+        "description": "用户登录响应实体"
+      },
+      "AdminBatchOperateWorkResult": {
+        "type": "object",
+        "properties": {
+          "totalCount": {
+            "type": "integer",
+            "description": "需要操作的作品总数",
+            "format": "int32",
+            "example": 10
+          },
+          "successCount": {
+            "type": "integer",
+            "description": "成功操作的作品数量",
+            "format": "int32",
+            "example": 9
+          },
+          "failedWorkIds": {
+            "type": "array",
+            "description": "失败作品的 ID 列表",
+            "example": [
+              4,
+              7
+            ],
+            "items": {
+              "type": "integer",
+              "description": "失败作品的 ID 列表",
+              "format": "int32"
+            }
+          }
+        },
+        "description": "管理员批量操作作品结果"
+      },
+      "ResponsePojoAdminBatchOperateWorkResult": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/AdminBatchOperateWorkResult"
+          },
+          "message": {
+            "type": "string",
+            "description": "响应说明信息"
+          },
+          "recode": {
+            "type": "integer",
+            "description": "响应状态码（200-成功；500-失败）",
+            "format": "int32"
+          },
+          "status": {
+            "type": "string",
+            "description": "响应状态"
+          },
+          "time_str": {
+            "type": "string",
+            "description": "响应时间"
+          }
+        },
+        "description": "响应数据类型"
+      },
+      "AdminBatchUpdateUserResult": {
+        "type": "object",
+        "properties": {
+          "totalCount": {
+            "type": "integer",
+            "description": "需要更新的用户总数",
+            "format": "int32",
+            "example": 10
+          },
+          "successCount": {
+            "type": "integer",
+            "description": "成功更新的用户数量",
+            "format": "int32",
+            "example": 9
+          },
+          "failedUserIds": {
+            "type": "array",
+            "description": "失败用户的 ID 列表",
+            "example": [
+              4,
+              7
+            ],
+            "items": {
+              "type": "integer",
+              "description": "失败用户的 ID 列表",
+              "format": "int32"
+            }
+          }
+        },
+        "description": "管理员批量更新用户信息结果"
+      },
+      "ResponsePojoAdminBatchUpdateUserResult": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/AdminBatchUpdateUserResult"
+          },
+          "message": {
+            "type": "string",
+            "description": "响应说明信息"
+          },
+          "recode": {
+            "type": "integer",
+            "description": "响应状态码（200-成功；500-失败）",
+            "format": "int32"
+          },
+          "status": {
+            "type": "string",
+            "description": "响应状态"
+          },
+          "time_str": {
+            "type": "string",
+            "description": "响应时间"
+          }
+        },
+        "description": "响应数据类型"
+      },
+      "AdminResetPasswordResult": {
+        "type": "object",
+        "properties": {
+          "totalCount": {
+            "type": "integer",
+            "description": "需要重置的用户总数",
+            "format": "int32",
+            "example": 10
+          },
+          "successCount": {
+            "type": "integer",
+            "description": "成功重置密码的用户数量",
+            "format": "int32",
+            "example": 9
+          },
+          "emailSentCount": {
+            "type": "integer",
+            "description": "成功发送邮件的数量",
+            "format": "int32",
+            "example": 8
+          },
+          "failedUserIds": {
+            "type": "array",
+            "description": "失败用户的 ID 列表",
+            "example": [
+              4,
+              7
+            ],
+            "items": {
+              "type": "integer",
+              "description": "失败用户的 ID 列表",
+              "format": "int32"
+            }
+          }
+        },
+        "description": "管理员批量重置密码结果"
+      },
+      "ResponsePojoAdminResetPasswordResult": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/AdminResetPasswordResult"
+          },
+          "message": {
+            "type": "string",
+            "description": "响应说明信息"
+          },
+          "recode": {
+            "type": "integer",
+            "description": "响应状态码（200-成功；500-失败）",
+            "format": "int32"
+          },
+          "status": {
+            "type": "string",
+            "description": "响应状态"
+          },
+          "time_str": {
+            "type": "string",
+            "description": "响应时间"
+          }
+        },
+        "description": "响应数据类型"
+      },
+      "ResponsePojoInteger": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "integer",
+            "description": "响应数据",
+            "format": "int32"
+          },
+          "message": {
+            "type": "string",
+            "description": "响应说明信息"
+          },
+          "recode": {
+            "type": "integer",
+            "description": "响应状态码（200-成功；500-失败）",
+            "format": "int32"
+          },
+          "status": {
+            "type": "string",
+            "description": "响应状态"
+          },
+          "time_str": {
+            "type": "string",
+            "description": "响应时间"
+          }
+        },
+        "description": "响应数据类型"
+      },
+      "AdminBatchDeleteUserResult": {
+        "type": "object",
+        "properties": {
+          "totalCount": {
+            "type": "integer",
+            "description": "需要删除的用户总数",
+            "format": "int32",
+            "example": 10
+          },
+          "successCount": {
+            "type": "integer",
+            "description": "成功删除的用户数量",
+            "format": "int32",
+            "example": 9
+          },
+          "failedUserIds": {
+            "type": "array",
+            "description": "失败用户的 ID 列表",
+            "example": [
+              4,
+              7
+            ],
+            "items": {
+              "type": "integer",
+              "description": "失败用户的 ID 列表",
+              "format": "int32"
+            }
+          }
+        },
+        "description": "管理员批量删除用户结果"
+      },
+      "ResponsePojoAdminBatchDeleteUserResult": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/AdminBatchDeleteUserResult"
+          },
+          "message": {
+            "type": "string",
+            "description": "响应说明信息"
+          },
+          "recode": {
+            "type": "integer",
+            "description": "响应状态码（200-成功；500-失败）",
+            "format": "int32"
+          },
+          "status": {
+            "type": "string",
+            "description": "响应状态"
+          },
+          "time_str": {
+            "type": "string",
+            "description": "响应时间"
+          }
+        },
+        "description": "响应数据类型"
+      },
+      "ResponsePojoSystemInfo": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/SystemInfo"
+          },
+          "message": {
+            "type": "string",
+            "description": "响应说明信息"
+          },
+          "recode": {
+            "type": "integer",
+            "description": "响应状态码（200-成功；500-失败）",
+            "format": "int32"
+          },
+          "status": {
+            "type": "string",
+            "description": "响应状态"
+          },
+          "time_str": {
+            "type": "string",
+            "description": "响应时间"
+          }
+        },
+        "description": "响应数据类型"
+      },
+      "SystemInfo": {
+        "required": [
+          "nowTime"
+        ],
+        "type": "object",
+        "properties": {
+          "nowTime": {
+            "type": "string",
+            "description": "获取时间"
+          },
+          "osArch": {
+            "type": "string",
+            "description": "操作系统架构"
+          },
+          "osName": {
+            "type": "string",
+            "description": "操作系统名称"
+          },
+          "osVersion": {
+            "type": "string",
+            "description": "操作系统版本"
+          },
+          "userName": {
+            "type": "string",
+            "description": "用户名"
+          },
+          "userHome": {
+            "type": "string",
+            "description": "用户主目录"
+          },
+          "userCurrentDir": {
+            "type": "string",
+            "description": "项目目录"
+          },
+          "userTempDir": {
+            "type": "string",
+            "description": "用户临时目录"
+          },
+          "userLanguage": {
+            "type": "string",
+            "description": "用户语言"
+          },
+          "userCountry": {
+            "type": "string",
+            "description": "用户国家"
+          },
+          "hostName": {
+            "type": "string",
+            "description": "主机名"
+          },
+          "hostAddress": {
+            "type": "string",
+            "description": "主机地址"
+          },
+          "maxMemory": {
+            "type": "string",
+            "description": "最大内存"
+          },
+          "totalMemory": {
+            "type": "string",
+            "description": "总内存"
+          },
+          "freeMemory": {
+            "type": "string",
+            "description": "空闲内存"
+          },
+          "usableMemory": {
+            "type": "string",
+            "description": "可用内存"
+          },
+          "jvmName": {
+            "type": "string",
+            "description": "Java 虚拟机名称"
+          },
+          "jvmVersion": {
+            "type": "string",
+            "description": "Java 虚拟机版本"
+          },
+          "jvmVendor": {
+            "type": "string",
+            "description": "Java 虚拟机供应商"
+          },
+          "jvmInfo": {
+            "type": "string",
+            "description": "Java 虚拟机信息"
+          },
+          "jvmSpecName": {
+            "type": "string",
+            "description": "Java 虚拟机规范名称"
+          },
+          "jvmSpecVersion": {
+            "type": "string",
+            "description": "Java 虚拟机规范版本"
+          },
+          "jvmSpecVendor": {
+            "type": "string",
+            "description": "Java 虚拟机规范供应商"
+          },
+          "jdkVersion": {
+            "type": "string",
+            "description": "JDK 版本"
+          },
+          "jdkVendor": {
+            "type": "string",
+            "description": "JDK 供应商"
+          },
+          "jdkVendorURL": {
+            "type": "string",
+            "description": "JDK 供应商 URL"
+          },
+          "jdkSpecName": {
+            "type": "string",
+            "description": "JDK 规范名称"
+          },
+          "jdkSpecVersion": {
+            "type": "string",
+            "description": "JDK 规范版本"
+          },
+          "jdkSpecVendor": {
+            "type": "string",
+            "description": "JDK 规范供应商"
+          }
+        },
+        "description": "系统相关信息"
+      },
+      "IPageSeries": {
+        "type": "object",
+        "properties": {
+          "size": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "total": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "records": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Series"
+            }
+          },
+          "current": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "pages": {
+            "type": "integer",
+            "format": "int64"
+          }
+        },
+        "description": "响应数据"
+      },
+      "ResponsePojoIPageSeries": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/IPageSeries"
+          },
+          "message": {
+            "type": "string",
+            "description": "响应说明信息"
+          },
+          "recode": {
+            "type": "integer",
+            "description": "响应状态码（200-成功；500-失败）",
+            "format": "int32"
+          },
+          "status": {
+            "type": "string",
+            "description": "响应状态"
+          },
+          "time_str": {
+            "type": "string",
+            "description": "响应时间"
+          }
+        },
+        "description": "响应数据类型"
+      },
+      "Series": {
+        "type": "object",
+        "properties": {
+          "series_id": {
+            "type": "integer",
+            "description": "系列 ID",
+            "format": "int32"
+          },
+          "user_id": {
+            "type": "integer",
+            "description": "用户 ID",
+            "format": "int32"
+          },
+          "series_title": {
+            "type": "string",
+            "description": "系列标题，16 个中文长度"
+          },
+          "about_text": {
+            "type": "string",
+            "description": "系列描述文本，24 个中文长度"
+          },
+          "is_delete": {
+            "type": "boolean",
+            "description": "删除标签：0 - 未删除、1 - 已删除"
+          },
+          "update_time": {
+            "type": "string",
+            "description": "数据条目更新时间戳",
+            "format": "date-time"
+          },
+          "update_user": {
+            "type": "integer",
+            "description": "修改者 id，系统修改为 0",
+            "format": "int32"
+          },
+          "create_time": {
+            "type": "string",
+            "description": "数据条目创建时间戳",
+            "format": "date-time"
+          },
+          "create_user": {
+            "type": "integer",
+            "description": "存储创建者 id，系统创建为 0",
+            "format": "int32"
+          }
+        },
+        "description": "作品系列实体"
+      },
+      "IPageWorks": {
+        "type": "object",
+        "properties": {
+          "size": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "total": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "records": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Works"
+            }
+          },
+          "current": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "pages": {
+            "type": "integer",
+            "format": "int64"
+          }
+        },
+        "description": "响应数据"
+      },
+      "ResponsePojoIPageWorks": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/IPageWorks"
+          },
+          "message": {
+            "type": "string",
+            "description": "响应说明信息"
+          },
+          "recode": {
+            "type": "integer",
+            "description": "响应状态码（200-成功；500-失败）",
+            "format": "int32"
+          },
+          "status": {
+            "type": "string",
+            "description": "响应状态"
+          },
+          "time_str": {
+            "type": "string",
+            "description": "响应时间"
+          }
+        },
+        "description": "响应数据类型"
+      },
+      "Works": {
+        "type": "object",
+        "properties": {
+          "work_id": {
+            "type": "integer",
+            "description": "作品 ID",
+            "format": "int32"
+          },
+          "user_id": {
+            "type": "integer",
+            "description": "用户 ID",
+            "format": "int32"
+          },
+          "work_title": {
+            "type": "string",
+            "description": "作品标题，16 个中文长度"
+          },
+          "img_url": {
+            "type": "string",
+            "description": "图片 URL"
+          },
+          "series_id": {
+            "type": "integer",
+            "description": "系列 ID",
+            "format": "int32"
+          },
+          "like_count": {
+            "type": "integer",
+            "description": "点赞数",
+            "format": "int32"
+          },
+          "star_count": {
+            "type": "integer",
+            "description": "收藏数",
+            "format": "int32"
+          },
+          "view_count": {
+            "type": "integer",
+            "description": "查看数",
+            "format": "int32"
+          },
+          "is_original_work": {
+            "type": "boolean",
+            "description": "是否原创：1 - 原创、0 - 转载"
+          },
+          "out_url": {
+            "type": "string",
+            "description": "外部转载链接"
+          },
+          "is_delete": {
+            "type": "boolean",
+            "description": "删除标签：0 - 未删除、1 - 已删除"
+          },
+          "update_time": {
+            "type": "string",
+            "description": "数据条目更新时间戳",
+            "format": "date-time"
+          },
+          "update_user": {
+            "type": "integer",
+            "description": "修改者 id，系统修改为 0",
+            "format": "int32"
+          },
+          "create_time": {
+            "type": "string",
+            "description": "数据条目创建时间戳",
+            "format": "date-time"
+          },
+          "create_user": {
+            "type": "integer",
+            "description": "存储创建者 id，系统创建为 0",
+            "format": "int32"
+          }
+        },
+        "description": "作品实体"
+      },
+      "ResponsePojoWorks": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/Works"
+          },
+          "message": {
+            "type": "string",
+            "description": "响应说明信息"
+          },
+          "recode": {
+            "type": "integer",
+            "description": "响应状态码（200-成功；500-失败）",
+            "format": "int32"
+          },
+          "status": {
+            "type": "string",
+            "description": "响应状态"
+          },
+          "time_str": {
+            "type": "string",
+            "description": "响应时间"
+          }
+        },
+        "description": "响应数据类型"
+      },
+      "IPageUser": {
+        "type": "object",
+        "properties": {
+          "size": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "total": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "records": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/User"
+            }
+          },
+          "current": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "pages": {
+            "type": "integer",
+            "format": "int64"
+          }
+        },
+        "description": "响应数据"
+      },
+      "ResponsePojoIPageUser": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/IPageUser"
+          },
+          "message": {
+            "type": "string",
+            "description": "响应说明信息"
+          },
+          "recode": {
+            "type": "integer",
+            "description": "响应状态码（200-成功；500-失败）",
+            "format": "int32"
+          },
+          "status": {
+            "type": "string",
+            "description": "响应状态"
+          },
+          "time_str": {
+            "type": "string",
+            "description": "响应时间"
+          }
+        },
+        "description": "响应数据类型"
+      },
+      "ResponsePojoListUserData": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "array",
+            "description": "响应数据",
+            "items": {
+              "$ref": "#/components/schemas/UserData"
+            }
+          },
+          "message": {
+            "type": "string",
+            "description": "响应说明信息"
+          },
+          "recode": {
+            "type": "integer",
+            "description": "响应状态码（200-成功；500-失败）",
+            "format": "int32"
+          },
+          "status": {
+            "type": "string",
+            "description": "响应状态"
+          },
+          "time_str": {
+            "type": "string",
+            "description": "响应时间"
+          }
+        },
+        "description": "响应数据类型"
+      },
+      "UserData": {
+        "type": "object",
+        "properties": {
+          "data_id": {
+            "type": "integer",
+            "description": "数据 ID",
+            "format": "int32"
+          },
+          "user_id": {
+            "type": "integer",
+            "description": "用户 ID",
+            "format": "int32"
+          },
+          "user_data_name": {
+            "type": "string",
+            "description": "数据项目名称（电话、邮箱、网站、微信等等）"
+          },
+          "user_data": {
+            "type": "string",
+            "description": "数据内容（具体的电话号码、邮箱地址、网站 url 等等）"
+          },
+          "is_delete": {
+            "type": "boolean",
+            "description": "删除标签：0 - 未删除、1 - 已删除"
+          },
+          "update_time": {
+            "type": "string",
+            "description": "数据条目更新时间戳",
+            "format": "date-time"
+          },
+          "update_user": {
+            "type": "integer",
+            "description": "修改者 id，系统修改为 0",
+            "format": "int32"
+          },
+          "create_time": {
+            "type": "string",
+            "description": "数据条目创建时间戳",
+            "format": "date-time"
+          },
+          "create_user": {
+            "type": "integer",
+            "description": "存储创建者 id，系统创建为 0",
+            "format": "int32"
+          }
+        },
+        "description": "用户数据实体"
+      },
+      "History": {
+        "type": "object",
+        "properties": {
+          "work_id": {
+            "type": "integer",
+            "description": "作品 ID",
+            "format": "int32"
+          },
+          "user_id": {
+            "type": "integer",
+            "description": "用户 ID",
+            "format": "int32"
+          },
+          "work_title": {
+            "type": "string",
+            "description": "作品标题，16 个中文长度"
+          },
+          "img_url": {
+            "type": "string",
+            "description": "图片 URL"
+          },
+          "series_id": {
+            "type": "integer",
+            "description": "系列 ID",
+            "format": "int32"
+          },
+          "like_count": {
+            "type": "integer",
+            "description": "点赞数",
+            "format": "int32"
+          },
+          "star_count": {
+            "type": "integer",
+            "description": "收藏数",
+            "format": "int32"
+          },
+          "view_count": {
+            "type": "integer",
+            "description": "查看数",
+            "format": "int32"
+          },
+          "is_original_work": {
+            "type": "boolean",
+            "description": "是否原创：1 - 原创、0 - 转载"
+          },
+          "out_url": {
+            "type": "string",
+            "description": "外部转载链接"
+          },
+          "is_delete": {
+            "type": "boolean",
+            "description": "删除标签：0 - 未删除、1 - 已删除"
+          },
+          "update_time": {
+            "type": "string",
+            "description": "数据条目更新时间戳",
+            "format": "date-time"
+          },
+          "update_user": {
+            "type": "integer",
+            "description": "修改者 id，系统修改为 0",
+            "format": "int32"
+          },
+          "create_time": {
+            "type": "string",
+            "description": "数据条目创建时间戳",
+            "format": "date-time"
+          },
+          "create_user": {
+            "type": "integer",
+            "description": "存储创建者 id，系统创建为 0",
+            "format": "int32"
+          },
+          "time": {
+            "type": "string",
+            "description": "操作时间戳（ISO 8601格式）"
+          }
+        },
+        "description": "历史记录实体"
+      },
+      "IPageHistory": {
+        "type": "object",
+        "properties": {
+          "size": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "total": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "records": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/History"
+            }
+          },
+          "current": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "pages": {
+            "type": "integer",
+            "format": "int64"
+          }
+        },
+        "description": "响应数据"
+      },
+      "ResponsePojoIPageHistory": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/IPageHistory"
+          },
+          "message": {
+            "type": "string",
+            "description": "响应说明信息"
+          },
+          "recode": {
+            "type": "integer",
+            "description": "响应状态码（200-成功；500-失败）",
+            "format": "int32"
+          },
+          "status": {
+            "type": "string",
+            "description": "响应状态"
+          },
+          "time_str": {
+            "type": "string",
+            "description": "响应时间"
+          }
+        },
+        "description": "响应数据类型"
+      },
+      "PrimaryComment": {
+        "type": "object",
+        "properties": {
+          "conmment_id": {
+            "type": "integer",
+            "description": "评论 ID",
+            "format": "int32"
+          },
+          "user_id": {
+            "type": "integer",
+            "description": "用户 ID",
+            "format": "int32"
+          },
+          "work_id": {
+            "type": "integer",
+            "description": "作品 ID",
+            "format": "int32"
+          },
+          "parent_comment_id": {
+            "type": "integer",
+            "description": "父评论 ID",
+            "format": "int32"
+          },
+          "in_comment_id": {
+            "type": "integer",
+            "description": "所属一级评论 ID",
+            "format": "int32"
+          },
+          "conmment_floor": {
+            "type": "integer",
+            "description": "评论层级",
+            "format": "int32"
+          },
+          "conmment_text": {
+            "type": "string",
+            "description": "评论内容，限制长度 125 字"
+          },
+          "is_delete": {
+            "type": "boolean",
+            "description": "删除标签：0 - 未删除、1 - 已删除"
+          },
+          "time": {
+            "type": "string",
+            "description": "评论时间",
+            "format": "date-time"
+          },
+          "nickname": {
+            "type": "string",
+            "description": "用户昵称"
+          },
+          "user_avatar": {
+            "type": "string",
+            "description": "用户头像路径"
+          },
+          "replied_nickname": {
+            "type": "string",
+            "description": "被回复者的用户昵称"
+          },
+          "replied_user_id": {
+            "type": "integer",
+            "description": "被回复者的用户 ID",
+            "format": "int32"
+          },
+          "children": {
+            "type": "array",
+            "description": "二级评论列表",
+            "items": {
+              "$ref": "#/components/schemas/SecondaryComment"
+            }
+          }
+        },
+        "description": "一级评论响应实体"
+      },
+      "ResponsePojoListPrimaryComment": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "array",
+            "description": "响应数据",
+            "items": {
+              "$ref": "#/components/schemas/PrimaryComment"
+            }
+          },
+          "message": {
+            "type": "string",
+            "description": "响应说明信息"
+          },
+          "recode": {
+            "type": "integer",
+            "description": "响应状态码（200-成功；500-失败）",
+            "format": "int32"
+          },
+          "status": {
+            "type": "string",
+            "description": "响应状态"
+          },
+          "time_str": {
+            "type": "string",
+            "description": "响应时间"
+          }
+        },
+        "description": "响应数据类型"
+      },
+      "SecondaryComment": {
+        "type": "object",
+        "properties": {
+          "conmment_id": {
+            "type": "integer",
+            "description": "评论 ID",
+            "format": "int32"
+          },
+          "user_id": {
+            "type": "integer",
+            "description": "用户 ID",
+            "format": "int32"
+          },
+          "work_id": {
+            "type": "integer",
+            "description": "作品 ID",
+            "format": "int32"
+          },
+          "parent_comment_id": {
+            "type": "integer",
+            "description": "父评论 ID",
+            "format": "int32"
+          },
+          "in_comment_id": {
+            "type": "integer",
+            "description": "所属一级评论 ID",
+            "format": "int32"
+          },
+          "conmment_floor": {
+            "type": "integer",
+            "description": "评论层级",
+            "format": "int32"
+          },
+          "conmment_text": {
+            "type": "string",
+            "description": "评论内容，限制长度 125 字"
+          },
+          "is_delete": {
+            "type": "boolean",
+            "description": "删除标签：0 - 未删除、1 - 已删除"
+          },
+          "time": {
+            "type": "string",
+            "description": "评论时间",
+            "format": "date-time"
+          },
+          "nickname": {
+            "type": "string",
+            "description": "用户昵称"
+          },
+          "user_avatar": {
+            "type": "string",
+            "description": "用户头像路径"
+          },
+          "replied_nickname": {
+            "type": "string",
+            "description": "被回复者的用户昵称"
+          },
+          "replied_user_id": {
+            "type": "integer",
+            "description": "被回复者的用户 ID",
+            "format": "int32"
+          }
+        },
+        "description": "二级评论响应实体"
+      }
+    }
+  }
+}
