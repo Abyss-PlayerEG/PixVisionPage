@@ -1,5 +1,5 @@
 <script setup>
-import { showInfo, showSuccess, showWarning, showError } from '@/utils/notification'
+import { showInfo, showSuccess, showWarning, showError } from '@/utils/notification.js'
 
 // 工具函数方式 - 各种类型提示
 const showToolInfo = () => {
