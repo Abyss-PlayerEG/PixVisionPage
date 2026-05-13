@@ -16,7 +16,7 @@ export const useLoginView = () => {
     let aniEND = false; // 登录面板打开/关闭状态
     const activePanel = ref("");
 
-    // ✅ 新增：登录面板的打开/关闭状态 (true=打开, false=关闭)
+    // 登录面板的打开/关闭状态 (true=打开, false=关闭)
     const isLoginPanelOpen = ref(false);
 
     const bgimg = ref(null);
@@ -248,7 +248,7 @@ export const useLoginView = () => {
 
         aniEND = false;
         activePanel.value = "login";
-        isLoginPanelOpen.value = true; // ✅ 设置登录面板为打开状态
+        isLoginPanelOpen.value = true; // 设置登录面板为打开状态
         console.log("登录面板状态：" + isLoginPanelOpen.value);
 
         tl.to(title1.value, {
@@ -419,7 +419,7 @@ export const useLoginView = () => {
             onComplete: () => {
                 aniEND = true;
                 activePanel.value = "";
-                isLoginPanelOpen.value = false; // ✅ 设置登录面板为关闭状态
+                isLoginPanelOpen.value = false; // 设置登录面板为关闭状态
                 console.log("登录面板状态：" + isLoginPanelOpen.value);
             }
         });
@@ -461,38 +461,22 @@ export const useLoginView = () => {
         const result = await apiHandleLogin(loginForm);
         
         if (result.success) {
-            console.log('✅ 登录成功');
-            
-            // 清空登录表单（可选，根据需求决定）
-            // for (const key in loginForm) {
-            //     loginForm[key] = '';
-            // }
-            // for (const key in fieldStates) {
-            //     fieldStates[key] = { status: 'idle', message: '' };
-            // }
+            console.log('[SUCCESS] 登录成功');
 
-            // 开始登录按钮倒计时
-            let seconds = 3;
-            loginButtonState.text = `登录成功，${seconds}秒后跳转`;
-            loginButtonState.disabled = true;
-
-            loginSuccessCountdownTimer = setInterval(() => {
-                seconds--;
-                if (seconds > 0) {
-                    loginButtonState.text = `登录成功，${seconds}秒后跳转`;
-                } else {
-                    // 倒计时结束
-                    clearInterval(loginSuccessCountdownTimer);
-                    loginSuccessCountdownTimer = null;
-                    loginButtonState.text = '登录';
-                    loginButtonState.disabled = false;
-
+            // 使用通用倒计时函数
+            handleSuccessCountdown({
+                buttonState: loginButtonState,
+                successMessage: '登录成功，${seconds}秒后跳转',
+                duration: 3,
+                onComplete: () => {
                     // 跳转到 HomePage
                     router.push('/');
-                }
-            }, 1000);
+                },
+                setTimer: (timer) => { loginSuccessCountdownTimer = timer; },
+                clearTimer: () => { loginSuccessCountdownTimer = null; }
+            });
         } else {
-            console.error('❌ 登录失败:', result.message);
+            console.error('[ERROR] 登录失败:', result.message);
             alert(result.message || '登录失败，请检查用户名、密码和验证码');
         }
     };
@@ -833,7 +817,7 @@ export const useLoginView = () => {
             }
 
             if (result.success) {
-                console.log("✅ 验证码发送成功");
+                console.log("[SUCCESS] 验证码发送成功");
 
                 if (needCountdown && countdownFn) {
                     // 需要倒计时
@@ -849,7 +833,7 @@ export const useLoginView = () => {
                 // 发送失败，恢复按钮状态
                 buttonState.disabled = false;
                 buttonState.text = "获取验证码";
-                console.error(`❌ ${errorMessagePrefix}:`, result.message);
+                console.error(`[ERROR] ${errorMessagePrefix}:`, result.message);
                 alert(result.message || errorMessagePrefix);
             }
         } catch (error) {
@@ -1028,7 +1012,7 @@ export const useLoginView = () => {
         const result = await apiHandleRegister(regForm);
         
         if (result.success) {
-            console.log('✅ 注册成功');
+            console.log('[SUCCESS] 注册成功');
 
             // 保存用户名和密码，用于自动填充登录表单
             const registeredUsername = result.registeredUsername;
@@ -1046,40 +1030,32 @@ export const useLoginView = () => {
                 regFieldStates[key] = { status: 'idle', message: '' };
             }
 
-            // ✅ 先填充登录表单的用户名和密码
+            // 先填充登录表单的用户名和密码
             loginForm.usernameOrEmail = registeredUsername;
             loginForm.password = registeredPassword;
             console.log('已自动填充登录信息:', { username: registeredUsername });
 
-            // 开始注册按钮倒计时
-            let seconds = 3;
-            registerButtonState.text = `注册成功，${seconds}秒后返回登录页面`;
-            registerButtonState.disabled = true;
-
-            registerCountdownTimer = setInterval(() => {
-                seconds--;
-                if (seconds > 0) {
-                    registerButtonState.text = `注册成功，${seconds}秒后返回登录页面`;
-                } else {
-                    // 倒计时结束
-                    clearInterval(registerCountdownTimer);
-                    registerCountdownTimer = null;
-                    registerButtonState.text = '注册';
-                    registerButtonState.disabled = false;
-
+            // 使用通用倒计时函数
+            handleSuccessCountdown({
+                buttonState: registerButtonState,
+                successMessage: '注册成功，${seconds}秒后返回登录页面',
+                duration: 3,
+                onComplete: () => {
                     // 切换到登录面板
                     hideFormPanel(); // 先关闭/切换表单面板
 
                     // 等待动画完成后，显示登录面板
                     if (!isLoginPanelOpen.value) {
                         setTimeout(() => {
-                            showLoginPanel(); // ✅ 直接打开登录面板（数据已预先填充）
+                            showLoginPanel(); // 直接打开登录面板（数据已预先填充）
                         }, 600); // 等待 hideFormPanel 动画完成
                     }
-                }
-            }, 1000);
+                },
+                setTimer: (timer) => { registerCountdownTimer = timer; },
+                clearTimer: () => { registerCountdownTimer = null; }
+            });
         } else {
-            console.error('❌ 注册失败:', result.message);
+            console.error('[ERROR] 注册失败:', result.message);
             alert(result.message || '注册失败');
         }
     };
@@ -1126,7 +1102,7 @@ export const useLoginView = () => {
         const result = await apiHandleForgotPassword(forgotPasswordForm);
         
         if (result.success) {
-            console.log('✅ 密码重置成功');
+            console.log('[SUCCESS] 密码重置成功');
 
             // 清除验证码倒计时
             clearForgotPasswordCountdown();
@@ -1140,28 +1116,20 @@ export const useLoginView = () => {
                 forgotPasswordFieldStates[key] = { status: 'idle', message: '' };
             }
 
-            // 开始确定按钮倒计时
-            let seconds = 3;
-            forgotPasswordSubmitButtonState.text = `重置成功，${seconds}秒后返回登录页面`;
-            forgotPasswordSubmitButtonState.disabled = true;
-
-            forgotPasswordSubmitCountdownTimer = setInterval(() => {
-                seconds--;
-                if (seconds > 0) {
-                    forgotPasswordSubmitButtonState.text = `重置成功，${seconds}秒后返回登录页面`;
-                } else {
-                    // 倒计时结束
-                    clearInterval(forgotPasswordSubmitCountdownTimer);
-                    forgotPasswordSubmitCountdownTimer = null;
-                    forgotPasswordSubmitButtonState.text = '确定';
-                    forgotPasswordSubmitButtonState.disabled = false;
-
+            // 使用通用倒计时函数
+            handleSuccessCountdown({
+                buttonState: forgotPasswordSubmitButtonState,
+                successMessage: '重置成功，${seconds}秒后返回登录页面',
+                duration: 3,
+                onComplete: () => {
                     // 隐藏忘记密码面板，返回登录页面
                     showPasswordPanel(false);
-                }
-            }, 1000);
+                },
+                setTimer: (timer) => { forgotPasswordSubmitCountdownTimer = timer; },
+                clearTimer: () => { forgotPasswordSubmitCountdownTimer = null; }
+            });
         } else {
-            console.error('❌ 密码重置失败:', result.message);
+            console.error('[ERROR] 密码重置失败:', result.message);
             alert(result.message || '密码重置失败');
         }
     };
@@ -1170,6 +1138,66 @@ export const useLoginView = () => {
     const setForgotPasswordFieldError = (fieldName, message) => {
         forgotPasswordFieldStates[fieldName].status = "error";
         forgotPasswordFieldStates[fieldName].message = message;
+    };
+
+    /**
+     * 通用成功倒计时处理函数
+     * @param {Object} options - 配置选项
+     * @param {Object} options.buttonState - 按钮状态对象（reactive）
+     * @param {string} options.successMessage - 成功消息模板（包含 ${seconds} 占位符）
+     * @param {number} options.duration - 倒计时时长（秒），默认 3
+     * @param {Function} options.onComplete - 倒计时结束后的回调函数
+     * @param {Function} options.setTimer - 设置定时器的函数
+     * @param {Function} options.clearTimer - 清除定时器的函数
+     */
+    const handleSuccessCountdown = (options) => {
+        const {
+            buttonState,
+            successMessage,
+            duration = 3,
+            onComplete,
+            setTimer,
+            clearTimer
+        } = options;
+
+        let seconds = duration;
+        
+        // 设置初始状态
+        buttonState.text = successMessage.replace('${seconds}', seconds);
+        buttonState.disabled = true;
+
+        // 启动倒计时
+        const timer = setInterval(() => {
+            seconds--;
+            
+            if (seconds > 0) {
+                // 更新倒计时文本
+                buttonState.text = successMessage.replace('${seconds}', seconds);
+            } else {
+                // 倒计时结束
+                clearInterval(timer);
+                
+                // 清理定时器引用
+                if (clearTimer) {
+                    clearTimer();
+                }
+                
+                // 恢复按钮状态
+                buttonState.disabled = false;
+                
+                // 执行回调
+                if (onComplete && typeof onComplete === 'function') {
+                    onComplete();
+                }
+            }
+        }, 1000);
+
+        // 保存定时器引用
+        if (setTimer) {
+            setTimer(timer);
+        }
+
+        return timer;
     };
 
     // 导出数据
@@ -1188,11 +1216,11 @@ export const useLoginView = () => {
         forgotPasswordFieldStates,
         vCodeButtonState,
         loginVCodeButtonState,
-        loginButtonState,  // ✅ 导出登录按钮状态
+        loginButtonState,  // 导出登录按钮状态
         registerButtonState,
         forgotPasswordVCodeButtonState,
         forgotPasswordSubmitButtonState,
-        isLoginPanelOpen, // ✅ 导出登录面板状态
+        isLoginPanelOpen, // 导出登录面板状态
         showLoginPanel,
         showRegisterPanel,
         hideFormPanel,
@@ -1208,6 +1236,7 @@ export const useLoginView = () => {
         clearForgotPasswordFieldState,
         setRegFieldError,
         setForgotPasswordFieldError,
+        handleSuccessCountdown,
         handleLogin,
         handleRegister,
         showPasswordPanel,
