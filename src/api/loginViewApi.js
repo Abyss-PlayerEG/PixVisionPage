@@ -289,7 +289,8 @@ export const sendVerificationCode = async (options) => {
       if (needCountdown && countdownFn) {
         countdownFn();
       } else if (showSuccessAlert) {
-        alert(successMessage);
+        // 不直接调用 alert，而是返回成功信息
+        // alert(successMessage);
       }
       
       return { success: true, message: successMessage };

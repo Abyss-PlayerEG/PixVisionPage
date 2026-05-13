@@ -9,7 +9,7 @@ import {
  * 验证码和倒计时管理模块
  * 负责所有场景的验证码发送和倒计时逻辑
  */
-export const useVerificationCode = (validationModule) => {
+export const useVerificationCode = (validationModule, notificationCallback = null) => {
     // ==================== 按钮状态 ====================
 
     // 注册验证码按钮状态
@@ -83,7 +83,11 @@ export const useVerificationCode = (validationModule) => {
                     countdownFn();
                 } else if (showSuccessAlert) {
                     // 不需要倒计时，但显示提示并恢复按钮
-                    alert(successMessage);
+                    if (notificationCallback) {
+                        notificationCallback('success', successMessage);
+                    } else {
+                        alert(successMessage);
+                    }
                     buttonState.disabled = false;
                     buttonState.text = "获取验证码";
                 }
@@ -92,14 +96,22 @@ export const useVerificationCode = (validationModule) => {
                 buttonState.disabled = false;
                 buttonState.text = "获取验证码";
                 console.error(`[ERROR] ${errorMessagePrefix}:`, result.message);
-                alert(result.message || errorMessagePrefix);
+                if (notificationCallback) {
+                    notificationCallback('error', result.message || errorMessagePrefix);
+                } else {
+                    alert(result.message || errorMessagePrefix);
+                }
             }
         } catch (error) {
             // 网络错误，恢复按钮状态
             buttonState.disabled = false;
             buttonState.text = "获取验证码";
             console.error("发送验证码请求失败:", error);
-            alert("网络错误，请稍后重试");
+            if (notificationCallback) {
+                notificationCallback('error', "网络错误，请稍后重试");
+            } else {
+                alert("网络错误，请稍后重试");
+            }
         }
     };
 

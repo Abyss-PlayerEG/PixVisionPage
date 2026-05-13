@@ -1,7 +1,26 @@
 <script setup>
 import { useLoginView } from "../composables/loginView.js";
+import { showSuccess, showError, showWarning, showInfo } from '@/utils/notification';
 
-const LV = useLoginView();
+// 定义通知回调函数
+const notificationCallback = (type, message) => {
+  switch (type) {
+    case 'success':
+      showSuccess(message);
+      break;
+    case 'error':
+      showError(message);
+      break;
+    case 'warning':
+      showWarning(message);
+      break;
+    default:
+      showInfo(message);
+  }
+};
+
+// 传入通知回调
+const LV = useLoginView(notificationCallback);
 
 const {
   router,
@@ -42,7 +61,7 @@ const {
   clearForgotPasswordCountdown,
   handleForgotPasswordSubmit,
   handleForgotPasswordFinalSubmit,
-} = useLoginView();
+} = LV;
 
 // 忘记密码 - 下一步处理
 const handleForgotPasswordNext = () => {

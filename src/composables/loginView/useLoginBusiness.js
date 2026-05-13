@@ -4,7 +4,7 @@ import { reactive } from "vue";
  * 登录业务逻辑模块
  * 负责登录、注册、忘记密码等核心业务流程
  */
-export const useLoginBusiness = (router, validationModule, verificationModule, animationsModule) => {
+export const useLoginBusiness = (router, validationModule, verificationModule, animationsModule, notificationCallback = null) => {
     // ==================== 按钮状态 ====================
 
     // 登录按钮状态
@@ -124,7 +124,11 @@ export const useLoginBusiness = (router, validationModule, verificationModule, a
             });
         } else {
             console.error('[ERROR] 登录失败:', result.message);
-            alert(result.message || '登录失败，请检查用户名、密码和验证码');
+            if (notificationCallback) {
+                notificationCallback('error', result.message || '登录失败，请检查用户名、密码和验证码');
+            } else {
+                alert(result.message || '登录失败，请检查用户名、密码和验证码');
+            }
         }
     };
 
@@ -199,7 +203,11 @@ export const useLoginBusiness = (router, validationModule, verificationModule, a
             });
         } else {
             console.error('[ERROR] 注册失败:', result.message);
-            alert(result.message || '注册失败');
+            if (notificationCallback) {
+                notificationCallback('error', result.message || '注册失败');
+            } else {
+                alert(result.message || '注册失败');
+            }
         }
     };
 

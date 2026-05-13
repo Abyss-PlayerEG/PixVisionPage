@@ -13,6 +13,11 @@ const router = createRouter({
       name:'login',
       component: () => import('../views/loginView.vue'),
     },
+    {
+      path:'/toast-demo',
+      name:'toastDemo',
+      component: () => import('../views/ToastDemo.vue'),
+    },
   ],
 })
 
