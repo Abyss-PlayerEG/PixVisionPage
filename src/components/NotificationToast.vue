@@ -37,7 +37,7 @@ const toastRef = ref(null)
 // 关闭弹窗
 const closeToast = () => {
   if (!isVisible.value) return
-  
+
   // GSAP 退出动画 - 使用 autoAlpha 替代 opacity
   gsap.to(toastRef.value, {
     x: 100,
@@ -56,13 +56,13 @@ const closeToast = () => {
 // 显示弹窗
 const showToast = () => {
   if (isVisible.value) return
-  
+
   isVisible.value = true
-  
+
   // 使用 nextTick 确保 DOM 已更新
   nextTick(() => {
     if (!toastRef.value) return
-    
+
     // 执行进入动画（元素已通过模板中的 style 初始隐藏）
     gsap.fromTo(toastRef.value,
       {
@@ -77,7 +77,7 @@ const showToast = () => {
         ease: "power3.out"
       }
     )
-    
+
     // 自动关闭定时器
     if (props.duration > 0) {
       setTimeout(closeToast, props.duration)
@@ -117,8 +117,8 @@ onUnmounted(() => {
 
 <template>
   <Teleport to="body">
-    <div 
-      v-if="isVisible" 
+    <div
+      v-if="isVisible"
       ref="toastRef"
       class="notification-toast"
       :class="`type-${type}`"
@@ -140,7 +140,7 @@ onUnmounted(() => {
             <path fill="currentColor" d="M12 2C6.47 2 2 6.47 2 12s4.47 10 10 10 10-4.47 10-10S17.53 2 12 2zm5 13.59L15.59 17 12 13.41 8.41 17 7 15.59 10.59 12 7 8.41 8.41 7 12 10.59 15.59 7 17 8.41 13.41 12 17 15.59z"/>
           </svg>
         </div>
-        
+
         <div class="toast-text">
           <div class="toast-title">{{ title }}</div>
           <div class="toast-message">{{ message }}</div>
@@ -154,12 +154,12 @@ onUnmounted(() => {
 .notification-toast {
   position: fixed;
   bottom: 20px;
-  right: 20px;
+  right: -1px;
   z-index: 9999;
   max-width: 350px;
   min-width: 280px;
   background-color: #1a1a1a;
-  border-radius: 12px;
+  border-radius: 12px 0 0 12px;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
   border: 1px solid #333;
   overflow: hidden;
@@ -167,7 +167,7 @@ onUnmounted(() => {
 
 .toast-content {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   padding: 16px;
   gap: 12px;
 }
@@ -175,7 +175,10 @@ onUnmounted(() => {
 .toast-icon {
   flex-shrink: 0;
   color: #888;
-  margin-top: 2px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  align-self: stretch;
 }
 
 .type-info .toast-icon {
@@ -207,6 +210,22 @@ onUnmounted(() => {
   line-height: 1.4;
 }
 
+.type-info .toast-title {
+  color: #4A9EFF;
+}
+
+.type-success .toast-title {
+  color: #2ECC71;
+}
+
+.type-warning .toast-title {
+  color: #F39C12;
+}
+
+.type-error .toast-title {
+  color: #E74C3C;
+}
+
 .toast-message {
   font-size: 13px;
   color: #cccccc;
@@ -217,12 +236,11 @@ onUnmounted(() => {
 /* 响应式设计 */
 @media (max-width: 768px) {
   .notification-toast {
-    right: 10px;
-    left: 10px;
     max-width: none;
-    bottom: 10px;
+    top: 10px;
+    bottom: auto;
   }
-  
+
   .toast-content {
     padding: 12px;
   }

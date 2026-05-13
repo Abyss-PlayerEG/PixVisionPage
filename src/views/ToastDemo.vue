@@ -1,21 +1,5 @@
 <script setup>
-import { ref } from 'vue'
-import NotificationToast from '@/components/NotificationToast.vue'
 import { showInfo, showSuccess, showWarning, showError } from '@/utils/notification'
-
-// 控制组件方式显示的状态
-const showToast1 = ref(false)
-const showToast2 = ref(false)
-
-// 组件方式 - 显示信息提示
-const showComponentInfo = () => {
-  showToast1.value = true
-}
-
-// 组件方式 - 显示成功提示
-const showComponentSuccess = () => {
-  showToast2.value = true
-}
 
 // 工具函数方式 - 各种类型提示
 const showToolInfo = () => {
@@ -45,36 +29,7 @@ const showLongToast = () => {
     <h1>右下角弹窗组件演示</h1>
     
     <section class="demo-section">
-      <h2>方式一：直接使用组件</h2>
-      <div class="button-group">
-        <button @click="showComponentInfo" class="btn btn-info">
-          显示信息提示
-        </button>
-        <button @click="showComponentSuccess" class="btn btn-success">
-          显示成功提示
-        </button>
-      </div>
-      
-      <!-- 组件方式 -->
-      <NotificationToast
-        v-model:show="showToast1"
-        title="信息提示"
-        message="这是通过组件直接使用的信息提示"
-        type="info"
-        :duration="3000"
-      />
-      
-      <NotificationToast
-        v-model:show="showToast2"
-        title="成功提示"
-        message="操作已成功完成！"
-        type="success"
-        :duration="3000"
-      />
-    </section>
-    
-    <section class="demo-section">
-      <h2>方式二：使用工具函数（推荐）</h2>
+      <h2>使用工具函数（推荐）</h2>
       <div class="button-group">
         <button @click="showToolInfo" class="btn btn-info">
           信息提示
@@ -103,16 +58,7 @@ const showLongToast = () => {
     <section class="demo-section">
       <h2>代码示例</h2>
       <div class="code-block">
-        <pre><code>// 方式一：在模板中使用组件
-&lt;NotificationToast
-  :show="showToast"
-  title="提示"
-  message="这是一条消息"
-  type="info"
-  :duration="3000"
-/&gt;
-
-// 方式二：在脚本中使用工具函数（推荐）
+        <pre><code>// 在脚本中使用工具函数
 import { showSuccess, showError } from '@/utils/notification'
 
 // 显示成功提示
