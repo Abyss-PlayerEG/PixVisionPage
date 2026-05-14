@@ -19,6 +19,7 @@
 2. **颜色异常**：再次打开登录面板时，"- Login -"字样颜色不是#ffffff
 3. **输入框消失**：登录面板的输入框动画暂停在被中断的状态
 4. **控制台报错**：`Cannot set property isTrusted of #<PointerEvent>`
+5. **忘记密码返回动画消失**：点击忘记密码后点击返回，回到登录面板时动画消失
 
 ---
 
@@ -130,6 +131,47 @@ gsap.to(lfzTitle.value, { opacity: 1, duration: 0.4 });
 - 如果在opacity从1→0.1的过程中被打断
 - 此时opacity可能是0.5（中间值）
 - 新动画从0.5→1，如果也被中断，颜色就错了
+
+---
+
+### 6. clearProps过度使用导致状态丢失
+
+**问题代码：**
+```javascript
+// tl_backtopass1的onComplete中
+gsap.set(".fadeIn_loginBt", { clearProps: "all" });
+gsap.set(".fadeIn_loginInput", { clearProps: "all" });
+gsap.set(".fadeIn_loginItem", { clearProps: "all" });
+```
+
+**原因：**
+- `clearProps: "all"`会清除GSAP添加到元素上的**所有样式属性**
+- 包括transform、opacity等动画属性
+- 这些元素在CSS中**没有定义初始状态**，完全依赖GSAP动画
+- clearProps后，元素回到"裸"状态，可能导致显示异常
+- 更重要的是，这破坏了动画的视觉效果，让用户感觉"动画没了"
+
+**场景演示：**
+```
+Step 1: 打开登录面板
+        输入框从(y:100, opacity:0) → (y:0, opacity:1) ✅
+        
+Step 2: 点击"忘记密码"
+        tl_showpass1播放
+        输入框动画到(x:100, opacity:0) ✅
+        
+Step 3: 点击"返回"
+        tl_backtopass1播放
+        输入框从(x:100, opacity:0) → (x:0, opacity:1) ✅ 有动画
+        onComplete执行
+        clearProps: "all" ❌ 清除所有GSAP样式
+        元素回到CSS默认状态（无transform, opacity:1）
+        
+Step 4: 用户看到的结果
+        动画刚播放完就被clearProps重置
+        或者在动画过程中被其他操作中断
+        ❌ 感觉"动画消失了"
+```
 
 ---
 
@@ -287,6 +329,78 @@ loginTimeline.set("#Xzone", { bottom: -600 });
 
 ---
 
+### 方案7：移除clearProps，使用明确的set设置最终状态
+
+**修改前：**
+```javascript
+// tl_backtopass1的onComplete中
+gsap.set(".fadeIn_loginBt", { clearProps: "all" });
+gsap.set(".fadeIn_loginInput", { clearProps: "all" });
+gsap.set(".fadeIn_loginItem", { clearProps: "all" });
+```
+
+**修改后：**
+```javascript
+// ✅ 明确设置正确的最终状态，而不是清除所有属性
+gsap.set(".fadeIn_loginBt", { x: 0, opacity: 1 });
+gsap.set(".fadeIn_loginInput", { x: 0, opacity: 1 });
+gsap.set(".fadeIn_loginItem", { x: 0, opacity: 1 });
+```
+
+**优势：**
+- 保留元素的正确状态
+- 不会破坏动画的视觉效果
+- 为后续动画提供正确的起点
+- 避免元素回到CSS默认状态导致的显示问题
+
+---
+
+### 方案8：统一管理所有timeline引用
+
+**添加变量：**
+```javascript
+let forgotPasswordTimeline = null;
+```
+
+**在showLoginPanel和showRegisterPanel中kill忘记密码相关的timeline：**
+```javascript
+const showLoginPanel = () => {
+    // ✅ kill掉忘记密码相关的timeline
+    if (forgotPasswordTimeline) {
+        forgotPasswordTimeline.kill();
+        forgotPasswordTimeline = null;
+    }
+    if (tl_showpass1) {
+        tl_showpass1.kill();
+    }
+    if (tl_backtopass1) {
+        tl_backtopass1.kill();
+    }
+    if (tl_showpass2) {
+        tl_showpass2.kill();
+    }
+    
+    gsap.killTweensOf([
+        title1.value, 
+        title2.value, 
+        loginFormZone.value, 
+        bgimg.value, 
+        ".fadeIn_loginInput", 
+        ".fadeIn_loginBt",  // ✅ 新增
+        ".fadeIn_loginItem"  // ✅ 新增
+    ]);
+    // ...
+};
+```
+
+**作用：**
+- 确保在打开新面板前，所有旧动画都被清理
+- 防止动画冲突和状态混乱
+- 提供干净的状态供新动画执行
+- 即使用户在忘记密码动画播放时切换面板，也能正确处理
+
+---
+
 ## 🎯 关键技术要点
 
 ### 1. GSAP的from() vs fromTo()
@@ -369,6 +483,12 @@ gsap.to(el, { opacity: 1, duration: 0.4 });  // 0.4秒内渐变
 ↓
 再次点击Start          fromTo()明确起点终点          ✅ 输入框正常显示
                        gsap.set重置lfzTitle          ✅ 颜色正确
+↓
+点击忘记密码            tl_showpass1播放              ✅ 输入框向右移出
+↓
+点击返回                tl_backtopass1播放            ✅ 输入框动画回来
+                        set({x:0, opacity:1})        ✅ 设置正确状态
+                        不清除所有样式                 ✅ 动画正常显示
 ```
 
 ---
@@ -448,6 +568,9 @@ gsap.to(el, { opacity: 1, duration: 0.4 });  // 0.4秒内渐变
 - ✅ 不会出现isTrusted错误
 - ✅ 动画不会冲突或排队执行
 - ✅ 所有状态管理正确，不会出现混乱
+- ✅ **忘记密码返回动画能正常显示**
+- ✅ **clearProps不再破坏元素状态**
+- ✅ **所有timeline被统一管理和清理**
 
 ---
 

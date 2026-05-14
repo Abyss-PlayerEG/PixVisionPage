@@ -30,6 +30,9 @@ export const useLoginAnimations = (validationModule = null, verificationModule =
     let tl_showpass1 = null;
     let tl_showpass2 = null;
     let tl_backtopass1 = null;
+    
+    // ✅ 修复：保存忘记密码相关的timeline引用，纳入统一管理
+    let forgotPasswordTimeline = null;
 
     // 初始化动画时间轴
     onMounted(() => {
@@ -86,9 +89,12 @@ export const useLoginAnimations = (validationModule = null, verificationModule =
                 });
                 gsap.set(".s1", { x: 0, opacity: 1 });
                 gsap.set(".s2", { x: "100%", opacity: 0 });
-                gsap.set(".fadeIn_loginBt", { clearProps: "all" });
-                gsap.set(".fadeIn_loginInput", { clearProps: "all" });
-                gsap.set(".fadeIn_loginItem", { clearProps: "all" });
+                
+                // ✅ 修复：不使用clearProps，而是明确设置正确的最终状态
+                // clearProps会清除所有GSAP样式，导致元素回到CSS默认状态，可能引起显示问题
+                gsap.set(".fadeIn_loginBt", { x: 0, opacity: 1 });
+                gsap.set(".fadeIn_loginInput", { x: 0, opacity: 1 });
+                gsap.set(".fadeIn_loginItem", { x: 0, opacity: 1 });
             }
         })
             .to(".s1, .s2", {
@@ -201,7 +207,22 @@ export const useLoginAnimations = (validationModule = null, verificationModule =
             registerTimeline.kill();
             registerTimeline = null;
         }
-        gsap.killTweensOf([title1.value, title2.value, loginFormZone.value, bgimg.value, ".fadeIn_loginInput"]);
+        // ✅ 修复：kill掉忘记密码相关的timeline
+        if (forgotPasswordTimeline) {
+            forgotPasswordTimeline.kill();
+            forgotPasswordTimeline = null;
+        }
+        if (tl_showpass1) {
+            tl_showpass1.kill();
+        }
+        if (tl_backtopass1) {
+            tl_backtopass1.kill();
+        }
+        if (tl_showpass2) {
+            tl_showpass2.kill();
+        }
+        
+        gsap.killTweensOf([title1.value, title2.value, loginFormZone.value, bgimg.value, ".fadeIn_loginInput", ".fadeIn_loginBt", ".fadeIn_loginItem"]);
         
         loginTimeline = gsap.timeline();
 
@@ -264,6 +285,21 @@ export const useLoginAnimations = (validationModule = null, verificationModule =
             loginTimeline.kill();
             loginTimeline = null;
         }
+        // ✅ 修复：kill掉忘记密码相关的timeline
+        if (forgotPasswordTimeline) {
+            forgotPasswordTimeline.kill();
+            forgotPasswordTimeline = null;
+        }
+        if (tl_showpass1) {
+            tl_showpass1.kill();
+        }
+        if (tl_backtopass1) {
+            tl_backtopass1.kill();
+        }
+        if (tl_showpass2) {
+            tl_showpass2.kill();
+        }
+        
         gsap.killTweensOf([lfzTitle.value, '#Xzone', '.xzone_input', '.xzone_input_vcode', '.xzone_registerBt', '.xzone_tips']);
         
         registerTimeline = gsap.timeline();
