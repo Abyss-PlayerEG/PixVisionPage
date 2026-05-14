@@ -1,4 +1,5 @@
 import { reactive } from "vue";
+import { showSuccess, showError } from "@/utils/notification";
 import {
     sendRegisterCode as apiSendRegisterCode,
     sendLoginCode as apiSendLoginCode,
@@ -78,16 +79,18 @@ export const useVerificationCode = (validationModule, notificationCallback = nul
             if (result.success) {
                 console.log("[SUCCESS] 验证码发送成功");
 
+                // 显示成功提示
+                if (notificationCallback) {
+                    notificationCallback('success', successMessage);
+                } else {
+                    showSuccess(successMessage);
+                }
+
                 if (needCountdown && countdownFn) {
                     // 需要倒计时
                     countdownFn();
-                } else if (showSuccessAlert) {
-                    // 不需要倒计时，但显示提示并恢复按钮
-                    if (notificationCallback) {
-                        notificationCallback('success', successMessage);
-                    } else {
-                        alert(successMessage);
-                    }
+                } else {
+                    // 不需要倒计时，恢复按钮状态
                     buttonState.disabled = false;
                     buttonState.text = "获取验证码";
                 }
@@ -99,7 +102,7 @@ export const useVerificationCode = (validationModule, notificationCallback = nul
                 if (notificationCallback) {
                     notificationCallback('error', result.message || errorMessagePrefix);
                 } else {
-                    alert(result.message || errorMessagePrefix);
+                    showError(result.message || errorMessagePrefix);
                 }
             }
         } catch (error) {
@@ -110,7 +113,7 @@ export const useVerificationCode = (validationModule, notificationCallback = nul
             if (notificationCallback) {
                 notificationCallback('error', "网络错误，请稍后重试");
             } else {
-                alert("网络错误，请稍后重试");
+                showError("网络错误，请稍后重试");
             }
         }
     };

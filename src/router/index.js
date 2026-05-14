@@ -17,7 +17,7 @@ const router = createRouter({
         // 以下路由仅在开发环境启用，构建后自动去除以下路由
         ...(import.meta.env.DEV ? [
             {
-                path: '/toast-demo',
+                path: '/demo/toast',
                 name: 'toastDemo',
                 component: () => import('../views/demo/ToastDemo.vue'),
             },

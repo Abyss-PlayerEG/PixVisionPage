@@ -1,4 +1,5 @@
 import { reactive } from "vue";
+import { showSuccess, showError } from "@/utils/notification";
 
 /**
  * 登录业务逻辑模块
@@ -127,7 +128,7 @@ export const useLoginBusiness = (router, validationModule, verificationModule, a
             if (notificationCallback) {
                 notificationCallback('error', result.message || '登录失败，请检查用户名、密码和验证码');
             } else {
-                alert(result.message || '登录失败，请检查用户名、密码和验证码');
+                showError(result.message || '登录失败，请检查用户名、密码和验证码');
             }
         }
     };
@@ -206,7 +207,7 @@ export const useLoginBusiness = (router, validationModule, verificationModule, a
             if (notificationCallback) {
                 notificationCallback('error', result.message || '注册失败');
             } else {
-                alert(result.message || '注册失败');
+                showError(result.message || '注册失败');
             }
         }
     };
@@ -284,7 +285,11 @@ export const useLoginBusiness = (router, validationModule, verificationModule, a
             });
         } else {
             console.error('[ERROR] 密码重置失败:', result.message);
-            alert(result.message || '密码重置失败');
+            if (notificationCallback) {
+                notificationCallback('error', result.message || '密码重置失败');
+            } else {
+                showError(result.message || '密码重置失败');
+            }
         }
     };
 
