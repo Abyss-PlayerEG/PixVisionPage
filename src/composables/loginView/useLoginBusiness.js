@@ -184,13 +184,7 @@ export const useLoginBusiness = (router, validationModule, verificationModule, a
                 duration: 3,
                 onComplete: () => {
                     // 切换到登录面板
-                    animationsModule.hideFormPanel(
-                        validationModule.regForm,
-                        validationModule.regFieldStates,
-                        verificationModule.clearCountdown,
-                        registerCountdownTimer,
-                        registerButtonState
-                    );
+                    animationsModule.hideFormPanel();  // ✅ 修复：不再传递参数
 
                     // 等待动画完成后，显示登录面板
                     if (!animationsModule.isLoginPanelOpen.value) {

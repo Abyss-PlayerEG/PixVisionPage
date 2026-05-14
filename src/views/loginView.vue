@@ -161,7 +161,7 @@ const handleForgotPasswordNext = () => {
     <!-- 注册页面 -->
     <section id="Xzone">
       <div class="xzone_title">- JoinUs -</div>
-      <div class="xzone_back" @click="hideFormPanel">
+      <div class="xzone_back" @click="() => hideFormPanel()">
       </div>
       <div class="xzone_content">
         <div class="xzone_input fadeIn_regInput" :class="regFieldStates.nickname.status">
@@ -197,13 +197,13 @@ const handleForgotPasswordNext = () => {
         </div>
         <button class="xzone_registerBt fadeIn_regInput" @click="handleRegister" :disabled="registerButtonState.disabled">{{ registerButtonState.text }}</button>
         <div class="xzone_tips fadeIn_regInput">
-          已有账号?<span @click="hideFormPanel">立即登录</span>
+          已有账号?<span @click="() => hideFormPanel()">立即登录</span>
         </div>
       </div>
     </section>
 
     <!-- 隐藏LoginFormZone的Zone -->
-     <section id="hideFZ" ref="hideFZ" @click="hideFormPanel"></section>
+     <section id="hideFZ" ref="hideFZ" @click="() => hideFormPanel()"></section>
 
     <section id="titleSlider">
       <div class="title1" ref="title1">

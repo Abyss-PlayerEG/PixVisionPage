@@ -5,10 +5,19 @@ import { ref, onMounted } from "vue";
  * 登录页面动画管理模块
  * 负责所有GSAP动画的初始化和控制
  */
-export const useLoginAnimations = () => {
+export const useLoginAnimations = (validationModule = null, verificationModule = null, businessModule = null) => {
     let aniEND = false; // 动画完成标志
     const activePanel = ref("");
     const isLoginPanelOpen = ref(false);
+    
+    // ✅ 修复：保存模块引用，支持后续设置
+    let _validationModule = validationModule;
+    let _verificationModule = verificationModule;
+    let _businessModule = businessModule;
+    
+    // ✅ 修复：保存timeline引用，用于正确清理动画
+    let registerTimeline = null;
+    let loginTimeline = null;
 
     // DOM元素引用
     const bgimg = ref(null);
@@ -183,74 +192,101 @@ export const useLoginAnimations = () => {
 
     // 显示登录面板
     const showLoginPanel = () => {
-        const tl = gsap.timeline();
+        // ✅ 修复：先kill掉旧的timeline，防止冲突
+        if (loginTimeline) {
+            loginTimeline.kill();
+            loginTimeline = null;
+        }
+        if (registerTimeline) {
+            registerTimeline.kill();
+            registerTimeline = null;
+        }
+        gsap.killTweensOf([title1.value, title2.value, loginFormZone.value, bgimg.value, ".fadeIn_loginInput"]);
+        
+        loginTimeline = gsap.timeline();
 
         aniEND = false;
         activePanel.value = "login";
         isLoginPanelOpen.value = true;
         console.log("登录面板状态：" + isLoginPanelOpen.value);
 
-        tl.to(title1.value, {
+        loginTimeline.to(title1.value, {
             y: -250,
             opacity: 0,
             duration: 0.4,
             ease: "power2.out",
         });
 
-        tl.to(title2.value, {
+        loginTimeline.to(title2.value, {
             y: -300,
             opacity: 0,
             duration: 0.5,
             ease: "power2.out",
         }, "<");
 
-        tl.to(loginFormZone.value, {
+        loginTimeline.to(loginFormZone.value, {
             bottom: 0,
             duration: 0.6,
             ease: "power2.Out",
         }, "<");
 
-        tl.to(bgimg.value, {
+        loginTimeline.to(bgimg.value, {
             width: "100vw",
             height: "100vh",
             duration: 0.6,
             ease: "power2.Out",
         }, "<");
 
-        tl.from(".fadeIn_loginInput", {
-            y: 100,
-            opacity: 0,
-            duration: 0.8,
-            stagger: 0.1,
-            ease: "power2.out",
-        }, "<");
+        // ✅ 修复：使用fromTo明确指定起点和终点，避免状态残留问题
+        loginTimeline.fromTo(".fadeIn_loginInput",
+            { y: 100, opacity: 0 },  // 明确的起点
+            {
+                y: 0,
+                opacity: 1,
+                duration: 0.8,
+                stagger: 0.1,
+                ease: "power2.out",
+            },
+            "<"
+        );
 
         aniEND = true;
     };
 
     // 显示注册面板
     const showRegisterPanel = () => {
-        const tl = gsap.timeline();
+        // ✅ 修复：先kill掉旧的timeline，防止冲突
+        if (registerTimeline) {
+            registerTimeline.kill();
+            registerTimeline = null;
+        }
+        if (loginTimeline) {
+            loginTimeline.kill();
+            loginTimeline = null;
+        }
+        gsap.killTweensOf([lfzTitle.value, '#Xzone', '.xzone_input', '.xzone_input_vcode', '.xzone_registerBt', '.xzone_tips']);
+        
+        registerTimeline = gsap.timeline();
         activePanel.value = "register";
 
-        tl.set(".xzone_registerBt", { y: 20, opacity: 0 });
-        tl.set(".xzone_tips", { y: 20, opacity: 0 });
-        tl.set(".xzone_input", { y: 30, opacity: 0 });
-        tl.set(".xzone_input_vcode", { y: 30, opacity: 0 });
+        registerTimeline.set(".xzone_registerBt", { y: 20, opacity: 0 });
+        registerTimeline.set(".xzone_tips", { y: 20, opacity: 0 });
+        registerTimeline.set(".xzone_input", { y: 30, opacity: 0 });
+        registerTimeline.set(".xzone_input_vcode", { y: 30, opacity: 0 });
 
-        tl.to(lfzTitle.value, {
+        registerTimeline.to(lfzTitle.value, {
             opacity: .1,
             duration: 0.6,
             ease: "power2.Out",
         });
 
-        tl.to('#Xzone', {
+        registerTimeline.to('#Xzone', {
             bottom: 0,
             duration: 0.5,
             ease: "power2.out",
         }, "<");
 
-        tl.to(".xzone_input", {
+        registerTimeline.to(".xzone_input", {
             y: 0,
             opacity: 1,
             duration: 0.4,
@@ -258,66 +294,112 @@ export const useLoginAnimations = () => {
             ease: "power2.out",
         }, "-=0.2");
 
-        tl.to(".xzone_input_vcode", {
+        registerTimeline.to(".xzone_input_vcode", {
             y: 0,
             opacity: 1,
             duration: 0.4,
             ease: "power2.out",
         }, "-=0.4");
 
-        tl.to(".xzone_registerBt", {
+        registerTimeline.to(".xzone_registerBt", {
             y: 0,
             opacity: 1,
             duration: 0.4,
             ease: "power2.inOut",
         }, "<");
 
-        tl.to(".xzone_tips", {
+        registerTimeline.to(".xzone_tips", {
             delay: 0.1,
             y: 0,
             opacity: 1,
             duration: 0.4,
             ease: "power2.out",
         });
+        
+        // ✅ 修复：注册面板动画完成后设置aniEND标志
+        aniEND = true;
     };
 
-    // 隐藏表单面板
-    const hideFormPanel = (regForm, regFieldStates, clearCountdown, registerCountdownTimer, registerButtonState) => {
+    // 隐藏表单面板（无参数版本，直接从模块内部获取数据）
+    const hideFormPanel = () => {
+        // ✅ 修复：从模块内部获取所需数据，避免事件对象传递问题
+        const regForm = _validationModule?.regForm;
+        const regFieldStates = _validationModule?.regFieldStates;
+        const clearCountdown = _verificationModule?.clearCountdown;
+        const registerButtonState = _businessModule?.registerButtonState;
+        let registerCountdownTimer = null; // 定时器引用应该在verificationModule中管理
+        
         // 优先：如果注册面板打开 -> 只关闭注册
         if (activePanel.value === "register") {
-            gsap.to(lfzTitle.value, { opacity: 1, duration: 0.4, ease: "power2.out" });
+            // ✅ 修复：先kill掉注册面板的timeline，立即停止进入动画
+            if (registerTimeline) {
+                registerTimeline.kill();
+                registerTimeline = null;
+            }
+            
+            // ✅ 修复：使用immediateRender确保opacity立即设置为1，避免颜色问题
+            gsap.set(lfzTitle.value, { opacity: 1 });
+            
+            // ✅ 修复：使用overwrite: true确保新动画立即覆盖旧动画
             gsap.to("#Xzone", {
                 bottom: -700,
                 duration: 0.4,
                 ease: "power2.in",
+                overwrite: true,  // ✅ 关键：立即覆盖之前的动画
                 onComplete: () => {
                     gsap.set("#Xzone", { bottom: -600 });
-                    // 清理注册表单
-                    for (const key in regForm) {
-                        regForm[key] = "";
+                    
+                    // ✅ 修复：安全检查，确保regForm是对象而非事件对象
+                    if (regForm && typeof regForm === 'object' && !regForm.preventDefault) {
+                        // 清理注册表单
+                        for (const key in regForm) {
+                            if (regForm.hasOwnProperty(key)) {
+                                regForm[key] = "";
+                            }
+                        }
                     }
-                    for (const key in regFieldStates) {
-                        regFieldStates[key] = { status: "idle", message: "" };
+                    
+                    if (regFieldStates && typeof regFieldStates === 'object') {
+                        for (const key in regFieldStates) {
+                            if (regFieldStates.hasOwnProperty(key)) {
+                                regFieldStates[key] = { status: "idle", message: "" };
+                            }
+                        }
                     }
+                    
                     // 清除验证码倒计时
-                    clearCountdown();
-                    // 清除注册按钮倒计时
-                    if (registerCountdownTimer) {
-                        clearInterval(registerCountdownTimer);
-                        registerCountdownTimer = null;
+                    if (clearCountdown && typeof clearCountdown === 'function') {
+                        clearCountdown();
                     }
-                    registerButtonState.text = '注册';
-                    registerButtonState.disabled = false;
+                    
+                    // 恢复按钮状态
+                    if (registerButtonState) {
+                        registerButtonState.text = '注册';
+                        registerButtonState.disabled = false;
+                    }
+                    
+                    // ✅ 修复：注册面板关闭完成后重置aniEND标志
+                    aniEND = true;
                 },
             });
-            activePanel.value = "login";
+            activePanel.value = "";  // ✅ 修复：关闭注册面板后应设置为空
             return;
         }
 
         // 关闭登录面板
         if (!aniEND) return;
+        
+        // ✅ 修复：先kill掉旧的timeline
+        if (loginTimeline) {
+            loginTimeline.kill();
+            loginTimeline = null;
+        }
+        if (registerTimeline) {
+            registerTimeline.kill();
+            registerTimeline = null;
+        }
 
-        const tl = gsap.timeline({
+        loginTimeline = gsap.timeline({
             onComplete: () => {
                 aniEND = true;
                 activePanel.value = "";
@@ -326,26 +408,33 @@ export const useLoginAnimations = () => {
             }
         });
 
-        tl.to(loginFormZone.value, {
+        loginTimeline.to(loginFormZone.value, {
             bottom: -700,
             duration: 0.5,
             ease: "power2.in",
         }, 0);
 
-        tl.to(bgimg.value, {
+        loginTimeline.to(bgimg.value, {
             width: "120vw",
             height: "120vh",
             duration: 0.5,
             ease: "power2.in",
         }, 0);
 
-        tl.to(title1.value, { y: 0, opacity: 1, duration: 0.8, ease: "power2.out" }, 0.2);
-        tl.to(title2.value, { y: 0, opacity: 1, duration: 0.5, ease: "power2.out" }, 0.2);
+        loginTimeline.to(title1.value, { y: 0, opacity: 1, duration: 0.8, ease: "power2.out" }, 0.2);
+        loginTimeline.to(title2.value, { y: 0, opacity: 1, duration: 0.5, ease: "power2.out" }, 0.2);
 
-        tl.set(loginFormZone.value, { bottom: -700 });
-        tl.set("#Xzone", { bottom: -600 });
+        // ✅ 修复：重置输入框和面板位置到初始状态
+        loginTimeline.set(".fadeIn_loginInput", { y: 100, opacity: 0 });
+        loginTimeline.set(loginFormZone.value, { bottom: -700 });
+        loginTimeline.set("#Xzone", { bottom: -600 });
 
         aniEND = false;
+    };
+
+    // ✅ 修复：提供方法用于设置businessModule（解决循环依赖）
+    const __setBusinessModule = (module) => {
+        _businessModule = module;
     };
 
     return {
@@ -361,5 +450,6 @@ export const useLoginAnimations = () => {
         showLoginPanel,
         showRegisterPanel,
         hideFormPanel,
+        __setBusinessModule,  // ✅ 导出设置方法
     };
 };
