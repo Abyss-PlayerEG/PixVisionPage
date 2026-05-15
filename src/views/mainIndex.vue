@@ -1,5 +1,5 @@
 <script setup>
-import { onMounted, onUnmounted } from 'vue'
+import { onMounted, onUnmounted, watch } from 'vue'
 import { useRouter } from "vue-router"
 
 //组件引用
@@ -8,6 +8,10 @@ import Waterfall from "@/components/Waterfall.vue";
 
 // 引入 composable
 import { useCopyAnimation, useArrowAnimation } from "@/composables/mainIndex.js"
+import { useWorkWaterfall } from "@/composables/useWorkWaterfall.js"
+
+// 引入通知组件
+import { showError } from '@/utils/notification'
 
 //依赖申明
 const router = useRouter()
@@ -17,6 +21,16 @@ const { initCopyAnimation, cleanupCopyAnimation } = useCopyAnimation()
 
 // 初始化箭头动画
 const { triggerArrowAnimation, cleanupArrowAnimation } = useArrowAnimation()
+
+// 初始化作品瀑布流
+const { waterfallImages, isLoading, error } = useWorkWaterfall()
+
+// 监听错误信息，显示弹窗
+watch(error, (newError) => {
+  if (newError) {
+    showError(newError)
+  }
+})
 
 onMounted(() => {
   // 启动文案动画
@@ -63,8 +77,13 @@ onUnmounted(() => {
     <section id="num2z">
         <div class="water_fall">
             <!-- 距离顶部还有 ?px 时就固定并开始水平滚动 -->
-             <!-- todo:联调后端图片资源 -->
-            <Waterfall :pin-offset-top="70"/>
+            <Waterfall 
+              :external-images="waterfallImages" 
+              :pin-offset-top="70"
+            />
+            
+            <!-- 加载状态提示 -->
+            <div v-if="isLoading" class="loading-tip">加载中...</div>
         </div>
     </section>
     <section id="num2z_2">

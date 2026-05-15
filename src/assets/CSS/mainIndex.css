@@ -144,6 +144,27 @@
     /* width: 100%; */
     /* min-height: 1000px; */
     /* padding: 20px; */
+    position: relative;
+}
+
+.loading-tip {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: #fff;
+    font-size: 16px;
+    z-index: 10;
+}
+
+.error-tip {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: #ff4d4f;
+    font-size: 16px;
+    z-index: 10;
 }
 
 #num2z_2{

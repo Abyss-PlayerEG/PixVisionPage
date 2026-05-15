@@ -1,0 +1,92 @@
+/**
+ * 作品瀑布流业务逻辑
+ * 负责获取作品数据并转换为瀑布流组件所需格式
+ */
+
+import { ref, onMounted } from 'vue'
+import { fetchWorkPage, transformWorksToWaterfallFormat } from '@/api/workApi'
+
+export const useWorkWaterfall = () => {
+  // 瀑布流图片数据
+  const waterfallImages = ref([])
+  
+  // 加载状态
+  const isLoading = ref(false)
+  
+  // 错误信息
+  const error = ref(null)
+
+  /**
+   * 加载作品数据
+   * @param {number} page - 页码（从1开始）
+   * @param {number} size - 每页数量
+   */
+  const loadWorks = async (page = 1, size = 50) => {
+    try {
+      isLoading.value = true
+      error.value = null
+      
+      console.log(`加载作品数据: 第${page}页, 每页${size}条`)
+      
+      const result = await fetchWorkPage(page, size)
+      
+      if (result.success && result.data && result.data.records) {
+        console.log('原始 records 数据:', result.data.records)
+        console.log('records 数量:', result.data.records.length)
+        
+        // 转换数据格式
+        const transformed = transformWorksToWaterfallFormat(result.data.records)
+        console.log('转换后的数据:', transformed)
+        console.log('转换后第一条数据示例:', transformed[0])
+        
+        waterfallImages.value = transformed
+        console.log('waterfallImages 已更新，数量:', waterfallImages.value.length)
+      } else {
+        error.value = result.message || '获取作品数据失败'
+        console.error('获取作品数据失败:', error.value)
+      }
+    } catch (err) {
+      error.value = '网络错误，请稍后重试'
+      console.error('加载作品数据异常:', err)
+    } finally {
+      isLoading.value = false
+    }
+  }
+
+  /**
+   * 加载更多作品（追加到现有数据）
+   * @param {number} page - 页码
+   * @param {number} size - 每页数量
+   */
+  const loadMoreWorks = async (page = 2, size = 50) => {
+    try {
+      isLoading.value = true
+      
+      const result = await fetchWorkPage(page, size)
+      
+      if (result.success && result.data && result.data.records) {
+        const newImages = transformWorksToWaterfallFormat(result.data.records)
+        // 追加到现有数据
+        waterfallImages.value = [...waterfallImages.value, ...newImages]
+        console.log('加载更多作品完成，当前总数:', waterfallImages.value.length)
+      }
+    } catch (err) {
+      console.error('加载更多作品异常:', err)
+    } finally {
+      isLoading.value = false
+    }
+  }
+
+  // 组件挂载时自动加载第一页数据
+  onMounted(() => {
+    loadWorks(1, 50)
+  })
+
+  return {
+    waterfallImages,
+    isLoading,
+    error,
+    loadWorks,
+    loadMoreWorks,
+  }
+}

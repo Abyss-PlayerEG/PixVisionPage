@@ -4,7 +4,7 @@
  */
 
 // 后端 API 基础 URL
-export const API_BASE_URL = 'http://localhost:9090/';
+export const API_BASE_URL = 'http://localhost:9090';
 
 // 头像获取接口
 export const AVATAR_API = `${API_BASE_URL}/api/image/avatar/get`;
@@ -34,4 +34,20 @@ export const getAvatarUrl = (avatarPath) => {
     return `${AVATAR_API}?filePath=default/1.png`;
   }
   return `${AVATAR_API}?filePath=${encodeURIComponent(avatarPath)}`;
+};
+
+// 作品相关接口
+export const WORK_API = {
+  PAGE: `${API_BASE_URL}/api/work/page`,
+};
+
+// 作品图片获取接口
+export const WORK_IMAGE_API = `${API_BASE_URL}/api/image/work/get`;
+
+// 获取作品图片完整 URL
+export const getWorkImageUrl = (filePath) => {
+  if (!filePath) {
+    return '';
+  }
+  return `${WORK_IMAGE_API}?filePath=${encodeURIComponent(filePath)}`;
 };

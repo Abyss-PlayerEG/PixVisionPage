@@ -160,6 +160,15 @@ watch(images, () => {
   initOrRefreshScrollTrigger()
 })
 
+// 监听外部传入的图片数据变化
+watch(() => props.externalImages, (newImages) => {
+  console.log('Waterfall 组件接收到 externalImages 变化:', newImages?.length, '条')
+  if (newImages && newImages.length > 0) {
+    images.value = newImages
+    console.log('images 已更新为:', images.value.length, '条')
+  }
+}, { immediate: true, deep: true })
+
 const onResize = () => {
   if (images.value.length === 0) buildSkeleton()
   ScrollTrigger.refresh()
