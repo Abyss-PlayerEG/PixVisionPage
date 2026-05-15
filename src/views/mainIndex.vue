@@ -4,6 +4,7 @@ import { useRouter } from "vue-router"
 
 //组件引用
 import NavBar from "@/components/NavBar.vue";
+import Waterfall from "@/components/Waterfall.vue";
 
 // 引入 composable
 import { useCopyAnimation, useArrowAnimation } from "@/composables/mainIndex.js"
@@ -60,8 +61,19 @@ onUnmounted(() => {
     </section>
 
     <section id="num2z">
-        
+        <h1>abc</h1>
+        <h1>abc</h1>
+        <h1>abc</h1>
+        <h1>abc</h1>
+        <h1>abc</h1>
+        <h1>abc</h1>
+        <div class="water_fall">
+            <!-- 距离顶部还有 200px 时就固定并开始水平滚动 -->
+            <Waterfall :pin-offset-top="200" />
+        </div>
     </section>
+
+    <div style="height: 200vh;"></div>
 </template>
 
 <style>
