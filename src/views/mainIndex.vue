@@ -61,19 +61,16 @@ onUnmounted(() => {
     </section>
 
     <section id="num2z">
-        <h1>abc</h1>
-        <h1>abc</h1>
-        <h1>abc</h1>
-        <h1>abc</h1>
-        <h1>abc</h1>
-        <h1>abc</h1>
         <div class="water_fall">
-            <!-- 距离顶部还有 200px 时就固定并开始水平滚动 -->
-            <Waterfall :pin-offset-top="200" />
+            <!-- 距离顶部还有 ?px 时就固定并开始水平滚动 -->
+             <!-- todo:联调后端图片资源 -->
+            <Waterfall :pin-offset-top="70"/>
         </div>
     </section>
+    <section id="num2z_2">
+        <div></div>
+    </section>
 
-    <div style="height: 200vh;"></div>
 </template>
 
 <style>

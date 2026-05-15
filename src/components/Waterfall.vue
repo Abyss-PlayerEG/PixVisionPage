@@ -47,6 +47,7 @@ import { ScrollTrigger } from 'gsap/ScrollTrigger'
 
 gsap.registerPlugin(ScrollTrigger)
 
+//todo 组件所需要的参数
 // ---------- Props ----------
 const props = defineProps({
   externalImages: { type: Array, default: () => [] },
@@ -55,11 +56,10 @@ const props = defineProps({
   pinOffsetTop: { type: Number, default: 0 }
 })
 
-const COLUMNS_COUNT = 8
+const COLUMNS_COUNT = 16
 const sectionRef = ref(null)
 const trackRef = ref(null)
 const images = ref([])
-const isLoading = ref(false)
 const skeletonColumns = ref([])
 const activeColumns = ref(0)
 let scrollTriggerInstance = null
@@ -114,7 +114,6 @@ const initOrRefreshScrollTrigger = () => {
     const scrollDistance = currentTotalWidth - window.innerWidth
 
     if (scrollDistance <= 0) {
-      console.warn('⚠️ 内容宽度不足')
       if (scrollTriggerInstance) {
         scrollTriggerInstance.kill()
         scrollTriggerInstance = null
@@ -129,7 +128,6 @@ const initOrRefreshScrollTrigger = () => {
         scrollTriggerInstance = null
       }
 
-      // 构建 start 字符串：提前 pinOffsetTop 像素触发
       const startValue = props.pinOffsetTop > 0
         ? `top top+=${props.pinOffsetTop}`
         : 'top top'
@@ -141,17 +139,17 @@ const initOrRefreshScrollTrigger = () => {
           trigger: sectionRef.value,
           start: startValue,
           end: () => `+=${scrollDistance}`,
-          scrub: 1,
+          scrub: 1,               // 完全跟手，消除回弹延迟
           pin: true,
-          anticipatePin: 1,
+          anticipatePin: false,      // 避免快速切换时的抖动
+          pinSpacing: true,
+          fastScrollEnd: true,       // 快速滚动后立即到达最终位置
           invalidateOnRefresh: true,
-          id: 'waterfall-gallery',
-          // markers: true,  // 取消注释即可显示触发点，调试完再注释掉
+          id: 'waterfall-gallery'
         }
       })
 
       lastTotalWidth = currentTotalWidth
-      console.log('🎬 ScrollTrigger 已创建，触发条件:', startValue, '滚动距离:', scrollDistance)
     } else {
       ScrollTrigger.refresh()
     }
@@ -172,7 +170,13 @@ onMounted(() => {
   if (props.externalImages && props.externalImages.length > 0) {
     images.value = props.externalImages
   }
-  initOrRefreshScrollTrigger()
+
+  // 延迟初始化，确保上方内容完全渲染后再设置滚动触发，避免位置偏移
+  setTimeout(() => {
+    initOrRefreshScrollTrigger()
+    ScrollTrigger.refresh()  // 再次全局刷新，消除可能的位置偏移
+  }, 300)
+
   window.addEventListener('resize', onResize)
 })
 
@@ -189,14 +193,16 @@ onUnmounted(() => {
 .waterfall-gallery {
   position: relative;
   width: 100%;
-  height: 100vh;
+  height: 90vh;
   overflow: hidden;
+  border-radius: 20px;
 }
 
 .gallery-track {
   display: flex;
   height: 100%;
   will-change: transform;
+  transition: none; /* 防止 CSS 过渡干扰 GSAP */
 }
 
 .gallery-column {

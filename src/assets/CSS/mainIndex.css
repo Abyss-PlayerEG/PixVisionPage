@@ -130,6 +130,7 @@
     width: 100%;
     min-height: 2000px;
     background-color: #000;
+    padding:20px;
     position: relative;
     z-index: 20;
     border-radius: 20px 20px 0 0;
@@ -137,7 +138,17 @@
 }
 
 .water_fall{
+    /* border:1px #ffffff solid; */
+    border-radius: 20px;
+    overflow: hidden;
+    /* width: 100%; */
+    /* min-height: 1000px; */
+    /* padding: 20px; */
+}
+
+#num2z_2{
     width: 100%;
-    min-height: 1000px;
-    padding: 20px;
+    min-height: 200px;
+    background-color: #000;
+    position: absolute;
 }
