@@ -121,6 +121,29 @@ export const transformWorksToWaterfallFormat = (records) => {
       result[secondLastIdx].height = tempHeight;
     }
   });
+
+  // 单独处理最后一列：计算总高度，将留白部分全部加给最后一张图片
+  if (columns.length > 0) {
+    const lastColIndices = columns[columns.length - 1];
+    if (lastColIndices.length > 0) {
+      let currentColTotalHeight = 0;
+      
+      // 计算当前列所有图片的总高度（含间距）
+      lastColIndices.forEach((idx, i) => {
+        currentColTotalHeight += result[idx].height;
+        if (i > 0) currentColTotalHeight += 8; // 加上间距
+      });
+
+      // 计算留白空间
+      const remainingSpace = CONTAINER_HEIGHT - currentColTotalHeight;
+      
+      // 如果有留白（且留白不是负数），加到最后一张图上
+      if (remainingSpace > 0) {
+        const lastImgIdx = lastColIndices[lastColIndices.length - 1];
+        result[lastImgIdx].height += remainingSpace;
+      }
+    }
+  }
   
   return result;
 };
