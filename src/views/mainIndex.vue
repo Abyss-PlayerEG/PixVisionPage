@@ -35,6 +35,11 @@ watch(error, (newError) => {
 onMounted(() => {
   // 启动文案动画
   initCopyAnimation()
+  
+  // 监听窗口大小变化，触发页面刷新
+  window.addEventListener('resize', () => {
+    window.location.reload()
+  })
 })
 
 onUnmounted(() => {
