@@ -42,29 +42,6 @@ export const useWorkWaterfall = () => {
     }
   }
 
-  /**
-   * 加载更多作品（追加到现有数据）
-   * @param {number} page - 页码
-   * @param {number} size - 每页数量
-   */
-  const loadMoreWorks = async (page = 2, size = 50) => {
-    try {
-      isLoading.value = true
-      
-      const result = await fetchWorkPage(page, size)
-      
-      if (result.success && result.data && result.data.records) {
-        const newImages = transformWorksToWaterfallFormat(result.data.records)
-        // 追加到现有数据
-        waterfallImages.value = [...waterfallImages.value, ...newImages]
-      }
-    } catch (err) {
-      // 静默失败
-    } finally {
-      isLoading.value = false
-    }
-  }
-
   // 组件挂载时自动加载第一页数据
   onMounted(() => {
     loadWorks(1, 500)
@@ -75,6 +52,5 @@ export const useWorkWaterfall = () => {
     isLoading,
     error,
     loadWorks,
-    loadMoreWorks,
   }
 }
