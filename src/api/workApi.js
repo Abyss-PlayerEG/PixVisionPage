@@ -109,17 +109,28 @@ export const transformWorksToWaterfallFormat = (records) => {
     columns.push([...currentColumnIndices]);
   }
 
-  // 执行交换逻辑：遍历每一列，如果列内图片 >= 2，交换最后两张的高度
-  columns.forEach(colIndices => {
-    if (colIndices.length >= 2) {
+  // 执行分组交换逻辑
+  columns.forEach((colIndices, colIndex) => {
+    if (colIndices.length < 2) return;
+
+    const remainder = colIndex % 3;
+    
+    if (remainder === 1) {
+      // 第 2, 5, 8... 列：交换最后一张和倒数第二张
       const lastIdx = colIndices[colIndices.length - 1];
       const secondLastIdx = colIndices[colIndices.length - 2];
-      
-      // 交换高度
       const tempHeight = result[lastIdx].height;
       result[lastIdx].height = result[secondLastIdx].height;
       result[secondLastIdx].height = tempHeight;
+    } else if (remainder === 2) {
+      // 第 3, 6, 9... 列：交换最后一张和第一张
+      const lastIdx = colIndices[colIndices.length - 1];
+      const firstIdx = colIndices[0];
+      const tempHeight = result[lastIdx].height;
+      result[lastIdx].height = result[firstIdx].height;
+      result[firstIdx].height = tempHeight;
     }
+    // remainder === 0 (第 1, 4, 7... 列) 不做任何交换
   });
 
   // 单独处理最后一列：计算总高度，将留白部分全部加给最后一张图片
