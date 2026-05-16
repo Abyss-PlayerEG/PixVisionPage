@@ -26,14 +26,21 @@
           class="gallery-column"
           :style="{ width: columnWidth + 'px' }"
         >
-          <img
+          <div
             v-for="(img, imgIndex) in column"
             :key="imgIndex"
-            :src="img.src"
-            :alt="img.alt || ''"
+            class="waterfall-item"
             :style="{ height: img.height + 'px', width: '100%' }"
-            loading="lazy"
-          />
+          >
+            <img
+              :src="img.src"
+              :alt="img.alt || ''"
+              loading="lazy"
+            />
+            <div class="item-overlay">
+              <span class="item-title">{{ img.workTitle || 'Untitled Work' }}</span>
+            </div>
+          </div>
         </div>
       </template>
     </div>
@@ -296,16 +303,47 @@ onUnmounted(() => {
   100% { background-position: -200% 0; }
 }
 
-.gallery-column img {
-  display: block;
-  width: 100%;
-  object-fit: cover;
+.waterfall-item {
+  position: relative;
+  overflow: hidden;
   border-radius: 8px;
   background-color: #e0e0e0;
-  transition: transform 0.3s ease;
 }
 
-.gallery-column img:hover {
-  transform: scale(1.02);
+.waterfall-item img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.4s ease;
+}
+
+.item-overlay {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  padding: 16px;
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.7), transparent);
+  color: #fff;
+  opacity: 0;
+  transform: translateY(10px);
+  transition: all 0.3s ease;
+  pointer-events: none;
+}
+
+.item-title {
+  font-size: 14px;
+  font-weight: 500;
+  letter-spacing: 0.5px;
+}
+
+.waterfall-item:hover img {
+  transform: scale(1.05);
+}
+
+.waterfall-item:hover .item-overlay {
+  opacity: 1;
+  transform: translateY(0);
 }
 </style>
