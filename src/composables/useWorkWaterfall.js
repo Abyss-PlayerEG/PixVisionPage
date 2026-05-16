@@ -26,28 +26,17 @@ export const useWorkWaterfall = () => {
       isLoading.value = true
       error.value = null
       
-      console.log(`加载作品数据: 第${page}页, 每页${size}条`)
-      
       const result = await fetchWorkPage(page, size)
       
       if (result.success && result.data && result.data.records) {
-        console.log('原始 records 数据:', result.data.records)
-        console.log('records 数量:', result.data.records.length)
-        
         // 转换数据格式
         const transformed = transformWorksToWaterfallFormat(result.data.records)
-        console.log('转换后的数据:', transformed)
-        console.log('转换后第一条数据示例:', transformed[0])
-        
         waterfallImages.value = transformed
-        console.log('waterfallImages 已更新，数量:', waterfallImages.value.length)
       } else {
         error.value = result.message || '获取作品数据失败'
-        console.error('获取作品数据失败:', error.value)
       }
     } catch (err) {
       error.value = '网络错误，请稍后重试'
-      console.error('加载作品数据异常:', err)
     } finally {
       isLoading.value = false
     }
@@ -68,10 +57,9 @@ export const useWorkWaterfall = () => {
         const newImages = transformWorksToWaterfallFormat(result.data.records)
         // 追加到现有数据
         waterfallImages.value = [...waterfallImages.value, ...newImages]
-        console.log('加载更多作品完成，当前总数:', waterfallImages.value.length)
       }
     } catch (err) {
-      console.error('加载更多作品异常:', err)
+      // 静默失败
     } finally {
       isLoading.value = false
     }

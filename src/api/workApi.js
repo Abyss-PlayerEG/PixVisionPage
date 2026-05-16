@@ -12,8 +12,6 @@ import { WORK_API, getWorkImageUrl } from '../config/api';
  */
 export const fetchWorkPage = async (current, size) => {
   try {
-    console.log('获取作品列表:', { current, size });
-
     const response = await fetch(`${WORK_API.PAGE}/${current}/${size}`, {
       method: 'GET',
       headers: {
@@ -22,7 +20,6 @@ export const fetchWorkPage = async (current, size) => {
     });
 
     const result = await response.json();
-    console.log('作品列表响应:', JSON.stringify(result, null, 2));
 
     // 兼容 code 和 recode 字段
     const statusCode = result.code || result.recode;
@@ -55,27 +52,14 @@ export const fetchWorkPage = async (current, size) => {
  */
 export const transformWorksToWaterfallFormat = (records) => {
   if (!records || !Array.isArray(records)) {
-    console.warn('records 为空或不是数组:', records)
     return [];
   }
 
-  console.log('开始转换', records.length, '条记录')
-
-  const result = records.map((work, index) => {
+  const result = records.map((work) => {
     // 生成 200-500 之间的随机高度
     const randomHeight = Math.floor(Math.random() * (500 - 200 + 1)) + 200;
     
     const imageUrl = getWorkImageUrl(work.img_url)
-
-    if (index === 0) {
-      console.log('第一条数据详情:', {
-        work_id: work.work_id,
-        img_url: work.img_url,
-        work_title: work.work_title,
-        生成的URL: imageUrl,
-        height: randomHeight
-      })
-    }
 
     return {
       src: imageUrl,
@@ -88,6 +72,5 @@ export const transformWorksToWaterfallFormat = (records) => {
     };
   });
   
-  console.log('转换完成，返回', result.length, '条数据')
   return result;
 };

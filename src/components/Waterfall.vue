@@ -125,7 +125,6 @@ const calculateColumnsByHeight = (imagesList, height) => {
       if (remainingSpace > 0) {
         currentColumn.push(img)
         currentHeight += imgTotalHeight
-        console.log(`⚠️ 列${columns.length} 强制塞入图片，溢出 ${imgTotalHeight - remainingSpace}px`)
       } else {
         // 完全没有空间了，创建新列
         columns.push(currentColumn)
@@ -145,14 +144,6 @@ const calculateColumnsByHeight = (imagesList, height) => {
   if (currentColumn.length > 0) {
     columns.push(currentColumn)
   }
-  
-  console.log(`📐 根据高度 ${height}px 计算，共需 ${columns.length} 列`)
-  console.log('📊 列分布:', columns.map((col, i) => {
-    const totalH = col.reduce((sum, img) => sum + img.height, 0) + (col.length - 1) * COLUMN_GAP
-    const remaining = height - totalH
-    const status = remaining >= 0 ? `剩余${remaining}px` : `溢出${Math.abs(remaining)}px`
-    return `列${i}: ${col.length}张, 高度${totalH}px, ${status}`
-  }))
   
   return columns
 }
@@ -226,10 +217,8 @@ watch(images, () => {
 
 // 监听外部传入的图片数据变化
 watch(() => props.externalImages, (newImages) => {
-  console.log('Waterfall 组件接收到 externalImages 变化:', newImages?.length, '条')
   if (newImages && newImages.length > 0) {
     images.value = newImages
-    console.log('images 已更新为:', images.value.length, '条')
   }
 }, { immediate: true, deep: true })
 
@@ -245,7 +234,6 @@ onMounted(() => {
   nextTick(() => {
     if (sectionRef.value) {
       containerHeight.value = sectionRef.value.offsetHeight
-      console.log('📏 容器高度:', containerHeight.value, 'px')
     }
   })
   
