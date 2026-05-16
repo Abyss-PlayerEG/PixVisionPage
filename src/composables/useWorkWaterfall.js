@@ -79,7 +79,7 @@ export const useWorkWaterfall = () => {
 
   // 组件挂载时自动加载第一页数据
   onMounted(() => {
-    loadWorks(1, 50)
+    loadWorks(1, 100)
   })
 
   return {

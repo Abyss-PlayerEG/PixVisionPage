@@ -57,11 +57,13 @@ const props = defineProps({
 })
 
 const COLUMNS_COUNT = 16
+const COLUMN_GAP = 8  // 列内图片间距
 const sectionRef = ref(null)
 const trackRef = ref(null)
 const images = ref([])
 const skeletonColumns = ref([])
 const activeColumns = ref(0)
+const containerHeight = ref(0)  // ⭐ 容器高度
 let scrollTriggerInstance = null
 let lastTotalWidth = 0
 
@@ -87,21 +89,83 @@ const buildSkeleton = () => {
   activeColumns.value = lastNonEmpty + 1
 }
 
-const imageColumns = computed(() => {
-  const cols = COLUMNS_COUNT
-  const columnsArr = Array.from({ length: cols }, () => [])
-  const columnHeights = new Array(cols).fill(0)
-  images.value.forEach((img) => {
-    let minIndex = 0
-    for (let i = 1; i < cols; i++) {
-      if (columnHeights[i] < columnHeights[minIndex]) minIndex = i
+/**
+ * 根据容器高度和图片列表，计算需要多少列
+ * @param {Array} imagesList - 图片列表
+ * @param {number} height - 容器高度
+ * @returns {Array} 列数组，每列包含若干图片
+ */
+const calculateColumnsByHeight = (imagesList, height) => {
+  if (!imagesList || imagesList.length === 0) return []
+  
+  const columns = []
+  let currentColumn = []
+  let currentHeight = 0
+  
+  imagesList.forEach((img, index) => {
+    // 计算加入这张图片后的总高度（图片高度 + 间距）
+    const imgTotalHeight = img.height + (currentColumn.length > 0 ? COLUMN_GAP : 0)
+    
+    // ⭐ 如果当前列为空，必须放入第一张图片
+    if (currentColumn.length === 0) {
+      currentColumn.push(img)
+      currentHeight += img.height
     }
-    columnsArr[minIndex].push(img)
-    columnHeights[minIndex] += img.height
+    // ⭐ 如果加入后不超限，直接放入
+    else if (currentHeight + imgTotalHeight <= height) {
+      currentColumn.push(img)
+      currentHeight += imgTotalHeight
+    }
+    // ⭐ 如果加入后会超限，但当前列还有空余空间，强制塞入
+    else if (currentHeight < height) {
+      // 计算剩余空间
+      const remainingSpace = height - currentHeight
+      
+      // 如果剩余空间大于0，强制塞入（允许轻微溢出）
+      if (remainingSpace > 0) {
+        currentColumn.push(img)
+        currentHeight += imgTotalHeight
+        console.log(`⚠️ 列${columns.length} 强制塞入图片，溢出 ${imgTotalHeight - remainingSpace}px`)
+      } else {
+        // 完全没有空间了，创建新列
+        columns.push(currentColumn)
+        currentColumn = [img]
+        currentHeight = img.height
+      }
+    }
+    // 当前列已经完全填满或溢出，创建新列
+    else {
+      columns.push(currentColumn)
+      currentColumn = [img]
+      currentHeight = img.height
+    }
   })
-  const lastNonEmpty = columnsArr.reduce((lastIdx, col, idx) => (col.length > 0 ? idx : lastIdx), -1)
-  activeColumns.value = lastNonEmpty + 1
-  return columnsArr
+  
+  // 添加最后一列
+  if (currentColumn.length > 0) {
+    columns.push(currentColumn)
+  }
+  
+  console.log(`📐 根据高度 ${height}px 计算，共需 ${columns.length} 列`)
+  console.log('📊 列分布:', columns.map((col, i) => {
+    const totalH = col.reduce((sum, img) => sum + img.height, 0) + (col.length - 1) * COLUMN_GAP
+    const remaining = height - totalH
+    const status = remaining >= 0 ? `剩余${remaining}px` : `溢出${Math.abs(remaining)}px`
+    return `列${i}: ${col.length}张, 高度${totalH}px, ${status}`
+  }))
+  
+  return columns
+}
+
+const imageColumns = computed(() => {
+  // ⭐ 获取容器实际高度
+  const height = containerHeight.value || (window.innerHeight * 0.9)  // 默认90vh
+  
+  // 根据高度动态计算列
+  const columns = calculateColumnsByHeight(images.value, height)
+  
+  activeColumns.value = columns.length
+  return columns
 })
 
 const initOrRefreshScrollTrigger = () => {
@@ -176,6 +240,15 @@ const onResize = () => {
 
 onMounted(() => {
   buildSkeleton()
+  
+  // ⭐ 获取容器实际高度
+  nextTick(() => {
+    if (sectionRef.value) {
+      containerHeight.value = sectionRef.value.offsetHeight
+      console.log('📏 容器高度:', containerHeight.value, 'px')
+    }
+  })
+  
   if (props.externalImages && props.externalImages.length > 0) {
     images.value = props.externalImages
   }
