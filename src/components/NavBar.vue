@@ -115,9 +115,10 @@ onUnmounted(() => {
     left: 0;
     width: 100%;
     height: 50px;
-    background-color: rgba(26, 26, 26, 0.95);
+    background-color: rgba(0, 0, 0, 0.95);
     backdrop-filter: blur(10px);
     box-shadow: 0 4px 30px rgba(0, 0, 0, 0.3);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
     z-index: -1;
     
     /* 默认状态：在可视区域外 */
