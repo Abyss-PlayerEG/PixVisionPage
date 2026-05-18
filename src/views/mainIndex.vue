@@ -126,8 +126,8 @@ onUnmounted(() => {
               :external-images="waterfallImages" 
               :pin-offset-top="70"
             />
-<!--             
-            加载状态提示
+            
+            <!-- 加载状态提示
             <div v-if="isLoading" class="loading-tip">加载中...</div> -->
         </div>
     </section>
@@ -141,6 +141,14 @@ onUnmounted(() => {
     </section>
 
     <section id="num3z">
+        <h1>Feel the breath of the wilderness .</h1>
+        <div>
+            <span>旷野的生机,&nbsp;&nbsp;&nbsp;</span>
+            <span>来自野性的呼唤,&nbsp;&nbsp;&nbsp;</span>
+            <span>We are all in nature。</span>
+        </div>
+
+        <div class="n3_showIMG"></div>
     </section>
 
 </template>
