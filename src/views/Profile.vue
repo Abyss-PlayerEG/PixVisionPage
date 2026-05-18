@@ -9,7 +9,7 @@ const router = useRouter()
 const userInfo = ref({
   avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Felix', // 使用 DiceBear 生成头像
   nickname: 'PixelUser',
-  email: 'user@example.com',
+  username: '@pixeluser',
   uuid: '550e8400-e29b-41d4-a716-446655440000'
 })
 
@@ -57,7 +57,7 @@ const goHome = () => {
         
         <div class="user-info">
           <h3 class="nickname">{{ userInfo.nickname }}</h3>
-          <p class="email">{{ userInfo.email }}</p>
+          <p class="username">{{ userInfo.username }}</p>
         </div>
       </div>
       

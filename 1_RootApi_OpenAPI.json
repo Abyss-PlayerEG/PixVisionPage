@@ -13,50 +13,6 @@
   ],
   "tags": [
     {
-      "name": "系统管理员接口 - 用户管理",
-      "description": "提供用户管理的后台接口，包括批量更新、删除、创建用户等操作"
-    },
-    {
-      "name": "JWT 鉴权测试接口",
-      "description": "提供 JWT Token 生成和验证的测试功能"
-    },
-    {
-      "name": "评论接口",
-      "description": "提供评论新增、查询等评论相关功能"
-    },
-    {
-      "name": "作品合集接口",
-      "description": "提供作品系列的新增、查询、删除等功能"
-    },
-    {
-      "name": "用户基础资料接口",
-      "description": "提供用户基本资料的查询和修改功能"
-    },
-    {
-      "name": "ServerRoot",
-      "description": "提供服务端根路径、健康检查、系统信息等基础功能"
-    },
-    {
-      "name": "账号密码接口",
-      "description": "提供用户密码修改、重置等密码管理功能"
-    },
-    {
-      "name": "系统管理员接口 - 评论管理",
-      "description": "提供评论管理的后台接口，包括批量删除等操作"
-    },
-    {
-      "name": "历史记录接口",
-      "description": "提供用户访问历史记录的查询和删除功能"
-    },
-    {
-      "name": "邮件服务接口",
-      "description": "提供验证码发送、邮箱验证等邮件相关功能"
-    },
-    {
-      "name": "用户拓展数据接口",
-      "description": "提供用户扩展数据的增删改查功能"
-    },
-    {
       "name": "认证接口",
       "description": "提供用户注册、登录、登出、注销等认证相关功能"
     },
@@ -65,19 +21,71 @@
       "description": "提供头像、作品、Logo 等图片资源的访问接口"
     },
     {
-      "name": "作品接口",
+      "name": "邮件服务接口",
+      "description": "提供验证码发送、邮箱验证等邮件相关功能"
+    },
+    {
+      "name": "用户接口 - 作品",
       "description": "提供作品的新增、查询、修改、删除等功能"
+    },
+    {
+      "name": "用户接口 - 作品合集",
+      "description": "提供作品系列的新增、查询、删除等功能"
+    },
+    {
+      "name": "用户接口 - 历史记录",
+      "description": "提供用户访问历史记录的查询和删除功能"
+    },
+    {
+      "name": "用户接口 - 基础资料",
+      "description": "提供用户基本资料的查询和修改功能"
+    },
+    {
+      "name": "用户接口 - 收藏",
+      "description": "提供作品收藏、取消收藏及状态查询功能"
+    },
+    {
+      "name": "用户接口 - 点赞",
+      "description": "提供作品点赞、取消点赞及状态查询功能"
+    },
+    {
+      "name": "用户接口 - 用户拓展数据",
+      "description": "提供用户扩展数据的增删改查功能"
+    },
+    {
+      "name": "用户接口 - 评论",
+      "description": "提供评论新增、查询等评论相关功能"
+    },
+    {
+      "name": "用户接口 - 账号密码",
+      "description": "提供用户密码修改、重置等密码管理功能"
     },
     {
       "name": "系统管理员接口 - 作品管理",
       "description": "提供作品管理的后台接口，包括批量更新审核状态、删除作品等操作"
+    },
+    {
+      "name": "系统管理员接口 - 用户管理",
+      "description": "提供用户管理的后台接口，包括批量更新、删除、创建用户等操作"
+    },
+    {
+      "name": "系统管理员接口 - 评论管理",
+      "description": "提供评论管理的后台接口，包括批量删除等操作"
+    },
+    {
+      "name": "JWT 鉴权测试接口",
+      "description": "提供 JWT Token 生成和验证的测试功能"
+    },
+    {
+      "name": "ServerRoot",
+      "description": "提供服务端根路径、健康检查、系统信息等基础功能"
     }
   ],
   "paths": {
     "/api/work/update": {
       "post": {
         "tags": [
-          "作品接口"
+          "用户接口 - 作品"
         ],
         "summary": "修改作品信息接口",
         "description": "# 修改作品信息（需要登录认证 + 角色权限[22,77]）\n\n## 特性\n- Token 认证（支持 Header 和 URL 参数两种方式）\n- 支持部分字段修改（所有参数可选）\n- 支持重新上传图片（MultipartFile）\n- SQL 层面权限验证（只能修改自己的作品）\n- 动态更新非空字段\n- 完整的参数校验\n- 自动删除旧图片文件\n- **修改后自动重置为待审核状态**\n\n## 参数说明：\n- Authorization: Header 中的 Token，格式为 `Bearer <token>`，或通过 URL 参数 `?token=<token>` 传递\n- workId: **作品 ID**，Integer 类型，必填\n- workTitle: **作品标题**，String 类型，可选，最多 16 个中文字符（48 字节）\n- file: **新的图片文件**，MultipartFile 类型，可选，仅支持 JPG/JPEG/PNG 格式，最大 32MB\n- seriesId: **系列 ID**，Integer 类型，可选，传入 0 表示不属于任何系列（清空系列），传入正整数表示关联到对应系列\n- isOriginal: **是否原创**，Boolean 类型，可选，下拉框选择（true=原创，false=转载）\n- outUrl: **外部转载链接**，String 类型，可选，isOriginal=false 时必填\n\n## 返回说明：\n- **修改成功**：返回 **{\"data\": true}** 和“作品修改成功”提示\n- **无修改内容**：返回 **{\"data\": null}** 和“无修改内容”提示（所有参数均为空）\n- **Token 不存在**：返回 **{\"data\": null}** 和“Token 不存在”提示\n- **Token 已失效**：返回 **{\"data\": null}** 和“Token 已失效”提示\n- **作品 ID 无效**：返回 **{\"data\": false}** 和“作品 ID 无效”提示\n- **无权修改**：返回 **{\"data\": false}** 和“无权修改该作品”提示（作品不属于当前用户）\n- **作品不存在**：返回 **{\"data\": false}** 和“作品不存在或已删除”提示\n- **标题过长**：返回 **{\"data\": false}** 和“作品标题过长”提示\n- **文件格式错误**：返回 **{\"data\": false}** 和“不支持的文件格式”提示\n- **文件大小超限**：返回 **{\"data\": false}** 和“文件大小超出限制”提示\n- **原创作品填写链接**：返回 **{\"data\": false}** 和“原创作品不能填写外部链接”提示\n- **转载缺少链接**：返回 **{\"data\": false}** 和“转载作品必须提供外部链接”提示\n- **URL 格式错误**：返回 **{\"data\": false}** 和“外部链接格式不正确”提示\n\n## 业务逻辑：\n1. 从请求头或 URL 参数中提取 Token（支持 Bearer 前缀）\n2. 验证 Token 是否在白名单中\n3. 从 Token 中解析用户 ID\n4. 校验作品 ID 参数有效性\n5. 检查是否所有修改参数都为空，如果是则返回“无修改内容”\n6. 查询作品信息并验证所有权（只能修改自己的作品）\n7. **如果提供了新图片文件**：\n   - 验证文件格式（JPG/JPEG/PNG）\n   - 验证文件大小（最大 32MB）\n   - 验证图片真实性（魔数检查）\n   - 生成唯一文件名（UUID）并保存\n   - 删除旧图片文件（重命名为 .del）\n8. **验证作品标题**（如果提供）：\n   - 长度不超过 48 字节（16 个中文字符）\n   - 去除首尾空格\n9. **处理系列 ID**（如果提供）：\n   - **seriesId = 0**：将作品的 series_id 设置为 NULL（不属于任何系列）\n   - **seriesId > 0**：验证系列是否存在且属于当前用户，然后关联到该系列\n   - **seriesId = null**：不修改系列 ID\n10. **处理原创/转载逻辑**：\n   - **设置为原创（isOriginal=true）**：\n     * 不能填写 outUrl，否则报错\n     * 自动将 outUrl 清空为空字符串 \"\"（即使原来有转载链接）\n   - **设置为转载（isOriginal=false）**：\n     * 必须提供有效的 outUrl\n     * 验证 URL 格式\n   - **不修改原创状态（isOriginal=null）**：\n     * 可以单独修改 outUrl\n     * 如果提供了 outUrl，验证 URL 格式\n11. 执行动态更新（只更新非空字段）\n12. **自动将作品审核状态重置为待审核（approval_status = 20）**\n13. 返回修改结果\n\n## 注意事项：\n- **需要携带有效的 Token 才能修改作品**\n- Token 必须在白名单中（未过期、未登出）\n- **用户只能修改自己的作品**，无法修改他人的作品\n- 所有参数都是可选的，可以只修改部分字段\n- **如果所有参数都为空或空字符串，将返回“无修改内容”**\n- 作品标题限制：**最多 16 个中文字符**（48 字节）\n- 图片文件仅支持：**JPG、JPEG、PNG** 格式\n- 图片文件大小限制：**最大 32MB**\n- **系列 ID 特殊规则**：\n  * seriesId = 0：将作品从系列中移除（series_id 设为 NULL）\n  * seriesId > 0：必须验证系列存在且属于当前用户\n  * seriesId = null：不修改系列 ID\n- **原创与转载链接约束**：\n  * 原创作品（isOriginal=true）：不能填写 outUrl，系统会自动清空原有的转载链接\n  * 转载作品（isOriginal=false）：必须提供有效的 outUrl\n- **审核状态自动重置**：\n  * 修改作品后，审核状态会自动重置为待审核（approval_status = 20）\n  * 需要管理员重新审核通过后，作品才会再次公开显示\n  * 无论作品当前是什么状态，修改后都会变为待审核\n- 采用动态更新机制，只提供要修改的字段即可\n- 上传新图片后，旧图片会被自动删除（重命名为 .del）\n- 修改成功后，update_time 和 update_user 会自动更新\n- isOriginal 参数使用下拉框选择，避免输入错误\n",
@@ -151,7 +159,9 @@
                   "file": {
                     "type": "string",
                     "description": "新的图片文件（可选，仅支持 JPG/JPEG/PNG，最大 32MB）",
-                    "format": "binary"
+                    "format": "binary",
+                    "name": "file",
+                    "in": "query"
                   }
                 }
               }
@@ -175,7 +185,7 @@
     "/api/work/series/update": {
       "post": {
         "tags": [
-          "作品合集接口"
+          "用户接口 - 作品合集"
         ],
         "summary": "更新系列信息接口",
         "description": "# 更新系列信息（需要登录认证 + 角色权限[22,77]）\n\n## 特性\n- Token 认证（支持 Header 和 URL 参数两种方式）\n- 支持部分字段修改（所有参数可选）\n- SQL 层面权限验证（只能修改自己的系列）\n- 动态更新非空字段\n- 完整的参数校验\n- 标题唯一性检查（同一用户下不能重复）\n\n## 参数说明：\n- Authorization: Header 中的 Token，格式为 `Bearer <token>`，或通过 URL 参数 `?token=<token>` 传递\n- seriesId: **系列 ID**，Integer 类型，必填\n- seriesTitle: **系列标题**，String 类型，可选，最多 16 个中文字符\n- aboutText: **系列描述**，String 类型，可选，最多 24 个中文字符\n\n## 返回说明：\n- **修改成功**：返回 **{\"data\": true}** 和“系列信息更新成功”提示\n- **Token 不存在**：返回 **{\"data\": null}** 和“Token 不存在”提示\n- **Token 已失效**：返回 **{\"data\": null}** 和“Token 已失效”提示\n- **系列 ID 无效**：返回 **{\"data\": false}** 和“系列 ID 无效”提示\n- **无修改内容**：返回 **{\"data\": false}** 和“无修改内容”提示\n- **系列不存在**：返回 **{\"data\": false}** 和“系列不存在或已删除”提示\n- **无权修改**：返回 **{\"data\": false}** 和“无权修改该系列”提示\n- **标题过长**：返回 **{\"data\": false}** 和“系列标题长度不能超过 16 个字符”提示\n- **描述过长**：返回 **{\"data\": false}** 和“系列描述长度不能超过 24 个字符”提示\n- **标题重复**：返回 **{\"data\": false}** 和“系列标题已存在，请使用其他标题”提示\n\n## 业务逻辑：\n1. 从请求头或 URL 参数中提取 Token（支持 Bearer 前缀）\n2. 验证 Token 是否在白名单中\n3. 从 Token 中解析用户 ID\n4. 校验系列 ID 参数有效性\n5. 检查是否至少有一个参数不为空\n6. 查询系列信息并验证所有权（只能修改自己的系列）\n7. 如果提供了新标题，验证长度并检查是否与当前标题不同且未被其他系列使用\n8. 如果提供了新描述，验证长度并检查是否与当前描述不同\n9. 执行动态更新（只更新非空且发生变化的字段）\n10. 自动更新 update_time 和 update_user\n11. 返回修改结果\n\n## 注意事项：\n- **需要携带有效的 Token 才能修改系列**\n- Token 必须在白名单中（未过期、未登出）\n- **用户只能修改自己的系列**，无法修改他人的系列\n- 所有参数都是可选的，可以只修改部分字段\n- **如果所有参数都为空或与当前值相同，将返回“无修改内容”**\n- 系列标题限制：**最多 16 个字符**\n- 系列描述限制：**最多 24 个字符**\n- **同一用户下系列标题不能重复**（修改时也会检查）\n- 采用动态更新机制，只提供要修改的字段即可\n- 修改成功后，update_time 和 update_user 会自动更新\n",
@@ -228,7 +238,7 @@
     "/api/work/series/delete": {
       "post": {
         "tags": [
-          "作品合集接口"
+          "用户接口 - 作品合集"
         ],
         "summary": "删除作品系列接口",
         "description": "# 删除作品系列（需要登录认证 + 角色权限[22,77]）\n\n## 特性\n- Token 认证（支持 Header 和 URL 参数两种方式）\n- 支持选择是否删除系列内的作品\n- SQL 层面权限验证（只能删除自己的系列）\n- 逻辑删除（数据不真正从数据库移除）\n- 如果选择删除作品，会将作品文件重命名为 .del 后缀\n\n## 参数说明：\n- Authorization: Header 中的 Token，格式为 `Bearer <token>`，或通过 URL 参数 `?token=<token>` 传递\n- seriesId: 系列 ID，Integer 类型，必填\n- deleteWorks: 是否删除系列内的作品，Boolean 类型，必填\n  * true: 删除系列及其所有作品（作品文件重命名为 .del）\n  * false: 仅删除系列，作品保留但 series_id 置空\n\n## 返回说明：\n- **删除成功**：返回 **{\"data\": true}** 和“系列删除成功”提示\n- **Token 不存在**：返回 **{\"data\": null}** 和“Token 不存在”提示\n- **Token 已失效**：返回 **{\"data\": null}** 和“Token 已失效”提示\n- **系列 ID 无效**：返回 **{\"data\": false}** 和“系列 ID 无效”提示\n- **无权删除**：返回 **{\"data\": false}** 和“无权删除该系列”提示（系列不属于当前用户）\n- **系列不存在**：返回 **{\"data\": false}** 和“系列不存在或已删除”提示\n- **删除失败**：返回 **{\"data\": false}** 和“系列删除失败”提示\n\n## 业务逻辑：\n1. 从请求头或 URL 参数中提取 Token（支持 Bearer 前缀）\n2. 验证 Token 是否在白名单中\n3. 从 Token 中解析用户 ID\n4. 校验系列 ID 参数有效性\n5. 查询系列信息并验证所有权（只能删除自己的系列）\n6. 根据 deleteWorks 参数处理系列内的作品：\n   - 如果 deleteWorks=true：查询系列下所有作品，重命名文件为 .del，执行逻辑删除\n   - 如果 deleteWorks=false：将系列下所有作品的 series_id 置空\n7. 执行系列的逻辑删除（SQL 层面验证 user_id）\n8. 返回删除结果\n\n## 注意事项：\n- **需要携带有效的 Token 才能删除系列**\n- Token 必须在白名单中（未过期、未登出）\n- **用户只能删除自己的系列**，无法删除他人的系列\n- 采用逻辑删除方式，数据不会真正从数据库中移除\n- 如果选择删除作品，作品文件会被重命名为 .del 后缀（如 123.png → 123.png.del）\n- 如果选择保留作品，这些作品的 series_id 会被置空，但仍存在于系统中\n- 删除系列后，这些系列在查询接口中将不再显示\n- 建议先确认系列内是否有重要作品，再决定是否删除\n",
@@ -279,7 +289,7 @@
     "/api/work/series/add": {
       "post": {
         "tags": [
-          "作品合集接口"
+          "用户接口 - 作品合集"
         ],
         "summary": "新增作品系列接口",
         "description": "# 新增作品系列（需要登录认证 + 角色权限[22,77]）\n\n## 特性\n- Token 认证（支持 Header 和 URL 参数两种方式）\n- 系列标题长度限制（≤16 个中文字符）\n- 系列描述长度限制（≤24 个中文字符）\n- 自动关联当前登录用户\n\n## 参数说明：\n- Authorization: Header 中的 Token，格式为 `Bearer <token>`，或通过 URL 参数 `?token=<token>` 传递\n- seriesTitle: 系列标题，字符串类型，必填，长度不超过 16 个中文字符\n- aboutText: 系列描述文本，字符串类型，可选，长度不超过 24 个中文字符\n\n## 返回说明：\n- **成功**：返回 **{\"data\": Series 对象}** 和提示信息\n- **Token 失效**：返回 **{\"data\": null}** 和 \"Token 已失效\" 提示\n- **标题为空**：返回 **{\"data\": false}** 和 \"系列标题不能为空\" 提示\n- **标题过长**：返回 **{\"data\": false}** 和 \"系列标题长度不能超过 16 个字符\" 提示\n- **描述过长**：返回 **{\"data\": false}** 和 \"系列描述长度不能超过 24 个字符\" 提示\n- **标题重复**：返回 **{\"data\": false}** 和 \"系列标题已存在，请使用其他标题\" 提示\n\n## 业务逻辑：\n1. 从请求中提取并验证 Token\n2. 检查 Token 是否在白名单中\n3. 从 Token 中解析用户 ID\n4. 校验系列标题和描述的长度\n5. **检查系列标题是否已存在（同一用户下不能重复）**\n6. 创建系列对象并设置用户 ID、时间戳等信息\n7. 插入数据库并返回结果\n\n## 注意事项：\n- 系列标题**必填**，长度不超过 16 个字符\n- 系列描述**可选**，长度不超过 24 个字符\n- **同一用户下系列标题不能重复**\n- 系统自动记录创建者 ID 和创建时间\n- 返回的 Series 对象包含自动生成的 series_id\n",
@@ -324,7 +334,7 @@
     "/api/work/delete": {
       "post": {
         "tags": [
-          "作品接口"
+          "用户接口 - 作品"
         ],
         "summary": "删除作品接口",
         "description": "# 删除作品（需要登录认证 + 角色权限[22,77]）\n\n## 特性\n- Token 认证（支持 Header 和 URL 参数两种方式）\n- 支持单条/批量删除\n- SQL 层面权限验证（只能删除自己的作品）\n- 逻辑删除（数据不真正从数据库移除）\n- 文件重命名（将 .png/.jpg 改为 .del）\n\n## 参数说明：\n- Authorization: Header 中的 Token，格式为 `Bearer <token>`，或通过 URL 参数 `?token=<token>` 传递\n- workIds: 要删除的作品 ID 列表，整形数组类型，必填\n  * 单条删除：传入 [1]\n  * 批量删除：传入 [1, 2, 3]\n\n## 返回说明：\n- **删除成功**：返回 **{\"data\": true}** 和“作品删除成功”提示\n- **Token 不存在**：返回 **{\"data\": null}** 和“Token 不存在”提示\n- **Token 已失效**：返回 **{\"data\": null}** 和“Token 已失效”提示\n- **作品 ID 列表为空**：返回 **{\"data\": false}** 和“作品 ID 列表不能为空”提示\n- **无权删除**：返回 **{\"data\": false}** 和“部分或全部作品无权删除”提示（作品不属于当前用户）\n- **删除失败**：返回 **{\"data\": false}** 和“作品删除失败”提示\n\n## 业务逻辑：\n1. 从请求头或 URL 参数中提取 Token（支持 Bearer 前缀）\n2. 验证 Token 是否在白名单中\n3. 从 Token 中解析用户 ID\n4. 校验作品 ID 列表参数有效性\n5. 检查用户是否存在\n6. 查询作品信息并验证所有权（只能删除自己的作品）\n7. 将作品文件后缀名改为 .del（如 123.png → 123.png.del）\n8. 执行批量逻辑删除（SQL 层面验证 user_id，确保只能删除自己的作品）\n9. 返回删除结果\n\n## 注意事项：\n- **需要携带有效的 Token 才能删除作品**\n- Token 必须在白名单中（未过期、未登出）\n- **用户只能删除自己的作品**，无法删除他人的作品\n- 采用逻辑删除方式，数据不会真正从数据库中移除\n- 作品文件会被重命名为 .del 后缀（如 123.png → 123.png.del）\n- 如果部分作品不属于当前用户，只会删除属于当前用户的作品\n- 删除后，这些作品在查询接口中将不再显示\n- 建议单次批量删除不超过 100 个作品\n- 单条删除时传入单个元素的数组，如 [1]\n",
@@ -362,7 +372,7 @@
     "/api/user/profile/nickname/change": {
       "post": {
         "tags": [
-          "用户基础资料接口"
+          "用户接口 - 基础资料"
         ],
         "summary": "修改用户昵称接口",
         "description": "# 修改用户昵称（需要登录认证）\n\n## 特性\n- Token 认证（支持 Header 和 URL 参数两种方式）\n- 昵称长度限制校验（1-20字符）\n- 支持中文、英文、数字和特殊字符\n\n## 参数说明：\n- Authorization: Header 中的 Token，格式为 `Bearer <token>`，或通过 URL 参数 `?token=<token>` 传递\n- nickname: 新昵称，字符串类型，必填，长度 1-20 个字符\n\n## 返回说明：\n- **修改成功**：返回 **{\"data\": true}** 和\"昵称修改成功\"提示\n- **Token 不存在**：返回 **{\"data\": null}** 和\"Token 不存在\"提示\n- **Token 已失效**：返回 **{\"data\": null}** 和\"Token 已失效\"提示\n- **昵称为空**：返回 **{\"data\": null}** 和\"昵称不能为空\"提示\n- **昵称长度错误**：返回 **{\"data\": null}** 和\"昵称长度必须在 1-20 个字符之间\"提示\n- **修改失败**：返回 **{\"data\": false}** 和\"昵称修改失败\"提示\n\n## 业务逻辑：\n1. 从请求头或 URL 参数中提取 Token（支持 Bearer 前缀）\n2. 验证 Token 是否在白名单中\n3. 从 Token 中解析用户 ID\n4. 校验昵称参数（非空、长度 1-20）\n5. 调用服务层更新用户昵称\n6. 返回修改结果\n\n## 注意事项：\n- 需要携带有效的 Token 才能修改昵称\n- Token 必须在白名单中（未过期、未登出）\n- 昵称长度限制：**1-20 个字符**\n- 昵称可以包含中文、英文、数字和特殊字符\n- 修改成功后，下次登录时会看到新昵称\n",
@@ -396,7 +406,7 @@
     "/api/user/profile/email/change": {
       "post": {
         "tags": [
-          "用户基础资料接口"
+          "用户接口 - 基础资料"
         ],
         "summary": "更改账号绑定邮箱接口",
         "description": "# 更改账号绑定邮箱（需要登录认证）\n\n## 特性\n- Token 认证（支持 Header 和 URL 参数两种方式）\n- 邮箱格式校验\n- 邮箱验证码验证\n- 邮箱唯一性检查\n- 自动清除旧验证码\n\n## 参数说明：\n- Authorization: Header 中的 Token，格式为 `Bearer <token>`，或通过 URL 参数 `?token=<token>` 传递\n- newEmail: 新邮箱地址，字符串类型，必填，需符合标准邮箱格式\n- vCode: 邮箱验证码，6 位大写字母或数字，字符串类型，必填\n\n## 返回说明：\n- **修改成功**：返回 **{\"data\": true}** 和“邮箱修改成功”提示\n- **Token 不存在**：返回 **{\"data\": null}** 和“Token 不存在”提示\n- **Token 已失效**：返回 **{\"data\": null}** 和“Token 已失效”提示\n- **新邮箱为空**：返回 **{\"data\": null}** 和“新邮箱不能为空”提示\n- **邮箱格式错误**：返回 **{\"data\": null}** 和“邮箱格式错误”提示\n- **验证码为空**：返回 **{\"data\": null}** 和“验证码不能为空”提示\n- **验证码格式错误**：返回 **{\"data\": null}** 和“验证码格式错误”提示\n- **验证码错误**：返回 **{\"data\": false}** 和“验证码错误或已过期”提示\n- **邮箱已被使用**：返回 **{\"data\": false}** 和“该邮箱已被其他账号使用”提示\n- **修改失败**：返回 **{\"data\": false}** 和“邮箱修改失败”提示\n\n## 业务逻辑：\n1. 从请求头或 URL 参数中提取 Token（支持 Bearer 前缀）\n2. 验证 Token 是否在白名单中\n3. 从 Token 中解析用户 ID\n4. 校验新邮箱参数（非空、格式正确）\n5. 校验验证码参数（非空、格式正确）\n6. 检查新邮箱是否已被其他用户使用\n7. 验证邮箱验证码（使用新邮箱作为 key）\n8. 调用服务层更新用户邮箱\n9. 返回修改结果\n\n## 注意事项：\n- 需要携带有效的 Token 才能修改邮箱\n- Token 必须在白名单中（未过期、未登出）\n- 新邮箱必须符合标准邮箱格式\n- 新邮箱不能被其他账号使用\n- 需要先通过 `/api/mail/send-change-email-code` 接口发送验证码到新邮箱\n- 验证码有效期为 **5 分钟**\n- 验证码验证成功后会自动失效（一次性使用）\n- 修改成功后，下次登录时需要使用新邮箱\n",
@@ -440,7 +450,7 @@
     "/api/user/password/forgot": {
       "post": {
         "tags": [
-          "账号密码接口"
+          "用户接口 - 账号密码"
         ],
         "summary": "忘记密码",
         "description": "# 忘记密码（无需登录认证）\n\n## 特性\n- 公开接口（无需 Token 认证）\n- 支持用户名或邮箱找回\n- 邮箱验证码验证\n- SHA-256 密码加密\n- 强制所有设备下线（移除所有 Token）\n\n## 参数说明：\n- usernameOrEmail: **用户名**或**邮箱地址**，字符串类型，必填\n- newPassword: 新密码，字符串类型，必填，建议使用强密码组合\n- confirmPassword: 确认新密码，字符串类型，必填，需与新密码一致\n- vCode: 邮箱验证码，6 位大写字母或数字，字符串类型，必填\n\n## 返回说明：\n- **重置成功**：返回 **{\"data\": true}** 和\"密码重置成功，请使用新密码重新登录\"提示\n- **用户名或邮箱格式错误**：返回 **{\"data\": false}** 和\"用户名或邮箱格式错误\"提示\n- **验证码格式错误**：返回 **{\"data\": false}** 和\"验证码格式错误\"提示\n- **验证码错误**：返回 **{\"data\": false}** 和\"验证码错误\"提示\n- **用户不存在**：返回 **{\"data\": false}** 和\"用户不存在\"提示\n- **两次密码不一致**：返回 **{\"data\": false}** 和\"两次输入的密码不一致\"提示\n- **重置失败**：返回 **{\"data\": false}** 和\"密码重置失败\"提示\n\n## 业务逻辑：\n1. 校验用户名格式、邮箱格式、验证码格式\n2. 验证邮箱验证码是否正确（如提供用户名则先查询邮箱）\n3. 根据用户名或邮箱查询用户信息\n4. 校验两次输入的新密码是否一致\n5. 对新密码进行 SHA-256 哈希加密处理\n6. 更新数据库中的密码（不验证旧密码）\n7. **移除该用户的所有 Token**（强制所有设备下线）\n8. 返回重置结果\n\n## 注意事项：\n- 此接口**无需登录**即可调用\n- 验证码发送到用户的注册邮箱\n- 密码会使用 **SHA-256** 进行加密存储\n- 支持使用用户名**或**邮箱找回密码\n- 建议使用强密码组合（大小写字母 + 数字 + 特殊字符）\n- 验证码有效期由 Redis 配置决定（默认 5 分钟）\n- **密码重置后，该用户的所有 Token 会被立即移除**，所有设备需要重新登录\n",
@@ -504,7 +514,7 @@
     "/api/user/password/change": {
       "post": {
         "tags": [
-          "账号密码接口"
+          "用户接口 - 账号密码"
         ],
         "summary": "更换密码",
         "description": "# 更换密码（需要登录认证）\n\n## 特性\n- Token 认证（支持 Header 和 URL 参数两种方式）\n- 邮箱验证码验证\n- SHA-256 密码加密\n- 新旧密码一致性校验\n- 强制所有设备下线（移除所有 Token）\n\n## 参数说明：\n- Authorization: Header 中的 Token，格式为 `Bearer <token>`，或通过 URL 参数 `?token=<token>` 传递\n- newPassword: 新密码，字符串类型，必填\n- confirmPassword: 确认新密码，字符串类型，必填，需与新密码一致\n- vCode: 邮箱验证码，6 位大写字母或数字，字符串类型，必填\n\n## 返回说明：\n- **修改成功**：返回 **{\"data\": true}** 和\"修改成功\"提示，同时当前 Token 失效\n- **验证码错误**：返回 **{\"data\": false}** 和\"验证码错误\"提示\n- **新旧密码一致**：返回 **{\"data\": false}** 和\"新旧密码不能一致\"提示\n- **修改失败**：返回 **{\"data\": false}** 和\"修改失败\"提示\n\n## 业务逻辑：\n1. 从请求的 Token 中提取用户 ID\n2. 根据用户 ID 从数据库查询用户信息（邮箱等）\n3. 校验验证码格式和正确性\n4. 校验两次输入的新密码是否一致\n5. 校验新密码与旧密码是否相同\n6. 对密码进行 SHA-256 哈希加密\n7. 更新数据库中的密码\n8. **移除该用户的所有 Token**（强制所有设备下线）\n9. 返回修改结果\n\n## 注意事项：\n- **必须携带有效的 Token** 才能调用此接口\n- 验证码发送到用户的注册邮箱\n- 密码修改成功后，**该用户的所有 Token 会被立即移除**，所有设备需要重新登录\n- 建议使用强密码组合（大小写字母 + 数字 + 特殊字符）\n- 验证码有效期由 Redis 配置决定（默认 5 分钟）\n",
@@ -558,7 +568,7 @@
     "/api/user/data/delete": {
       "post": {
         "tags": [
-          "用户拓展数据接口"
+          "用户接口 - 用户拓展数据"
         ],
         "summary": "删除用户拓展数据接口",
         "description": "# 删除用户拓展数据（需要登录认证）\n\n## 特性\n- Token 认证（支持 Header 和 URL 参数两种方式）\n- 支持单条/批量删除\n- SQL 层面权限验证（只能删除自己的数据）\n- 逻辑删除（数据不真正从数据库移除）\n\n## 参数说明：\n- Authorization: Header 中的 Token，格式为 `Bearer <token>`，或通过 URL 参数 `?token=<token>` 传递\n- dataIds: 要删除的数据 ID 列表，整形数组类型，必填\n  * 单条删除：传入 [1]\n  * 批量删除：传入 [1, 2, 3]\n\n## 返回说明：\n- **删除成功**：返回 **{\"data\": true}** 和\"用户拓展数据删除成功\"提示\n- **Token 不存在**：返回 **{\"data\": null}** 和\"Token 不存在\"提示\n- **Token 已失效**：返回 **{\"data\": null}** 和\"Token 已失效\"提示\n- **数据 ID 列表为空**：返回 **{\"data\": false}** 和\"数据 ID 列表不能为空\"提示\n- **无权删除**：返回 **{\"data\": false}** 和\"部分或全部数据无权删除\"提示（数据不属于当前用户）\n- **删除失败**：返回 **{\"data\": false}** 和\"用户拓展数据删除失败\"提示\n\n## 业务逻辑：\n1. 从请求头或 URL 参数中提取 Token（支持 Bearer 前缀）\n2. 验证 Token 是否在白名单中\n3. 从 Token 中解析用户 ID\n4. 校验数据 ID 列表参数有效性\n5. 检查用户是否存在\n6. 执行批量逻辑删除（SQL 层面验证 user_id，确保只能删除自己的数据）\n7. 返回删除结果\n\n## 注意事项：\n- **需要携带有效的 Token 才能删除拓展数据**\n- Token 必须在白名单中（未过期、未登出）\n- **用户只能删除自己的拓展数据**，无法删除他人的数据\n- 采用逻辑删除方式，数据不会真正从数据库中移除\n- 如果部分数据不属于当前用户，只会删除属于当前用户的数据\n- 删除后，这些数据在查询接口中将不再显示\n- 建议单次批量删除不超过 100 条数据\n- 单条删除时传入单个元素的数组，如 [1]\n",
@@ -596,7 +606,7 @@
     "/api/user/data/add": {
       "post": {
         "tags": [
-          "用户拓展数据接口"
+          "用户接口 - 用户拓展数据"
         ],
         "summary": "新增用户拓展数据接口",
         "description": "# 新增用户拓展数据（需要登录认证）\n\n## 特性\n- Token 认证（支持 Header 和 URL 参数两种方式）\n- 数据长度限制校验（名称≤26字符，内容≤96字符）\n- 1对n关系（同一用户可添加多条拓展数据）\n\n## 参数说明：\n- Authorization: Header 中的 Token，格式为 `Bearer <token>`，或通过 URL 参数 `?token=<token>` 传递\n- dataName: 数据名称，字符串类型，必填，长度不超过 26 个字符（如：电话、邮箱、网站、微信等）\n- dataContent: 数据内容，字符串类型，必填，长度不超过 96 个字符（如：具体的电话号码、邮箱地址、网站 url 等）\n\n## 返回说明：\n- **添加成功**：返回 **{\"data\": true}** 和\"用户拓展数据添加成功\"提示\n- **Token 不存在**：返回 **{\"data\": null}** 和\"Token 不存在\"提示\n- **Token 已失效**：返回 **{\"data\": null}** 和\"Token 已失效\"提示\n- **数据名称为空**：返回 **{\"data\": null}** 和\"数据名称不能为空\"提示\n- **数据名称过长**：返回 **{\"data\": null}** 和\"数据名称长度不能超过 26 个字符\"提示\n- **数据内容为空**：返回 **{\"data\": null}** 和\"数据内容不能为空\"提示\n- **数据内容过长**：返回 **{\"data\": null}** 和\"数据内容长度不能超过 96 个字符\"提示\n- **添加失败**：返回 **{\"data\": false}** 和\"用户拓展数据添加失败\"提示\n\n## 业务逻辑：\n1. 从请求头或 URL 参数中提取 Token（支持 Bearer 前缀）\n2. 验证 Token 是否在白名单中\n3. 从 Token 中解析用户 ID\n4. 校验数据名称和数据内容参数（非空、长度限制）\n5. 检查用户是否存在\n6. 调用服务层新增用户拓展数据\n7. 返回添加结果\n\n## 注意事项：\n- 需要携带有效的 Token 才能添加拓展数据\n- Token 必须在白名单中（未过期、未登出）\n- 数据名称长度限制：**不超过 26 个字符**\n- 数据内容长度限制：**不超过 96 个字符**\n- 同一用户可以添加多条拓展数据（1 对 n 关系）\n- 常见的数据名称示例：电话、邮箱、网站、微信、QQ 等\n",
@@ -621,6 +631,41 @@
               "type": "string"
             },
             "example": 13800138000
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResponsePojoBoolean"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/star/toggle/{workId}": {
+      "post": {
+        "tags": [
+          "用户接口 - 收藏"
+        ],
+        "summary": "切换收藏状态",
+        "description": "# 切换收藏状态（需要登录认证）\n\n## 特性\n- Token 认证（支持 Header 和 URL 参数两种方式）\n- 智能切换：如果未收藏则收藏，如果已收藏则取消\n- 自动同步：实时更新作品的总收藏数\n- 幂等性：重复调用不会产生脏数据\n\n## 参数说明：\n- Authorization: Header 中的 Token，格式为 `Bearer <token>`，或通过 URL 参数 `?token=<token>` 传递\n- workId: **作品 ID**，Integer 类型，必填\n\n## 返回说明：\n- **操作成功**：返回 **{\"data\": true/false}**，true 表示当前已收藏，false 表示当前未收藏\n- **Token 不存在或失效**：返回 **{\"data\": null}** 和错误提示\n- **作品不存在**：返回 **{\"data\": null}** 和错误提示\n\n## 业务逻辑：\n1. 从请求头或 URL 参数中提取 Token 并验证\n2. 从 Token 中解析用户 ID\n3. 检查该用户对该作品的收藏状态\n4. 如果是收藏状态，执行逻辑删除并减少作品收藏数\n5. 如果是未收藏状态，插入或恢复记录并增加作品收藏数\n6. 返回最新的收藏状态\n\n## 注意事项：\n- **必须携带有效的 Token**\n- 只有已登录用户才能进行收藏操作\n- 收藏采用逻辑删除方式，保留历史数据\n",
+        "operationId": "toggleStar",
+        "parameters": [
+          {
+            "name": "workId",
+            "in": "path",
+            "description": "作品 ID",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            },
+            "example": 1
           }
         ],
         "responses": {
@@ -872,6 +917,41 @@
         }
       }
     },
+    "/api/like/toggle/{workId}": {
+      "post": {
+        "tags": [
+          "用户接口 - 点赞"
+        ],
+        "summary": "切换点赞状态",
+        "description": "# 切换点赞状态（需要登录认证）\n\n## 特性\n- Token 认证（支持 Header 和 URL 参数两种方式）\n- 智能切换：如果未点赞则点赞，如果已点赞则取消\n- 自动同步：实时更新作品的总点赞数\n- 幂等性：重复调用不会产生脏数据\n\n## 参数说明：\n- Authorization: Header 中的 Token，格式为 `Bearer <token>`，或通过 URL 参数 `?token=<token>` 传递\n- workId: **作品 ID**，Integer 类型，必填\n\n## 返回说明：\n- **操作成功**：返回 **{\"data\": true/false}**，true 表示当前已点赞，false 表示当前未点赞\n- **Token 不存在或失效**：返回 **{\"data\": null}** 和错误提示\n- **作品不存在**：返回 **{\"data\": null}** 和错误提示\n\n## 业务逻辑：\n1. 从请求头或 URL 参数中提取 Token 并验证\n2. 从 Token 中解析用户 ID\n3. 检查该用户对该作品的点赞状态\n4. 如果是点赞状态，执行逻辑删除并减少作品点赞数\n5. 如果是未点赞状态，插入或恢复记录并增加作品点赞数\n6. 返回最新的点赞状态\n\n## 注意事项：\n- **必须携带有效的 Token**\n- 只有已登录用户才能进行点赞操作\n- 点赞采用逻辑删除方式，保留历史数据\n",
+        "operationId": "toggleLike",
+        "parameters": [
+          {
+            "name": "workId",
+            "in": "path",
+            "description": "作品 ID",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            },
+            "example": 1
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResponsePojoBoolean"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/image/work/upload": {
       "post": {
         "tags": [
@@ -942,7 +1022,9 @@
                   "file": {
                     "type": "string",
                     "description": "作品图片文件",
-                    "format": "binary"
+                    "format": "binary",
+                    "name": "file",
+                    "in": "query"
                   }
                 }
               }
@@ -983,7 +1065,9 @@
                   "file": {
                     "type": "string",
                     "description": "头像文件",
-                    "format": "binary"
+                    "format": "binary",
+                    "name": "file",
+                    "in": "query"
                   }
                 }
               }
@@ -1007,17 +1091,17 @@
     "/api/history/delete": {
       "post": {
         "tags": [
-          "历史记录接口"
+          "用户接口 - 历史记录"
         ],
         "summary": "批量删除访问历史记录",
-        "description": "# 批量删除访问历史记录（需要登录认证）\n\n## 特性\n- 需要 Token 认证\n- 支持单条/批量删除\n- SQL 层面权限验证（只能删除自己的历史记录）\n- 逻辑删除（数据不真正从数据库移除）\n\n## 参数说明：\n- Authorization: Header 中的 Token，格式为 `Bearer <token>`，或通过 URL 参数 `?token=<token>` 传递\n- workIds: 要删除的作品 ID 列表，整形数组类型，必填\n  * 单条删除：传入 [1]\n  * 批量删除：传入 [1, 2, 3]\n\n## 返回说明：\n- **删除成功**：返回 **{\"data\": true}** 和“历史记录删除成功”提示\n- **Token 不存在**：返回 **{\"data\": null}** 和“Token 不存在”提示\n- **Token 已失效**：返回 **{\"data\": null}** 和“Token 已失效”提示\n- **作品 ID 列表为空**：返回 **{\"data\": false}** 和“作品 ID 列表不能为空”提示\n- **删除失败**：返回 **{\"data\": false}** 和“历史记录删除失败”提示\n\n## 业务逻辑：\n1. 从请求头或 URL 参数中提取 Token\n2. 验证 Token 是否在白名单中\n3. 从 Token 中解析用户 ID\n4. 校验作品 ID 列表参数有效性\n5. 执行批量逻辑删除（SQL 层面验证 user_id，确保只能删除自己的历史记录）\n6. 返回删除结果\n\n## 注意事项：\n- **需要携带有效的 Token 才能删除历史记录**\n- Token 必须在白名单中（未过期、未登出）\n- **用户只能删除自己的历史记录**\n- 采用逻辑删除方式，数据不会真正从数据库中移除\n- 建议单次批量删除不超过 100 个记录\n",
+        "description": "# 批量删除访问历史记录（需要登录认证）\n\n## 特性\n- 需要 Token 认证\n- 支持单条/批量删除指定作品\n- 支持一键清空所有历史记录\n- SQL 层面权限验证（只能删除自己的历史记录）\n- 逻辑删除（数据不真正从数据库移除）\n\n## 参数说明：\n- Authorization: Header 中的 Token，格式为 `Bearer <token>`，或通过 URL 参数 `?token=<token>` 传递\n- workIds: 要删除的作品 ID 列表，整形数组类型。当 clearAll 为 false 或 null 时必填\n  * 单条删除：传入 [1]\n  * 批量删除：传入 [1, 2, 3]\n- clearAll: 是否清空所有历史记录，布尔值，可选。默认为 false\n  * true: 清空当前用户的所有历史记录（此时 workIds 可为空）\n  * false/null: 执行基于 workIds 的批量删除\n\n## 返回说明：\n- **删除成功**：返回 **{\"data\": true}** 和“历史记录删除成功”提示\n- **清空成功**：返回 **{\"data\": true}** 和“历史记录已清空”提示\n- **Token 不存在**：返回 **{\"data\": null}** 和“Token 不存在”提示\n- **Token 已失效**：返回 **{\"data\": null}** 和“Token 已失效”提示\n- **参数错误**：返回 **{\"data\": false}** 和相应的错误提示\n- **删除失败**：返回 **{\"data\": false}** 和“历史记录删除失败”提示\n\n## 业务逻辑：\n1. 从请求头或 URL 参数中提取 Token\n2. 验证 Token 是否在白名单中\n3. 从 Token 中解析用户 ID\n4. 判断 clearAll 参数：\n   - 若为 true，则清空该用户所有历史记录\n   - 若为 false 或 null，则校验 workIds 并执行批量逻辑删除\n5. 返回操作结果\n\n## 注意事项：\n- **需要携带有效的 Token 才能删除历史记录**\n- Token 必须在白名单中（未过期、未登出）\n- **用户只能删除自己的历史记录**\n- 采用逻辑删除方式，数据不会真正从数据库中移除\n- 建议单次批量删除不超过 100 个记录\n",
         "operationId": "deleteHistory",
         "parameters": [
           {
             "name": "workIds",
             "in": "query",
             "description": "要删除的作品 ID 列表（支持单条或多条）",
-            "required": true,
+            "required": false,
             "schema": {
               "type": "array",
               "items": {
@@ -1026,6 +1110,56 @@
               }
             },
             "example": "1,2,3"
+          },
+          {
+            "name": "clearAll",
+            "in": "query",
+            "description": "是否清空所有历史记录",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "description": "是否清空所有历史记录",
+              "default": "true",
+              "enum": [
+                "true",
+                "false"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResponsePojoBoolean"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/comment/delete": {
+      "post": {
+        "tags": [
+          "用户接口 - 评论"
+        ],
+        "summary": "删除评论接口",
+        "description": "# 删除评论（需要登录认证）\n\n## 特性\n- Token 认证（支持 Header 和 URL 参数两种方式）\n- 权限控制：用户只能删除自己的评论\n- 级联删除：删除一级评论时，其下属的所有二级评论也会一并删除\n- 逻辑删除：数据库中仅更新 is_delete 字段\n\n## 参数说明：\n- Authorization: Header 中的 Token，格式为 `Bearer <token>`，或通过 URL 参数 `?token=<token>` 传递\n- commentId: **评论 ID**，Integer 类型，必填\n\n## 返回说明：\n- **删除成功**：返回 **{\"data\": true}** 和“评论删除成功”提示\n- **Token 不存在**：返回 **{\"data\": null}** 和“Token 不存在”提示\n- **Token 已失效**：返回 **{\"data\": null}** 和“Token 已失效”提示\n- **评论不存在**：返回 **{\"data\": false}** 和“评论不存在或已删除”提示\n- **无权操作**：返回 **{\"data\": false}** 和“无权删除他人评论”提示\n- **删除失败**：返回 **{\"data\": false}** 和“评论删除失败”提示\n\n## 业务逻辑：\n1. 从请求头或 URL 参数中提取 Token\n2. 验证 Token 是否在白名单中\n3. 从 Token 中解析用户 ID\n4. 校验评论 ID 参数有效性\n5. 查询评论是否存在且未被删除\n6. 验证当前用户是否为评论所有者\n7. 如果是一级评论，查找其下属的所有二级评论 ID\n8. 执行批量逻辑删除（将 is_delete 设为 1）\n9. 返回删除结果\n\n## 注意事项：\n- **需要携带有效的 Token 才能删除评论**\n- Token 必须在白名单中（未过期、未登出）\n- 用户**只能删除自己发布的评论**\n- 删除一级评论会**自动级联删除**其下的所有二级评论\n- 删除二级评论只影响当前评论\n- 该操作为逻辑删除，数据仍保留在数据库中\n",
+        "operationId": "deleteComment",
+        "parameters": [
+          {
+            "name": "commentId",
+            "in": "query",
+            "description": "评论 ID",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            },
+            "example": 10
           }
         ],
         "responses": {
@@ -1045,7 +1179,7 @@
     "/api/comment/add": {
       "post": {
         "tags": [
-          "评论接口"
+          "用户接口 - 评论"
         ],
         "summary": "新增评论接口",
         "description": "# 新增评论（需要登录认证）\n\n## 特性\n- Token 认证（支持 Header 和 URL 参数两种方式）\n- 支持一级评论（对作品评论）和二级评论（回复其他评论）\n- 评论内容长度限制（最多 125 个汉字）\n- 严格的参数校验和逻辑验证\n\n## 参数说明：\n- Authorization: Header 中的 Token，格式为 `Bearer <token>`，或通过 URL 参数 `?token=<token>` 传递\n- workId: **作品 ID**，Integer 类型，必填\n- parentCommentId: **父评论 ID**，Integer 类型，可选（二级评论时必填）\n- commentFloor: **评论层级**，Integer 类型，必填（1 - 作品评论、2 - 二级评论）\n- commentText: **评论内容**，String 类型，必填，最多 125 个汉字\n\n## 返回说明：\n- **新增成功**：返回 **{\"data\": true}** 和\"评论新增成功\"提示\n- **Token 不存在**：返回 **{\"data\": null}** 和\"Token 不存在\"提示\n- **Token 已失效**：返回 **{\"data\": null}** 和\"Token 已失效\"提示\n- **参数缺失**：返回 **{\"data\": false}** 和\"缺少必要参数\"提示\n- **评论层级无效**：返回 **{\"data\": false}** 和\"评论层级无效，必须为 1 或 2\"提示\n- **评论内容过长**：返回 **{\"data\": false}** 和\"评论内容不能超过 125 个汉字\"提示\n- **二级评论缺少父评论ID**：返回 **{\"data\": false}** 和\"二级评论必须提供父评论ID\"提示\n- **一级评论不应有父评论ID**：返回 **{\"data\": false}** 和\"一级评论不应提供父评论ID\"提示\n- **父评论不存在**：返回 **{\"data\": false}** 和\"父评论不存在\"提示\n- **父评论不属于当前作品**：返回 **{\"data\": false}** 和\"父评论不属于当前作品\"提示\n- **新增失败**：返回 **{\"data\": false}** 和\"评论新增失败\"提示\n\n## 业务逻辑：\n1. 从请求头或 URL 参数中提取 Token（支持 Bearer 前缀）\n2. 验证 Token 是否在白名单中\n3. 从 Token 中解析用户 ID\n4. 校验所有必要参数（workId, commentFloor, commentText）\n5. 验证评论层级（必须为 1 或 2）\n6. 验证评论内容长度（不超过 125 个汉字）\n7. 如果评论层级为 2，验证 parentCommentId 不为空\n8. 如果评论层级为 1，验证 parentCommentId 为空\n9. 如果是二级评论，验证父评论是否存在且属于同一作品\n10. 创建评论对象并插入数据库\n11. 返回新增结果\n\n## 注意事项：\n- **需要携带有效的 Token 才能新增评论**\n- Token 必须在白名单中（未过期、未登出）\n- 所有用户角色（11, 22, 55, 66, 77）都可以发表评论\n- 评论内容限制：**最多 125 个汉字**\n- 评论层级只能为 1（对作品评论）或 2（回复其他评论）\n- 二级评论必须提供父评论 ID\n- 一级评论不应提供父评论 ID\n- 父评论必须存在且属于同一作品\n- 评论会自动关联到当前登录用户\n",
@@ -1768,10 +1902,10 @@
     "/api/work/series/page/{userId}/{current}/{size}": {
       "get": {
         "tags": [
-          "作品合集接口"
+          "用户接口 - 作品合集"
         ],
         "summary": "分页查询用户作品系列接口",
-        "description": "# 分页查询用户作品系列（无需登录认证）\n\n## 特性\n- 公开接口（无需 Token 认证）\n- 支持分页查询\n- 自动过滤逻辑删除数据\n- 按创建时间倒序排列\n\n## 参数说明：\n- **userId**: 用户 ID，Integer 类型，必填\n- **current**: 当前页码，Integer 类型，必填，从 1 开始\n- **size**: 每页数量，Integer 类型，必填，范围 1-100\n\n## 返回说明：\n- **查询成功**：返回 **{\"data\": IPage<Series>}** ，包含分页信息和系列列表\n- **用户 ID 无效**：返回 **{\"data\": null}** 和“用户 ID 无效”提示\n\n## 业务逻辑：\n1. 校验用户 ID、页码和每页数量参数有效性\n2. 调用 Service 层进行分页查询\n3. 自动排除逻辑删除的数据（is_delete=0）\n4. 按创建时间倒序返回结果\n\n## 注意事项：\n- **此接口为公开接口，无需登录即可访问**\n- 如果用户没有作品系列，返回空列表 []\n- 建议合理设置每页数量（size），避免一次性加载过多数据\n",
+        "description": "# 分页查询用户作品系列（无需登录认证）\n\n## 特性\n- 公开接口（无需 Token 认证）\n- 支持分页查询\n- 自动过滤逻辑删除数据\n- **只返回审核通过的系列**（approval_status = 10）\n- 按创建时间倒序排列\n\n## 参数说明：\n- **userId**: 用户 ID，Integer 类型，必填\n- **current**: 当前页码，Integer 类型，必填，从 1 开始\n- **size**: 每页数量，Integer 类型，必填，范围 1-500\n\n## 返回说明：\n- **查询成功**：返回 **{\"data\": IPage<Series>}** ，包含分页信息和系列列表\n- **用户 ID 无效**：返回 **{\"data\": null}** 和“用户 ID 无效”提示\n\n## 业务逻辑：\n1. 校验用户 ID、页码和每页数量参数有效性\n2. 调用 Service 层进行分页查询\n3. 自动排除逻辑删除的数据（is_delete=0）\n4. **只返回审核通过的系列**（approval_status=10）\n5. 待审核（approval_status=20）和未过审（approval_status=30）的系列不会返回\n6. 按创建时间倒序返回结果\n\n## 注意事项：\n- **此接口为公开接口，无需登录即可访问**\n- 如果用户没有作品系列，返回空列表 []\n- **只能查看审核通过的系列**，待审核和未过审的系列不可见\n- 建议合理设置每页数量（size），避免一次性加载过多数据\n",
         "operationId": "getSeriesList",
         "parameters": [
           {
@@ -1799,7 +1933,7 @@
           {
             "name": "size",
             "in": "path",
-            "description": "每页数量，范围 1-100",
+            "description": "每页数量，范围 1-500",
             "required": true,
             "schema": {
               "type": "integer",
@@ -1825,10 +1959,10 @@
     "/api/work/page/{current}/{size}": {
       "get": {
         "tags": [
-          "作品接口"
+          "用户接口 - 作品"
         ],
         "summary": "分页查询作品列表",
-        "description": "# 分页查询作品列表（无需登录认证）\n\n## 特性\n- 公开接口（无需认证）\n- MyBatis-Plus 分页支持\n- 多条件组合查询（作品标题/用户 ID/系列 ID/是否原创）\n- 模糊匹配与精确匹配\n- 仅返回未删除且审核通过的作品\n- 按创建时间倒序排列（最新作品优先）\n\n## 参数说明：\n- current: **当前页码**，Long 类型，必填，**从 1 开始**，默认为 1\n- size: **每页大小**，Long 类型，必填，范围 1-100，默认为 10\n- workTitle: **作品标题**（可选），String 类型，支持模糊查询\n- userId: **用户 ID**（可选），Integer 类型，支持精确查询\n- seriesId: **系列 ID**（可选），Integer 类型，支持精确查询\n- isOriginal: **是否原创**（可选），Boolean 类型，支持精确查询（true=原创，false=转载）\n\n## 返回说明：\n- **查询成功**：返回 **{\"data\": {IPage<Works>对象}}** ，包含作品列表和分页信息\n- **参数错误**：返回 **{\"data\": null}** 和\"页码或每页大小错误\"提示\n- **无数据**：返回 **{\"data\": null}** 和\"查询失败，返回结果为空\"提示\n\n## 业务逻辑：\n1. 校验页码和每页大小参数（current>=1, 1<=size<=100）\n2. 构建 MyBatis-Plus 分页对象\n3. 根据条件查询作品信息（支持多条件组合）\n4. 仅返回未删除且审核通过的作品（is_delete = 0 AND approval_status = 10）\n5. 按创建时间倒序排列（create_time DESC）\n6. 返回分页结果集（IPage<Works>）\n\n## 注意事项：\n- 所有查询条件均为**可选参数**，可不传\n- 支持多个条件组合查询\n- 作品标题支持**模糊匹配**\n- 用户 ID、系列 ID 和是否原创支持**精确匹配**\n- 默认返回完整 Works 实体字段\n- 已自动过滤逻辑删除的作品（is_delete=0）\n- **仅返回审核通过的作品**（approval_status=10），待审核和未过审的作品不会显示\n- 每页大小限制：**1-100**\n- 图片 URL 为文件名，完整访问路径为：`/api/image/works?filePath={img_url}`\n- 使用 **RESTful 风格**路径参数，格式：`/homepage/{current}/{size}`\n",
+        "description": "# 分页查询作品列表（无需登录认证）\n\n## 特性\n- 公开接口（无需认证）\n- MyBatis-Plus 分页支持\n- 多条件组合查询（作品标题/用户 ID/系列 ID/是否原创）\n- 模糊匹配与精确匹配\n- 仅返回未删除且审核通过的作品\n- 按创建时间倒序排列（最新作品优先）\n\n## 参数说明：\n- current: **当前页码**，Long 类型，必填，**从 1 开始**，默认为 1\n- size: **每页大小**，Long 类型，必填，范围 1-500，默认为 10\n- workTitle: **作品标题**（可选），String 类型，支持模糊查询\n- userId: **用户 ID**（可选），Integer 类型，支持精确查询\n- seriesId: **系列 ID**（可选），Integer 类型，支持精确查询\n- isOriginal: **是否原创**（可选），Boolean 类型，支持精确查询（true=原创，false=转载）\n\n## 返回说明：\n- **查询成功**：返回 **{\"data\": {IPage<Works>对象}}** ，包含作品列表和分页信息\n- **参数错误**：返回 **{\"data\": null}** 和\"页码或每页大小错误\"提示\n- **无数据**：返回 **{\"data\": null}** 和\"查询失败，返回结果为空\"提示\n\n## 业务逻辑：\n1. 校验页码和每页大小参数（current>=1, 1<=size<=100）\n2. 构建 MyBatis-Plus 分页对象\n3. 根据条件查询作品信息（支持多条件组合）\n4. 仅返回未删除且审核通过的作品（is_delete = 0 AND approval_status = 10）\n5. 按创建时间倒序排列（create_time DESC）\n6. 返回分页结果集（IPage<Works>）\n\n## 注意事项：\n- 所有查询条件均为**可选参数**，可不传\n- 支持多个条件组合查询\n- 作品标题支持**模糊匹配**\n- 用户 ID、系列 ID 和是否原创支持**精确匹配**\n- 默认返回完整 Works 实体字段\n- 已自动过滤逻辑删除的作品（is_delete=0）\n- **仅返回审核通过的作品**（approval_status=10），待审核和未过审的作品不会显示\n- 每页大小限制：**1-500**\n- 图片 URL 为文件名，完整访问路径为：`/api/image/works?filePath={img_url}`\n- 使用 **RESTful 风格**路径参数，格式：`/homepage/{current}/{size}`\n",
         "operationId": "getHomepageWorks",
         "parameters": [
           {
@@ -1845,7 +1979,7 @@
           {
             "name": "size",
             "in": "path",
-            "description": "每页大小，范围 1-100",
+            "description": "每页大小，范围 1-500",
             "required": true,
             "schema": {
               "type": "integer",
@@ -1914,10 +2048,10 @@
     "/api/work/my-works/{current}/{size}": {
       "get": {
         "tags": [
-          "作品接口"
+          "用户接口 - 作品"
         ],
         "summary": "分页查询用户自己的作品",
-        "description": "# 分页查询用户自己的作品（需要登录认证）\n\n## 特性\n- 需要 Token 认证（支持 Header 和 URL 参数两种方式）\n- MyBatis-Plus 分页支持\n- 只过滤已删除作品（is_delete = 0）\n- **不过滤审核状态**，返回所有状态的作品（10-正常、20-待审核、30-未过审）\n- 支持按审核状态筛选（可选参数）\n- 按创建时间倒序排列（最新作品优先）\n\n## 参数说明：\n- Authorization: Header 中的 Token，格式为 `Bearer <token>`，或通过 URL 参数 `?token=<token>` 传递\n- current: **当前页码**，Long 类型，必填，**从 1 开始**，默认为 1\n- size: **每页大小**，Long 类型，必填，范围 1-100，默认为 10\n- approvalStatus: **审核状态**（可选），Integer 类型，可选值：\n  * 10: 正常（审核通过）\n  * 20: 待审核\n  * 30: 未过审\n  * null: 不限制，返回所有状态\n\n## 返回说明：\n- **查询成功**：返回 **{\"data\": {IPage<Works>对象}}** ，包含作品列表和分页信息\n- **Token 不存在**：返回 **{\"data\": null}** 和“Token 不存在”提示\n- **Token 已失效**：返回 **{\"data\": null}** 和“Token 已失效”提示\n- **参数错误**：返回 **{\"data\": null}** 和“页码或每页大小错误”提示\n- **无数据**：返回空的分页结果（total=0, records=[]）\n\n## 业务逻辑：\n1. 从请求头或 URL 参数中提取 Token（支持 Bearer 前缀）\n2. 验证 Token 是否在白名单中\n3. 从 Token 中解析用户 ID\n4. 校验页码和每页大小参数（current>=1, 1<=size<=100）\n5. 构建 MyBatis-Plus 分页对象\n6. 查询当前用户的作品列表（WHERE user_id = ? AND is_delete = 0）\n7. 如果提供了 approvalStatus 参数，添加审核状态过滤条件\n8. 按创建时间倒序排列（create_time DESC）\n9. 返回分页结果集（IPage<Works>）\n\n## 注意事项：\n- **必须携带有效的 Token 才能查询**\n- Token 必须在白名单中（未过期、未登出）\n- **只能查看自己的作品**，无法查看他人的作品\n- **返回所有审核状态的作品**，包括待审核和未过审的作品\n- 这是与普通查询接口的主要区别：普通接口只返回 approval_status = 10\n- 可以通过 approvalStatus 参数筛选特定状态的作品\n- 已自动过滤逻辑删除的作品（is_delete=0）\n- 默认返回完整 Works 实体字段，包含 approval_status\n- 每页大小限制：**1-100**\n- 图片 URL 为文件名，完整访问路径为：`/api/image/works?filePath={img_url}`\n- 使用 **RESTful 风格**路径参数，格式：`/my-works/{current}/{size}`\n",
+        "description": "# 分页查询用户自己的作品（需要登录认证）\n\n## 特性\n- 需要 Token 认证（支持 Header 和 URL 参数两种方式）\n- MyBatis-Plus 分页支持\n- 只过滤已删除作品（is_delete = 0）\n- **不过滤审核状态**，返回所有状态的作品（10-正常、20-待审核、30-未过审）\n- 支持按审核状态筛选（可选参数）\n- 按创建时间倒序排列（最新作品优先）\n\n## 参数说明：\n- Authorization: Header 中的 Token，格式为 `Bearer <token>`，或通过 URL 参数 `?token=<token>` 传递\n- current: **当前页码**，Long 类型，必填，**从 1 开始**，默认为 1\n- size: **每页大小**，Long 类型，必填，范围 1-500，默认为 10\n- approvalStatus: **审核状态**（可选），Integer 类型，可选值：\n  * 10: 正常（审核通过）\n  * 20: 待审核\n  * 30: 未过审\n  * null: 不限制，返回所有状态\n\n## 返回说明：\n- **查询成功**：返回 **{\"data\": {IPage<Works>对象}}** ，包含作品列表和分页信息\n- **Token 不存在**：返回 **{\"data\": null}** 和“Token 不存在”提示\n- **Token 已失效**：返回 **{\"data\": null}** 和“Token 已失效”提示\n- **参数错误**：返回 **{\"data\": null}** 和“页码或每页大小错误”提示\n- **无数据**：返回空的分页结果（total=0, records=[]）\n\n## 业务逻辑：\n1. 从请求头或 URL 参数中提取 Token（支持 Bearer 前缀）\n2. 验证 Token 是否在白名单中\n3. 从 Token 中解析用户 ID\n4. 校验页码和每页大小参数（current>=1, 1<=size<=100）\n5. 构建 MyBatis-Plus 分页对象\n6. 查询当前用户的作品列表（WHERE user_id = ? AND is_delete = 0）\n7. 如果提供了 approvalStatus 参数，添加审核状态过滤条件\n8. 按创建时间倒序排列（create_time DESC）\n9. 返回分页结果集（IPage<Works>）\n\n## 注意事项：\n- **必须携带有效的 Token 才能查询**\n- Token 必须在白名单中（未过期、未登出）\n- **只能查看自己的作品**，无法查看他人的作品\n- **返回所有审核状态的作品**，包括待审核和未过审的作品\n- 这是与普通查询接口的主要区别：普通接口只返回 approval_status = 10\n- 可以通过 approvalStatus 参数筛选特定状态的作品\n- 已自动过滤逻辑删除的作品（is_delete=0）\n- 默认返回完整 Works 实体字段，包含 approval_status\n- 每页大小限制：**1-500**\n- 图片 URL 为文件名，完整访问路径为：`/api/image/works?filePath={img_url}`\n- 使用 **RESTful 风格**路径参数，格式：`/my-works/{current}/{size}`\n",
         "operationId": "getMyWorks",
         "parameters": [
           {
@@ -1934,7 +2068,7 @@
           {
             "name": "size",
             "in": "path",
-            "description": "每页大小（范围 1-100）",
+            "description": "每页大小（范围 1-500）",
             "required": true,
             "schema": {
               "type": "integer",
@@ -1977,7 +2111,7 @@
     "/api/work/detail/{workId}": {
       "get": {
         "tags": [
-          "作品接口"
+          "用户接口 - 作品"
         ],
         "summary": "查询单个作品",
         "description": "# 查询单个作品（无需登录认证）\n\n## 特性\n- 公开接口（无需认证）\n- 根据作品 ID 精确查询\n- 仅返回未删除且审核通过的作品\n- 返回完整的 Works 实体字段\n\n## 参数说明：\n- Authorization: Header 中的 Token（可选），格式为 `Bearer <token>`，或通过 URL 参数 `?token=<token>` 传递。如果提供有效 Token，将记录访问历史。\n- workId: **作品 ID**，Integer 类型，必填\n\n## 返回说明：\n- **查询成功**：返回 **{\"data\": {Works对象}}** ，包含作品详细信息\n- **作品不存在**：返回 **{\"data\": null}** 和\"作品不存在或已删除\"提示\n- **参数错误**：返回 **{\"data\": null}** 和\"作品 ID 无效\"提示\n\n## 业务逻辑：\n1. 校验作品 ID 参数有效性\n2. 查询作品信息\n3. 验证作品是否存在、未删除且审核通过\n4. 返回作品详细信息\n\n## 注意事项：\n- 这是一个**公开接口**，无需 Token 认证\n- 只能查询**未删除且审核通过**的作品（is_delete=0 AND approval_status=10）\n- 待审核（approval_status=20）和未过审（approval_status=30）的作品无法查询\n- 图片 URL 为文件名，完整访问路径为：`/api/image/works?filePath={img_url}`\n- 如果作品不存在、已删除或未审核通过，返回 null\n",
@@ -2012,10 +2146,10 @@
     "/api/user/profile/page/{current}/{size}": {
       "get": {
         "tags": [
-          "用户基础资料接口"
+          "用户接口 - 基础资料"
         ],
         "summary": "分页查询用户信息",
-        "description": "# 分页查询用户信息（无需登录认证）\n\n## 特性\n- Token 认证（通过拦截器自动验证）\n- MyBatis-Plus 分页支持\n- 关键词统一查询（同时搜索用户名/邮箱/昵称/UUID）\n- 模糊匹配与精确匹配\n- UUID 二进制转换\n\n## 参数说明：\n- current: 当前页码，**从 1 开始**，Long 类型，必填，默认为 1\n- size: 每页大小，Long 类型，必填，默认为 10，范围 1-100\n- keyword: **关键词**（可选），字符串类型\n  * 如果输入的是标准 UUID 格式，则进行**精确匹配**\n  * 否则同时对用户名、邮箱、昵称进行**模糊匹配**\n\n## 返回说明：\n- **查询成功**：返回 **{\"data\": {IPage<User>对象}}** ，包含用户列表和分页信息\n- **参数错误**：返回 **{\"data\": null}** 和\"页码或每页大小错误\"提示\n- **UUID 格式错误**：返回 **{\"data\": null}** 和\"UUID 格式错误\"提示\n\n## 业务逻辑：\n1. 校验页码和每页大小参数（current>=1, 1<=size<=100）\n2. 判断关键词类型：\n   - 如果是标准 UUID 格式，转换为 byte 数组进行精确查询\n   - 否则作为普通关键词，同时对用户名、邮箱、昵称进行模糊查询\n3. 构建 MyBatis-Plus 分页对象\n4. 根据条件查询用户信息\n5. 返回分页结果集\n\n## 注意事项：\n- **关键词为可选参数**，可不传\n- 如果关键词是标准 UUID 格式（如：550e8400-e29b-41d4-a716-446655440000），则进行**精确匹配**\n- 如果关键词不是 UUID 格式，则同时对用户名、邮箱、昵称进行**模糊匹配**\n- 默认返回 8 个核心字段（user_id, user_uuid, username, password, nickname, avatar_url, email, status）\n- 已自动过滤逻辑删除的用户（is_delete=0）\n- 每页大小限制：**1-100**\n",
+        "description": "# 分页查询用户信息（无需登录认证）\n\n## 特性\n- Token 认证（通过拦截器自动验证）\n- MyBatis-Plus 分页支持\n- 关键词统一查询（同时搜索用户名/邮箱/昵称/UUID）\n- 模糊匹配与精确匹配\n- UUID 二进制转换\n\n## 参数说明：\n- current: 当前页码，**从 1 开始**，Long 类型，必填，默认为 1\n- size: 每页大小，Long 类型，必填，默认为 10，范围 1-500\n- keyword: **关键词**（可选），字符串类型\n  * 如果输入的是标准 UUID 格式，则进行**精确匹配**\n  * 否则同时对用户名、邮箱、昵称进行**模糊匹配**\n\n## 返回说明：\n- **查询成功**：返回 **{\"data\": {IPage<User>对象}}** ，包含用户列表和分页信息\n- **参数错误**：返回 **{\"data\": null}** 和\"页码或每页大小错误\"提示\n- **UUID 格式错误**：返回 **{\"data\": null}** 和\"UUID 格式错误\"提示\n\n## 业务逻辑：\n1. 校验页码和每页大小参数（current>=1, 1<=size<=100）\n2. 判断关键词类型：\n   - 如果是标准 UUID 格式，转换为 byte 数组进行精确查询\n   - 否则作为普通关键词，同时对用户名、邮箱、昵称进行模糊查询\n3. 构建 MyBatis-Plus 分页对象\n4. 根据条件查询用户信息\n5. 返回分页结果集\n\n## 注意事项：\n- **关键词为可选参数**，可不传\n- 如果关键词是标准 UUID 格式（如：550e8400-e29b-41d4-a716-446655440000），则进行**精确匹配**\n- 如果关键词不是 UUID 格式，则同时对用户名、邮箱、昵称进行**模糊匹配**\n- 默认返回 8 个核心字段（user_id, user_uuid, username, password, nickname, avatar_url, email, status）\n- 已自动过滤逻辑删除的用户（is_delete=0）\n- 每页大小限制：**1-500**\n",
         "operationId": "getPageUserInfo",
         "parameters": [
           {
@@ -2032,7 +2166,7 @@
           {
             "name": "size",
             "in": "path",
-            "description": "每页大小，范围 1-100",
+            "description": "每页大小，范围 1-500",
             "required": true,
             "schema": {
               "type": "integer",
@@ -2067,10 +2201,10 @@
     "/api/user/profile/page-by-role/{current}/{size}": {
       "get": {
         "tags": [
-          "用户基础资料接口"
+          "用户接口 - 基础资料"
         ],
         "summary": "按角色分页查询用户信息",
-        "description": "# 按角色分页查询用户信息（无需登录认证）\n\n## 特性\n- 公开接口（无需 Token 认证）\n- MyBatis-Plus 分页支持\n- 支持单个或多个角色筛选\n- 已自动过滤逻辑删除的用户\n\n## 参数说明：\n- current: 当前页码，**从 1 开始**，Long 类型，必填，默认为 1\n- size: 每页大小，Long 类型，必填，默认为 10，范围 1-100\n- userRoles: **用户角色列表**（可选），Integer 数组类型，支持传递多个角色\n  * 11-普通用户, 22-创作者, 55-审核员, 66-工单管理员, 77-系统管理员\n  * 可以传递单个角色或多个角色，如：?userRoles=11 或 ?userRoles=11&userRoles=22\n\n## 返回说明：\n- **查询成功**：返回 **{\"data\": {IPage<User>对象}}** ，包含用户列表和分页信息\n- **参数错误**：返回 **{\"data\": null}** 和\"页码或每页大小错误\"提示\n- **无符合条件的用户**：返回 **{\"data\": null}** 和\"查询失败，返回结果为空\"提示\n\n## 业务逻辑：\n1. 校验页码和每页大小参数（current>=1, 1<=size<=100）\n2. 如果提供了 userRoles 参数，则按角色筛选用户（支持多角色 OR 查询）\n3. 如果未提供 userRoles 参数，则查询所有用户\n4. 构建 MyBatis-Plus 分页对象\n5. 根据条件查询用户信息\n6. 将二进制 UUID 转换为字符串格式\n7. 返回分页结果集\n\n## 注意事项：\n- **userRoles 为可选参数**，可不传，不传则查询所有用户\n- 支持传递多个角色，多个角色之间是 OR 关系（满足任一角色即可）\n- 默认返回 8 个核心字段（user_id, user_uuid, username, password, nickname, avatar_url, email, status, user_role）\n- 已自动过滤逻辑删除的用户（is_delete=0）\n- 每页大小限制：**1-100**\n- 合法的角色代码：11-普通用户, 22-创作者, 55-审核员, 66-工单管理员, 77-系统管理员\n",
+        "description": "# 按角色分页查询用户信息（无需登录认证）\n\n## 特性\n- 公开接口（无需 Token 认证）\n- MyBatis-Plus 分页支持\n- 支持单个或多个角色筛选\n- 已自动过滤逻辑删除的用户\n\n## 参数说明：\n- current: 当前页码，**从 1 开始**，Long 类型，必填，默认为 1\n- size: 每页大小，Long 类型，必填，默认为 10，范围 1-500\n- userRoles: **用户角色列表**（可选），Integer 数组类型，支持传递多个角色\n  * 11-普通用户, 22-创作者, 55-审核员, 66-工单管理员, 77-系统管理员\n  * 可以传递单个角色或多个角色，如：?userRoles=11 或 ?userRoles=11&userRoles=22\n\n## 返回说明：\n- **查询成功**：返回 **{\"data\": {IPage<User>对象}}** ，包含用户列表和分页信息\n- **参数错误**：返回 **{\"data\": null}** 和\"页码或每页大小错误\"提示\n- **无符合条件的用户**：返回 **{\"data\": null}** 和\"查询失败，返回结果为空\"提示\n\n## 业务逻辑：\n1. 校验页码和每页大小参数（current>=1, 1<=size<=100）\n2. 如果提供了 userRoles 参数，则按角色筛选用户（支持多角色 OR 查询）\n3. 如果未提供 userRoles 参数，则查询所有用户\n4. 构建 MyBatis-Plus 分页对象\n5. 根据条件查询用户信息\n6. 将二进制 UUID 转换为字符串格式\n7. 返回分页结果集\n\n## 注意事项：\n- **userRoles 为可选参数**，可不传，不传则查询所有用户\n- 支持传递多个角色，多个角色之间是 OR 关系（满足任一角色即可）\n- 默认返回 8 个核心字段（user_id, user_uuid, username, password, nickname, avatar_url, email, status, user_role）\n- 已自动过滤逻辑删除的用户（is_delete=0）\n- 每页大小限制：**1-500**\n- 合法的角色代码：11-普通用户, 22-创作者, 55-审核员, 66-工单管理员, 77-系统管理员\n",
         "operationId": "getPageUserInfoByRole",
         "parameters": [
           {
@@ -2087,7 +2221,7 @@
           {
             "name": "size",
             "in": "path",
-            "description": "每页大小，范围 1-100",
+            "description": "每页大小，范围 1-500",
             "required": true,
             "schema": {
               "type": "integer",
@@ -2127,7 +2261,7 @@
     "/api/user/profile/info/{userId}": {
       "get": {
         "tags": [
-          "用户基础资料接口"
+          "用户接口 - 基础资料"
         ],
         "summary": "根据用户 ID 查询用户信息",
         "description": "# 根据用户 ID 查询用户信息（无需登录认证）\n\n## 特性\n- 公开接口（无需 Token 认证）\n- 精确查询单个用户\n- 自动转换二进制 UUID 为字符串格式\n\n## 参数说明：\n- userId: **用户 ID**，Integer 类型，路径变量，必填\n\n## 返回说明：\n- **查询成功**：返回 **{\"data\": {User对象}}** ，包含用户详细信息\n- **用户 ID 无效**：返回 **{\"data\": null}** 和\"用户 ID 不能为空\"提示\n- **用户不存在**：返回 **{\"data\": null}** 和\"用户不存在\"提示\n\n## 业务逻辑：\n1. 校验用户 ID 参数有效性\n2. 根据用户 ID 查询用户信息\n3. 将二进制 UUID 转换为字符串格式\n4. 返回用户详细信息\n\n## 注意事项：\n- 这是一个**公开接口**，无需 Token 认证\n- 只返回**未删除**的用户（is_delete=0）\n- 返回完整的用户信息（包括密码字段，前端应自行决定是否展示）\n- 用户 ID 必须是有效的正整数\n",
@@ -2162,7 +2296,7 @@
     "/api/user/data/list": {
       "get": {
         "tags": [
-          "用户拓展数据接口"
+          "用户接口 - 用户拓展数据"
         ],
         "summary": "查询用户所有拓展数据接口",
         "description": "# 查询用户所有拓展数据（无需登录认证）\n\n## 特性\n- 公开接口（无需 Token 认证）\n- 自动过滤逻辑删除数据\n- 按创建时间倒序排列\n\n## 参数说明：\n- userId: 用户 ID，Integer 类型，必填\n\n## 返回说明：\n- **查询成功**：返回 **{\"data\": [UserData 列表]}** ，包含用户的所有拓展数据\n- **用户 ID 无效**：返回 **{\"data\": null}** 和\"用户 ID 无效\"提示\n- **用户不存在**：返回 **{\"data\": null}** 和\"用户不存在\"提示\n- **查询失败**：返回 **{\"data\": null}** 和\"查询失败\"提示\n\n## 业务逻辑：\n1. 校验用户 ID 参数有效性\n2. 检查用户是否存在\n3. 查询用户的所有拓展数据（自动排除逻辑删除的数据）\n4. 按创建时间倒序返回结果\n5. 返回拓展数据列表\n\n## 注意事项：\n- **此接口为公开接口，无需登录即可访问**\n- 自动过滤已逻辑删除的数据（is_delete=0）\n- 返回结果按创建时间倒序排列（最新的在前）\n- 如果用户没有拓展数据，返回空列表 []\n- 常见的数据名称示例：电话、邮箱、网站、微信、QQ 等\n",
@@ -2194,13 +2328,299 @@
         }
       }
     },
+    "/api/star/user-starred/{userId}/{current}/{size}": {
+      "get": {
+        "tags": [
+          "用户接口 - 收藏"
+        ],
+        "summary": "分页查询用户收藏作品",
+        "description": "# 分页查询用户收藏作品（无需登录认证）\n\n## 特性\n- 公开接口（无需 Token 认证）\n- MyBatis-Plus 分页支持\n- 只返回审核通过的作品（approval_status = 10）\n- 按收藏时间倒序排列（最新收藏优先）\n\n## 参数说明：\n- **userId**: 用户 ID，Integer 类型，必填\n- **current**: 当前页码，Long 类型，必填，从 1 开始\n- **size**: 每页大小，Long 类型，必填，范围 1-500\n\n## 返回说明：\n- **查询成功**：返回 **{\"data\": IPage<Works>}** ，包含分页信息和作品列表\n- **用户 ID 无效**：返回 **{\"data\": null}** 和“用户 ID 无效”提示\n\n## 业务逻辑：\n1. 校验用户 ID、页码和每页数量参数有效性\n2. 调用 Service 层进行分页查询\n3. 关联查询 tb_star 和 tb_works 表\n4. 过滤条件：用户收藏且未删除（s.is_delete=0）、作品未删除（w.is_delete=0）、审核通过（w.approval_status=10）\n5. 按收藏时间倒序返回结果\n\n## 注意事项：\n- **此接口为公开接口，无需登录即可访问**\n- 如果用户没有收藏过任何作品，返回空列表 []\n- **只返回审核通过的作品**，待审核和未过审的作品不可见\n- 建议合理设置每页数量（size），避免一次性加载过多数据\n- 图片 URL 为文件名，完整访问路径为：`/api/image/works?filePath={img_url}`\n- 使用 **RESTful 风格**路径参数，格式：`/user-starred/{userId}/{current}/{size}`\n",
+        "operationId": "getUserStarredWorks",
+        "parameters": [
+          {
+            "name": "userId",
+            "in": "path",
+            "description": "用户 ID",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            },
+            "example": 1
+          },
+          {
+            "name": "current",
+            "in": "path",
+            "description": "当前页码，从 1 开始",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "example": 1
+          },
+          {
+            "name": "size",
+            "in": "path",
+            "description": "每页大小，范围 1-500",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "example": 10
+          },
+          {
+            "name": "orderBy",
+            "in": "query",
+            "description": "排序方式：'oldest' - 按最早收藏，其他值或 null - 按最新收藏（默认）",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "description": "排序方式：'oldest' - 按最早收藏，其他值或 null - 按最新收藏（默认）",
+              "example": "newest",
+              "enum": [
+                "newest",
+                "oldest"
+              ]
+            },
+            "example": "newest"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResponsePojoIPageWorks"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/star/status/{workId}": {
+      "get": {
+        "tags": [
+          "用户接口 - 收藏"
+        ],
+        "summary": "查询收藏状态",
+        "description": "# 查询收藏状态（需要登录认证）\n\n## 特性\n- 快速查询当前用户对指定作品的收藏状态\n- 用于前端初始化页面时显示星标状态\n\n## 参数说明：\n- Authorization: Header 中的 Token\n- workId: **作品 ID**，Integer 类型，必填\n\n## 返回说明：\n- **查询成功**：返回 **{\"data\": true/false}**\n",
+        "operationId": "getStarStatus",
+        "parameters": [
+          {
+            "name": "workId",
+            "in": "path",
+            "description": "作品 ID",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            },
+            "example": 1
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResponsePojoBoolean"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/star/count/{workId}": {
+      "get": {
+        "tags": [
+          "用户接口 - 收藏"
+        ],
+        "summary": "查询作品收藏总数",
+        "description": "# 查询作品收藏总数（无需登录认证）\n\n## 特性\n- 公开接口，查询某作品的总收藏数\n- 数据来源于作品表的冗余字段，性能极高\n\n## 参数说明：\n- workId: **作品 ID**，Integer 类型，必填\n\n## 返回说明：\n- **查询成功**：返回 **{\"data\": 收藏数}**\n",
+        "operationId": "getStarCount",
+        "parameters": [
+          {
+            "name": "workId",
+            "in": "path",
+            "description": "作品 ID",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            },
+            "example": 1
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResponsePojoInteger"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/like/user-liked/{userId}/{current}/{size}": {
+      "get": {
+        "tags": [
+          "用户接口 - 点赞"
+        ],
+        "summary": "分页查询用户点赞作品",
+        "description": "# 分页查询用户点赞作品（无需登录认证）\n\n## 特性\n- 公开接口（无需 Token 认证）\n- MyBatis-Plus 分页支持\n- 只返回审核通过的作品（approval_status = 10）\n- 按点赞时间倒序排列（最新点赞优先）\n\n## 参数说明：\n- **userId**: 用户 ID，Integer 类型，必填\n- **current**: 当前页码，Long 类型，必填，从 1 开始\n- **size**: 每页大小，Long 类型，必填，范围 1-500\n\n## 返回说明：\n- **查询成功**：返回 **{\"data\": IPage<Works>}** ，包含分页信息和作品列表\n- **用户 ID 无效**：返回 **{\"data\": null}** 和“用户 ID 无效”提示\n\n## 业务逻辑：\n1. 校验用户 ID、页码和每页数量参数有效性\n2. 调用 Service 层进行分页查询\n3. 关联查询 tb_like 和 tb_works 表\n4. 过滤条件：用户点赞且未删除（l.is_delete=0）、作品未删除（w.is_delete=0）、审核通过（w.approval_status=10）\n5. 按点赞时间倒序返回结果\n\n## 注意事项：\n- **此接口为公开接口，无需登录即可访问**\n- 如果用户没有点赞过任何作品，返回空列表 []\n- **只返回审核通过的作品**，待审核和未过审的作品不可见\n- 建议合理设置每页数量（size），避免一次性加载过多数据\n- 图片 URL 为文件名，完整访问路径为：`/api/image/works?filePath={img_url}`\n- 使用 **RESTful 风格**路径参数，格式：`/user-liked/{userId}/{current}/{size}`\n",
+        "operationId": "getUserLikedWorks",
+        "parameters": [
+          {
+            "name": "userId",
+            "in": "path",
+            "description": "用户 ID",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            },
+            "example": 1
+          },
+          {
+            "name": "current",
+            "in": "path",
+            "description": "当前页码，从 1 开始",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "example": 1
+          },
+          {
+            "name": "size",
+            "in": "path",
+            "description": "每页大小，范围 1-500",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "example": 10
+          },
+          {
+            "name": "orderBy",
+            "in": "query",
+            "description": "排序方式：'oldest' - 按最早点赞，其他值或 null - 按最新点赞（默认）",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "description": "排序方式：'oldest' - 按最早点赞，其他值或 null - 按最新点赞（默认）",
+              "example": "newest",
+              "enum": [
+                "newest",
+                "oldest"
+              ]
+            },
+            "example": "newest"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResponsePojoIPageWorks"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/like/status/{workId}": {
+      "get": {
+        "tags": [
+          "用户接口 - 点赞"
+        ],
+        "summary": "查询点赞状态",
+        "description": "# 查询点赞状态（需要登录认证）\n\n## 特性\n- 快速查询当前用户对指定作品的点赞状态\n- 用于前端初始化页面时显示红心状态\n\n## 参数说明：\n- Authorization: Header 中的 Token\n- workId: **作品 ID**，Integer 类型，必填\n\n## 返回说明：\n- **查询成功**：返回 **{\"data\": true/false}**\n",
+        "operationId": "getLikeStatus",
+        "parameters": [
+          {
+            "name": "workId",
+            "in": "path",
+            "description": "作品 ID",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            },
+            "example": 1
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResponsePojoBoolean"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/like/count/{workId}": {
+      "get": {
+        "tags": [
+          "用户接口 - 点赞"
+        ],
+        "summary": "查询作品点赞总数",
+        "description": "# 查询作品点赞总数（无需登录认证）\n\n## 特性\n- 公开接口，查询某作品的总点赞数\n- 数据来源于作品表的冗余字段，性能极高\n\n## 参数说明：\n- workId: **作品 ID**，Integer 类型，必填\n\n## 返回说明：\n- **查询成功**：返回 **{\"data\": 点赞数}**\n",
+        "operationId": "getLikeCount",
+        "parameters": [
+          {
+            "name": "workId",
+            "in": "path",
+            "description": "作品 ID",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            },
+            "example": 1
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResponsePojoInteger"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/image/work/get": {
       "get": {
         "tags": [
           "图像接口"
         ],
         "summary": "获取作品图片",
-        "description": "# 获取作品图片（无需登录认证）\n\n## 特性\n- 公开接口（无需认证）\n- 路径安全校验（防目录遍历攻击）\n- 文件类型白名单（JPG/JPEG/PNG）\n- HTTP 缓存支持（1小时）\n- 多层子目录支持\n\n## 参数说明：\n- filePath: **图像相对路径**，字符串类型，必填，支持子目录结构\n\n## 返回说明：\n- **获取成功**：直接返回图片二进制数据，Content-Type 为 image/png 或 image/jpeg\n- **文件不存在**：返回 **404 Not Found**\n- **非法路径**：返回 **400 Bad Request**（包含 .. 或 / 开头）\n- **不支持的格式**：返回 **400 Bad Request**（非 JPG/JPEG/PNG 格式）\n- **路径越权**：返回 **403 Forbidden**（超出允许目录范围）\n- **服务器错误**：返回 **500 Internal Server Error**\n\n## 业务逻辑：\n1. 校验文件路径安全性（禁止 .. 和绝对路径）\n2. 检查文件扩展名是否在白名单中（jpg/jpeg/png）\n3. 构建完整文件路径并验证文件存在性\n4. 确保文件在允许的目录下（~/.pix_vision/data/works/）\n5. 设置响应头 Content-Type 和 Cache-Control\n6. 返回图片二进制数据\n\n## 注意事项：\n- 该接口**无需认证**，任何人都可以访问\n- 图片会自动缓存 **1 小时**（Cache-Control: max-age=3600）\n- 支持子目录结构，建议按日期或用户分类，如：`2024/04/artwork.png`\n- **仅支持 JPG、JPEG、PNG 格式**的图片\n- 文件路径相对于 `~/.pix_vision/data/works/` 目录\n- 适用于展示用户上传的作品图片\n",
+        "description": "# 获取作品图片（无需登录认证）\n\n## 特性\n- 公开接口（无需认证）\n- 路径安全校验（防目录遍历攻击）\n- 文件类型白名单（JPG/JPEG/PNG）\n- HTTP 缓存支持（1小时）\n- 多层子目录支持\n- **根据审核状态动态查找文件**\n\n## 参数说明：\n- filePath: **图像相对路径**，字符串类型，必填，支持子目录结构\n\n## 返回说明：\n- **获取成功**：直接返回图片二进制数据，Content-Type 为 image/png 或 image/jpeg\n- **文件不存在**：返回 **404 Not Found**\n- **非法路径**：返回 **400 Bad Request**（包含 .. 或 / 开头）\n- **不支持的格式**：返回 **400 Bad Request**（非 JPG/JPEG/PNG 格式）\n- **路径越权**：返回 **403 Forbidden**（超出允许目录范围）\n- **服务器错误**：返回 **500 Internal Server Error**\n\n## 业务逻辑：\n1. 校验文件路径安全性（禁止 .. 和绝对路径）\n2. 检查文件扩展名是否在白名单中（jpg/jpeg/png）\n3. **从文件名提取作品 ID，查询审核状态**\n4. **根据审核状态动态拼接文件后缀**：\n   - 待审核（20）：查找 `.pend` 后缀文件\n   - 未过审（30）：查找 `.fail` 后缀文件\n   - 正常（10）：查找正常格式文件\n5. 构建完整文件路径并验证文件存在性\n6. 确保文件在允许的目录下（~/.pix_vision/data/works/）\n7. 设置响应头 Content-Type 和 Cache-Control\n8. 返回图片二进制数据\n\n## 注意事项：\n- 该接口**无需认证**，任何人都可以访问\n- 图片会自动缓存 **1 小时**（Cache-Control: max-age=3600）\n- 支持子目录结构，建议按日期或用户分类，如：`2024/04/artwork.png`\n- **仅支持 JPG、JPEG、PNG 格式**的图片\n- 文件路径相对于 `~/.pix_vision/data/works/` 目录\n- 适用于展示用户上传的作品图片\n- **数据库存储的文件名始终为正常格式**，实际文件根据审核状态有不同的后缀\n",
         "operationId": "getWorkImage",
         "parameters": [
           {
@@ -2302,10 +2722,10 @@
     "/api/history/{current}/{size}": {
       "get": {
         "tags": [
-          "历史记录接口"
+          "用户接口 - 历史记录"
         ],
         "summary": "查看个人访问历史记录",
-        "description": "# 查看个人访问历史记录（需要登录认证 + 分页）\n\n## 特性\n- 需要 Token 认证\n- MyBatis-Plus 分页支持\n- 返回当前用户访问过的作品列表（每个作品只返回一条最新记录）\n- 仅返回未删除的作品\n- 按访问时间倒序排列（最新的在前）\n\n## 参数说明：\n- Authorization: Header 中的 Token，格式为 `Bearer <token>`，或通过 URL 参数 `?token=<token>` 传递\n- current: **当前页码**，Long 类型，必填，**从 1 开始**，默认为 1\n- size: **每页大小**，Long 类型，必填，范围 1-100，默认为 10\n\n## 返回说明：\n- **查询成功**：返回 **{\"data\": {IPage<History>对象}}** ，包含作品列表和分页信息\n- **Token 不存在或失效**：返回 **{\"data\": null}** 和错误提示\n- **无历史记录**：返回 **{\"data\": null}** 和空列表\n\n## 业务逻辑：\n1. 校验页码和每页大小参数\n2. 从请求头或 URL 参数中提取 Token\n3. 验证 Token 是否在白名单中\n4. 从 Token 中解析用户 ID\n5. 构建分页对象并调用 Service 层查询该用户的访问历史记录\n6. 对同一作品的多条记录进行去重，只保留访问时间最新的那条\n7. 按访问时间倒序返回结果\n8. 返回关联的作品详细信息分页列表\n\n## 注意事项：\n- **必须携带有效的 Token**\n- 只有已登录用户才能查看自己的历史记录\n- 如果作品已被删除，则不会出现在历史记录列表中\n- **每个作品只返回一条记录**（最近一次访问的记录）\n- 如果多次访问同一作品，只显示最新的那次访问记录\n- 每页大小限制：**1-100**\n",
+        "description": "# 查看个人访问历史记录（需要登录认证 + 分页）\n\n## 特性\n- 需要 Token 认证\n- MyBatis-Plus 分页支持\n- 返回当前用户访问过的作品列表（每个作品只返回一条最新记录）\n- 仅返回未删除的作品\n- 按访问时间倒序排列（最新的在前）\n\n## 参数说明：\n- Authorization: Header 中的 Token，格式为 `Bearer <token>`，或通过 URL 参数 `?token=<token>` 传递\n- current: **当前页码**，Long 类型，必填，**从 1 开始**，默认为 1\n- size: **每页大小**，Long 类型，必填，范围 1-500，默认为 10\n\n## 返回说明：\n- **查询成功**：返回 **{\"data\": {IPage<History>对象}}** ，包含作品列表和分页信息\n- **Token 不存在或失效**：返回 **{\"data\": null}** 和错误提示\n- **无历史记录**：返回 **{\"data\": null}** 和空列表\n\n## 业务逻辑：\n1. 校验页码和每页大小参数\n2. 从请求头或 URL 参数中提取 Token\n3. 验证 Token 是否在白名单中\n4. 从 Token 中解析用户 ID\n5. 构建分页对象并调用 Service 层查询该用户的访问历史记录\n6. 对同一作品的多条记录进行去重，只保留访问时间最新的那条\n7. 按访问时间倒序返回结果\n8. 返回关联的作品详细信息分页列表\n\n## 注意事项：\n- **必须携带有效的 Token**\n- 只有已登录用户才能查看自己的历史记录\n- 如果作品已被删除，则不会出现在历史记录列表中\n- **每个作品只返回一条记录**（最近一次访问的记录）\n- 如果多次访问同一作品，只显示最新的那次访问记录\n- 每页大小限制：**1-500**\n",
         "operationId": "getUserHistory",
         "parameters": [
           {
@@ -2322,7 +2742,7 @@
           {
             "name": "size",
             "in": "path",
-            "description": "每页大小，范围 1-100",
+            "description": "每页大小，范围 1-500",
             "required": true,
             "schema": {
               "type": "integer",
@@ -2348,7 +2768,7 @@
     "/api/comment/list/{workId}": {
       "get": {
         "tags": [
-          "评论接口"
+          "用户接口 - 评论"
         ],
         "summary": "查询作品评论列表",
         "description": "# 查询作品评论列表（无需登录认证）\n\n## 特性\n- 公开接口（无需认证）\n- 根据作品 ID 查询所有评论\n- 包含用户昵称和头像信息\n- 自动构建嵌套回复结构（一级评论包含子评论列表）\n- 支持一级评论按时间排序（最新/最早）\n- 二级评论始终按最早发布排列\n\n## 参数说明：\n- workId: **作品 ID**，Integer 类型，必填\n- orderBy: **排序方式**，String 类型，可选\n  - 'oldest': 一级评论按最早发布排列\n  - 其他值或 null: 一级评论按最新发布排列（默认）\n\n## 返回说明：\n- **查询成功**：返回 **{\"data\": [PrimaryComment列表]}** 和“查询成功”提示\n- **作品 ID 无效**：返回 **{\"data\": null}** 和“作品 ID 无效”提示\n- **无评论**：返回 **{\"data\": []}** 和“该作品暂无评论”提示\n- **查询失败**：返回 **{\"data\": null}** 和“查询失败”提示\n\n## 业务逻辑：\n1. 校验作品 ID 参数有效性\n2. 查询该作品的所有评论（排除已删除的评论）\n3. 批量查询所有评论用户的昵称和头像信息\n4. 将评论转换为响应对象，包含用户信息\n5. 构建两级结构：一级评论的 children 字段包含其所有二级评论（SecondaryComment）\n6. 一级评论按指定顺序排列，二级评论始终按最早发布排列\n7. 返回评论列表\n\n## 注意事项：\n- 这是一个**公开接口**，无需 Token 认证\n- 只返回**未删除**的评论（is_delete=0）\n- 一级评论支持两种排序：最新发布（默认）或最早发布\n- 二级评论始终按最早发布排列（comment_id ASC）\n- 如果作品没有评论，返回空数组\n- 每个评论对象包含用户昵称（nickname）和头像路径（user_avatar）\n- 一级评论的 children 字段包含其所有二级评论（SecondaryComment类型）\n- 二级评论不再有 children 字段，结构清晰扁平化\n",
@@ -2396,13 +2816,84 @@
         }
       }
     },
+    "/api/admin/works/page/{current}/{size}": {
+      "get": {
+        "tags": [
+          "系统管理员接口 - 作品管理"
+        ],
+        "summary": "分页查询作品列表",
+        "description": "# 分页查询作品列表（需要登录认证 + 角色权限[55, 77]）\n\n## 特性\n- 需要审核员或系统管理员角色（role=55 或 77）才能访问\n- MyBatis-Plus 分页支持\n- 支持关键字过滤（标题模糊搜索）\n- 支持一级评论按时间排序（最新/最早）\n- 自动填充最新的浏览量数据\n\n## 参数说明：\n- **current**: **当前页码**，Long 类型，必填，从 1 开始\n- **size**: **每页大小**，Long 类型，必填，范围 1-500\n- **keyword**: **关键字**，String 类型，可选，模糊搜索作品标题\n- **orderBy**: **排序方式**，String 类型，可选\n  - 'oldest': 按最早发布排列\n  - 其他值或 null: 按最新发布排列（默认）\n\n## 返回说明：\n- **成功**：返回 IPage<Works> 对象，包含作品列表和分页信息\n- **无数据**：返回空的分页结果（total=0, records=[]）\n\n## 业务逻辑：\n1. 校验分页参数（current>=1, 1<=size<=500）\n2. 构建 MyBatis-Plus 分页对象\n3. 根据关键字参数构建动态 SQL 查询\n4. 根据排序参数动态调整 ORDER BY 子句\n5. 为每个作品填充最新的浏览量数据\n6. 返回分页结果集\n\n## 注意事项：\n- 关键字搜索使用模糊匹配（LIKE '%keyword%'）\n- 只查询未删除的作品（is_delete = 0）\n- 不过滤审核状态，返回所有状态的作品\n- 返回完整的 Works 实体字段\n",
+        "operationId": "getAdminWorksPage",
+        "parameters": [
+          {
+            "name": "current",
+            "in": "path",
+            "description": "当前页码（从 1 开始）",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "example": 1
+          },
+          {
+            "name": "size",
+            "in": "path",
+            "description": "每页大小（范围 1-500）",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "example": 10
+          },
+          {
+            "name": "keyword",
+            "in": "query",
+            "description": "关键字（可选，模糊搜索标题）",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "orderBy",
+            "in": "query",
+            "description": "排序方式：'oldest' - 按最早发布，其他值或 null - 按最新发布（默认）",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "description": "排序方式：'oldest' - 按最早发布，其他值或 null - 按最新发布（默认）",
+              "example": "newest",
+              "enum": [
+                "newest",
+                "oldest"
+              ]
+            },
+            "example": "newest"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResponsePojoIPageWorks"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/admin/comments/page/{current}/{size}": {
       "get": {
         "tags": [
           "系统管理员接口 - 评论管理"
         ],
         "summary": "分页查询评论列表",
-        "description": "# 分页查询评论列表（需要登录认证 + 角色权限[55, 77]）\n\n## 特性\n- 需要审核员或系统管理员角色（role=55 或 77）才能访问\n- MyBatis-Plus 分页支持\n- 支持多条件过滤：作品、用户、评论层级、审核状态、关键字\n- 按时间倒序排列（最新评论优先）\n\n## 参数说明：\n- **current**: **当前页码**，Long 类型，必填，从 1 开始\n- **size**: **每页大小**，Long 类型，必填，范围 1-100\n- **workId**: **作品ID**，Integer 类型，可选，用于过滤特定作品的评论\n- **userId**: **用户ID**，Integer 类型，可选，用于过滤特定用户的评论\n- **commentFloor**: **评论层级**，Integer 类型，可选，1-一级评论、2-二级评论\n- **approvalStatus**: **审核状态**，Integer 类型，可选，10-正常、20-待审核、30-未过审\n- **keyword**: **评论关键字**，String 类型，可选，模糊搜索评论内容\n\n## 返回说明：\n- **成功**：返回 IPage<Comments> 对象，包含评论列表和分页信息\n- **无数据**：返回空的分页结果（total=0, records=[]）\n\n## 业务逻辑：\n1. 校验分页参数（current>=1, 1<=size<=100）\n2. 构建 MyBatis-Plus 分页对象\n3. 根据可选参数构建动态 SQL 查询\n4. 按时间倒序排列（time DESC）\n5. 返回分页结果集\n\n## 注意事项：\n- 所有过滤参数都是可选的，可以组合使用\n- 关键字搜索使用模糊匹配（LIKE '%keyword%'）\n- 只查询未删除的评论（is_delete = 0）\n- 返回完整的 Comments 实体字段\n",
+        "description": "# 分页查询评论列表（需要登录认证 + 角色权限[55, 77]）\n\n## 特性\n- 需要审核员或系统管理员角色（role=55 或 77）才能访问\n- MyBatis-Plus 分页支持\n- 支持多条件过滤：作品、用户、评论层级、审核状态、关键字\n- 支持按时间排序（最新/最早）\n\n## 参数说明：\n- **current**: **当前页码**，Long 类型，必填，从 1 开始\n- **size**: **每页大小**，Long 类型，必填，范围 1-500\n- **workId**: **作品ID**，Integer 类型，可选，用于过滤特定作品的评论\n- **userId**: **用户ID**，Integer 类型，可选，用于过滤特定用户的评论\n- **commentFloor**: **评论层级**，Integer 类型，可选，1-一级评论、2-二级评论\n- **approvalStatus**: **审核状态**，Integer 类型，可选，10-正常、20-待审核、30-未过审\n- **keyword**: **评论关键字**，String 类型，可选，模糊搜索评论内容\n- **orderBy**: **排序方式**，String 类型，可选\n  - 'oldest': 按最早发布排列\n  - 其他值或 null: 按最新发布排列（默认）\n\n## 返回说明：\n- **成功**：返回 IPage<Comments> 对象，包含评论列表和分页信息\n- **无数据**：返回空的分页结果（total=0, records=[]）\n\n## 业务逻辑：\n1. 校验分页参数（current>=1, 1<=size<=100）\n2. 构建 MyBatis-Plus 分页对象\n3. 根据可选参数构建动态 SQL 查询\n4. 根据排序参数动态调整 ORDER BY 子句\n5. 返回分页结果集\n\n## 注意事项：\n- 所有过滤参数都是可选的，可以组合使用\n- 关键字搜索使用模糊匹配（LIKE '%keyword%'）\n- 只查询未删除的评论（is_delete = 0）\n- 返回完整的 Comments 实体字段\n",
         "operationId": "getCommentsPage",
         "parameters": [
           {
@@ -2419,7 +2910,7 @@
           {
             "name": "size",
             "in": "path",
-            "description": "每页大小（范围 1-100）",
+            "description": "每页大小（范围 1-500）",
             "required": true,
             "schema": {
               "type": "integer",
@@ -2482,6 +2973,22 @@
             "schema": {
               "type": "string"
             }
+          },
+          {
+            "name": "orderBy",
+            "in": "query",
+            "description": "排序方式：'oldest' - 按最早发布，其他值或 null - 按最新发布（默认）",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "description": "排序方式：'oldest' - 按最早发布，其他值或 null - 按最新发布（默认）",
+              "example": "newest",
+              "enum": [
+                "newest",
+                "oldest"
+              ]
+            },
+            "example": "newest"
           }
         ],
         "responses": {
@@ -2654,7 +3161,8 @@
             "type": "integer",
             "description": "用户 ID",
             "format": "int32",
-            "example": 1
+            "example": 1,
+            "refType": null
           },
           "user_uuid": {
             "type": "array",
@@ -2665,78 +3173,92 @@
               "description": "用户 UUID",
               "format": "byte",
               "example": "MTblrZfoioLkuozov5vliLZ1dWlk"
-            }
+            },
+            "refType": "string"
           },
           "username": {
             "type": "string",
             "description": "用户名",
-            "example": "li_hua"
+            "example": "li_hua",
+            "refType": null
           },
           "password": {
             "type": "string",
             "description": "用户密码",
-            "example": "哈希256加密密码"
+            "example": "哈希256加密密码",
+            "refType": null
           },
           "nickname": {
             "type": "string",
             "description": "用户昵称",
-            "example": "李华"
+            "example": "李华",
+            "refType": null
           },
           "user_role": {
             "type": "integer",
             "description": "用户角色",
             "format": "int32",
-            "example": 11
+            "example": 11,
+            "refType": null
           },
           "avatar_url": {
             "type": "string",
             "description": "用户头像路径",
-            "example": "/avatar/uuid.png"
+            "example": "/avatar/uuid.png",
+            "refType": null
           },
           "email": {
             "type": "string",
             "description": "绑定邮箱",
-            "example": "lihua@example.com"
+            "example": "lihua@example.com",
+            "refType": null
           },
           "is_delete": {
             "type": "boolean",
             "description": "删除标签",
-            "example": false
+            "example": false,
+            "refType": null
           },
           "status": {
             "type": "integer",
             "description": "账户状态",
             "format": "int32",
-            "example": 10
+            "example": 10,
+            "refType": null
           },
           "update_time": {
             "type": "string",
             "description": "更新时间",
             "format": "date-time",
-            "example": "2026-03-29T12:00:00.003Z"
+            "example": "2026-03-29T12:00:00.003Z",
+            "refType": null
           },
           "update_user": {
             "type": "integer",
             "description": "更新人员 ID",
             "format": "int32",
-            "example": 0
+            "example": 0,
+            "refType": null
           },
           "create_time": {
             "type": "string",
             "description": "创建时间",
             "format": "date-time",
-            "example": "2026-03-29T12:00:00.003Z"
+            "example": "2026-03-29T12:00:00.003Z",
+            "refType": null
           },
           "create_user": {
             "type": "integer",
             "description": "创建人员 ID",
             "format": "int32",
-            "example": 0
+            "example": 0,
+            "refType": null
           },
           "string_user_uuid": {
             "type": "string",
             "description": "用户 UUID 字符串",
-            "example": "字符串类型uuid"
+            "example": "字符串类型uuid",
+            "refType": null
           }
         },
         "description": "用户实体"
@@ -2774,7 +3296,8 @@
             "type": "integer",
             "description": "用户 ID",
             "format": "int32",
-            "example": 1
+            "example": 1,
+            "refType": null
           },
           "user_uuid": {
             "type": "array",
@@ -2785,83 +3308,98 @@
               "description": "用户 UUID",
               "format": "byte",
               "example": "MTblrZfoioLkuozov5vliLZ1dWlk"
-            }
+            },
+            "refType": "string"
           },
           "username": {
             "type": "string",
             "description": "用户名",
-            "example": "li_hua"
+            "example": "li_hua",
+            "refType": null
           },
           "password": {
             "type": "string",
             "description": "用户密码",
-            "example": "哈希256加密密码"
+            "example": "哈希256加密密码",
+            "refType": null
           },
           "nickname": {
             "type": "string",
             "description": "用户昵称",
-            "example": "李华"
+            "example": "李华",
+            "refType": null
           },
           "user_role": {
             "type": "integer",
             "description": "用户角色",
             "format": "int32",
-            "example": 11
+            "example": 11,
+            "refType": null
           },
           "avatar_url": {
             "type": "string",
             "description": "用户头像路径",
-            "example": "/avatar/uuid.png"
+            "example": "/avatar/uuid.png",
+            "refType": null
           },
           "email": {
             "type": "string",
             "description": "绑定邮箱",
-            "example": "lihua@example.com"
+            "example": "lihua@example.com",
+            "refType": null
           },
           "is_delete": {
             "type": "boolean",
             "description": "删除标签",
-            "example": false
+            "example": false,
+            "refType": null
           },
           "status": {
             "type": "integer",
             "description": "账户状态",
             "format": "int32",
-            "example": 10
+            "example": 10,
+            "refType": null
           },
           "update_time": {
             "type": "string",
             "description": "更新时间",
             "format": "date-time",
-            "example": "2026-03-29T12:00:00.003Z"
+            "example": "2026-03-29T12:00:00.003Z",
+            "refType": null
           },
           "update_user": {
             "type": "integer",
             "description": "更新人员 ID",
             "format": "int32",
-            "example": 0
+            "example": 0,
+            "refType": null
           },
           "create_time": {
             "type": "string",
             "description": "创建时间",
             "format": "date-time",
-            "example": "2026-03-29T12:00:00.003Z"
+            "example": "2026-03-29T12:00:00.003Z",
+            "refType": null
           },
           "create_user": {
             "type": "integer",
             "description": "创建人员 ID",
             "format": "int32",
-            "example": 0
+            "example": 0,
+            "refType": null
           },
           "string_user_uuid": {
             "type": "string",
             "description": "用户 UUID 字符串",
-            "example": "字符串类型uuid"
+            "example": "字符串类型uuid",
+            "refType": null
           },
           "token": {
             "type": "string",
             "description": "JWT Token",
-            "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9"
+            "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9",
+            "refType": null
           }
         },
         "description": "用户登录响应实体"
@@ -2873,13 +3411,15 @@
             "type": "integer",
             "description": "需要操作的作品总数",
             "format": "int32",
-            "example": 10
+            "example": 10,
+            "refType": null
           },
           "successCount": {
             "type": "integer",
             "description": "成功操作的作品数量",
             "format": "int32",
-            "example": 9
+            "example": 9,
+            "refType": null
           },
           "failedWorkIds": {
             "type": "array",
@@ -2892,7 +3432,8 @@
               "type": "integer",
               "description": "失败作品的 ID 列表",
               "format": "int32"
-            }
+            },
+            "refType": "integer"
           }
         },
         "description": "管理员批量操作作品结果"
@@ -2930,13 +3471,15 @@
             "type": "integer",
             "description": "需要更新的用户总数",
             "format": "int32",
-            "example": 10
+            "example": 10,
+            "refType": null
           },
           "successCount": {
             "type": "integer",
             "description": "成功更新的用户数量",
             "format": "int32",
-            "example": 9
+            "example": 9,
+            "refType": null
           },
           "failedUserIds": {
             "type": "array",
@@ -2949,7 +3492,8 @@
               "type": "integer",
               "description": "失败用户的 ID 列表",
               "format": "int32"
-            }
+            },
+            "refType": "integer"
           }
         },
         "description": "管理员批量更新用户信息结果"
@@ -2987,19 +3531,22 @@
             "type": "integer",
             "description": "需要重置的用户总数",
             "format": "int32",
-            "example": 10
+            "example": 10,
+            "refType": null
           },
           "successCount": {
             "type": "integer",
             "description": "成功重置密码的用户数量",
             "format": "int32",
-            "example": 9
+            "example": 9,
+            "refType": null
           },
           "emailSentCount": {
             "type": "integer",
             "description": "成功发送邮件的数量",
             "format": "int32",
-            "example": 8
+            "example": 8,
+            "refType": null
           },
           "failedUserIds": {
             "type": "array",
@@ -3012,7 +3559,8 @@
               "type": "integer",
               "description": "失败用户的 ID 列表",
               "format": "int32"
-            }
+            },
+            "refType": "integer"
           }
         },
         "description": "管理员批量重置密码结果"
@@ -3078,13 +3626,15 @@
             "type": "integer",
             "description": "需要删除的用户总数",
             "format": "int32",
-            "example": 10
+            "example": 10,
+            "refType": null
           },
           "successCount": {
             "type": "integer",
             "description": "成功删除的用户数量",
             "format": "int32",
-            "example": 9
+            "example": 9,
+            "refType": null
           },
           "failedUserIds": {
             "type": "array",
@@ -3097,7 +3647,8 @@
               "type": "integer",
               "description": "失败用户的 ID 列表",
               "format": "int32"
-            }
+            },
+            "refType": "integer"
           }
         },
         "description": "管理员批量删除用户结果"
@@ -3135,13 +3686,15 @@
             "type": "integer",
             "description": "需要操作的评论总数",
             "format": "int32",
-            "example": 10
+            "example": 10,
+            "refType": null
           },
           "successCount": {
             "type": "integer",
             "description": "成功操作的评论数量",
             "format": "int32",
-            "example": 9
+            "example": 9,
+            "refType": null
           },
           "failedWorkIds": {
             "type": "array",
@@ -3154,7 +3707,8 @@
               "type": "integer",
               "description": "失败评论的 ID 列表",
               "format": "int32"
-            }
+            },
+            "refType": "integer"
           }
         },
         "description": "管理员批量操作评论结果"
@@ -3219,119 +3773,148 @@
         "properties": {
           "nowTime": {
             "type": "string",
-            "description": "获取时间"
+            "description": "获取时间",
+            "refType": null
           },
           "osArch": {
             "type": "string",
-            "description": "操作系统架构"
+            "description": "操作系统架构",
+            "refType": null
           },
           "osName": {
             "type": "string",
-            "description": "操作系统名称"
+            "description": "操作系统名称",
+            "refType": null
           },
           "osVersion": {
             "type": "string",
-            "description": "操作系统版本"
+            "description": "操作系统版本",
+            "refType": null
           },
           "userName": {
             "type": "string",
-            "description": "用户名"
+            "description": "用户名",
+            "refType": null
           },
           "userHome": {
             "type": "string",
-            "description": "用户主目录"
+            "description": "用户主目录",
+            "refType": null
           },
           "userCurrentDir": {
             "type": "string",
-            "description": "项目目录"
+            "description": "项目目录",
+            "refType": null
           },
           "userTempDir": {
             "type": "string",
-            "description": "用户临时目录"
+            "description": "用户临时目录",
+            "refType": null
           },
           "userLanguage": {
             "type": "string",
-            "description": "用户语言"
+            "description": "用户语言",
+            "refType": null
           },
           "userCountry": {
             "type": "string",
-            "description": "用户国家"
+            "description": "用户国家",
+            "refType": null
           },
           "hostName": {
             "type": "string",
-            "description": "主机名"
+            "description": "主机名",
+            "refType": null
           },
           "hostAddress": {
             "type": "string",
-            "description": "主机地址"
+            "description": "主机地址",
+            "refType": null
           },
           "maxMemory": {
             "type": "string",
-            "description": "最大内存"
+            "description": "最大内存",
+            "refType": null
           },
           "totalMemory": {
             "type": "string",
-            "description": "总内存"
+            "description": "总内存",
+            "refType": null
           },
           "freeMemory": {
             "type": "string",
-            "description": "空闲内存"
+            "description": "空闲内存",
+            "refType": null
           },
           "usableMemory": {
             "type": "string",
-            "description": "可用内存"
+            "description": "可用内存",
+            "refType": null
           },
           "jvmName": {
             "type": "string",
-            "description": "Java 虚拟机名称"
+            "description": "Java 虚拟机名称",
+            "refType": null
           },
           "jvmVersion": {
             "type": "string",
-            "description": "Java 虚拟机版本"
+            "description": "Java 虚拟机版本",
+            "refType": null
           },
           "jvmVendor": {
             "type": "string",
-            "description": "Java 虚拟机供应商"
+            "description": "Java 虚拟机供应商",
+            "refType": null
           },
           "jvmInfo": {
             "type": "string",
-            "description": "Java 虚拟机信息"
+            "description": "Java 虚拟机信息",
+            "refType": null
           },
           "jvmSpecName": {
             "type": "string",
-            "description": "Java 虚拟机规范名称"
+            "description": "Java 虚拟机规范名称",
+            "refType": null
           },
           "jvmSpecVersion": {
             "type": "string",
-            "description": "Java 虚拟机规范版本"
+            "description": "Java 虚拟机规范版本",
+            "refType": null
           },
           "jvmSpecVendor": {
             "type": "string",
-            "description": "Java 虚拟机规范供应商"
+            "description": "Java 虚拟机规范供应商",
+            "refType": null
           },
           "jdkVersion": {
             "type": "string",
-            "description": "JDK 版本"
+            "description": "JDK 版本",
+            "refType": null
           },
           "jdkVendor": {
             "type": "string",
-            "description": "JDK 供应商"
+            "description": "JDK 供应商",
+            "refType": null
           },
           "jdkVendorURL": {
             "type": "string",
-            "description": "JDK 供应商 URL"
+            "description": "JDK 供应商 URL",
+            "refType": null
           },
           "jdkSpecName": {
             "type": "string",
-            "description": "JDK 规范名称"
+            "description": "JDK 规范名称",
+            "refType": null
           },
           "jdkSpecVersion": {
             "type": "string",
-            "description": "JDK 规范版本"
+            "description": "JDK 规范版本",
+            "refType": null
           },
           "jdkSpecVendor": {
             "type": "string",
-            "description": "JDK 规范供应商"
+            "description": "JDK 规范供应商",
+            "refType": null
           }
         },
         "description": "系统相关信息"
@@ -3340,16 +3923,6 @@
         "type": "object",
         "properties": {
           "size": {
-            "type": "integer",
-            "format": "int64",
-            "refType": null
-          },
-          "current": {
-            "type": "integer",
-            "format": "int64",
-            "refType": null
-          },
-          "pages": {
             "type": "integer",
             "format": "int64",
             "refType": null
@@ -3365,6 +3938,16 @@
               "$ref": "#/components/schemas/Series"
             },
             "refType": "Series"
+          },
+          "current": {
+            "type": "integer",
+            "format": "int64",
+            "refType": null
+          },
+          "pages": {
+            "type": "integer",
+            "format": "int64",
+            "refType": null
           }
         },
         "description": "响应数据"
@@ -3466,16 +4049,6 @@
             "format": "int64",
             "refType": null
           },
-          "current": {
-            "type": "integer",
-            "format": "int64",
-            "refType": null
-          },
-          "pages": {
-            "type": "integer",
-            "format": "int64",
-            "refType": null
-          },
           "total": {
             "type": "integer",
             "format": "int64",
@@ -3487,6 +4060,16 @@
               "$ref": "#/components/schemas/Works"
             },
             "refType": "Works"
+          },
+          "current": {
+            "type": "integer",
+            "format": "int64",
+            "refType": null
+          },
+          "pages": {
+            "type": "integer",
+            "format": "int64",
+            "refType": null
           }
         },
         "description": "响应数据"
@@ -3645,25 +4228,30 @@
         "properties": {
           "size": {
             "type": "integer",
-            "format": "int64"
-          },
-          "current": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "pages": {
-            "type": "integer",
-            "format": "int64"
+            "format": "int64",
+            "refType": null
           },
           "total": {
             "type": "integer",
-            "format": "int64"
+            "format": "int64",
+            "refType": null
           },
           "records": {
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/User"
-            }
+            },
+            "refType": "User"
+          },
+          "current": {
+            "type": "integer",
+            "format": "int64",
+            "refType": null
+          },
+          "pages": {
+            "type": "integer",
+            "format": "int64",
+            "refType": null
           }
         },
         "description": "响应数据"
@@ -3730,44 +4318,53 @@
           "data_id": {
             "type": "integer",
             "description": "数据 ID",
-            "format": "int32"
+            "format": "int32",
+            "refType": null
           },
           "user_id": {
             "type": "integer",
             "description": "用户 ID",
-            "format": "int32"
+            "format": "int32",
+            "refType": null
           },
           "user_data_name": {
             "type": "string",
-            "description": "数据项目名称（电话、邮箱、网站、微信等等）"
+            "description": "数据项目名称（电话、邮箱、网站、微信等等）",
+            "refType": null
           },
           "user_data": {
             "type": "string",
-            "description": "数据内容（具体的电话号码、邮箱地址、网站 url 等等）"
+            "description": "数据内容（具体的电话号码、邮箱地址、网站 url 等等）",
+            "refType": null
           },
           "is_delete": {
             "type": "boolean",
-            "description": "删除标签：0 - 未删除、1 - 已删除"
+            "description": "删除标签：0 - 未删除、1 - 已删除",
+            "refType": null
           },
           "update_time": {
             "type": "string",
             "description": "数据条目更新时间戳",
-            "format": "date-time"
+            "format": "date-time",
+            "refType": null
           },
           "update_user": {
             "type": "integer",
             "description": "修改者 id，系统修改为 0",
-            "format": "int32"
+            "format": "int32",
+            "refType": null
           },
           "create_time": {
             "type": "string",
             "description": "数据条目创建时间戳",
-            "format": "date-time"
+            "format": "date-time",
+            "refType": null
           },
           "create_user": {
             "type": "integer",
             "description": "存储创建者 id，系统创建为 0",
-            "format": "int32"
+            "format": "int32",
+            "refType": null
           }
         },
         "description": "用户数据实体"
@@ -3882,16 +4479,6 @@
             "format": "int64",
             "refType": null
           },
-          "current": {
-            "type": "integer",
-            "format": "int64",
-            "refType": null
-          },
-          "pages": {
-            "type": "integer",
-            "format": "int64",
-            "refType": null
-          },
           "total": {
             "type": "integer",
             "format": "int64",
@@ -3903,6 +4490,16 @@
               "$ref": "#/components/schemas/History"
             },
             "refType": "History"
+          },
+          "current": {
+            "type": "integer",
+            "format": "int64",
+            "refType": null
+          },
+          "pages": {
+            "type": "integer",
+            "format": "int64",
+            "refType": null
           }
         },
         "description": "响应数据"
@@ -3939,74 +4536,89 @@
           "comment_id": {
             "type": "integer",
             "description": "评论 ID",
-            "format": "int32"
+            "format": "int32",
+            "refType": null
           },
           "user_id": {
             "type": "integer",
             "description": "用户 ID",
-            "format": "int32"
+            "format": "int32",
+            "refType": null
           },
           "work_id": {
             "type": "integer",
             "description": "作品 ID",
-            "format": "int32"
+            "format": "int32",
+            "refType": null
           },
           "parent_comment_id": {
             "type": "integer",
             "description": "父评论 ID",
-            "format": "int32"
+            "format": "int32",
+            "refType": null
           },
           "in_comment_id": {
             "type": "integer",
             "description": "所属一级评论 ID",
-            "format": "int32"
+            "format": "int32",
+            "refType": null
           },
           "comment_floor": {
             "type": "integer",
             "description": "评论层级",
-            "format": "int32"
+            "format": "int32",
+            "refType": null
           },
           "comment_text": {
             "type": "string",
-            "description": "评论内容，限制长度 125 字"
+            "description": "评论内容，限制长度 125 字",
+            "refType": null
           },
           "approval_status": {
             "type": "integer",
             "description": "审核状态：10 - 正常、20 - 待审核、30 - 未过审",
-            "format": "int32"
+            "format": "int32",
+            "refType": null
           },
           "is_delete": {
             "type": "boolean",
-            "description": "删除标签：0 - 未删除、1 - 已删除"
+            "description": "删除标签：0 - 未删除、1 - 已删除",
+            "refType": null
           },
           "time": {
             "type": "string",
             "description": "评论时间",
-            "format": "date-time"
+            "format": "date-time",
+            "refType": null
           },
           "nickname": {
             "type": "string",
-            "description": "用户昵称"
+            "description": "用户昵称",
+            "refType": null
           },
           "user_avatar": {
             "type": "string",
-            "description": "用户头像路径"
+            "description": "用户头像路径",
+            "refType": null
           },
           "replied_nickname": {
             "type": "string",
-            "description": "被回复者的用户昵称"
+            "description": "被回复者的用户昵称",
+            "refType": null
           },
           "replied_user_id": {
             "type": "integer",
             "description": "被回复者的用户 ID",
-            "format": "int32"
+            "format": "int32",
+            "refType": null
           },
           "children": {
             "type": "array",
             "description": "二级评论列表",
             "items": {
               "$ref": "#/components/schemas/SecondaryComment"
-            }
+            },
+            "refType": "SecondaryComment"
           }
         },
         "description": "一级评论响应实体"
@@ -4047,67 +4659,81 @@
           "comment_id": {
             "type": "integer",
             "description": "评论 ID",
-            "format": "int32"
+            "format": "int32",
+            "refType": null
           },
           "user_id": {
             "type": "integer",
             "description": "用户 ID",
-            "format": "int32"
+            "format": "int32",
+            "refType": null
           },
           "work_id": {
             "type": "integer",
             "description": "作品 ID",
-            "format": "int32"
+            "format": "int32",
+            "refType": null
           },
           "parent_comment_id": {
             "type": "integer",
             "description": "父评论 ID",
-            "format": "int32"
+            "format": "int32",
+            "refType": null
           },
           "in_comment_id": {
             "type": "integer",
             "description": "所属一级评论 ID",
-            "format": "int32"
+            "format": "int32",
+            "refType": null
           },
           "comment_floor": {
             "type": "integer",
             "description": "评论层级",
-            "format": "int32"
+            "format": "int32",
+            "refType": null
           },
           "comment_text": {
             "type": "string",
-            "description": "评论内容，限制长度 125 字"
+            "description": "评论内容，限制长度 125 字",
+            "refType": null
           },
           "approval_status": {
             "type": "integer",
             "description": "审核状态：10 - 正常、20 - 待审核、30 - 未过审",
-            "format": "int32"
+            "format": "int32",
+            "refType": null
           },
           "is_delete": {
             "type": "boolean",
-            "description": "删除标签：0 - 未删除、1 - 已删除"
+            "description": "删除标签：0 - 未删除、1 - 已删除",
+            "refType": null
           },
           "time": {
             "type": "string",
             "description": "评论时间",
-            "format": "date-time"
+            "format": "date-time",
+            "refType": null
           },
           "nickname": {
             "type": "string",
-            "description": "用户昵称"
+            "description": "用户昵称",
+            "refType": null
           },
           "user_avatar": {
             "type": "string",
-            "description": "用户头像路径"
+            "description": "用户头像路径",
+            "refType": null
           },
           "replied_nickname": {
             "type": "string",
-            "description": "被回复者的用户昵称"
+            "description": "被回复者的用户昵称",
+            "refType": null
           },
           "replied_user_id": {
             "type": "integer",
             "description": "被回复者的用户 ID",
-            "format": "int32"
+            "format": "int32",
+            "refType": null
           }
         },
         "description": "二级评论响应实体"
@@ -4118,50 +4744,60 @@
           "comment_id": {
             "type": "integer",
             "description": "评论 ID",
-            "format": "int32"
+            "format": "int32",
+            "refType": null
           },
           "user_id": {
             "type": "integer",
             "description": "用户 ID",
-            "format": "int32"
+            "format": "int32",
+            "refType": null
           },
           "work_id": {
             "type": "integer",
             "description": "作品 ID",
-            "format": "int32"
+            "format": "int32",
+            "refType": null
           },
           "parent_comment_id": {
             "type": "integer",
             "description": "父评论 ID",
-            "format": "int32"
+            "format": "int32",
+            "refType": null
           },
           "in_comment_id": {
             "type": "integer",
             "description": "所属一级评论 ID",
-            "format": "int32"
+            "format": "int32",
+            "refType": null
           },
           "comment_floor": {
             "type": "integer",
             "description": "评论层级",
-            "format": "int32"
+            "format": "int32",
+            "refType": null
           },
           "comment_text": {
             "type": "string",
-            "description": "评论内容，限制长度 125 字"
+            "description": "评论内容，限制长度 125 字",
+            "refType": null
           },
           "approval_status": {
             "type": "integer",
             "description": "审核状态：10 - 正常、20 - 待审核、30 - 未过审",
-            "format": "int32"
+            "format": "int32",
+            "refType": null
           },
           "is_delete": {
             "type": "boolean",
-            "description": "删除标签：0 - 未删除、1 - 已删除"
+            "description": "删除标签：0 - 未删除、1 - 已删除",
+            "refType": null
           },
           "time": {
             "type": "string",
             "description": "评论时间",
-            "format": "date-time"
+            "format": "date-time",
+            "refType": null
           }
         },
         "description": "评论数据库实体"
@@ -4171,25 +4807,30 @@
         "properties": {
           "size": {
             "type": "integer",
-            "format": "int64"
-          },
-          "current": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "pages": {
-            "type": "integer",
-            "format": "int64"
+            "format": "int64",
+            "refType": null
           },
           "total": {
             "type": "integer",
-            "format": "int64"
+            "format": "int64",
+            "refType": null
           },
           "records": {
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/Comments"
-            }
+            },
+            "refType": "Comments"
+          },
+          "current": {
+            "type": "integer",
+            "format": "int64",
+            "refType": null
+          },
+          "pages": {
+            "type": "integer",
+            "format": "int64",
+            "refType": null
           }
         },
         "description": "响应数据"
