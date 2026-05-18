@@ -3285,6 +3285,34 @@
             "description": "用户 UUID 字符串",
             "example": "字符串类型uuid",
             "refType": null
+          },
+          "work_count": {
+            "type": "integer",
+            "description": "作品发布数",
+            "format": "int32",
+            "example": 10,
+            "refType": null
+          },
+          "total_likes": {
+            "type": "integer",
+            "description": "被点赞总数",
+            "format": "int64",
+            "example": 100,
+            "refType": null
+          },
+          "total_stars": {
+            "type": "integer",
+            "description": "被收藏总数",
+            "format": "int64",
+            "example": 50,
+            "refType": null
+          },
+          "total_views": {
+            "type": "integer",
+            "description": "被查看总数",
+            "format": "int64",
+            "example": 1000,
+            "refType": null
           }
         },
         "description": "用户实体"
@@ -3405,6 +3433,30 @@
             "type": "string",
             "description": "用户 UUID 字符串",
             "example": "字符串类型uuid"
+          },
+          "work_count": {
+            "type": "integer",
+            "description": "作品发布数",
+            "format": "int32",
+            "example": 10
+          },
+          "total_likes": {
+            "type": "integer",
+            "description": "被点赞总数",
+            "format": "int64",
+            "example": 100
+          },
+          "total_stars": {
+            "type": "integer",
+            "description": "被收藏总数",
+            "format": "int64",
+            "example": 50
+          },
+          "total_views": {
+            "type": "integer",
+            "description": "被查看总数",
+            "format": "int64",
+            "example": 1000
           },
           "token": {
             "type": "string",

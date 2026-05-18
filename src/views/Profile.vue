@@ -1,93 +1,18 @@
 <script setup>
-import { ref, onMounted } from 'vue'
-import { useRouter, useRoute } from 'vue-router'
-import { showSuccess, showError, showWarning } from '@/utils/notification.js'
-import { getUserProfile } from '@/api/loginViewApi.js'
-import { getAvatarUrl } from '@/config/api.js'
+import { onMounted } from 'vue'
+import { useProfile } from '@/composables/useProfile.js'
 
-const router = useRouter()
-const route = useRoute()
-
-// 用户信息
-const userInfo = ref({
-  avatar: '',
-  nickname: '',
-  username: '',
-  uuid: ''
-})
-
-// 加载状态
-const isLoading = ref(true)
-
-// 判断是否是自己的主页
-const isMyProfile = ref(true) // 暂时默认为 true，后续根据路由参数判断
-
-// 获取用户信息
-const fetchUserProfile = async () => {
-  isLoading.value = true
-  
-  try {
-    const result = await getUserProfile()
-    
-    if (result.success && result.data) {
-      const data = result.data
-      
-      // 映射后端字段到前端展示字段
-      userInfo.value = {
-        avatar: getAvatarUrl(data.avatar_url), // 使用头像接口拼接完整 URL
-        nickname: data.nickname || '未设置昵称',
-        username: '@' + (data.username || 'unknown'),
-        uuid: data.string_user_uuid || data.user_uuid || '无 UUID'
-      }
-      
-      console.log('用户信息已加载:', userInfo.value)
-    } else {
-      console.error('获取用户信息失败:', result.message)
-      showError(result.message || '获取用户信息失败')
-    }
-  } catch (error) {
-    console.error('加载用户信息异常:', error)
-    showError('加载用户信息失败')
-  } finally {
-    isLoading.value = false
-  }
-}
-
-// 复制 UUID 到剪贴板
-const copyUUID = async () => {
-  if (!userInfo.value.uuid || userInfo.value.uuid === '无 UUID') {
-    showWarning('UUID 不存在', '提示')
-    return
-  }
-  
-  try {
-    await navigator.clipboard.writeText(userInfo.value.uuid)
-    showSuccess('UUID 已复制到剪贴板', '复制成功')
-  } catch (error) {
-    console.error('复制失败:', error)
-    // 降级方案：使用传统方法
-    const textArea = document.createElement('textarea')
-    textArea.value = userInfo.value.uuid
-    document.body.appendChild(textArea)
-    textArea.select()
-    document.execCommand('copy')
-    document.body.removeChild(textArea)
-    showSuccess('UUID 已复制到剪贴板', '复制成功')
-  }
-}
-
-// 切换菜单
-const switchMenu = (menu) => {
-  activeMenu.value = menu
-}
-
-// 返回首页
-const goHome = () => {
-  router.push('/')
-}
-
-// 当前选中的菜单项
-const activeMenu = ref('works') // works: 个人作品, favorites: 个人收藏
+// 使用 Composable 获取 Profile 页面的状态和方法
+const {
+  userInfo,
+  isLoading,
+  activeMenu,
+  isMyProfile,
+  fetchUserProfile,
+  copyUUID,
+  switchMenu,
+  goHome
+} = useProfile()
 
 // 组件挂载时获取用户信息
 onMounted(() => {
