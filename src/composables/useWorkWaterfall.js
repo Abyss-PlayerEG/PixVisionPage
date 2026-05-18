@@ -44,7 +44,7 @@ export const useWorkWaterfall = () => {
 
   // 组件挂载时自动加载第一页数据
   onMounted(() => {
-    loadWorks(1, 500)
+    loadWorks(1, 96)
   })
 
   return {
