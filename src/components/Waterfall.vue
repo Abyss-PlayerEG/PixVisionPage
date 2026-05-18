@@ -26,21 +26,14 @@
           class="gallery-column"
           :style="{ width: columnWidth + 'px' }"
         >
-          <div
+          <img
             v-for="(img, imgIndex) in column"
             :key="imgIndex"
-            class="waterfall-item"
+            :src="img.src"
+            :alt="img.alt || ''"
             :style="{ height: img.height + 'px', width: '100%' }"
-          >
-            <img
-              :src="img.src"
-              :alt="img.alt || ''"
-              loading="lazy"
-            />
-            <div class="item-overlay">
-              <span class="item-title">{{ img.workTitle || 'Untitled Work' }}</span>
-            </div>
-          </div>
+            loading="lazy"
+          />
         </div>
       </template>
     </div>
@@ -64,13 +57,11 @@ const props = defineProps({
 })
 
 const COLUMNS_COUNT = 16
-const COLUMN_GAP = 8  // 列内图片间距
 const sectionRef = ref(null)
 const trackRef = ref(null)
 const images = ref([])
 const skeletonColumns = ref([])
 const activeColumns = ref(0)
-const containerHeight = ref(0)  // ⭐ 容器高度
 let scrollTriggerInstance = null
 let lastTotalWidth = 0
 
@@ -96,74 +87,21 @@ const buildSkeleton = () => {
   activeColumns.value = lastNonEmpty + 1
 }
 
-/**
- * 根据容器高度和图片列表，计算需要多少列
- * @param {Array} imagesList - 图片列表
- * @param {number} height - 容器高度
- * @returns {Array} 列数组，每列包含若干图片
- */
-const calculateColumnsByHeight = (imagesList, height) => {
-  if (!imagesList || imagesList.length === 0) return []
-  
-  const columns = []
-  let currentColumn = []
-  let currentHeight = 0
-  
-  imagesList.forEach((img, index) => {
-    // 计算加入这张图片后的总高度（图片高度 + 间距）
-    const imgTotalHeight = img.height + (currentColumn.length > 0 ? COLUMN_GAP : 0)
-    
-    // ⭐ 如果当前列为空，必须放入第一张图片
-    if (currentColumn.length === 0) {
-      currentColumn.push(img)
-      currentHeight += img.height
-    }
-    // ⭐ 如果加入后不超限，直接放入
-    else if (currentHeight + imgTotalHeight <= height) {
-      currentColumn.push(img)
-      currentHeight += imgTotalHeight
-    }
-    // ⭐ 如果加入后会超限，但当前列还有空余空间，强制塞入
-    else if (currentHeight < height) {
-      // 计算剩余空间
-      const remainingSpace = height - currentHeight
-      
-      // 如果剩余空间大于0，强制塞入（允许轻微溢出）
-      if (remainingSpace > 0) {
-        currentColumn.push(img)
-        currentHeight += imgTotalHeight
-      } else {
-        // 完全没有空间了，创建新列
-        columns.push(currentColumn)
-        currentColumn = [img]
-        currentHeight = img.height
-      }
-    }
-    // 当前列已经完全填满或溢出，创建新列
-    else {
-      columns.push(currentColumn)
-      currentColumn = [img]
-      currentHeight = img.height
-    }
-  })
-  
-  // 添加最后一列
-  if (currentColumn.length > 0) {
-    columns.push(currentColumn)
-  }
-  
-  return columns
-}
-
 const imageColumns = computed(() => {
-  // ⭐ 获取容器实际高度
-  const height = containerHeight.value || (window.innerHeight * 0.9)  // 默认90vh
-  
-  // 根据高度动态计算列
-  const columns = calculateColumnsByHeight(images.value, height)
-  
-  activeColumns.value = columns.length
-  return columns
+  const cols = COLUMNS_COUNT
+  const columnsArr = Array.from({ length: cols }, () => [])
+  const columnHeights = new Array(cols).fill(0)
+  images.value.forEach((img) => {
+    let minIndex = 0
+    for (let i = 1; i < cols; i++) {
+      if (columnHeights[i] < columnHeights[minIndex]) minIndex = i
+    }
+    columnsArr[minIndex].push(img)
+    columnHeights[minIndex] += img.height
+  })
+  const lastNonEmpty = columnsArr.reduce((lastIdx, col, idx) => (col.length > 0 ? idx : lastIdx), -1)
+  activeColumns.value = lastNonEmpty + 1
+  return columnsArr
 })
 
 const initOrRefreshScrollTrigger = () => {
@@ -222,13 +160,6 @@ watch(images, () => {
   initOrRefreshScrollTrigger()
 })
 
-// 监听外部传入的图片数据变化
-watch(() => props.externalImages, (newImages) => {
-  if (newImages && newImages.length > 0) {
-    images.value = newImages
-  }
-}, { immediate: true, deep: true })
-
 const onResize = () => {
   if (images.value.length === 0) buildSkeleton()
   ScrollTrigger.refresh()
@@ -236,14 +167,6 @@ const onResize = () => {
 
 onMounted(() => {
   buildSkeleton()
-  
-  // ⭐ 获取容器实际高度
-  nextTick(() => {
-    if (sectionRef.value) {
-      containerHeight.value = sectionRef.value.offsetHeight
-    }
-  })
-  
   if (props.externalImages && props.externalImages.length > 0) {
     images.value = props.externalImages
   }
@@ -303,47 +226,16 @@ onUnmounted(() => {
   100% { background-position: -200% 0; }
 }
 
-.waterfall-item {
-  position: relative;
-  overflow: hidden;
-  border-radius: 8px;
-  background-color: #e0e0e0;
-}
-
-.waterfall-item img {
+.gallery-column img {
   display: block;
   width: 100%;
-  height: 100%;
   object-fit: cover;
-  transition: transform 0.4s ease;
+  border-radius: 8px;
+  background-color: #e0e0e0;
+  transition: transform 0.3s ease;
 }
 
-.item-overlay {
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  width: 100%;
-  padding: 16px;
-  background: linear-gradient(to top, rgba(0, 0, 0, 0.7), transparent);
-  color: #fff;
-  opacity: 0;
-  transform: translateY(10px);
-  transition: all 0.3s ease;
-  pointer-events: none;
-}
-
-.item-title {
-  font-size: 14px;
-  font-weight: 500;
-  letter-spacing: 0.5px;
-}
-
-.waterfall-item:hover img {
-  transform: scale(1.05);
-}
-
-.waterfall-item:hover .item-overlay {
-  opacity: 1;
-  transform: translateY(0);
+.gallery-column img:hover {
+  transform: scale(1.02);
 }
 </style>

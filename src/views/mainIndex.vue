@@ -86,13 +86,22 @@ onUnmounted(() => {
               :external-images="waterfallImages" 
               :pin-offset-top="70"
             />
-            
-            <!-- 加载状态提示 -->
-            <div v-if="isLoading" class="loading-tip">加载中...</div>
+<!--             
+            加载状态提示
+            <div v-if="isLoading" class="loading-tip">加载中...</div> -->
         </div>
     </section>
     <section id="num2z_2">
-        <div></div>
+        <div class="view-more-btn">
+            <span>查看更多</span>
+            <svg class="arrow-icon" viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg" width="16" height="16">
+                <path d="M512 896l-64-64 256-256H128v-96h576L448 224l64-64 384 384z" fill="currentColor"/>
+            </svg>
+        </div>
+    </section>
+
+    <section id="num3z">
+      
     </section>
 
 </template>

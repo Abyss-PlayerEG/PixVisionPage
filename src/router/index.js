@@ -13,6 +13,11 @@ const router = createRouter({
             name: 'login',
             component: () => import('../views/loginView.vue'),
         },
+        {
+            path: '/profile',
+            name: 'profile',
+            component: () => import('../views/Profile.vue'),
+        },
 
         // 以下路由仅在开发环境启用,构建后自动去除以下路由
         ...(import.meta.env.DEV ? [
