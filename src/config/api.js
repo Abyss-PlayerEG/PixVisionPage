@@ -27,6 +27,11 @@ export const PASSWORD_API = {
   FORGOT: `${API_BASE_URL}/api/user/password/forgot`,
 };
 
+// 用户信息相关接口
+export const USER_API = {
+  PROFILE_ME: `${API_BASE_URL}/api/user/profile/me`,
+};
+
 // 获取完整的头像 URL
 export const getAvatarUrl = (avatarPath) => {
   if (!avatarPath) {

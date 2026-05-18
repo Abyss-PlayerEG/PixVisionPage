@@ -5,7 +5,7 @@
  * @module loginViewApi
  */
 
-import { AUTH_API, MAIL_API, PASSWORD_API } from '../config/api';
+import { AUTH_API, MAIL_API, PASSWORD_API, USER_API } from '../config/api';
 
 /**
  * ============================================
@@ -364,6 +364,64 @@ export const sendForgotPasswordCode = (data, validateFn) => {
     needCountdown: true,
     showSuccessAlert: false,
   });
+};
+
+/**
+ * ============================================
+ * 用户信息功能
+ * ============================================
+ */
+
+/**
+ * 获取当前登录用户的详细信息
+ * @returns {Promise<Object>} 用户信息结果
+ */
+export const getUserProfile = async () => {
+  try {
+    // 从 localStorage 获取 token
+    const token = localStorage.getItem('token');
+    
+    if (!token) {
+      console.error('❌ 未找到 Token，用户未登录');
+      return { success: false, message: '用户未登录' };
+    }
+
+    console.log('发送获取用户信息请求...');
+
+    // 调用后端接口 - 使用 GET 方法，Token 通过 Header 传递
+    const response = await fetch(USER_API.PROFILE_ME, {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+      },
+    });
+
+    const result = await response.json();
+
+    // 打印后端返回的响应
+    console.log('用户信息接口响应:', JSON.stringify(result, null, 2));
+
+    // 根据业务状态码处理（兼容 code 和 recode 字段）
+    const statusCode = result.code || result.recode;
+    
+    if (statusCode === 200 && result.data) {
+      console.log('✅ 获取用户信息成功');
+      
+      // 更新 localStorage 中的用户信息
+      const userInfo = { ...result.data };
+      delete userInfo.password; // 删除密码字段，不保存到本地
+      localStorage.setItem('userInfo', JSON.stringify(userInfo));
+      console.log('用户信息已更新到 localStorage');
+
+      return { success: true, data: result.data };
+    } else {
+      console.error('❌ 获取用户信息失败:', result.message);
+      return { success: false, message: result.message || '获取用户信息失败' };
+    }
+  } catch (error) {
+    console.error('网络请求失败:', error);
+    return { success: false, message: '网络错误，请稍后重试' };
+  }
 };
 
 /**
