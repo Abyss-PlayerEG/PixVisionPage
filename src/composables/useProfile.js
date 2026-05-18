@@ -23,7 +23,11 @@ export const useProfile = () => {
     nickname: '',
     username: '',
     uuid: '',
-    fullUuid: '' // 保存完整 UUID 用于复制
+    fullUuid: '', // 保存完整 UUID 用于复制
+    workCount: 0, // 作品数量
+    totalLikes: 0, // 总点赞数
+    totalStars: 0, // 总收藏数
+    totalViews: 0 // 总浏览数
   })
 
   // 加载状态
@@ -87,7 +91,11 @@ export const useProfile = () => {
         nickname: data.nickname || '未设置昵称',
         username: '@' + (data.username || 'unknown'),
         uuid: fullUuid, // 直接保存完整 UUID，由 CSS 自动截断
-        fullUuid: fullUuid // 保存完整 UUID
+        fullUuid: fullUuid, // 保存完整 UUID
+        workCount: data.work_count || 0,
+        totalLikes: data.total_likes || 0,
+        totalStars: data.total_stars || 0,
+        totalViews: data.total_views || 0
       }
       
       console.log('✅ 我的用户信息已加载:', userInfo.value)
@@ -113,7 +121,12 @@ export const useProfile = () => {
         avatar: getAvatarUrl(data.avatar_url),
         nickname: data.nickname || '未设置昵称',
         username: '@' + (data.username || 'unknown'),
-        uuid: null // 查看他人时不显示 UUID
+        uuid: null, // 查看他人时不显示 UUID
+        fullUuid: '',
+        workCount: data.work_count || 0,
+        totalLikes: data.total_likes || 0,
+        totalStars: data.total_stars || 0,
+        totalViews: data.total_views || 0
       }
       
       console.log('✅ 其他用户信息已加载（username）:', userInfo.value)
@@ -137,7 +150,12 @@ export const useProfile = () => {
         avatar: getAvatarUrl(data.avatar_url),
         nickname: data.nickname || '未设置昵称',
         username: '@' + (data.username || 'unknown'),
-        uuid: null // 查看他人时不显示 UUID
+        uuid: null, // 查看他人时不显示 UUID
+        fullUuid: '',
+        workCount: data.work_count || 0,
+        totalLikes: data.total_likes || 0,
+        totalStars: data.total_stars || 0,
+        totalViews: data.total_views || 0
       }
       
       console.log('✅ 其他用户信息已加载（uuid）:', userInfo.value)

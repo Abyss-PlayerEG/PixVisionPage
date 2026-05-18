@@ -50,6 +50,26 @@ onMounted(() => {
           <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
         </svg>
       </div>
+      
+      <!-- 统计数据区域（2×2 网格） -->
+      <div class="stats-grid">
+        <div class="stat-item">
+          <div class="stat-value">{{ userInfo.workCount }}</div>
+          <div class="stat-label">作品</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-value">{{ userInfo.totalLikes }}</div>
+          <div class="stat-label">点赞</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-value">{{ userInfo.totalStars }}</div>
+          <div class="stat-label">收藏</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-value">{{ userInfo.totalViews }}</div>
+          <div class="stat-label">浏览</div>
+        </div>
+      </div>
     </div>
 
     <!-- 菜单选项 -->

@@ -135,6 +135,41 @@
     flex-shrink: 0; /* 图标不缩小 */
 }
 
+/* 统计数据网格（2×2） */
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr); /* 2 列等宽 */
+    gap: 12px; /* 间距 */
+    margin-top: 8px;
+}
+
+.stat-item {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 8px;
+    padding: 12px;
+    text-align: center;
+    transition: all 0.2s ease;
+}
+
+.stat-item:hover {
+    background: rgba(255, 255, 255, 0.08);
+    transform: translateY(-2px);
+}
+
+.stat-value {
+    color: #ffffff;
+    font-size: 20px;
+    font-weight: 600;
+    line-height: 1.2;
+    margin-bottom: 4px;
+}
+
+.stat-label {
+    color: rgba(255, 255, 255, 0.6);
+    font-size: 12px;
+    font-weight: 500;
+}
+
 /* 菜单列表 */
 .menu-list {
     display: flex;
