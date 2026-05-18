@@ -43,6 +43,7 @@ onMounted(() => {
       
       <!-- 下半部分：仅在自己的主页显示 UUID -->
       <div v-if="isMyProfile" class="uuid-wrapper" @click="copyUUID" title="点击复制 UUID">
+        <span class="uuid-label">UUID:</span>
         <span class="uuid-text">{{ userInfo.uuid }}</span>
         <svg class="copy-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>

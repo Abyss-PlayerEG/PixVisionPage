@@ -22,7 +22,8 @@ export const useProfile = () => {
     avatar: '',
     nickname: '',
     username: '',
-    uuid: ''
+    uuid: '',
+    fullUuid: '' // 保存完整 UUID 用于复制
   })
 
   // 加载状态
@@ -79,11 +80,14 @@ export const useProfile = () => {
       const data = result.data
       
       // 映射后端字段到前端展示字段
+      const fullUuid = data.string_user_uuid || data.user_uuid || '无 UUID'
+      
       userInfo.value = {
         avatar: getAvatarUrl(data.avatar_url), // 使用头像接口拼接完整 URL
         nickname: data.nickname || '未设置昵称',
         username: '@' + (data.username || 'unknown'),
-        uuid: data.string_user_uuid || data.user_uuid || '无 UUID'
+        uuid: fullUuid, // 直接保存完整 UUID，由 CSS 自动截断
+        fullUuid: fullUuid // 保存完整 UUID
       }
       
       console.log('✅ 我的用户信息已加载:', userInfo.value)
@@ -144,22 +148,24 @@ export const useProfile = () => {
   }
 
   /**
-   * 复制 UUID 到剪贴板
+   * 复制 UUID 到剪贴板（复制完整 UUID）
    */
   const copyUUID = async () => {
-    if (!userInfo.value.uuid || userInfo.value.uuid === '无 UUID') {
+    const uuidToCopy = userInfo.value.fullUuid || userInfo.value.uuid
+    
+    if (!uuidToCopy || uuidToCopy === '无 UUID') {
       showWarning('UUID 不存在', '提示')
       return
     }
     
     try {
-      await navigator.clipboard.writeText(userInfo.value.uuid)
+      await navigator.clipboard.writeText(uuidToCopy)
       showSuccess('UUID 已复制到剪贴板', '复制成功')
     } catch (error) {
       console.error('复制失败:', error)
       // 降级方案：使用传统方法
       const textArea = document.createElement('textarea')
-      textArea.value = userInfo.value.uuid
+      textArea.value = uuidToCopy
       document.body.appendChild(textArea)
       textArea.select()
       document.execCommand('copy')
