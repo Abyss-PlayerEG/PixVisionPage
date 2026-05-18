@@ -66,6 +66,66 @@ export const getUserProfile = async () => {
 };
 
 /**
+ * 根据用户名或 UUID 查询其他用户的信息（公开接口，无需登录）
+ * @param {Object} params - 查询参数
+ * @param {string} [params.username] - 用户名（可选，与 uuid 二选一）
+ * @param {string} [params.uuid] - 用户 UUID（可选，与 username 二选一）
+ * @returns {Promise<Object>} 用户信息结果
+ */
+export const getUserInfoByUsernameOrUuid = async (params = {}) => {
+  try {
+    const { username, uuid } = params;
+    
+    // 校验参数：username 和 uuid 至少提供一个
+    if (!username && !uuid) {
+      console.error('❌ 请提供用户名或 UUID');
+      return { success: false, message: '请提供用户名或 UUID' };
+    }
+
+    // 构建查询参数
+    const queryParams = new URLSearchParams();
+    if (username) {
+      queryParams.append('username', username);
+    }
+    if (uuid) {
+      queryParams.append('uuid', uuid);
+    }
+
+    const queryString = queryParams.toString();
+    const apiUrl = `${USER_API.PROFILE_INFO}?${queryString}`;
+
+    console.log('发送获取其他用户信息请求:', apiUrl);
+
+    // 调用后端接口 - GET 方法，公开接口无需 Token
+    const response = await fetch(apiUrl, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+
+    const result = await response.json();
+
+    // 打印后端返回的响应
+    console.log('其他用户信息接口响应:', JSON.stringify(result, null, 2));
+
+    // 根据业务状态码处理（兼容 code 和 recode 字段）
+    const statusCode = result.code || result.recode;
+    
+    if (statusCode === 200 && result.data) {
+      console.log('✅ 获取其他用户信息成功');
+      return { success: true, data: result.data };
+    } else {
+      console.error('❌ 获取其他用户信息失败:', result.message);
+      return { success: false, message: result.message || '获取用户信息失败' };
+    }
+  } catch (error) {
+    console.error('网络请求失败:', error);
+    return { success: false, message: '网络错误，请稍后重试' };
+  }
+};
+
+/**
  * ============================================
  * 工具函数
  * ============================================

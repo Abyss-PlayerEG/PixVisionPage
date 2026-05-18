@@ -2279,30 +2279,29 @@
         "tags": [
           "用户接口 - 基础资料"
         ],
-        "summary": "根据用户 ID 或 UUID 查询用户信息",
-        "description": "# 根据用户 ID 或 UUID 查询用户信息（无需登录认证）\n\n## 特性\n- 公开接口（无需 Token 认证）\n- 支持通过用户 ID 或 UUID 精确查询单个用户\n- 自动转换二进制 UUID 为字符串格式\n- userId 和 uuid 至少提供一个\n\n## 参数说明：\n- userId: **用户 ID**，Integer 类型，可选，与 uuid 二选一\n- uuid: **用户 UUID**，String 类型，可选，支持两种格式：\n  * 32位不带连字符：`6ddae8a5837d4721a1b783a7f98c67aa`\n  * 36位带连字符：`550e8400-e29b-41d4-a716-446655440000`\n  * 与 userId 二选一\n\n## 返回说明：\n- **查询成功**：返回 **{\"data\": {User对象}}** ，包含用户详细信息\n- **参数缺失**：返回 **{\"data\": null}** 和\"请提供用户 ID 或 UUID\"提示\n- **UUID 格式错误**：返回 **{\"data\": null}** 和\"UUID 格式错误\"提示\n- **用户不存在**：返回 **{\"data\": null}** 和\"用户不存在\"提示\n\n## 业务逻辑：\n1. 校验参数：userId 和 uuid 至少提供一个\n2. 如果提供 uuid，验证格式并转换为二进制\n3. 根据 userId 或 uuid 查询用户信息\n4. 将二进制 UUID 转换为字符串格式\n5. 隐藏敏感字段后返回用户详细信息\n\n## 注意事项：\n- 这是一个**公开接口**，无需 Token 认证\n- **userId 和 uuid 至少提供一个**，优先使用 userId\n- 只返回**未删除**的用户（is_delete=0）\n- 返回的字段不包含敏感信息（password、user_uuid、user_role、status 均被隐藏）\n- UUID 支持两种格式：32位不带连字符 或 36位带连字符\n",
+        "summary": "根据 UUID 或用户名查询用户信息",
+        "description": "# 根据 UUID 或用户名查询用户信息（无需登录认证）\n\n## 特性\n- 公开接口（无需 Token 认证）\n- 支持通过 UUID 或用户名精确查询单个用户\n- 自动转换二进制 UUID 为字符串格式\n- uuid、username 至少提供一个\n\n## 参数说明：\n- uuid: **用户 UUID**，String 类型，可选，支持两种格式：\n  * 32位不带连字符：`6ddae8a5837d4721a1b783a7f98c67aa`\n  * 36位带连字符：`550e8400-e29b-41d4-a716-446655440000`\n  * 与 username 二选一\n- username: **用户名**，String 类型，可选，精确匹配，与 uuid 二选一\n\n## 返回说明：\n- **查询成功**：返回 **{\"data\": {User对象}}** ，包含用户详细信息\n- **参数缺失**：返回 **{\"data\": null}** 和\"请提供 UUID 或用户名\"提示\n- **UUID 格式错误**：返回 **{\"data\": null}** 和\"UUID 格式错误\"提示\n- **用户不存在**：返回 **{\"data\": null}** 和\"用户不存在\"提示\n\n## 业务逻辑：\n1. 校验参数：uuid、username 至少提供一个\n2. 如果提供 uuid，验证格式并转换为二进制\n3. 根据 uuid 或 username 查询用户信息\n4. 将二进制 UUID 转换为字符串格式\n5. 隐藏敏感字段后返回用户详细信息\n\n## 注意事项：\n- 这是一个**公开接口**，无需 Token 认证\n- **uuid、username 至少提供一个**\n- 只返回**未删除**的用户（is_delete=0）\n- 返回的字段不包含敏感信息（password、user_uuid 均被隐藏）\n- UUID 支持两种格式：32位不带连字符 或 36位带连字符\n- username 为精确匹配，不支持模糊查询\n",
         "operationId": "getUserInfo",
         "parameters": [
           {
-            "name": "userId",
-            "in": "query",
-            "description": "用户 ID（可选），与 uuid 二选一",
-            "required": false,
-            "schema": {
-              "type": "integer",
-              "format": "int32"
-            },
-            "example": 1
-          },
-          {
             "name": "uuid",
             "in": "query",
-            "description": "用户 UUID（可选），标准格式，与 userId 二选一",
+            "description": "用户 UUID（可选），标准格式，与 username 二选一",
             "required": false,
             "schema": {
               "type": "string"
             },
             "example": "550e8400-e29b-41d4-a716-446655440000"
+          },
+          {
+            "name": "username",
+            "in": "query",
+            "description": "用户名（可选），精确匹配，与 uuid 二选一",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "example": "test_user"
           }
         ],
         "responses": {

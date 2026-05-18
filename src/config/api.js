@@ -30,6 +30,7 @@ export const PASSWORD_API = {
 // 用户信息相关接口
 export const USER_API = {
   PROFILE_ME: `${API_BASE_URL}/api/user/profile/me`,
+  PROFILE_INFO: `${API_BASE_URL}/api/user/profile/info`, // 根据 userId 或 uuid 查询用户信息（公开接口）
 };
 
 // 获取完整的头像 URL

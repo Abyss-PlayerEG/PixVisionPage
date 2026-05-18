@@ -4,9 +4,9 @@
  */
 
 import { ref, reactive } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRouter, useRoute } from 'vue-router'
 import { showSuccess, showError, showWarning } from '@/utils/notification.js'
-import { getUserProfile } from '@/api/profileApi.js'
+import { getUserProfile, getUserInfoByUsernameOrUuid } from '@/api/profileApi.js'
 import { getAvatarUrl } from '@/config/api.js'
 
 /**
@@ -15,6 +15,7 @@ import { getAvatarUrl } from '@/config/api.js'
  */
 export const useProfile = () => {
   const router = useRouter()
+  const route = useRoute()
 
   // 用户信息
   const userInfo = ref({
@@ -30,39 +31,115 @@ export const useProfile = () => {
   // 当前选中的菜单项
   const activeMenu = ref('works') // works: 个人作品, favorites: 个人收藏
 
-  // 判断是否是自己的主页（后续可根据路由参数判断）
+  // 判断是否是自己的主页（根据路由参数判断）
   const isMyProfile = ref(true)
 
   /**
-   * 获取用户信息
+   * 获取用户信息（根据路由参数自动判断是查看自己还是他人）
    */
   const fetchUserProfile = async () => {
     isLoading.value = true
     
     try {
-      const result = await getUserProfile()
+      const identifier = route.params.identifier
       
-      if (result.success && result.data) {
-        const data = result.data
-        
-        // 映射后端字段到前端展示字段
-        userInfo.value = {
-          avatar: getAvatarUrl(data.avatar_url), // 使用头像接口拼接完整 URL
-          nickname: data.nickname || '未设置昵称',
-          username: '@' + (data.username || 'unknown'),
-          uuid: data.string_user_uuid || data.user_uuid || '无 UUID'
-        }
-        
-        console.log('用户信息已加载:', userInfo.value)
+      if (!identifier) {
+        // 没有 identifier，查看自己的主页
+        isMyProfile.value = true
+        await fetchMyProfile()
       } else {
-        console.error('获取用户信息失败:', result.message)
-        showError(result.message || '获取用户信息失败')
+        // 有 identifier，判断是 username 还是 uuid
+        const isUuid = /^[0-9a-fA-F]{8}-?[0-9a-fA-F]{4}-?[0-9a-fA-F]{4}-?[0-9a-fA-F]{4}-?[0-9a-fA-F]{12}$/.test(identifier)
+        
+        isMyProfile.value = false
+        
+        if (isUuid) {
+          // 通过 uuid 查询
+          await fetchOtherUserByUuid(identifier)
+        } else {
+          // 通过 username 查询
+          await fetchOtherUserByUsername(identifier)
+        }
       }
     } catch (error) {
       console.error('加载用户信息异常:', error)
       showError('加载用户信息失败')
     } finally {
       isLoading.value = false
+    }
+  }
+
+  /**
+   * 获取当前登录用户的信息
+   */
+  const fetchMyProfile = async () => {
+    const result = await getUserProfile()
+    
+    if (result.success && result.data) {
+      const data = result.data
+      
+      // 映射后端字段到前端展示字段
+      userInfo.value = {
+        avatar: getAvatarUrl(data.avatar_url), // 使用头像接口拼接完整 URL
+        nickname: data.nickname || '未设置昵称',
+        username: '@' + (data.username || 'unknown'),
+        uuid: data.string_user_uuid || data.user_uuid || '无 UUID'
+      }
+      
+      console.log('✅ 我的用户信息已加载:', userInfo.value)
+    } else {
+      console.error('获取用户信息失败:', result.message)
+      showError(result.message || '获取用户信息失败')
+    }
+  }
+
+
+
+  /**
+   * 通过 username 获取其他用户信息
+   */
+  const fetchOtherUserByUsername = async (username) => {
+    const result = await getUserInfoByUsernameOrUuid({ username })
+    
+    if (result.success && result.data) {
+      const data = result.data
+      
+      // 映射后端字段到前端展示字段
+      userInfo.value = {
+        avatar: getAvatarUrl(data.avatar_url),
+        nickname: data.nickname || '未设置昵称',
+        username: '@' + (data.username || 'unknown'),
+        uuid: null // 查看他人时不显示 UUID
+      }
+      
+      console.log('✅ 其他用户信息已加载（username）:', userInfo.value)
+    } else {
+      console.error('获取其他用户信息失败:', result.message)
+      showError(result.message || '用户不存在')
+    }
+  }
+
+  /**
+   * 通过 uuid 获取其他用户信息
+   */
+  const fetchOtherUserByUuid = async (uuid) => {
+    const result = await getUserInfoByUsernameOrUuid({ uuid })
+    
+    if (result.success && result.data) {
+      const data = result.data
+      
+      // 映射后端字段到前端展示字段
+      userInfo.value = {
+        avatar: getAvatarUrl(data.avatar_url),
+        nickname: data.nickname || '未设置昵称',
+        username: '@' + (data.username || 'unknown'),
+        uuid: null // 查看他人时不显示 UUID
+      }
+      
+      console.log('✅ 其他用户信息已加载（uuid）:', userInfo.value)
+    } else {
+      console.error('获取其他用户信息失败:', result.message)
+      showError(result.message || '用户不存在')
     }
   }
 
