@@ -126,6 +126,95 @@
     will-change: transform, opacity;
 }
 
+.n1_linkcard,.n1_linkcont{
+    width: 500px;
+    height: 250px;
+    position:absolute;
+    color: #cecece;
+    overflow: hidden;
+}
+
+.n1_linkcont{
+    top: 70%;
+    left: 5%;
+    font-size: 2rem;
+}
+
+.n1_linkcard{
+    top: 50%;
+    right: 5%;
+    display:flex;
+    flex-direction: column;
+    align-items: end;
+    justify-content: space-between;
+    gap: 12px;
+
+    .link-card-item{
+        height: auto;
+        min-height: 60px;
+        padding: 12px 20px;
+        border-radius: 20px;
+        border:1px solid rgba(255, 255, 255, 0.2);
+        backdrop-filter: blur(10px);
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        transition: all 0.3s ease-out;
+        cursor: pointer;
+        will-change: transform;
+        opacity: 0; /* 初始隐藏，由 GSAP 控制显示 */
+        
+        &:hover {
+            transform: scale(1.05);
+            border-color: rgba(255, 255, 255, 0.4);
+            box-shadow: 0 8px 32px rgba(255, 255, 255, 0.1);
+        }
+
+        .card-icon {
+            width: 24px;
+            height: 24px;
+            flex-shrink: 0;
+            color: #ffffff;
+            opacity: 0.9;
+        }
+
+        .card-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #ffffff;
+            white-space: nowrap;
+        }
+
+        .card-desc {
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.7);
+            margin: 0;
+            margin-left: auto; /* 推到右侧 */
+            padding-left: 16px; /* 与标题保持间距 */
+            opacity: 0;
+            transform: translateX(20px);
+            transition: all 0.3s ease-out;
+            white-space: nowrap;
+            text-align: right; /* 右对齐文本 */
+        }
+
+        &:hover .card-desc {
+            opacity: 1;
+            transform: translateX(0);
+        }
+
+        &:nth-child(1){
+            width: 70%;
+        }
+        &:nth-child(2){
+            width: 100%;
+        }
+        &:nth-child(3){
+            width: 80%;
+        }
+    }
+}
+
 #num2z{
     width: 100%;
     min-height: 2000px;
@@ -226,8 +315,12 @@
 
 #num3z{
     width: 100%;
-    min-height: 2000px;
-    position: relative; /* 添加relative定位以支持z-index */
-    z-index: 4; /* 确保在num2z_2之上 */
-    background-color: #000; /* 添加背景色以便区分 */
+    min-height: 100vh;
+    position: relative;
+    z-index: 4;
+    background-color: #000;
+    padding: 120px 48px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
 }

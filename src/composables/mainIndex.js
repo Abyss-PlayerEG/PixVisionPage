@@ -1,5 +1,6 @@
 import { ref, onMounted, onUnmounted } from 'vue'
 import gsap from 'gsap'
+import { ScrollTrigger } from 'gsap/ScrollTrigger'
 
 console.log("js 加载")
 
@@ -238,5 +239,68 @@ export const useArrowAnimation = (selector = '.n1_btn svg') => {
   return {
     triggerArrowAnimation,
     cleanupArrowAnimation
+  }
+}
+
+/**
+ * 链接卡片滚动入场动画 Composable
+ * @returns {Object} 包含初始化方法和清理方法
+ */
+export const useLinkCardAnimation = () => {
+  let scrollTriggers = []
+
+  // 初始化滚动触发动画
+  const initLinkCardAnimation = () => {
+    // 注册 ScrollTrigger 插件
+    gsap.registerPlugin(ScrollTrigger)
+
+    const cards = document.querySelectorAll('.n1_linkcard .link-card-item')
+    
+    if (cards.length === 0) return
+
+    // 为每个卡片创建从右侧 200px 入场的动画
+    cards.forEach((card, index) => {
+      // 使用 fromTo 明确定义起始和结束状态
+      const animation = gsap.fromTo(card, 
+        {
+          opacity: 0,
+          x: 200
+        },
+        {
+          opacity: 1,
+          x: 0,
+          duration: 0.8,
+          delay: index * 0.15, // 每个卡片延迟 0.15s
+          ease: 'power2.out',
+          scrollTrigger: {
+            trigger: '#num1z', // 以 num1z 容器为触发基准
+            start: '150vh top', // 当滚动到 150vh 位置时触发
+            once: true, // 一次性动画
+            toggleActions: 'play none none none' // 只播放一次
+          }
+        }
+      )
+
+      // 保存 ScrollTrigger 实例以便清理
+      if (animation.scrollTrigger) {
+        scrollTriggers.push(animation.scrollTrigger)
+      }
+    })
+  }
+
+  // 清理动画
+  const cleanupLinkCardAnimation = () => {
+    // 清理所有 ScrollTrigger 实例
+    scrollTriggers.forEach(trigger => {
+      if (trigger) {
+        trigger.kill()
+      }
+    })
+    scrollTriggers = []
+  }
+
+  return {
+    initLinkCardAnimation,
+    cleanupLinkCardAnimation
   }
 }
