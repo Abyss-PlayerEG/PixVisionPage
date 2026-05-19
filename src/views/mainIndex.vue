@@ -1,5 +1,5 @@
 <script setup>
-import { onMounted, onUnmounted, watch } from 'vue'
+import { onMounted, onUnmounted, watch, ref } from 'vue'
 import { useRouter } from "vue-router"
 
 //组件引用
@@ -15,6 +15,10 @@ import { showError } from '@/utils/notification'
 
 //依赖申明
 const router = useRouter()
+
+// Swiper 相关引用
+const swiperContainer = ref(null)
+const swiperWrapper = ref(null)
 
 // 初始化文案动画
 const { initCopyAnimation, cleanupCopyAnimation } = useCopyAnimation()
@@ -35,12 +39,164 @@ watch(error, (newError) => {
   }
 })
 
+// Swiper 初始化函数
+const initSwiper = () => {
+  if (!swiperContainer.value || !swiperWrapper.value) return
+  
+  const container = swiperContainer.value
+  const wrapper = swiperWrapper.value
+  
+  let isDragging = false
+  let startX = 0
+  let scrollLeft = 0
+  let velocity = 0
+  let lastX = 0
+  let lastTime = Date.now()
+  let animationFrameId = null
+  
+  // 鼠标按下
+  const handleMouseDown = (e) => {
+    isDragging = true
+    startX = e.pageX - container.offsetLeft
+    scrollLeft = container.scrollLeft
+    lastX = e.pageX
+    lastTime = Date.now()
+    velocity = 0
+    
+    // 停止惯性滚动
+    if (animationFrameId) {
+      cancelAnimationFrame(animationFrameId)
+    }
+    
+    container.style.cursor = 'grabbing'
+    container.style.userSelect = 'none'
+  }
+  
+  // 鼠标移动
+  const handleMouseMove = (e) => {
+    if (!isDragging) return
+    
+    e.preventDefault()
+    const x = e.pageX - container.offsetLeft
+    const walk = (x - startX) * 1.5 // 滚动倍率
+    container.scrollLeft = scrollLeft - walk
+    
+    // 计算速度
+    const currentTime = Date.now()
+    const timeDiff = currentTime - lastTime
+    if (timeDiff > 0) {
+      velocity = (e.pageX - lastX) / timeDiff * 15
+    }
+    lastX = e.pageX
+    lastTime = currentTime
+  }
+  
+  // 鼠标释放
+  const handleMouseUp = () => {
+    if (!isDragging) return
+    isDragging = false
+    container.style.cursor = 'grab'
+    container.style.userSelect = ''
+    
+    // 惯性滚动
+    if (Math.abs(velocity) > 0.5) {
+      inertiaScroll()
+    }
+  }
+  
+  // 鼠标离开
+  const handleMouseLeave = () => {
+    if (isDragging) {
+      handleMouseUp()
+    }
+  }
+  
+  // 惯性滚动动画
+  const inertiaScroll = () => {
+    if (Math.abs(velocity) < 0.5) {
+      velocity = 0
+      return
+    }
+    
+    container.scrollLeft -= velocity
+    velocity *= 0.95 // 摩擦力系数
+    
+    animationFrameId = requestAnimationFrame(inertiaScroll)
+  }
+  
+  // 触摸事件支持（移动端）
+  const handleTouchStart = (e) => {
+    isDragging = true
+    startX = e.touches[0].pageX - container.offsetLeft
+    scrollLeft = container.scrollLeft
+    lastX = e.touches[0].pageX
+    lastTime = Date.now()
+    velocity = 0
+    
+    if (animationFrameId) {
+      cancelAnimationFrame(animationFrameId)
+    }
+  }
+  
+  const handleTouchMove = (e) => {
+    if (!isDragging) return
+    
+    const x = e.touches[0].pageX - container.offsetLeft
+    const walk = (x - startX) * 1.5
+    container.scrollLeft = scrollLeft - walk
+    
+    const currentTime = Date.now()
+    const timeDiff = currentTime - lastTime
+    if (timeDiff > 0) {
+      velocity = (e.touches[0].pageX - lastX) / timeDiff * 15
+    }
+    lastX = e.touches[0].pageX
+    lastTime = currentTime
+  }
+  
+  const handleTouchEnd = () => {
+    isDragging = false
+    if (Math.abs(velocity) > 0.5) {
+      inertiaScroll()
+    }
+  }
+  
+  // 绑定事件
+  container.addEventListener('mousedown', handleMouseDown)
+  container.addEventListener('mousemove', handleMouseMove)
+  container.addEventListener('mouseup', handleMouseUp)
+  container.addEventListener('mouseleave', handleMouseLeave)
+  container.addEventListener('touchstart', handleTouchStart, { passive: true })
+  container.addEventListener('touchmove', handleTouchMove, { passive: false })
+  container.addEventListener('touchend', handleTouchEnd)
+  
+  // 初始样式
+  container.style.cursor = 'grab'
+  
+  // 保存清理函数
+  window.__swiperCleanup = () => {
+    container.removeEventListener('mousedown', handleMouseDown)
+    container.removeEventListener('mousemove', handleMouseMove)
+    container.removeEventListener('mouseup', handleMouseUp)
+    container.removeEventListener('mouseleave', handleMouseLeave)
+    container.removeEventListener('touchstart', handleTouchStart)
+    container.removeEventListener('touchmove', handleTouchMove)
+    container.removeEventListener('touchend', handleTouchEnd)
+    if (animationFrameId) {
+      cancelAnimationFrame(animationFrameId)
+    }
+  }
+}
+
 onMounted(() => {
   // 启动文案动画
   initCopyAnimation()
   
   // 启动链接卡片滚动动画
   initLinkCardAnimation()
+  
+  // 初始化 Swiper
+  initSwiper()
   
   // 监听窗口大小变化，触发页面刷新
   window.addEventListener('resize', () => {
@@ -53,6 +209,12 @@ onUnmounted(() => {
   cleanupCopyAnimation()
   cleanupArrowAnimation()
   cleanupLinkCardAnimation()
+  
+  // 清理 Swiper
+  if (window.__swiperCleanup) {
+    window.__swiperCleanup()
+    delete window.__swiperCleanup
+  }
 })
 </script>
 
@@ -148,7 +310,17 @@ onUnmounted(() => {
             <span>We are all in nature。</span>
         </div>
 
-        <div class="n3_showIMG"></div>
+        <div class="n3_showIMG">
+            <!-- Swiper 轮播图容器 -->
+            <div class="swiper-container" ref="swiperContainer">
+                <div class="swiper-wrapper" ref="swiperWrapper">
+                    <!-- 9个占位圆角矩形 -->
+                    <div v-for="index in 9" :key="index" class="swiper-slide">
+                        <div class="placeholder-card"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
     </section>
 
 </template>

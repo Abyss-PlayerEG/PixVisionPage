@@ -274,7 +274,7 @@ export const useLinkCardAnimation = () => {
           ease: 'power2.out',
           scrollTrigger: {
             trigger: '#num1z', // 以 num1z 容器为触发基准
-            start: '150vh top', // 当滚动到 150vh 位置时触发
+            start: '120vh top', // 当滚动到 ？vh 位置时触发
             once: true, // 一次性动画
             toggleActions: 'play none none none' // 只播放一次
           }

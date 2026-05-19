@@ -342,3 +342,82 @@
         color:#7e7e7e;
     }
 }
+
+/* Swiper 轮播图容器样式 */
+.n3_showIMG {
+    width: 100%;
+    margin-top: 60px;
+    overflow: hidden;
+}
+
+.swiper-container {
+    width: 100%;
+    overflow-x: auto;
+    overflow-y: hidden;
+    cursor: grab;
+    user-select: none;
+    -webkit-overflow-scrolling: touch; /* iOS 平滑滚动 */
+    
+    /* 隐藏滚动条 */
+    scrollbar-width: none; /* Firefox */
+    -ms-overflow-style: none; /* IE/Edge */
+}
+
+.swiper-container::-webkit-scrollbar {
+    display: none; /* Chrome/Safari */
+}
+
+.swiper-container:active {
+    cursor: grabbing;
+}
+
+.swiper-wrapper {
+    display: flex;
+    gap: 24px;
+    padding: 20px 0;
+    width: max-content;
+}
+
+.swiper-slide {
+    flex-shrink: 0;
+    width: calc((100vw - 10% - 48px) / 3); /* 每屏3个，减去左右padding和gap */
+    min-width: 280px;
+    max-width: 400px;
+}
+
+.placeholder-card {
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    background: linear-gradient(135deg, #2a2a2a 0%, #3a3a3a 100%);
+    border-radius: 16px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.placeholder-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.4);
+}
+
+/* 响应式适配 */
+@media (max-width: 768px) {
+    .swiper-slide {
+        width: calc((100vw - 10% - 24px) / 2); /* 平板显示2个 */
+        min-width: 240px;
+    }
+    
+    .swiper-wrapper {
+        gap: 16px;
+    }
+}
+
+@media (max-width: 480px) {
+    .swiper-slide {
+        width: calc(100vw - 10%); /* 手机显示1个 */
+        min-width: 280px;
+    }
+    
+    .placeholder-card {
+        border-radius: 12px;
+    }
+}
