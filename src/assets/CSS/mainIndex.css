@@ -339,6 +339,7 @@
 
     div > span{
         font-size: 30px;
+        display: inline-block; 
         color:#7e7e7e;
     }
 }
@@ -385,9 +386,16 @@
     max-width: 400px;
 }
 
+/* 卡片容器 - 包含图片和文案 */
+.slide-card {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
 .placeholder-card {
     width: 100%;
-    aspect-ratio: 16 / 9;
+    aspect-ratio: 4 / 3;
     background: linear-gradient(135deg, #2a2a2a 0%, #3a3a3a 100%);
     border-radius: 16px;
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
@@ -397,6 +405,36 @@
 .placeholder-card:hover {
     transform: translateY(-4px);
     box-shadow: 0 8px 30px rgba(0, 0, 0, 0.4);
+}
+
+/* 介绍文案容器 */
+.slide-caption {
+    opacity: 0;
+    transform: translateY(10px);
+    transition: opacity 0.3s ease, transform 0.3s ease;
+    padding: 0 4px;
+}
+
+/* Hover 时显示文案 */
+.slide-card:hover .slide-caption {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.caption-title {
+    font-size: 16px;
+    font-weight: 600;
+    color: #ffffff;
+    margin: 0 0 6px 0;
+    letter-spacing: 0.5px;
+}
+
+.caption-desc {
+    font-size: 13px;
+    color: rgba(255, 255, 255, 0.7);
+    margin: 0;
+    line-height: 1.6;
+    letter-spacing: 0.3px;
 }
 
 /* 响应式适配 */

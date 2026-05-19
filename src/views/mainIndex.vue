@@ -7,7 +7,7 @@ import NavBar from "@/components/NavBar.vue";
 import Waterfall from "@/components/Waterfall.vue";
 
 // 引入 composable
-import { useCopyAnimation, useArrowAnimation, useLinkCardAnimation } from "@/composables/mainIndex.js"
+import { useCopyAnimation, useArrowAnimation, useLinkCardAnimation, useNum3zAnimation } from "@/composables/mainIndex.js"
 import { useWorkWaterfall } from "@/composables/useWorkWaterfall.js"
 
 // 引入通知组件
@@ -28,6 +28,9 @@ const { triggerArrowAnimation, cleanupArrowAnimation } = useArrowAnimation()
 
 // 初始化链接卡片滚动动画
 const { initLinkCardAnimation, cleanupLinkCardAnimation } = useLinkCardAnimation()
+
+// 初始化 num3z 区域动画
+const { initNum3zAnimation, cleanupNum3zAnimation } = useNum3zAnimation()
 
 // 初始化作品瀑布流
 const { waterfallImages, isLoading, error } = useWorkWaterfall()
@@ -198,6 +201,11 @@ onMounted(() => {
   // 初始化 Swiper
   initSwiper()
   
+  // 延迟初始化 num3z 动画，等待 Waterfall 组件稳定后再创建 ScrollTrigger
+  setTimeout(() => {
+    initNum3zAnimation()
+  }, 500)
+  
   // 监听窗口大小变化，触发页面刷新
   window.addEventListener('resize', () => {
     window.location.reload()
@@ -209,6 +217,7 @@ onUnmounted(() => {
   cleanupCopyAnimation()
   cleanupArrowAnimation()
   cleanupLinkCardAnimation()
+  cleanupNum3zAnimation()
   
   // 清理 Swiper
   if (window.__swiperCleanup) {
@@ -314,9 +323,15 @@ onUnmounted(() => {
             <!-- Swiper 轮播图容器 -->
             <div class="swiper-container" ref="swiperContainer">
                 <div class="swiper-wrapper" ref="swiperWrapper">
-                    <!-- 9个占位圆角矩形 -->
+                    <!-- 9个占位圆角矩形 + 介绍文案 -->
                     <div v-for="index in 9" :key="index" class="swiper-slide">
-                        <div class="placeholder-card"></div>
+                        <div class="slide-card">
+                            <div class="placeholder-card"></div>
+                            <div class="slide-caption">
+                                <h3 class="caption-title">自然之美 {{ index }}</h3>
+                                <p class="caption-desc">探索大自然的无限魅力，感受每一帧画面的生命力与艺术价值</p>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>

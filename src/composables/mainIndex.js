@@ -2,8 +2,6 @@ import { ref, onMounted, onUnmounted } from 'vue'
 import gsap from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
 
-console.log("js 加载")
-
 //滚到顶部
 const scrollToTop = () => {
   window.scrollTo({
@@ -302,5 +300,115 @@ export const useLinkCardAnimation = () => {
   return {
     initLinkCardAnimation,
     cleanupLinkCardAnimation
+  }
+}
+
+/**
+ * Num3z 区域滚动触发动画 Composable
+ * @returns {Object} 包含初始化方法和清理方法
+ */
+export const useNum3zAnimation = () => {
+  let scrollTriggers = []
+
+  // 初始化滚动触发动画
+  const initNum3zAnimation = () => {
+    // 注册 ScrollTrigger 插件
+    gsap.registerPlugin(ScrollTrigger)
+
+    const h1 = document.querySelector('#num3z h1')
+    const descSpans = document.querySelectorAll('#num3z > div > span')
+    const swiper = document.querySelector('.n3_showIMG')
+
+    // 元素存在性验证
+    if (!h1 || !descSpans || descSpans.length === 0 || !swiper) {
+      return
+    }
+
+    // H1 标题动画
+    const h1Anim = gsap.fromTo(h1,
+      {
+        opacity: 0,
+        y: 50
+      },
+      {
+        opacity: 1,
+        y: 0,
+        duration: 0.8,
+        ease: 'power2.out',
+        scrollTrigger: {
+          trigger: '#num3z',
+          start: 'top 80%', // 使用相对触发点，不受上方布局影响
+          once: true,
+          toggleActions: 'play none none none'
+        }
+      }
+    )
+
+    // 描述文字 span 动画（从下往上进入）
+    const descAnim = gsap.fromTo(descSpans,
+      {
+        opacity: 0,
+        y: 20
+      },
+      {
+        opacity: 1,
+        y: 0,
+        duration: 0.8,
+        stagger: 0.15, // 每个 span 延迟 0.15s
+        delay: 0.2,
+        ease: 'power2.out',
+        scrollTrigger: {
+          trigger: '#num3z',
+          start: 'top 80%', // 使用相对触发点
+          once: true,
+          toggleActions: 'play none none none'
+        }
+      }
+    )
+
+    // Swiper 容器动画
+    const swiperAnim = gsap.fromTo(swiper,
+      {
+        opacity: 0,
+        y: 40,
+        scale: 0.95
+      },
+      {
+        opacity: 1,
+        y: 0,
+        scale: 1,
+        duration: 1,
+        delay: 0.4,
+        ease: 'power2.out',
+        scrollTrigger: {
+          trigger: '#num3z',
+          start: 'top 80%', // 使用相对触发点
+          once: true,
+          toggleActions: 'play none none none'
+        }
+      }
+    )
+
+    // 保存 ScrollTrigger 实例以便清理
+    [h1Anim, descAnim, swiperAnim].forEach(anim => {
+      if (anim.scrollTrigger) {
+        scrollTriggers.push(anim.scrollTrigger)
+      }
+    })
+  }
+
+  // 清理动画
+  const cleanupNum3zAnimation = () => {
+    scrollTriggers.forEach(trigger => {
+      if (trigger) {
+        trigger.kill()
+      }
+    })
+    scrollTriggers = []
+  }
+
+  return {
+    initNum3zAnimation,
+    cleanupNum3zAnimation
   }
 }
