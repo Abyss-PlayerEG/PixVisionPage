@@ -135,39 +135,109 @@
     flex-shrink: 0; /* 图标不缩小 */
 }
 
-/* 统计数据网格（2×2） */
+/* 统计数据网格（2×2 紧凑布局） */
 .stats-grid {
     display: grid;
     grid-template-columns: repeat(2, 1fr); /* 2 列等宽 */
-    gap: 12px; /* 间距 */
-    margin-top: 8px;
+    gap: 6px; /* 缩小间距 */
+    margin-top: 0px;
 }
 
 .stat-item {
     background: rgba(255, 255, 255, 0.05);
     border-radius: 8px;
-    padding: 12px;
-    text-align: center;
+    padding: 10px 8px;
     transition: all 0.2s ease;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 8px;
+    cursor: default;
 }
 
 .stat-item:hover {
-    background: rgba(255, 255, 255, 0.08);
-    transform: translateY(-2px);
+    background: rgba(255, 255, 255, 0.1);
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.stat-icon {
+    width: 16px;
+    height: 16px;
+    color: rgba(255, 255, 255, 0.7);
+    flex-shrink: 0;
+    transition: all 0.2s ease;
+}
+
+.stat-item:hover .stat-icon {
+    color: rgba(255, 255, 255, 0.95);
+    transform: scale(1.05);
 }
 
 .stat-value {
     color: #ffffff;
-    font-size: 20px;
-    font-weight: 600;
-    line-height: 1.2;
-    margin-bottom: 4px;
+    font-size: 16px;
+    font-weight: 700;
+    line-height: 1;
+    letter-spacing: -0.3px;
 }
 
-.stat-label {
-    color: rgba(255, 255, 255, 0.6);
-    font-size: 12px;
+/* 联系方式区域 */
+.contact-section {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-top: 0px;
+    padding-top: 12px;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.contact-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 12px;
+    background: rgba(255, 255, 255, 0.04);
+    border-radius: 8px;
+    transition: all 0.2s ease;
+}
+
+.contact-item:hover {
+    background: rgba(255, 255, 255, 0.08);
+    transform: translateX(3px);
+}
+
+.contact-icon {
+    width: 18px;
+    height: 18px;
+    color: rgba(255, 255, 255, 0.65);
+    flex-shrink: 0;
+    transition: all 0.2s ease;
+}
+
+.contact-item:hover .contact-icon {
+    color: rgba(255, 255, 255, 0.9);
+    transform: scale(1.05);
+}
+
+.contact-name {
+    color: rgba(255, 255, 255, 0.65);
+    font-size: 13px;
     font-weight: 500;
+    flex-shrink: 0;
+    min-width: 50px;
+}
+
+.contact-value {
+    color: rgba(255, 255, 255, 0.9);
+    font-size: 13px;
+    font-weight: 400;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    flex: 1;
+    text-align: right;
 }
 
 /* 菜单列表 */

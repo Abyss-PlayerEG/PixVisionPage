@@ -7,6 +7,7 @@ import { ref, reactive } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { showSuccess, showError, showWarning } from '@/utils/notification.js'
 import { getUserProfile, getUserInfoByUsernameOrUuid } from '@/api/profileApi.js'
+import { getUserDataList } from '@/api/userDataApi.js'
 import { getAvatarUrl } from '@/config/api.js'
 
 /**
@@ -24,6 +25,7 @@ export const useProfile = () => {
     username: '',
     uuid: '',
     fullUuid: '', // 保存完整 UUID 用于复制
+    userId: null, // 用户 ID，用于查询拓展数据
     workCount: 0, // 作品数量
     totalLikes: 0, // 总点赞数
     totalStars: 0, // 总收藏数
@@ -38,6 +40,9 @@ export const useProfile = () => {
 
   // 判断是否是自己的主页（根据路由参数判断）
   const isMyProfile = ref(true)
+
+  // 用户拓展数据（联系方式）
+  const contactList = ref([])
 
   /**
    * 获取用户信息（根据路由参数自动判断是查看自己还是他人）
@@ -85,6 +90,7 @@ export const useProfile = () => {
       
       // 映射后端字段到前端展示字段
       const fullUuid = data.string_user_uuid || data.user_uuid || '无 UUID'
+      const userId = data.user_id || null
       
       userInfo.value = {
         avatar: getAvatarUrl(data.avatar_url), // 使用头像接口拼接完整 URL
@@ -92,6 +98,7 @@ export const useProfile = () => {
         username: '@' + (data.username || 'unknown'),
         uuid: fullUuid, // 直接保存完整 UUID，由 CSS 自动截断
         fullUuid: fullUuid, // 保存完整 UUID
+        userId: userId, // 保存用户 ID
         workCount: data.work_count || 0,
         totalLikes: data.total_likes || 0,
         totalStars: data.total_stars || 0,
@@ -99,6 +106,11 @@ export const useProfile = () => {
       }
       
       console.log('✅ 我的用户信息已加载:', userInfo.value)
+      
+      // 获取联系方式
+      if (userId) {
+        await fetchContactList(userId)
+      }
     } else {
       console.error('获取用户信息失败:', result.message)
       showError(result.message || '获取用户信息失败')
@@ -115,6 +127,7 @@ export const useProfile = () => {
     
     if (result.success && result.data) {
       const data = result.data
+      const userId = data.user_id || null
       
       // 映射后端字段到前端展示字段
       userInfo.value = {
@@ -123,6 +136,7 @@ export const useProfile = () => {
         username: '@' + (data.username || 'unknown'),
         uuid: null, // 查看他人时不显示 UUID
         fullUuid: '',
+        userId: userId, // 保存用户 ID
         workCount: data.work_count || 0,
         totalLikes: data.total_likes || 0,
         totalStars: data.total_stars || 0,
@@ -130,6 +144,11 @@ export const useProfile = () => {
       }
       
       console.log('✅ 其他用户信息已加载（username）:', userInfo.value)
+      
+      // 获取联系方式
+      if (userId) {
+        await fetchContactList(userId)
+      }
     } else {
       console.error('获取其他用户信息失败:', result.message)
       showError(result.message || '用户不存在')
@@ -144,6 +163,7 @@ export const useProfile = () => {
     
     if (result.success && result.data) {
       const data = result.data
+      const userId = data.user_id || null
       
       // 映射后端字段到前端展示字段
       userInfo.value = {
@@ -152,6 +172,7 @@ export const useProfile = () => {
         username: '@' + (data.username || 'unknown'),
         uuid: null, // 查看他人时不显示 UUID
         fullUuid: '',
+        userId: userId, // 保存用户 ID
         workCount: data.work_count || 0,
         totalLikes: data.total_likes || 0,
         totalStars: data.total_stars || 0,
@@ -159,6 +180,11 @@ export const useProfile = () => {
       }
       
       console.log('✅ 其他用户信息已加载（uuid）:', userInfo.value)
+      
+      // 获取联系方式
+      if (userId) {
+        await fetchContactList(userId)
+      }
     } else {
       console.error('获取其他用户信息失败:', result.message)
       showError(result.message || '用户不存在')
@@ -193,6 +219,27 @@ export const useProfile = () => {
   }
 
   /**
+   * 获取用户联系方式列表
+   * @param {number} userId - 用户 ID
+   */
+  const fetchContactList = async (userId) => {
+    try {
+      const result = await getUserDataList(userId)
+      
+      if (result.success) {
+        contactList.value = result.data || []
+        console.log('✅ 联系方式已加载:', contactList.value.length, '条')
+      } else {
+        console.warn('⚠️ 获取联系方式失败:', result.message)
+        contactList.value = []
+      }
+    } catch (error) {
+      console.error('获取联系方式异常:', error)
+      contactList.value = []
+    }
+  }
+
+  /**
    * 切换菜单
    * @param {string} menu - 菜单项 ('works' | 'favorites')
    */
@@ -213,6 +260,7 @@ export const useProfile = () => {
     isLoading,
     activeMenu,
     isMyProfile,
+    contactList,
     
     // 方法
     fetchUserProfile,

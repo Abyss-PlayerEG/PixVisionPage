@@ -33,6 +33,13 @@ export const USER_API = {
   PROFILE_INFO: `${API_BASE_URL}/api/user/profile/info`, // 根据 userId 或 uuid 查询用户信息（公开接口）
 };
 
+// 用户拓展数据相关接口
+export const USER_DATA_API = {
+  LIST: `${API_BASE_URL}/api/user/data/list`,      // 查询用户所有拓展数据（公开接口）
+  ADD: `${API_BASE_URL}/api/user/data/add`,         // 新增用户拓展数据（需登录）
+  DELETE: `${API_BASE_URL}/api/user/data/delete`,   // 删除用户拓展数据（需登录）
+};
+
 // 获取完整的头像 URL
 export const getAvatarUrl = (avatarPath) => {
   if (!avatarPath) {
