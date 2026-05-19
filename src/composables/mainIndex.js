@@ -337,7 +337,7 @@ export const useNum3zAnimation = () => {
         ease: 'power2.out',
         scrollTrigger: {
           trigger: '#num3z',
-          start: 'top 80%', // 使用相对触发点，不受上方布局影响
+          start: 'top 40%', 
           once: true,
           toggleActions: 'play none none none'
         }
@@ -359,7 +359,7 @@ export const useNum3zAnimation = () => {
         ease: 'power2.out',
         scrollTrigger: {
           trigger: '#num3z',
-          start: 'top 80%', // 使用相对触发点
+          start: 'top 40%', 
           once: true,
           toggleActions: 'play none none none'
         }
@@ -377,11 +377,11 @@ export const useNum3zAnimation = () => {
         y: 0,
         duration: 0.8,
         stagger: 0.1, // 每个卡片间隔 0.1s
-        delay: 0.1,
+        delay: 0.4,
         ease: 'power2.out',
         scrollTrigger: {
           trigger: '#num3z',
-          start: 'top 80%', // 使用相对触发点
+          start: 'top 40%', 
           once: true,
           toggleActions: 'play none none none'
         }
