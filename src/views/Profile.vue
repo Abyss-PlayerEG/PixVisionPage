@@ -1,54 +1,34 @@
 <script setup>
-import { ref, computed } from 'vue'
-import { useRouter } from 'vue-router'
-import { showSuccess } from '@/utils/notification.js'
+import { onMounted } from 'vue'
+import { useProfile } from '@/composables/useProfile.js'
 
-const router = useRouter()
+// 使用 Composable 获取 Profile 页面的状态和方法
+const {
+  userInfo,
+  isLoading,
+  activeMenu,
+  isMyProfile,
+  fetchUserProfile,
+  copyUUID,
+  switchMenu,
+  goHome
+} = useProfile()
 
-// todo 模拟用户数据（实际应从 API 获取）
-const userInfo = ref({
-  avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Felix', // 使用 DiceBear 生成头像
-  nickname: 'PixelUser',
-  email: 'user@example.com',
-  uuid: '550e8400-e29b-41d4-a716-446655440000'
+// 组件挂载时获取用户信息
+onMounted(() => {
+  fetchUserProfile()
 })
-
-// 当前选中的菜单项
-const activeMenu = ref('works') // works: 个人作品, favorites: 个人收藏
-
-// 复制 UUID 到剪贴板
-const copyUUID = async () => {
-  try {
-    await navigator.clipboard.writeText(userInfo.value.uuid)
-    showSuccess('UUID 已复制到剪贴板', '复制成功')
-  } catch (error) {
-    console.error('复制失败:', error)
-    // 降级方案：使用传统方法
-    const textArea = document.createElement('textarea')
-    textArea.value = userInfo.value.uuid
-    document.body.appendChild(textArea)
-    textArea.select()
-    document.execCommand('copy')
-    document.body.removeChild(textArea)
-    showSuccess('UUID 已复制到剪贴板', '复制成功')
-  }
-}
-
-// 切换菜单
-const switchMenu = (menu) => {
-  activeMenu.value = menu
-}
-
-// 返回首页
-const goHome = () => {
-  router.push('/')
-}
 </script>
 
 <template>
   <section id="itemCeb">
+    <!-- 加载状态 -->
+    <div v-if="isLoading" class="loading-state">
+      <p>加载中...</p>
+    </div>
+    
     <!-- 用户信息卡片 -->
-    <div class="user-card">
+    <div v-else class="user-card">
       <!-- 上半部分 -->
       <div class="card-header">
         <div class="avatar-wrapper">
@@ -57,17 +37,38 @@ const goHome = () => {
         
         <div class="user-info">
           <h3 class="nickname">{{ userInfo.nickname }}</h3>
-          <p class="email">{{ userInfo.email }}</p>
+          <p class="username">{{ userInfo.username }}</p>
         </div>
       </div>
       
-      <!-- 下半部分 -->
-      <div class="uuid-wrapper" @click="copyUUID" title="点击复制 UUID">
+      <!-- 下半部分：仅在自己的主页显示 UUID -->
+      <div v-if="isMyProfile" class="uuid-wrapper" @click="copyUUID" title="点击复制 UUID">
+        <span class="uuid-label">UUID:</span>
         <span class="uuid-text">{{ userInfo.uuid }}</span>
         <svg class="copy-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
           <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
         </svg>
+      </div>
+      
+      <!-- 统计数据区域（2×2 网格） -->
+      <div class="stats-grid">
+        <div class="stat-item">
+          <div class="stat-value">{{ userInfo.workCount }}</div>
+          <div class="stat-label">作品</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-value">{{ userInfo.totalLikes }}</div>
+          <div class="stat-label">点赞</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-value">{{ userInfo.totalStars }}</div>
+          <div class="stat-label">收藏</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-value">{{ userInfo.totalViews }}</div>
+          <div class="stat-label">浏览</div>
+        </div>
       </div>
     </div>
 

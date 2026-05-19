@@ -5,7 +5,7 @@
  * @module loginViewApi
  */
 
-import { AUTH_API, MAIL_API, PASSWORD_API } from '../config/api';
+import { AUTH_API, MAIL_API, PASSWORD_API, USER_API } from '../config/api';
 
 /**
  * ============================================
@@ -366,59 +366,4 @@ export const sendForgotPasswordCode = (data, validateFn) => {
   });
 };
 
-/**
- * ============================================
- * 工具函数
- * ============================================
- */
 
-/**
- * 获取当前登录用户信息
- * @returns {Object|null} 用户信息对象，如果未登录则返回 null
- */
-export const getCurrentUser = () => {
-  const userInfoStr = localStorage.getItem('userInfo');
-  if (userInfoStr) {
-    try {
-      return JSON.parse(userInfoStr);
-    } catch (error) {
-      console.error('解析用户信息失败:', error);
-      return null;
-    }
-  }
-  return null;
-};
-
-/**
- * 检查用户是否已登录
- * @returns {boolean} 是否已登录
- */
-export const isLoggedIn = () => {
-  return !!localStorage.getItem('token');
-};
-
-/**
- * 退出登录
- */
-export const logout = () => {
-  localStorage.removeItem('token');
-  localStorage.removeItem('userInfo');
-  console.log('已退出登录');
-};
-
-/**
- * 获取认证头（用于需要 Token 的请求）
- * @returns {Object} 包含 Authorization 头的对象
- */
-export const getAuthHeaders = () => {
-  const token = localStorage.getItem('token');
-  if (token) {
-    return {
-      'Authorization': `Bearer ${token}`,
-      'Content-Type': 'application/json',
-    };
-  }
-  return {
-    'Content-Type': 'application/json',
-  };
-};
