@@ -41,7 +41,7 @@
 /* 卡片头部：头像（左）+ 用户信息（右） */
 .card-header {
     display: flex;
-    align-items: flex-start;
+    align-items: center;
     gap: 12px;
 }
 
