@@ -317,10 +317,10 @@ export const useNum3zAnimation = () => {
 
     const h1 = document.querySelector('#num3z h1')
     const descSpans = document.querySelectorAll('#num3z > div > span')
-    const swiper = document.querySelector('.n3_showIMG')
+    const swiperSlides = document.querySelectorAll('.swiper-slide')
 
     // 元素存在性验证
-    if (!h1 || !descSpans || descSpans.length === 0 || !swiper) {
+    if (!h1 || !descSpans || descSpans.length === 0 || !swiperSlides || swiperSlides.length === 0) {
       return
     }
 
@@ -366,19 +366,18 @@ export const useNum3zAnimation = () => {
       }
     )
 
-    // Swiper 容器动画
-    const swiperAnim = gsap.fromTo(swiper,
+    // Swiper 卡片依次从下方滑入动画
+    const slidesAnim = gsap.fromTo(swiperSlides,
       {
         opacity: 0,
-        y: 40,
-        scale: 0.95
+        y: 60
       },
       {
         opacity: 1,
         y: 0,
-        scale: 1,
-        duration: 1,
-        delay: 0.4,
+        duration: 0.8,
+        stagger: 0.1, // 每个卡片间隔 0.1s
+        delay: 0.1,
         ease: 'power2.out',
         scrollTrigger: {
           trigger: '#num3z',
@@ -390,7 +389,7 @@ export const useNum3zAnimation = () => {
     )
 
     // 保存 ScrollTrigger 实例以便清理
-    [h1Anim, descAnim, swiperAnim].forEach(anim => {
+    [h1Anim, descAnim, slidesAnim].forEach(anim => {
       if (anim.scrollTrigger) {
         scrollTriggers.push(anim.scrollTrigger)
       }
