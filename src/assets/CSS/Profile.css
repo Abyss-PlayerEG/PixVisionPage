@@ -201,11 +201,16 @@
     background: rgba(255, 255, 255, 0.04);
     border-radius: 8px;
     transition: all 0.2s ease;
+    cursor: pointer;
 }
 
 .contact-item:hover {
     background: rgba(255, 255, 255, 0.08);
     transform: translateX(3px);
+}
+
+.contact-item:active {
+    transform: translateX(3px) scale(0.98);
 }
 
 .contact-icon {
@@ -214,6 +219,24 @@
     color: rgba(255, 255, 255, 0.65);
     flex-shrink: 0;
     transition: all 0.2s ease;
+}
+
+/* Bilibili 图标特殊样式 */
+.contact-icon.bilibili-icon {
+    width: 20px;
+    height: 20px;
+}
+
+/* QQ 图标特殊样式 */
+.contact-icon.qq-icon {
+    width: 20px;
+    height: 20px;
+}
+
+/* 微信图标特殊样式 */
+.contact-icon.wechat-icon {
+    width: 20px;
+    height: 20px;
 }
 
 .contact-item:hover .contact-icon {

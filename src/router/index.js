@@ -32,6 +32,11 @@ const router = createRouter({
                 name: 'toastDemo',
                 component: () => import('../views/demo/ToastDemo.vue'),
             },
+            {
+                path: '/demo/icons',
+                name: 'icons',
+                component: () => import('../views/demo/IconDemo.vue'),
+            }
         ] : []),
     ],
 })
