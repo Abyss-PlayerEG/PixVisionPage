@@ -317,31 +317,32 @@ onUnmounted(() => {
     <section id="num3z">
         <h1>Feel the breath of the wilderness .</h1>
         <div>
-            <span>旷野的生机,&nbsp;&nbsp;&nbsp;</span>
-            <span>来自野性的呼唤,&nbsp;&nbsp;&nbsp;</span>
-            <span>We are all in nature。</span>
+          <span>旷野的生机,&nbsp;&nbsp;&nbsp;</span>
+          <span>来自野性的呼唤,&nbsp;&nbsp;&nbsp;</span>
+          <span>We are all in nature。</span>
         </div>
-
+        
         <div class="n3_showIMG">
-            <!-- Swiper 轮播图容器 -->
-            <div class="swiper-container" ref="swiperContainer">
-                <div class="swiper-wrapper" ref="swiperWrapper">
-                    <!-- 9个占位圆角矩形 + 介绍文案 -->
-                    <div v-for="index in 9" :key="index" class="swiper-slide">
-                        <div class="slide-card">
-                            <div class="placeholder-card"></div>
-                            <div class="slide-caption">
-                                <h3 class="caption-title">自然之美 {{ index }}</h3>
-                                <p class="caption-desc">探索大自然的无限魅力，感受每一帧画面的生命力与艺术价值</p>
-                            </div>
-                        </div>
-                    </div>
+          <!-- Swiper 轮播图容器 -->
+          <div class="swiper-container" ref="swiperContainer">
+            <div class="swiper-wrapper" ref="swiperWrapper">
+              <!-- 9个占位圆角矩形 + 介绍文案 -->
+              <div v-for="index in 9" :key="index" class="swiper-slide">
+                <div class="slide-card">
+                  <div class="placeholder-card"></div>
+                  <div class="slide-caption">
+                    <h3 class="caption-title">自然之美 {{ index }}</h3>
+                    <p class="caption-desc">探索大自然的无限魅力，感受每一帧画面的生命力与艺术价值</p>
+                  </div>
                 </div>
+              </div>
             </div>
+          </div>
         </div>
-    </section>
-
-    <section id="num4z">
+      </section>
+      
+      <section id="num4z">
+        <h1>Feel the breath of the wilderness .</h1>
 
     </section>
 

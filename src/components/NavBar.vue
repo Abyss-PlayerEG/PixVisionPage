@@ -29,12 +29,20 @@ const shouldShowBg = computed(() => {
          shouldDelayBgHide.value;
 });
 
-// 菜单配置
+// 菜单配置 - 包含高度信息
 const menuItems = [
-  { label: '资源总览', content: '这里是资源总览的内容区域' },
-  { label: '创作中心', content: '这里是创作中心的内容区域' },
-  { label: '关于我们', content: '这里是关于我们的内容区域' }
+  { label: '资源总览', content: '这里是资源总览的内容区域', height: '600px' }, // 最高
+  { label: '创作中心', content: '这里是创作中心的内容区域', height: '400px' }, // 保持当前高度
+  { label: '关于我们', content: '这里是关于我们的内容区域', height: '500px' } // 中等高度
 ];
+
+// 计算当前激活菜单的高度
+const currentMenuHeight = computed(() => {
+  if (activeMenuIndex.value >= 0 && activeMenuIndex.value < menuItems.length) {
+    return menuItems[activeMenuIndex.value].height;
+  }
+  return '400px'; // 默认高度
+});
 
 // 监听页面滚动
 const handleScroll = () => {
@@ -227,7 +235,7 @@ onUnmounted(() => {
 
     <!-- 下拉选项卡 - 独立于导航栏 -->
     <transition name="dropdown">
-        <div v-if="isDropdownVisible" class="dropdown-menu">
+        <div v-if="isDropdownVisible" class="dropdown-menu" :style="{ height: currentMenuHeight }">
             <div class="dropdown-content">
                 {{ dropdownContent }}
             </div>
@@ -386,8 +394,8 @@ onUnmounted(() => {
     left: 0;
     width: 100%;
     height: calc(100vh - 50px);
-    background-color: rgba(0, 0, 0, 0.5);
-    backdrop-filter: blur(5px);
+    background-color: rgba(10, 10, 10, 0.5);
+    backdrop-filter: blur(10px);
     z-index: 998;
 }
 
@@ -418,7 +426,8 @@ onUnmounted(() => {
     border-bottom: 1px solid rgba(255, 255, 255, 0.1);
     z-index: 999;
     padding: 40px 5%;
-    min-height: 300px;
+    /* height 由动态绑定控制，不再使用 min-height */
+    transition: height 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .dropdown-content {
@@ -428,21 +437,29 @@ onUnmounted(() => {
     margin: 0 auto;
 }
 
-/* 下拉菜单过渡动画 - 从上到下 */
+/* 下拉菜单过渡动画 - 滑动入场和滑出屏幕 */
 .dropdown-enter-active,
 .dropdown-leave-active {
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-.dropdown-enter-from,
-.dropdown-leave-to {
+.dropdown-enter-from {
     opacity: 0;
-    transform: translateY(-50px);
+    transform: translateY(-100%);
 }
 
-.dropdown-enter-to,
+.dropdown-enter-to {
+    opacity: 1;
+    transform: translateY(0);
+}
+
 .dropdown-leave-from {
     opacity: 1;
     transform: translateY(0);
+}
+
+.dropdown-leave-to {
+    opacity: 0;
+    transform: translateY(-100%);
 }
 </style>

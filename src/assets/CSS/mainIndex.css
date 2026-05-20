@@ -259,7 +259,7 @@
 #num2z_2{
     width: 100%;
     min-height: 200px;
-    background-color: #000;
+    background-color: #000000;
     position: relative; /* 添加relative定位以支持z-index */
     z-index: 3; /* 确保在num2z之上 */
     display: flex;
@@ -314,7 +314,7 @@
 
 #num3z{
     width: 100%;
-    min-height: 100vh;
+    min-height: 90vh;
     position: relative;
     z-index: 4;
     background-color: #000;
@@ -458,4 +458,12 @@
     .placeholder-card {
         border-radius: 12px;
     }
+}
+
+#num4z{
+    width: 100%;
+    min-height: 100vh;
+    position: relative;
+    z-index: 5;
+    padding: 100px 5% 0 5%;
 }
