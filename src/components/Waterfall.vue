@@ -50,7 +50,7 @@ gsap.registerPlugin(ScrollTrigger)
 //todo 组件所需要的参数
 // ---------- Props ----------
 const props = defineProps({
-  externalImages: { type: Array, default: () => [] },
+  externalImages: { type: Array, default: () => [] }, // 需要插入的图片数据
   columnWidth: { type: Number, default: 300 },
   // 提前触发距离：当画廊顶部距离视口顶部还有该像素时就固定并开始水平滚动
   pinOffsetTop: { type: Number, default: 0 }
@@ -87,7 +87,17 @@ const buildSkeleton = () => {
   activeColumns.value = lastNonEmpty + 1
 }
 
+watch(() => props.externalImages, (newVal) => {
+  console.log('[Waterfall Component] Props 变化，新数据条数:', newVal.length);
+  images.value = newVal;
+}, { deep: true });
+
 const imageColumns = computed(() => {
+  console.log('[Waterfall Component] 接收到的图片数据条数:', images.value.length);
+  if (images.value.length > 0) {
+    console.log('[Waterfall Component] 第一张图片数据:', images.value[0]);
+  }
+
   const cols = COLUMNS_COUNT
   const columnsArr = Array.from({ length: cols }, () => [])
   const columnHeights = new Array(cols).fill(0)
@@ -167,6 +177,7 @@ const onResize = () => {
 
 onMounted(() => {
   buildSkeleton()
+  console.log('[Waterfall Component] 组件挂载，初始 externalImages 条数:', props.externalImages.length);
   if (props.externalImages && props.externalImages.length > 0) {
     images.value = props.externalImages
   }

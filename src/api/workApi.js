@@ -6,13 +6,36 @@ import { WORK_API, getWorkImageUrl } from '../config/api';
 
 /**
  * 获取作品分页数据
- * @param {number} current - 当前页码
- * @param {number} size - 每页数量
+ * @param {Object} params - 查询参数
+ * @param {number} params.current - 当前页码 (默认 1)
+ * @param {number} params.size - 每页数量 (默认 10, 最大 500)
+ * @param {string} [params.workTitle] - 作品标题 (模糊查询)
+ * @param {number} [params.userId] - 用户 ID
+ * @param {number} [params.seriesId] - 系列 ID
+ * @param {boolean} [params.isOriginal] - 是否原创
  * @returns {Promise<Object>} 标准化返回格式
  */
-export const fetchWorkPage = async (current, size) => {
+export const fetchWorkPage = async ({ 
+  current = 1, 
+  size = 10, 
+  workTitle, 
+  userId, 
+  seriesId, 
+  isOriginal 
+} = {}) => {
   try {
-    const response = await fetch(`${WORK_API.PAGE}/${current}/${size}`, {
+    // 构建查询参数
+    const queryParams = new URLSearchParams();
+    queryParams.append('current', current);
+    queryParams.append('size', size);
+    if (workTitle) queryParams.append('workTitle', workTitle);
+    if (userId !== undefined) queryParams.append('userId', userId);
+    if (seriesId !== undefined) queryParams.append('seriesId', seriesId);
+    if (isOriginal !== undefined) queryParams.append('isOriginal', isOriginal);
+
+    const url = `${WORK_API.PAGE}/${current}/${size}?${queryParams.toString()}`;
+
+    const response = await fetch(url, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
@@ -20,6 +43,7 @@ export const fetchWorkPage = async (current, size) => {
     });
 
     const result = await response.json();
+    console.log('[API] 原始响应数据:', result);
 
     // 兼容 code 和 recode 字段
     const statusCode = result.code || result.recode;
@@ -67,6 +91,11 @@ export const transformWorksToWaterfallFormat = (records) => {
   let currentColumnIndices = [];
 
   const result = records.map((work, index) => {
+    // 调试日志：检查第一条数据的字段
+    if (index === 0) {
+      console.log('[API] 第一条作品原始数据:', work);
+    }
+
     let currentHeight;
 
     // 计算加入这张图后的预估高度
@@ -91,7 +120,10 @@ export const transformWorksToWaterfallFormat = (records) => {
       currentColumnIndices.push(index);
     }
     
-    const imageUrl = getWorkImageUrl(work.img_url)
+    const imageUrl = getWorkImageUrl(work.img_url);
+    if (index === 0) {
+      console.log('[API] 第一条图片生成的 URL:', imageUrl);
+    }
 
     return {
       src: imageUrl,

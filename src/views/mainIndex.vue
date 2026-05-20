@@ -33,7 +33,7 @@ const { initLinkCardAnimation, cleanupLinkCardAnimation } = useLinkCardAnimation
 const { initNum3zAnimation, cleanupNum3zAnimation } = useNum3zAnimation()
 
 // 初始化作品瀑布流
-const { waterfallImages, isLoading, error } = useWorkWaterfall()
+const { waterfallImages, isLoading, error, loadWorks } = useWorkWaterfall()
 
 // 监听错误信息，显示弹窗
 watch(error, (newError) => {
@@ -200,6 +200,9 @@ onMounted(() => {
   
   // 初始化 Swiper
   initSwiper()
+  
+  // 加载瀑布流数据 (简单调用，像 Toast 一样方便)
+  loadWorks({ reset: true })
   
   // 延迟初始化 num3z 动画，等待 Waterfall 组件稳定后再创建 ScrollTrigger
   setTimeout(() => {
