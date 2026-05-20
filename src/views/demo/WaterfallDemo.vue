@@ -23,6 +23,9 @@ const filters = ref({
   size: 50
 })
 
+// 控制面板展开状态
+const isPanelExpanded = ref(true)
+
 // 刷新/搜索
 const handleRefresh = () => {
   const params = {
@@ -50,8 +53,18 @@ onMounted(() => {
 
 <template>
   <div class="demo-container">
-    <header class="demo-header">
-      <h1>瀑布流组件联调演示</h1>
+    <header class="demo-header" :class="{ 'collapsed': !isPanelExpanded }">
+      <div class="header-top">
+        <h1>瀑布流组件联调演示</h1>
+        <button class="collapse-btn" @click="isPanelExpanded = !isPanelExpanded" :title="isPanelExpanded ? '收起' : '展开'">
+          <svg v-if="isPanelExpanded" viewBox="0 0 1024 1024" width="16" height="16">
+            <path d="M768 384L512 640 256 384" fill="none" stroke="currentColor" stroke-width="64"/>
+          </svg>
+          <svg v-else viewBox="0 0 1024 1024" width="16" height="16">
+            <path d="M256 640l256-256 256 256" fill="none" stroke="currentColor" stroke-width="64"/>
+          </svg>
+        </button>
+      </div>
       
       <!-- 状态栏 -->
       <div class="status-bar">
@@ -62,38 +75,40 @@ onMounted(() => {
       </div>
 
       <!-- 筛选控制面板 -->
-      <div class="controls">
-        <div class="control-group">
-          <label>作品标题:</label>
-          <input v-model="filters.workTitle" placeholder="模糊查询" />
+      <transition name="panel-slide">
+        <div v-if="isPanelExpanded" class="controls">
+          <div class="control-group">
+            <label>作品标题:</label>
+            <input v-model="filters.workTitle" placeholder="模糊查询" />
+          </div>
+          <div class="control-group">
+            <label>用户 ID:</label>
+            <input type="number" v-model.number="filters.userId" placeholder="精确查询" />
+          </div>
+          <div class="control-group">
+            <label>系列 ID:</label>
+            <input type="number" v-model.number="filters.seriesId" placeholder="精确查询" />
+          </div>
+          <div class="control-group">
+            <label>是否原创:</label>
+            <select v-model="filters.isOriginal">
+              <option value="">全部</option>
+              <option value="true">是 (原创)</option>
+              <option value="false">否 (转载)</option>
+            </select>
+          </div>
+          <div class="control-group">
+            <label>每页数量:</label>
+            <input type="number" v-model.number="filters.size" min="1" max="500" style="width: 80px;" />
+          </div>
+          <button @click="handleRefresh" :disabled="isLoading" class="btn-primary">
+            {{ isLoading ? '请求中...' : '搜索 / 刷新' }}
+          </button>
+          <button @click="handleLoadMore" :disabled="isLoading || !hasMore" class="btn-secondary">
+            加载更多
+          </button>
         </div>
-        <div class="control-group">
-          <label>用户 ID:</label>
-          <input type="number" v-model.number="filters.userId" placeholder="精确查询" />
-        </div>
-        <div class="control-group">
-          <label>系列 ID:</label>
-          <input type="number" v-model.number="filters.seriesId" placeholder="精确查询" />
-        </div>
-        <div class="control-group">
-          <label>是否原创:</label>
-          <select v-model="filters.isOriginal">
-            <option value="">全部</option>
-            <option value="true">是 (原创)</option>
-            <option value="false">否 (转载)</option>
-          </select>
-        </div>
-        <div class="control-group">
-          <label>每页数量:</label>
-          <input type="number" v-model.number="filters.size" min="1" max="500" style="width: 80px;" />
-        </div>
-        <button @click="handleRefresh" :disabled="isLoading" class="btn-primary">
-          {{ isLoading ? '请求中...' : '搜索 / 刷新' }}
-        </button>
-        <button @click="handleLoadMore" :disabled="isLoading || !hasMore" class="btn-secondary">
-          加载更多
-        </button>
-      </div>
+      </transition>
     </header>
 
     <main class="demo-content">
@@ -120,6 +135,39 @@ onMounted(() => {
   position: sticky;
   top: 0;
   z-index: 100;
+  transition: all 0.3s ease;
+}
+
+.demo-header.collapsed {
+  padding: 10px 20px;
+}
+
+.header-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.collapse-btn {
+  background: transparent;
+  border: 1px solid #444;
+  color: #888;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.collapse-btn:hover {
+  background: #333;
+  color: #fff;
+  border-color: #666;
 }
 
 .demo-header h1 {
@@ -240,6 +288,24 @@ button:disabled {
   border: 1px solid #e74c3c;
   border-radius: 6px;
   color: #e74c3c;
+}
+
+.panel-slide-enter-active,
+.panel-slide-leave-active {
+  transition: all 0.3s ease;
+  overflow: hidden;
+}
+
+.panel-slide-enter-from,
+.panel-slide-leave-to {
+  opacity: 0;
+  max-height: 0;
+}
+
+.panel-slide-enter-to,
+.panel-slide-leave-from {
+  opacity: 1;
+  max-height: 200px;
 }
 
 .demo-content {

@@ -93,24 +93,78 @@ watch(() => props.externalImages, (newVal) => {
 }, { deep: true });
 
 const imageColumns = computed(() => {
-  console.log('[Waterfall Component] 接收到的图片数据条数:', images.value.length);
-  if (images.value.length > 0) {
-    console.log('[Waterfall Component] 第一张图片数据:', images.value[0]);
+  // 1. 基础高度随机池
+  const baseHeights = [260, 310, 360, 410, 460]
+  const CONTAINER_HEIGHT = window.innerHeight * 0.9
+  const gap = 8
+
+  const columnsArr = []
+  let currentColHeight = 0
+  let usedHeightsInCol = new Set() // 追踪当前列已使用的高度档位
+
+  // 初始化第一列
+  columnsArr.push([])
+
+  images.value.forEach((img, index) => {
+    const currentCol = columnsArr[columnsArr.length - 1]
+    
+    // 计算当前列加入间距后的预估高度
+    const projectedHeight = currentColHeight + (currentColHeight > 0 ? gap : 0)
+    const remainingSpace = CONTAINER_HEIGHT - projectedHeight
+
+    let currentHeight
+
+    // 3.2 列尾自适应逻辑：当剩余空间小于 350px 时触发
+    if (remainingSpace < 350) {
+      // 直接将当前图片高度设为剩余空间大小（最小保底 160px）
+      currentHeight = Math.max(remainingSpace, 160)
+      
+      const imgWithHeight = { ...img, height: currentHeight }
+      currentCol.push(imgWithHeight)
+      
+      // 当前列已满，开启新的一列供下一张图片使用
+      columnsArr.push([])
+      currentColHeight = 0
+      usedHeightsInCol.clear() // 重置已用高度记录
+    } else {
+      // 3.1 基础高度随机池：从 5 个档位中随机选取（排除本列已出现的）
+      const availableHeights = baseHeights.filter(h => !usedHeightsInCol.has(h))
+      
+      // 如果所有档位都用过了，则重置集合允许重复
+      if (availableHeights.length === 0) {
+        usedHeightsInCol.clear()
+      }
+      
+      // 从可用档位中随机选取
+      const pool = availableHeights.length > 0 ? availableHeights : baseHeights
+      currentHeight = pool[Math.floor(Math.random() * pool.length)]
+      usedHeightsInCol.add(currentHeight)
+      
+      // 二次检查：如果随机高度导致溢出，也执行自适应并换列
+      if (projectedHeight + currentHeight > CONTAINER_HEIGHT) {
+        currentHeight = Math.max(remainingSpace, 160)
+        const imgWithHeight = { ...img, height: currentHeight }
+        currentCol.push(imgWithHeight)
+        
+        // 开启新列
+        columnsArr.push([])
+        currentColHeight = 0
+        usedHeightsInCol.clear()
+      } else {
+        // 正常放入当前列
+        const imgWithHeight = { ...img, height: currentHeight }
+        currentCol.push(imgWithHeight)
+        currentColHeight = projectedHeight + currentHeight
+      }
+    }
+  })
+
+  // 移除最后一个可能为空的列
+  if (columnsArr.length > 1 && columnsArr[columnsArr.length - 1].length === 0) {
+    columnsArr.pop()
   }
 
-  const cols = COLUMNS_COUNT
-  const columnsArr = Array.from({ length: cols }, () => [])
-  const columnHeights = new Array(cols).fill(0)
-  images.value.forEach((img) => {
-    let minIndex = 0
-    for (let i = 1; i < cols; i++) {
-      if (columnHeights[i] < columnHeights[minIndex]) minIndex = i
-    }
-    columnsArr[minIndex].push(img)
-    columnHeights[minIndex] += img.height
-  })
-  const lastNonEmpty = columnsArr.reduce((lastIdx, col, idx) => (col.length > 0 ? idx : lastIdx), -1)
-  activeColumns.value = lastNonEmpty + 1
+  activeColumns.value = columnsArr.length
   return columnsArr
 })
 
