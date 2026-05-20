@@ -18,7 +18,7 @@ export const useWorkWaterfall = () => {
 
   // 分页状态
   const currentPage = ref(1)
-  const pageSize = ref(500)
+  const pageSize = ref(50)
   const hasMore = ref(true)
   
   // 自动加载状态
