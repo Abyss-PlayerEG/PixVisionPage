@@ -57,7 +57,7 @@ router.beforeEach((to, from, next) => {
         
         if (!token) {
             // 未登录，重定向到404页面
-            next({ name: 'notFound' });
+            next({ name: 'login' });
         } else {
             // 已登录，允许访问
             next();
