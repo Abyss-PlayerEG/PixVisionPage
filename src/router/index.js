@@ -13,11 +13,18 @@ const router = createRouter({
             name: 'login',
             component: () => import('../views/loginView.vue'),
         },
+        // 个人主页
         {
-            path: '/profile/:identifier?',
-            name: 'profile',
+            path: '/profile/me',
+            name: 'profileMe',
             component: () => import('../views/Profile.vue'),
-            meta: { requiresAuth: true }, // 标记需要登录访问
+            meta: { requiresAuth: true }, // 个人主页，需要登录
+        },
+        // 访问者主页视角
+        {
+            path: '/profile/:identifier',
+            name: 'profileVisitor',
+            component: () => import('../views/Profile.vue'),
         },
         // 404页面 - 捕获所有未匹配的路径（必须放在最后）
         {
