@@ -9,8 +9,10 @@ const {
   isLoading, 
   error, 
   hasMore, 
+  autoLoadEnabled,
   loadWorks, 
-  loadMore 
+  loadMore,
+  toggleAutoLoad 
 } = useWorkWaterfall()
 
 // 筛选条件状态
@@ -26,6 +28,10 @@ const filters = ref({
 // 控制面板展开状态
 const isPanelExpanded = ref(true)
 
+// 自动加载监听器
+let scrollTriggerObserver = null
+let hasTriggeredLoad = false // 防止重复触发
+
 // 刷新/搜索
 const handleRefresh = () => {
   const params = {
@@ -39,6 +45,50 @@ const handleRefresh = () => {
     }
   }
   loadWorks(params)
+}
+
+// 切换自动加载
+const handleToggleAutoLoad = (enabled) => {
+  toggleAutoLoad(enabled)
+  hasTriggeredLoad = false // 重置触发标志
+  if (enabled) {
+    setupAutoLoadObserver()
+  } else {
+    removeAutoLoadObserver()
+  }
+}
+
+// 设置自动加载监听
+const setupAutoLoadObserver = () => {
+  if (scrollTriggerObserver) return
+  
+  import('gsap/ScrollTrigger').then(({ ScrollTrigger }) => {
+    scrollTriggerObserver = ScrollTrigger.create({
+      trigger: "#num2z",
+      start: "top top",
+      end: "bottom bottom",
+      onUpdate: (self) => {
+        // 只有当进度超过 80% 且尚未触发过加载时
+        if (self.progress > 0.8 && !hasTriggeredLoad && hasMore.value && !isLoading.value && autoLoadEnabled.value) {
+          hasTriggeredLoad = true // 立即上锁
+          loadMore().finally(() => {
+            // 等待一小段时间或数据渲染完成后解锁，允许下一次触发
+            setTimeout(() => {
+              hasTriggeredLoad = false
+            }, 500)
+          })
+        }
+      }
+    })
+  })
+}
+
+// 移除监听
+const removeAutoLoadObserver = () => {
+  if (scrollTriggerObserver) {
+    scrollTriggerObserver.kill()
+    scrollTriggerObserver = null
+  }
 }
 
 // 加载更多
@@ -104,9 +154,16 @@ onMounted(() => {
           <button @click="handleRefresh" :disabled="isLoading" class="btn-primary">
             {{ isLoading ? '请求中...' : '搜索 / 刷新' }}
           </button>
-          <button @click="handleLoadMore" :disabled="isLoading || !hasMore" class="btn-secondary">
-            加载更多
-          </button>
+            <div class="control-group">
+              <label>自动加载:</label>
+              <label class="switch">
+                <input type="checkbox" :checked="autoLoadEnabled" @change="handleToggleAutoLoad($event.target.checked)">
+                <span class="slider round"></span>
+              </label>
+            </div>
+            <button @click="handleLoadMore" :disabled="isLoading || !hasMore || autoLoadEnabled" class="btn-secondary">
+              {{ isLoading ? '加载中...' : '手动加载' }}
+            </button>
         </div>
       </transition>
     </header>
@@ -306,6 +363,62 @@ button:disabled {
 .panel-slide-leave-from {
   opacity: 1;
   max-height: 200px;
+}
+
+/* Toggle Switch 样式 */
+.switch {
+  position: relative;
+  display: inline-block;
+  width: 40px;
+  height: 20px;
+}
+
+.switch input { 
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #444;
+  transition: .4s;
+}
+
+.slider:before {
+  position: absolute;
+  content: "";
+  height: 14px;
+  width: 14px;
+  left: 3px;
+  bottom: 3px;
+  background-color: white;
+  transition: .4s;
+}
+
+input:checked + .slider {
+  background-color: #4a9eff;
+}
+
+input:focus + .slider {
+  box-shadow: 0 0 1px #4a9eff;
+}
+
+input:checked + .slider:before {
+  transform: translateX(20px);
+}
+
+.slider.round {
+  border-radius: 20px;
+}
+
+.slider.round:before {
+  border-radius: 50%;
 }
 
 .demo-content {

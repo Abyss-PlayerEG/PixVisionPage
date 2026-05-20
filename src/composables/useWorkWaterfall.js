@@ -18,8 +18,18 @@ export const useWorkWaterfall = () => {
 
   // 分页状态
   const currentPage = ref(1)
-  const pageSize = ref(50)
+  const pageSize = ref(500)
   const hasMore = ref(true)
+  
+  // 自动加载状态
+  const autoLoadEnabled = ref(false)
+
+  /**
+   * 切换自动加载模式
+   */
+  const toggleAutoLoad = (enabled) => {
+    autoLoadEnabled.value = enabled
+  }
 
   /**
    * 加载作品数据 (支持重置或追加)
@@ -112,8 +122,10 @@ export const useWorkWaterfall = () => {
     isLoading,
     error,
     hasMore,
+    autoLoadEnabled,
     loadWorks,
     loadMore,
     refresh,
+    toggleAutoLoad,
   }
 }
