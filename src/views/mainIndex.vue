@@ -315,11 +315,11 @@ onUnmounted(() => {
     </section>
 
     <section id="num3z">
-        <h1>Feel the breath of the wilderness .</h1>
+        <h1>Every collection tells a story .</h1>
         <div>
-          <span>旷野的生机,&nbsp;&nbsp;&nbsp;</span>
-          <span>来自野性的呼唤,&nbsp;&nbsp;&nbsp;</span>
-          <span>We are all in nature。</span>
+          <span>视觉的归档,&nbsp;&nbsp;&nbsp;</span>
+          <span>从灵感碎片到册集的沉淀,&nbsp;&nbsp;&nbsp;</span>
+          <span>Curated works 。</span>
         </div>
         
         <div class="n3_showIMG">
@@ -331,8 +331,8 @@ onUnmounted(() => {
                 <div class="slide-card">
                   <div class="placeholder-card"></div>
                   <div class="slide-caption">
-                    <h3 class="caption-title">自然之美 {{ index }}</h3>
-                    <p class="caption-desc">探索大自然的无限魅力，感受每一帧画面的生命力与艺术价值</p>
+                    <h3 class="caption-title">精选合集 {{ index }}</h3>
+                    <p class="caption-desc">探索摄影机的无限魅力，感受每一帧画面的生命力与艺术价值</p>
                   </div>
                 </div>
               </div>
