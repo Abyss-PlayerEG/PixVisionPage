@@ -44,11 +44,6 @@ const router = createRouter({
                 name: 'icons',
                 component: () => import('../views/demo/IconDemo.vue'),
             },
-            {
-                path: '/demo/waterfall',
-                name: 'waterfallDemo',
-                component: () => import('../views/demo/WaterfallDemo.vue'),
-            }
         ] : []),
     ],
 })

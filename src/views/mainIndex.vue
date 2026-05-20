@@ -301,8 +301,8 @@ onUnmounted(() => {
               :pin-offset-top="70"
             />
             
-            <!-- 加载状态提示
-            <div v-if="isLoading" class="loading-tip">加载中...</div> -->
+<!--            加载状态提示-->
+            <div v-if="isLoading" class="loading-tip">加载中...</div>
         </div>
     </section>
     <section id="num2z_2">
