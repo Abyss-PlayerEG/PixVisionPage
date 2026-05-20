@@ -389,11 +389,9 @@ export const useNum3zAnimation = () => {
     )
 
     // 保存 ScrollTrigger 实例以便清理
-    [h1Anim, descAnim, slidesAnim].forEach(anim => {
-      if (anim.scrollTrigger) {
-        scrollTriggers.push(anim.scrollTrigger)
-      }
-    })
+    if (h1Anim.scrollTrigger) scrollTriggers.push(h1Anim.scrollTrigger)
+    if (descAnim.scrollTrigger) scrollTriggers.push(descAnim.scrollTrigger)
+    if (slidesAnim.scrollTrigger) scrollTriggers.push(slidesAnim.scrollTrigger)
   }
 
   // 清理动画

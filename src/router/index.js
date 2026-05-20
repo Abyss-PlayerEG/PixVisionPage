@@ -49,23 +49,18 @@ const router = createRouter({
 })
 
 // 全局前置守卫 - 检查需要认证的路由
-router.beforeEach((to, from, next) => {
+router.beforeEach((to) => {
     // 检查路由是否需要认证
     if (to.meta.requiresAuth) {
         // 检查是否有 token
         const token = localStorage.getItem('token');
         
         if (!token) {
-            // 未登录，重定向到404页面
-            next({ name: 'login' });
-        } else {
-            // 已登录，允许访问
-            next();
+            // 未登录，重定向到登录页面
+            return { name: 'login' };
         }
-    } else {
-        // 不需要认证的路由，直接放行
-        next();
     }
+    // 已登录或不需要认证，直接放行
 });
 
 export default router
