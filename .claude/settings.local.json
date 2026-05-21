@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(cp \"d:/.ProJect/Vue/Pixel_Vision/.lingma/skills/frontend-backend-integration.md\" \"d:/.ProJect/Vue/Pixel_Vision/.claude/skills/frontend-backend-integration.md\")",
+      "Bash(cp -r \"d:/.ProJect/Vue/Pixel_Vision/.lingma/skills/gsap-core\" \"d:/.ProJect/Vue/Pixel_Vision/.lingma/skills/gsap-frameworks\" \"d:/.ProJect/Vue/Pixel_Vision/.lingma/skills/gsap-performance\" \"d:/.ProJect/Vue/Pixel_Vision/.lingma/skills/gsap-plugins\" \"d:/.ProJect/Vue/Pixel_Vision/.lingma/skills/gsap-react\" \"d:/.ProJect/Vue/Pixel_Vision/.lingma/skills/gsap-scrolltrigger\" \"d:/.ProJect/Vue/Pixel_Vision/.lingma/skills/gsap-timeline\" \"d:/.ProJect/Vue/Pixel_Vision/.lingma/skills/gsap-utils\" \"d:/.ProJect/Vue/Pixel_Vision/.claude/skills/\")"
+    ]
+  }
+}
