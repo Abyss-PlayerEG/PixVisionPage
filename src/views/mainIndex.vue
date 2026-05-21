@@ -7,8 +7,9 @@ import NavBar from "@/components/NavBar.vue";
 import Waterfall from "@/components/Waterfall.vue";
 
 // 引入 composable
-import { useCopyAnimation, useArrowAnimation, useLinkCardAnimation, useNum3zAnimation } from "@/composables/mainIndex.js"
+import { useCopyAnimation, useArrowAnimation, useLinkCardAnimation, useNum3zAnimation, useNum5zAnimation } from "@/composables/mainIndex.js"
 import { useWorkWaterfall } from "@/composables/useWorkWaterfall.js"
+import { ScrollTrigger } from 'gsap/ScrollTrigger'
 
 // 引入通知组件
 import { showError } from '@/utils/notification'
@@ -32,13 +33,23 @@ const { initLinkCardAnimation, cleanupLinkCardAnimation } = useLinkCardAnimation
 // 初始化 num3z 区域动画
 const { initNum3zAnimation, cleanupNum3zAnimation } = useNum3zAnimation()
 
-// 初始化作品瀑布流
+// 初始化 num5z 区域动画 (滚动驱动 pill 动画)
+const { initNum5zAnimation, cleanupNum5zAnimation } = useNum5zAnimation()
+
+// 作品瀑布流数据
 const { waterfallImages, isLoading, error, loadWorks } = useWorkWaterfall()
 
 // 监听错误信息，显示弹窗
 watch(error, (newError) => {
   if (newError) {
     showError(newError)
+  }
+})
+
+// 瀑布流图片加载完成后，刷新所有 ScrollTrigger 位置
+watch(isLoading, (loading) => {
+  if (!loading) {
+    ScrollTrigger.refresh()
   }
 })
 
@@ -208,6 +219,9 @@ onMounted(() => {
   setTimeout(() => {
     initNum3zAnimation()
   }, 500)
+
+  // 初始化 num5z pill 动画
+  initNum5zAnimation()
   
   // 监听窗口大小变化，触发页面刷新
   window.addEventListener('resize', () => {
@@ -221,6 +235,7 @@ onUnmounted(() => {
   cleanupArrowAnimation()
   cleanupLinkCardAnimation()
   cleanupNum3zAnimation()
+  cleanupNum5zAnimation()
   
   // 清理 Swiper
   if (window.__swiperCleanup) {
@@ -346,9 +361,17 @@ onUnmounted(() => {
         <div class="n4_font">
           <span>suliusu</span>
         </div>
-        <div class="n4_GridLayout"></div>
+        <div class="n4_GridLayout">
+              <div
+                v-for="item in 8"
+                :key="item"
+                class="grid-card"
+                :class="'grid-card--' + item"
+              >
+                <div class="grid-card__skeleton"></div>
+              </div>
+            </div>
     </section>
-
 </template>
 
 <style>

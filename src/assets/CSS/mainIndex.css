@@ -465,29 +465,169 @@
     min-height: 100vh;
     position: relative;
     z-index: 5;
-    padding: 200px 5% 0 5%;
+    padding: 120px 5% 80px 5%;
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+    background-color:#000;
 
     h1{
-        font-size: 60px;
-        height: 100px;
+        font-size: clamp(36px, 5vw, 60px);
         color: #cecece;
+        flex-shrink: 0;
+        margin: 0;
+        line-height: 1.15;
     }
 }
 
 .n4_font{
     width: 100%;
-    height: 100px;
     display: flex;
-    justify-content: end;
+    justify-content: flex-end;
     color: #7e7e7e;
-    font-size: 30px;
+    font-size: clamp(18px, 2.5vw, 30px);
+    flex-shrink: 0;
     span{
         display: inline-block;
     }
 }
 
 .n4_GridLayout{
+    flex: 1;
     width: 100%;
-    min-height: 500px;
-    border: 1px solid #cecece;
+    min-height: 0;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    grid-template-rows: repeat(4, minmax(140px, 1fr));
+    gap: 16px;
+
+    .grid-card {
+        border-radius: 16px;
+        overflow: hidden;
+        cursor: pointer;
+        min-width: 0;
+        min-height: 0;
+        transition: transform 0.35s ease, box-shadow 0.35s ease;
+
+        &:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+        }
+    }
+
+    .grid-card__skeleton {
+        width: 100%;
+        height: 100%;
+        display: block;
+        position: relative;
+        overflow: hidden;
+
+        &::after {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 60%;
+            height: 100%;
+            background: linear-gradient(
+                90deg,
+                transparent 0%,
+                rgba(255, 255, 255, 0.02) 40%,
+                rgba(255, 255, 255, 0.04) 50%,
+                rgba(255, 255, 255, 0.02) 60%,
+                transparent 100%
+            );
+            animation: shimmer 2.4s ease-in-out infinite;
+        }
+    }
+
+    /*
+     *  显式网格布局 (4列 × 4行):
+     *  ┌──────────┬──────────┬─────┬─────┐
+     *  │                     │     │     │
+     *  │      1 (2×2)        │  2  │  3  │
+     *  │                     │     │(1×2)│
+     *  │                     ├─────┤     │
+     *  │                     │  4  │     │
+     *  ├─────┬───────────────┼─────┼─────┤
+     *  │  5  │     6 (2×1)   │  7  │     │
+     *  ├─────┴───────────────┴─────┴─────┤
+     *  │           8 (全宽 4×1)          │
+     *  └─────────────────────────────────┘
+     */
+    .grid-card--1 { grid-column: 1 / 3; grid-row: 1 / 3; }
+    .grid-card--2 { grid-column: 3 / 4; grid-row: 1 / 2; }
+    .grid-card--3 { grid-column: 4 / 5; grid-row: 1 / 3; }
+    .grid-card--4 { grid-column: 3 / 4; grid-row: 2 / 3; }
+    .grid-card--5 { grid-column: 1 / 2; grid-row: 3 / 4; }
+    .grid-card--6 { grid-column: 2 / 4; grid-row: 3 / 4; }
+    .grid-card--7 { grid-column: 4 / 5; grid-row: 3 / 4; }
+    .grid-card--8 { grid-column: 1 / 5; grid-row: 4 / 5; }
+
+    /* 骨架屏底色微差 */
+    .grid-card--1 .grid-card__skeleton  { background: #1a1a1a; }
+    .grid-card--2 .grid-card__skeleton  { background: #1d1d1d; }
+    .grid-card--3 .grid-card__skeleton  { background: #1c1c1c; }
+    .grid-card--4 .grid-card__skeleton  { background: #1e1e1e; }
+    .grid-card--5 .grid-card__skeleton  { background: #1d1d1d; }
+    .grid-card--6 .grid-card__skeleton  { background: #1a1a1a; }
+    .grid-card--7 .grid-card__skeleton  { background: #1c1c1c; }
+    .grid-card--8 .grid-card__skeleton  { background: #1e1e1e; }
+}
+
+@keyframes shimmer {
+    0%   { left: -100%; }
+    100% { left: 160%; }
+}
+
+/* --- 响应式: 平板 (≤1024px) --- */
+@media (max-width: 1024px) {
+    #num4z {
+        padding: 100px 5% 60px 5%;
+        gap: 20px;
+    }
+
+    .n4_GridLayout {
+        grid-template-columns: repeat(3, 1fr);
+        grid-template-rows: auto;
+        gap: 12px;
+
+        .grid-card {
+            height: 180px;
+        }
+        .grid-card--1 { grid-column: 1 / 3; height: 376px; }  /* 2×2 → 两行高 */
+        .grid-card--2 { grid-column: 3 / 4; }
+        .grid-card--3 { grid-column: 1 / 2; }
+        .grid-card--4 { grid-column: 2 / 4; }
+        .grid-card--5 { grid-column: 1 / 2; }
+        .grid-card--6 { grid-column: 2 / 4; }
+        .grid-card--7 { grid-column: 1 / 3; }
+        .grid-card--8 { grid-column: 1 / 4; height: 200px; }
+    }
+}
+
+/* --- 响应式: 手机 (≤640px) --- */
+@media (max-width: 640px) {
+    #num4z {
+        padding: 80px 5% 60px 5%;
+        gap: 16px;
+    }
+
+    .n4_GridLayout {
+        grid-template-columns: repeat(2, 1fr);
+        grid-template-rows: auto;
+        gap: 10px;
+
+        .grid-card {
+            height: 160px;
+        }
+        .grid-card--1 { grid-column: 1 / 3; height: 340px; }
+        .grid-card--2 { grid-column: 1 / 2; }
+        .grid-card--3 { grid-column: 2 / 3; }
+        .grid-card--4 { grid-column: 1 / 3; height: 200px; }
+        .grid-card--5 { grid-column: 1 / 2; }
+        .grid-card--6 { grid-column: 2 / 3; }
+        .grid-card--7 { grid-column: 1 / 3; height: 180px; }
+        .grid-card--8 { grid-column: 1 / 3; height: 200px; }
+    }
 }
