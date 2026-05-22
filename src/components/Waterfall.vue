@@ -33,6 +33,7 @@
             :alt="img.alt || ''"
             :style="{ height: img.height + 'px', width: '100%' }"
             loading="lazy"
+            @click="emit('image-click', img)"
           />
         </div>
       </template>
@@ -55,6 +56,8 @@ const props = defineProps({
   // 提前触发距离：当画廊顶部距离视口顶部还有该像素时就固定并开始水平滚动
   pinOffsetTop: { type: Number, default: 0 }
 })
+
+const emit = defineEmits(['image-click'])
 
 const COLUMNS_COUNT = 16
 const sectionRef = ref(null)

@@ -13,6 +13,12 @@ const router = createRouter({
             name: 'login',
             component: () => import('../views/loginView.vue'),
         },
+        // 作品详情页
+        {
+            path: '/work/:id',
+            name: 'workDetail',
+            component: () => import('../views/WorkDetail.vue'),
+        },
         // 个人主页
         {
             path: '/profile/me',
