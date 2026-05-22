@@ -4,7 +4,6 @@
     position: sticky;
     top: 0;
     z-index: 1;
-    overflow: hidden;
 }
 
 .n1_showzone{
@@ -126,21 +125,12 @@
     will-change: transform, opacity;
 }
 
-.n1_linkcard,.n1_linkcont{
+.n1_linkcard{
     width: 500px;
     height: 250px;
     position:absolute;
     color: #cecece;
     overflow: hidden;
-}
-
-.n1_linkcont{
-    top: 70%;
-    left: 5%;
-    font-size: 2rem;
-}
-
-.n1_linkcard{
     top: 50%;
     right: 5%;
     display:flex;
@@ -219,7 +209,6 @@
     width: 100%;
     min-height: 2000px;
     background-color: #000;
-    padding:20px;
     position: relative;
     z-index: 2; /* 降低z-index，确保在num1z之上但在后续区域之下 */
     border-radius: 20px 20px 0 0;
@@ -230,9 +219,7 @@
     /* border:1px #ffffff solid; */
     border-radius: 20px;
     overflow: hidden;
-    /* width: 100%; */
-    /* min-height: 1000px; */
-    /* padding: 20px; */
+    padding: 20px;
     position: relative;
 }
 
@@ -537,7 +524,7 @@
                 rgba(255, 255, 255, 0.02) 60%,
                 transparent 100%
             );
-            animation: shimmer 2.4s ease-in-out infinite;
+            animation: shimmerLeft 2.4s ease-in-out infinite;
         }
     }
 
@@ -575,7 +562,7 @@
     .grid-card--8 .grid-card__skeleton  { background: #1e1e1e; }
 }
 
-@keyframes shimmer {
+@keyframes shimmerLeft {
     0%   { left: -100%; }
     100% { left: 160%; }
 }
