@@ -47,6 +47,14 @@ const goLogin = () => {
   router.push({ name: 'login', query: { redirect: route.fullPath } })
 }
 
+const goToProfile = (userId, username) => {
+  if (currentUser.value && currentUser.value.user_id === userId) {
+    router.push({ name: 'profileMe' })
+  } else {
+    router.push({ name: 'profileVisitor', params: { identifier: username || userId } })
+  }
+}
+
 const handleSubmitComment = async () => {
   const text = newComment.value.trim()
   if (!text || commentSubmitting.value) return
@@ -259,7 +267,7 @@ onUnmounted(() => {
                 <img :src="comment.avatarUrl || getAvatarUrl('')" alt="avatar" />
               </div>
               <div class="wd-comment-body">
-                <p class="wd-comment-author">{{ comment.nickname || '匿名用户' }}</p>
+                <p class="wd-comment-author"><span class="wd-author-link" @click.stop="goToProfile(comment.user_id, comment.username)">{{ comment.nickname || '匿名用户' }}</span></p>
                 <p class="wd-comment-text">{{ comment.comment_text }}</p>
                 <div class="wd-comment-actions">
                   <span class="wd-comment-time">{{ formatTime(comment.time) }}</span>
@@ -274,7 +282,7 @@ onUnmounted(() => {
                       <img :src="reply.avatarUrl || getAvatarUrl('')" alt="avatar" />
                     </div>
                     <div class="wd-comment-body">
-                      <p class="wd-comment-author">{{ reply.nickname || '匿名用户' }}</p>
+                      <p class="wd-comment-author"><span class="wd-author-link" @click.stop="goToProfile(reply.user_id, reply.username)">{{ reply.nickname || '匿名用户' }}</span></p>
                       <p class="wd-comment-text">
                         <span v-if="reply.replied_nickname && reply.parent_comment_id !== reply.in_comment_id" class="wd-reply-mention" @click.stop="highlightComment(reply.parent_comment_id)">@{{ reply.replied_nickname }}</span>
                         {{ reply.comment_text }}
@@ -365,7 +373,7 @@ onUnmounted(() => {
 
 .wd-loading { display: flex; align-items: center; justify-content: center; min-height: 300px; color: #7e7e7e; font-size: 14px; }
 .wd-comment-replies { margin-top: 12px; padding-left: 12px; border-left: 1px solid rgba(255, 255, 255, 0.06); }
-.wd-comment-reply { background: transparent; padding: 8px 0; }
+.wd-comment-reply { background: transparent; padding: 8px 10px; }
 .wd-comment-reply:hover { background: transparent; }
 .wd-comment-submit:disabled { opacity: 0.5; cursor: not-allowed; }
 
@@ -393,14 +401,14 @@ onUnmounted(() => {
   padding: 8px 18px;
   border-radius: 8px;
   border: none;
-  background: #4a9eff;
+  background: #00A947;
   color: #ffffff;
   font-size: 13px;
   font-weight: 500;
   cursor: pointer;
   transition: all 0.2s ease;
 }
-.wd-login-btn:hover { background: #3a8eef; }
+.wd-login-btn:hover { background: #00ce5a; }
 .wd-login-btn:active { transform: scale(0.97); }
 
 .wd-comment-reply-btn {
@@ -466,6 +474,15 @@ onUnmounted(() => {
   transition: color 0.2s;
 }
 .wd-reply-mention:hover { color: #66c0ff; }
+
+.wd-author-link {
+  cursor: pointer;
+  transition: color 0.2s, opacity 0.2s;
+}
+.wd-author-link:hover {
+  color: #4a9eff;
+  opacity: 0.85;
+}
 
 @keyframes wd-highlight-flash {
   0%, 100% { background-color: transparent; }

@@ -7,7 +7,7 @@
   },
   "servers": [
     {
-      "url": "http://localhost:9090",
+      "url": "http://127.0.0.1:9090",
       "description": "Generated server url"
     }
   ],
@@ -163,9 +163,7 @@
                   "file": {
                     "type": "string",
                     "description": "新的图片文件（可选，仅支持 JPG/JPEG/PNG，最大 32MB）",
-                    "format": "binary",
-                    "name": "file",
-                    "in": "query"
+                    "format": "binary"
                   }
                 }
               }
@@ -1026,9 +1024,7 @@
                   "file": {
                     "type": "string",
                     "description": "作品图片文件",
-                    "format": "binary",
-                    "name": "file",
-                    "in": "query"
+                    "format": "binary"
                   }
                 }
               }
@@ -1069,9 +1065,7 @@
                   "file": {
                     "type": "string",
                     "description": "头像文件",
-                    "format": "binary",
-                    "name": "file",
-                    "in": "query"
+                    "format": "binary"
                   }
                 }
               }
@@ -1123,11 +1117,11 @@
             "schema": {
               "type": "string",
               "description": "是否清空所有历史记录",
-              "default": "true",
               "enum": [
                 "true",
                 "false"
-              ]
+              ],
+              "default": "true"
             }
           }
         ],
@@ -3594,8 +3588,7 @@
             "type": "integer",
             "description": "用户 ID",
             "format": "int32",
-            "example": 1,
-            "refType": null
+            "example": 1
           },
           "user_uuid": {
             "type": "array",
@@ -3606,120 +3599,102 @@
               "description": "用户 UUID",
               "format": "byte",
               "example": "MTblrZfoioLkuozov5vliLZ1dWlk"
-            },
-            "refType": "string"
+            }
           },
           "username": {
             "type": "string",
             "description": "用户名",
-            "example": "li_hua",
-            "refType": null
+            "example": "li_hua"
           },
           "password": {
             "type": "string",
             "description": "用户密码",
-            "example": "哈希256加密密码",
-            "refType": null
+            "example": "哈希256加密密码"
           },
           "nickname": {
             "type": "string",
             "description": "用户昵称",
-            "example": "李华",
-            "refType": null
+            "example": "李华"
           },
           "user_role": {
             "type": "integer",
             "description": "用户角色",
             "format": "int32",
-            "example": 11,
-            "refType": null
+            "example": 11
           },
           "avatar_url": {
             "type": "string",
             "description": "用户头像路径",
-            "example": "/avatar/uuid.png",
-            "refType": null
+            "example": "/avatar/uuid.png"
           },
           "email": {
             "type": "string",
             "description": "绑定邮箱",
-            "example": "lihua@example.com",
-            "refType": null
+            "example": "lihua@example.com"
           },
           "is_delete": {
             "type": "boolean",
             "description": "删除标签",
-            "example": false,
-            "refType": null
+            "example": false
           },
           "status": {
             "type": "integer",
             "description": "账户状态",
             "format": "int32",
-            "example": 10,
-            "refType": null
+            "example": 10
           },
           "update_time": {
             "type": "string",
             "description": "更新时间",
             "format": "date-time",
-            "example": "2026-03-29T12:00:00.003Z",
-            "refType": null
+            "example": "2026-03-29T12:00:00.003Z"
           },
           "update_user": {
             "type": "integer",
             "description": "更新人员 ID",
             "format": "int32",
-            "example": 0,
-            "refType": null
+            "example": 0
           },
           "create_time": {
             "type": "string",
             "description": "创建时间",
             "format": "date-time",
-            "example": "2026-03-29T12:00:00.003Z",
-            "refType": null
+            "example": "2026-03-29T12:00:00.003Z"
           },
           "create_user": {
             "type": "integer",
             "description": "创建人员 ID",
             "format": "int32",
-            "example": 0,
-            "refType": null
+            "example": 0
           },
           "string_user_uuid": {
             "type": "string",
             "description": "用户 UUID 字符串",
-            "example": "字符串类型uuid",
-            "refType": null
+            "example": "字符串类型uuid"
           },
           "work_count": {
             "type": "integer",
             "description": "作品发布数",
             "format": "int32",
-            "example": 10,
-            "refType": null
+            "example": 10
           },
           "total_likes": {
             "type": "integer",
             "description": "被点赞总数",
             "format": "int64",
-            "example": 100,
-            "refType": null
+            "example": 100
           },
           "total_stars": {
             "type": "integer",
             "description": "被收藏总数",
             "format": "int64",
-            "example": 50,
-            "refType": null
+            "example": 50
           },
           "total_views": {
             "type": "integer",
             "description": "被查看总数",
             "format": "int64",
-            "example": 1000,
-            "refType": null
+            "example": 1000
           }
         },
         "description": "用户实体"
@@ -3757,8 +3732,7 @@
             "type": "integer",
             "description": "用户 ID",
             "format": "int32",
-            "example": 1,
-            "refType": null
+            "example": 1
           },
           "user_uuid": {
             "type": "array",
@@ -3769,126 +3743,107 @@
               "description": "用户 UUID",
               "format": "byte",
               "example": "MTblrZfoioLkuozov5vliLZ1dWlk"
-            },
-            "refType": "string"
+            }
           },
           "username": {
             "type": "string",
             "description": "用户名",
-            "example": "li_hua",
-            "refType": null
+            "example": "li_hua"
           },
           "password": {
             "type": "string",
             "description": "用户密码",
-            "example": "哈希256加密密码",
-            "refType": null
+            "example": "哈希256加密密码"
           },
           "nickname": {
             "type": "string",
             "description": "用户昵称",
-            "example": "李华",
-            "refType": null
+            "example": "李华"
           },
           "user_role": {
             "type": "integer",
             "description": "用户角色",
             "format": "int32",
-            "example": 11,
-            "refType": null
+            "example": 11
           },
           "avatar_url": {
             "type": "string",
             "description": "用户头像路径",
-            "example": "/avatar/uuid.png",
-            "refType": null
+            "example": "/avatar/uuid.png"
           },
           "email": {
             "type": "string",
             "description": "绑定邮箱",
-            "example": "lihua@example.com",
-            "refType": null
+            "example": "lihua@example.com"
           },
           "is_delete": {
             "type": "boolean",
             "description": "删除标签",
-            "example": false,
-            "refType": null
+            "example": false
           },
           "status": {
             "type": "integer",
             "description": "账户状态",
             "format": "int32",
-            "example": 10,
-            "refType": null
+            "example": 10
           },
           "update_time": {
             "type": "string",
             "description": "更新时间",
             "format": "date-time",
-            "example": "2026-03-29T12:00:00.003Z",
-            "refType": null
+            "example": "2026-03-29T12:00:00.003Z"
           },
           "update_user": {
             "type": "integer",
             "description": "更新人员 ID",
             "format": "int32",
-            "example": 0,
-            "refType": null
+            "example": 0
           },
           "create_time": {
             "type": "string",
             "description": "创建时间",
             "format": "date-time",
-            "example": "2026-03-29T12:00:00.003Z",
-            "refType": null
+            "example": "2026-03-29T12:00:00.003Z"
           },
           "create_user": {
             "type": "integer",
             "description": "创建人员 ID",
             "format": "int32",
-            "example": 0,
-            "refType": null
+            "example": 0
           },
           "string_user_uuid": {
             "type": "string",
             "description": "用户 UUID 字符串",
-            "example": "字符串类型uuid",
-            "refType": null
+            "example": "字符串类型uuid"
           },
           "work_count": {
             "type": "integer",
             "description": "作品发布数",
             "format": "int32",
-            "example": 10,
-            "refType": null
+            "example": 10
           },
           "total_likes": {
             "type": "integer",
             "description": "被点赞总数",
             "format": "int64",
-            "example": 100,
-            "refType": null
+            "example": 100
           },
           "total_stars": {
             "type": "integer",
             "description": "被收藏总数",
             "format": "int64",
-            "example": 50,
-            "refType": null
+            "example": 50
           },
           "total_views": {
             "type": "integer",
             "description": "被查看总数",
             "format": "int64",
-            "example": 1000,
-            "refType": null
+            "example": 1000
           },
           "token": {
             "type": "string",
             "description": "JWT Token",
-            "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9",
-            "refType": null
+            "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9"
           }
         },
         "description": "用户登录响应实体"
@@ -3900,15 +3855,13 @@
             "type": "integer",
             "description": "需要操作的作品总数",
             "format": "int32",
-            "example": 10,
-            "refType": null
+            "example": 10
           },
           "successCount": {
             "type": "integer",
             "description": "成功操作的作品数量",
             "format": "int32",
-            "example": 9,
-            "refType": null
+            "example": 9
           },
           "failedWorkIds": {
             "type": "array",
@@ -3921,8 +3874,7 @@
               "type": "integer",
               "description": "失败作品的 ID 列表",
               "format": "int32"
-            },
-            "refType": "integer"
+            }
           }
         },
         "description": "管理员批量操作作品结果"
@@ -3960,15 +3912,13 @@
             "type": "integer",
             "description": "需要更新的用户总数",
             "format": "int32",
-            "example": 10,
-            "refType": null
+            "example": 10
           },
           "successCount": {
             "type": "integer",
             "description": "成功更新的用户数量",
             "format": "int32",
-            "example": 9,
-            "refType": null
+            "example": 9
           },
           "failedUserIds": {
             "type": "array",
@@ -3981,8 +3931,7 @@
               "type": "integer",
               "description": "失败用户的 ID 列表",
               "format": "int32"
-            },
-            "refType": "integer"
+            }
           }
         },
         "description": "管理员批量更新用户信息结果"
@@ -4020,22 +3969,19 @@
             "type": "integer",
             "description": "需要重置的用户总数",
             "format": "int32",
-            "example": 10,
-            "refType": null
+            "example": 10
           },
           "successCount": {
             "type": "integer",
             "description": "成功重置密码的用户数量",
             "format": "int32",
-            "example": 9,
-            "refType": null
+            "example": 9
           },
           "emailSentCount": {
             "type": "integer",
             "description": "成功发送邮件的数量",
             "format": "int32",
-            "example": 8,
-            "refType": null
+            "example": 8
           },
           "failedUserIds": {
             "type": "array",
@@ -4048,8 +3994,7 @@
               "type": "integer",
               "description": "失败用户的 ID 列表",
               "format": "int32"
-            },
-            "refType": "integer"
+            }
           }
         },
         "description": "管理员批量重置密码结果"
@@ -4113,30 +4058,25 @@
         "properties": {
           "size": {
             "type": "integer",
-            "format": "int64",
-            "refType": null
+            "format": "int64"
           },
           "records": {
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/User"
-            },
-            "refType": "User"
+            }
           },
           "total": {
             "type": "integer",
-            "format": "int64",
-            "refType": null
+            "format": "int64"
           },
           "current": {
             "type": "integer",
-            "format": "int64",
-            "refType": null
+            "format": "int64"
           },
           "pages": {
             "type": "integer",
-            "format": "int64",
-            "refType": null
+            "format": "int64"
           }
         },
         "description": "响应数据"
@@ -4174,15 +4114,13 @@
             "type": "integer",
             "description": "需要删除的用户总数",
             "format": "int32",
-            "example": 10,
-            "refType": null
+            "example": 10
           },
           "successCount": {
             "type": "integer",
             "description": "成功删除的用户数量",
             "format": "int32",
-            "example": 9,
-            "refType": null
+            "example": 9
           },
           "failedUserIds": {
             "type": "array",
@@ -4195,8 +4133,7 @@
               "type": "integer",
               "description": "失败用户的 ID 列表",
               "format": "int32"
-            },
-            "refType": "integer"
+            }
           }
         },
         "description": "管理员批量删除用户结果"
@@ -4234,15 +4171,13 @@
             "type": "integer",
             "description": "需要操作的评论总数",
             "format": "int32",
-            "example": 10,
-            "refType": null
+            "example": 10
           },
           "successCount": {
             "type": "integer",
             "description": "成功操作的评论数量",
             "format": "int32",
-            "example": 9,
-            "refType": null
+            "example": 9
           },
           "failedWorkIds": {
             "type": "array",
@@ -4255,8 +4190,7 @@
               "type": "integer",
               "description": "失败评论的 ID 列表",
               "format": "int32"
-            },
-            "refType": "integer"
+            }
           }
         },
         "description": "管理员批量操作评论结果"
@@ -4321,148 +4255,119 @@
         "properties": {
           "nowTime": {
             "type": "string",
-            "description": "获取时间",
-            "refType": null
+            "description": "获取时间"
           },
           "osArch": {
             "type": "string",
-            "description": "操作系统架构",
-            "refType": null
+            "description": "操作系统架构"
           },
           "osName": {
             "type": "string",
-            "description": "操作系统名称",
-            "refType": null
+            "description": "操作系统名称"
           },
           "osVersion": {
             "type": "string",
-            "description": "操作系统版本",
-            "refType": null
+            "description": "操作系统版本"
           },
           "userName": {
             "type": "string",
-            "description": "用户名",
-            "refType": null
+            "description": "用户名"
           },
           "userHome": {
             "type": "string",
-            "description": "用户主目录",
-            "refType": null
+            "description": "用户主目录"
           },
           "userCurrentDir": {
             "type": "string",
-            "description": "项目目录",
-            "refType": null
+            "description": "项目目录"
           },
           "userTempDir": {
             "type": "string",
-            "description": "用户临时目录",
-            "refType": null
+            "description": "用户临时目录"
           },
           "userLanguage": {
             "type": "string",
-            "description": "用户语言",
-            "refType": null
+            "description": "用户语言"
           },
           "userCountry": {
             "type": "string",
-            "description": "用户国家",
-            "refType": null
+            "description": "用户国家"
           },
           "hostName": {
             "type": "string",
-            "description": "主机名",
-            "refType": null
+            "description": "主机名"
           },
           "hostAddress": {
             "type": "string",
-            "description": "主机地址",
-            "refType": null
+            "description": "主机地址"
           },
           "maxMemory": {
             "type": "string",
-            "description": "最大内存",
-            "refType": null
+            "description": "最大内存"
           },
           "totalMemory": {
             "type": "string",
-            "description": "总内存",
-            "refType": null
+            "description": "总内存"
           },
           "freeMemory": {
             "type": "string",
-            "description": "空闲内存",
-            "refType": null
+            "description": "空闲内存"
           },
           "usableMemory": {
             "type": "string",
-            "description": "可用内存",
-            "refType": null
+            "description": "可用内存"
           },
           "jvmName": {
             "type": "string",
-            "description": "Java 虚拟机名称",
-            "refType": null
+            "description": "Java 虚拟机名称"
           },
           "jvmVersion": {
             "type": "string",
-            "description": "Java 虚拟机版本",
-            "refType": null
+            "description": "Java 虚拟机版本"
           },
           "jvmVendor": {
             "type": "string",
-            "description": "Java 虚拟机供应商",
-            "refType": null
+            "description": "Java 虚拟机供应商"
           },
           "jvmInfo": {
             "type": "string",
-            "description": "Java 虚拟机信息",
-            "refType": null
+            "description": "Java 虚拟机信息"
           },
           "jvmSpecName": {
             "type": "string",
-            "description": "Java 虚拟机规范名称",
-            "refType": null
+            "description": "Java 虚拟机规范名称"
           },
           "jvmSpecVersion": {
             "type": "string",
-            "description": "Java 虚拟机规范版本",
-            "refType": null
+            "description": "Java 虚拟机规范版本"
           },
           "jvmSpecVendor": {
             "type": "string",
-            "description": "Java 虚拟机规范供应商",
-            "refType": null
+            "description": "Java 虚拟机规范供应商"
           },
           "jdkVersion": {
             "type": "string",
-            "description": "JDK 版本",
-            "refType": null
+            "description": "JDK 版本"
           },
           "jdkVendor": {
             "type": "string",
-            "description": "JDK 供应商",
-            "refType": null
+            "description": "JDK 供应商"
           },
           "jdkVendorURL": {
             "type": "string",
-            "description": "JDK 供应商 URL",
-            "refType": null
+            "description": "JDK 供应商 URL"
           },
           "jdkSpecName": {
             "type": "string",
-            "description": "JDK 规范名称",
-            "refType": null
+            "description": "JDK 规范名称"
           },
           "jdkSpecVersion": {
             "type": "string",
-            "description": "JDK 规范版本",
-            "refType": null
+            "description": "JDK 规范版本"
           },
           "jdkSpecVendor": {
             "type": "string",
-            "description": "JDK 规范供应商",
-            "refType": null
+            "description": "JDK 规范供应商"
           }
         },
         "description": "系统相关信息"
@@ -4472,30 +4377,25 @@
         "properties": {
           "size": {
             "type": "integer",
-            "format": "int64",
-            "refType": null
+            "format": "int64"
           },
           "records": {
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/Series"
-            },
-            "refType": "Series"
+            }
           },
           "total": {
             "type": "integer",
-            "format": "int64",
-            "refType": null
+            "format": "int64"
           },
           "current": {
             "type": "integer",
-            "format": "int64",
-            "refType": null
+            "format": "int64"
           },
           "pages": {
             "type": "integer",
-            "format": "int64",
-            "refType": null
+            "format": "int64"
           }
         },
         "description": "响应数据"
@@ -4532,59 +4432,49 @@
           "series_id": {
             "type": "integer",
             "description": "系列 ID",
-            "format": "int32",
-            "refType": null
+            "format": "int32"
           },
           "user_id": {
             "type": "integer",
             "description": "用户 ID",
-            "format": "int32",
-            "refType": null
+            "format": "int32"
           },
           "series_title": {
             "type": "string",
-            "description": "系列标题，16 个中文长度",
-            "refType": null
+            "description": "系列标题，16 个中文长度"
           },
           "about_text": {
             "type": "string",
-            "description": "系列描述文本，24 个中文长度",
-            "refType": null
+            "description": "系列描述文本，24 个中文长度"
           },
           "approval_status": {
             "type": "integer",
             "description": "审核状态：10 - 正常、20 - 待审核、30 - 未过审",
-            "format": "int32",
-            "refType": null
+            "format": "int32"
           },
           "is_delete": {
             "type": "boolean",
-            "description": "删除标签：0 - 未删除、1 - 已删除",
-            "refType": null
+            "description": "删除标签：0 - 未删除、1 - 已删除"
           },
           "update_time": {
             "type": "string",
             "description": "数据条目更新时间戳",
-            "format": "date-time",
-            "refType": null
+            "format": "date-time"
           },
           "update_user": {
             "type": "integer",
             "description": "修改者 id，系统修改为 0",
-            "format": "int32",
-            "refType": null
+            "format": "int32"
           },
           "create_time": {
             "type": "string",
             "description": "数据条目创建时间戳",
-            "format": "date-time",
-            "refType": null
+            "format": "date-time"
           },
           "create_user": {
             "type": "integer",
             "description": "存储创建者 id，系统创建为 0",
-            "format": "int32",
-            "refType": null
+            "format": "int32"
           }
         },
         "description": "作品系列实体"
@@ -4594,30 +4484,25 @@
         "properties": {
           "size": {
             "type": "integer",
-            "format": "int64",
-            "refType": null
+            "format": "int64"
           },
           "records": {
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/Works"
-            },
-            "refType": "Works"
+            }
           },
           "total": {
             "type": "integer",
-            "format": "int64",
-            "refType": null
+            "format": "int64"
           },
           "current": {
             "type": "integer",
-            "format": "int64",
-            "refType": null
+            "format": "int64"
           },
           "pages": {
             "type": "integer",
-            "format": "int64",
-            "refType": null
+            "format": "int64"
           }
         },
         "description": "响应数据"
@@ -4654,98 +4539,81 @@
           "work_id": {
             "type": "integer",
             "description": "作品 ID",
-            "format": "int32",
-            "refType": null
+            "format": "int32"
           },
           "user_id": {
             "type": "integer",
             "description": "用户 ID",
-            "format": "int32",
-            "refType": null
+            "format": "int32"
           },
           "work_title": {
             "type": "string",
-            "description": "作品标题，16 个中文长度",
-            "refType": null
+            "description": "作品标题，16 个中文长度"
           },
           "img_url": {
             "type": "string",
-            "description": "图片 URL",
-            "refType": null
+            "description": "图片 URL"
           },
           "thumb_url": {
             "type": "string",
-            "description": "封面缩略图文件名",
-            "refType": null
+            "description": "封面缩略图文件名"
           },
           "series_id": {
             "type": "integer",
             "description": "系列 ID",
-            "format": "int32",
-            "refType": null
+            "format": "int32"
           },
           "like_count": {
             "type": "integer",
             "description": "点赞数",
-            "format": "int32",
-            "refType": null
+            "format": "int32"
           },
           "star_count": {
             "type": "integer",
             "description": "收藏数",
-            "format": "int32",
-            "refType": null
+            "format": "int32"
           },
           "view_count": {
             "type": "integer",
             "description": "查看数",
-            "format": "int32",
-            "refType": null
+            "format": "int32"
           },
           "is_original_work": {
             "type": "boolean",
-            "description": "是否原创：1 - 原创、0 - 转载",
-            "refType": null
+            "description": "是否原创：1 - 原创、0 - 转载"
           },
           "out_url": {
             "type": "string",
-            "description": "外部转载链接",
-            "refType": null
+            "description": "外部转载链接"
           },
           "approval_status": {
             "type": "integer",
             "description": "审核状态：10 - 正常、20 - 待审核、30 - 未过审",
-            "format": "int32",
-            "refType": null
+            "format": "int32"
           },
           "is_delete": {
             "type": "boolean",
-            "description": "删除标签：0 - 未删除、1 - 已删除",
-            "refType": null
+            "description": "删除标签：0 - 未删除、1 - 已删除"
           },
           "update_time": {
             "type": "string",
             "description": "数据条目更新时间戳",
-            "format": "date-time",
-            "refType": null
+            "format": "date-time"
           },
           "update_user": {
             "type": "integer",
             "description": "修改者 id，系统修改为 0",
-            "format": "int32",
-            "refType": null
+            "format": "int32"
           },
           "create_time": {
             "type": "string",
             "description": "数据条目创建时间戳",
-            "format": "date-time",
-            "refType": null
+            "format": "date-time"
           },
           "create_user": {
             "type": "integer",
             "description": "存储创建者 id，系统创建为 0",
-            "format": "int32",
-            "refType": null
+            "format": "int32"
           }
         },
         "description": "作品实体"
@@ -4812,53 +4680,44 @@
           "data_id": {
             "type": "integer",
             "description": "数据 ID",
-            "format": "int32",
-            "refType": null
+            "format": "int32"
           },
           "user_id": {
             "type": "integer",
             "description": "用户 ID",
-            "format": "int32",
-            "refType": null
+            "format": "int32"
           },
           "user_data_name": {
             "type": "string",
-            "description": "数据项目名称（电话、邮箱、网站、微信等等）",
-            "refType": null
+            "description": "数据项目名称（电话、邮箱、网站、微信等等）"
           },
           "user_data": {
             "type": "string",
-            "description": "数据内容（具体的电话号码、邮箱地址、网站 url 等等）",
-            "refType": null
+            "description": "数据内容（具体的电话号码、邮箱地址、网站 url 等等）"
           },
           "is_delete": {
             "type": "boolean",
-            "description": "删除标签：0 - 未删除、1 - 已删除",
-            "refType": null
+            "description": "删除标签：0 - 未删除、1 - 已删除"
           },
           "update_time": {
             "type": "string",
             "description": "数据条目更新时间戳",
-            "format": "date-time",
-            "refType": null
+            "format": "date-time"
           },
           "update_user": {
             "type": "integer",
             "description": "修改者 id，系统修改为 0",
-            "format": "int32",
-            "refType": null
+            "format": "int32"
           },
           "create_time": {
             "type": "string",
             "description": "数据条目创建时间戳",
-            "format": "date-time",
-            "refType": null
+            "format": "date-time"
           },
           "create_user": {
             "type": "integer",
             "description": "存储创建者 id，系统创建为 0",
-            "format": "int32",
-            "refType": null
+            "format": "int32"
           }
         },
         "description": "用户数据实体"
@@ -4869,103 +4728,85 @@
           "work_id": {
             "type": "integer",
             "description": "作品 ID",
-            "format": "int32",
-            "refType": null
+            "format": "int32"
           },
           "user_id": {
             "type": "integer",
             "description": "用户 ID（作为逻辑主键）",
-            "format": "int32",
-            "refType": null
+            "format": "int32"
           },
           "work_title": {
             "type": "string",
-            "description": "作品标题，16 个中文长度",
-            "refType": null
+            "description": "作品标题，16 个中文长度"
           },
           "img_url": {
             "type": "string",
-            "description": "图片 URL",
-            "refType": null
+            "description": "图片 URL"
           },
           "thumb_url": {
             "type": "string",
-            "description": "封面缩略图文件名",
-            "refType": null
+            "description": "封面缩略图文件名"
           },
           "series_id": {
             "type": "integer",
             "description": "系列 ID",
-            "format": "int32",
-            "refType": null
+            "format": "int32"
           },
           "like_count": {
             "type": "integer",
             "description": "点赞数",
-            "format": "int32",
-            "refType": null
+            "format": "int32"
           },
           "star_count": {
             "type": "integer",
             "description": "收藏数",
-            "format": "int32",
-            "refType": null
+            "format": "int32"
           },
           "view_count": {
             "type": "integer",
             "description": "查看数",
-            "format": "int32",
-            "refType": null
+            "format": "int32"
           },
           "is_original_work": {
             "type": "boolean",
-            "description": "是否原创：1 - 原创、0 - 转载",
-            "refType": null
+            "description": "是否原创：1 - 原创、0 - 转载"
           },
           "out_url": {
             "type": "string",
-            "description": "外部转载链接",
-            "refType": null
+            "description": "外部转载链接"
           },
           "approval_status": {
             "type": "integer",
             "description": "审核状态：10 - 正常、20 - 待审核、30 - 未过审",
-            "format": "int32",
-            "refType": null
+            "format": "int32"
           },
           "is_delete": {
             "type": "boolean",
-            "description": "删除标签：0 - 未删除、1 - 已删除",
-            "refType": null
+            "description": "删除标签：0 - 未删除、1 - 已删除"
           },
           "update_time": {
             "type": "string",
             "description": "数据条目更新时间戳",
-            "format": "date-time",
-            "refType": null
+            "format": "date-time"
           },
           "update_user": {
             "type": "integer",
             "description": "修改者 id，系统修改为 0",
-            "format": "int32",
-            "refType": null
+            "format": "int32"
           },
           "create_time": {
             "type": "string",
             "description": "数据条目创建时间戳",
-            "format": "date-time",
-            "refType": null
+            "format": "date-time"
           },
           "create_user": {
             "type": "integer",
             "description": "存储创建者 id，系统创建为 0",
-            "format": "int32",
-            "refType": null
+            "format": "int32"
           },
           "time": {
             "type": "string",
-            "description": "操作时间戳（ISO 8601格式）",
-            "refType": null
+            "description": "操作时间戳（ISO 8601格式）"
           }
         },
         "description": "历史记录实体"
@@ -4975,30 +4816,25 @@
         "properties": {
           "size": {
             "type": "integer",
-            "format": "int64",
-            "refType": null
+            "format": "int64"
           },
           "records": {
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/History"
-            },
-            "refType": "History"
+            }
           },
           "total": {
             "type": "integer",
-            "format": "int64",
-            "refType": null
+            "format": "int64"
           },
           "current": {
             "type": "integer",
-            "format": "int64",
-            "refType": null
+            "format": "int64"
           },
           "pages": {
             "type": "integer",
-            "format": "int64",
-            "refType": null
+            "format": "int64"
           }
         },
         "description": "响应数据"
@@ -5095,6 +4931,11 @@
             "description": "用户昵称",
             "refType": null
           },
+          "username": {
+            "type": "string",
+            "description": "用户名",
+            "refType": null
+          },
           "user_avatar": {
             "type": "string",
             "description": "用户头像路径",
@@ -5103,6 +4944,11 @@
           "replied_nickname": {
             "type": "string",
             "description": "被回复者的用户昵称",
+            "refType": null
+          },
+          "replied_username": {
+            "type": "string",
+            "description": "被回复者的用户名",
             "refType": null
           },
           "replied_user_id": {
@@ -5218,6 +5064,11 @@
             "description": "用户昵称",
             "refType": null
           },
+          "username": {
+            "type": "string",
+            "description": "用户名",
+            "refType": null
+          },
           "user_avatar": {
             "type": "string",
             "description": "用户头像路径",
@@ -5226,6 +5077,11 @@
           "replied_nickname": {
             "type": "string",
             "description": "被回复者的用户昵称",
+            "refType": null
+          },
+          "replied_username": {
+            "type": "string",
+            "description": "被回复者的用户名",
             "refType": null
           },
           "replied_user_id": {
@@ -5243,60 +5099,50 @@
           "comment_id": {
             "type": "integer",
             "description": "评论 ID",
-            "format": "int32",
-            "refType": null
+            "format": "int32"
           },
           "user_id": {
             "type": "integer",
             "description": "用户 ID",
-            "format": "int32",
-            "refType": null
+            "format": "int32"
           },
           "work_id": {
             "type": "integer",
             "description": "作品 ID",
-            "format": "int32",
-            "refType": null
+            "format": "int32"
           },
           "parent_comment_id": {
             "type": "integer",
             "description": "父评论 ID",
-            "format": "int32",
-            "refType": null
+            "format": "int32"
           },
           "in_comment_id": {
             "type": "integer",
             "description": "所属一级评论 ID",
-            "format": "int32",
-            "refType": null
+            "format": "int32"
           },
           "comment_floor": {
             "type": "integer",
             "description": "评论层级",
-            "format": "int32",
-            "refType": null
+            "format": "int32"
           },
           "comment_text": {
             "type": "string",
-            "description": "评论内容，限制长度 125 字",
-            "refType": null
+            "description": "评论内容，限制长度 125 字"
           },
           "approval_status": {
             "type": "integer",
             "description": "审核状态：10 - 正常、20 - 待审核、30 - 未过审",
-            "format": "int32",
-            "refType": null
+            "format": "int32"
           },
           "is_delete": {
             "type": "boolean",
-            "description": "删除标签：0 - 未删除、1 - 已删除",
-            "refType": null
+            "description": "删除标签：0 - 未删除、1 - 已删除"
           },
           "time": {
             "type": "string",
             "description": "评论时间",
-            "format": "date-time",
-            "refType": null
+            "format": "date-time"
           }
         },
         "description": "评论数据库实体"
@@ -5306,30 +5152,25 @@
         "properties": {
           "size": {
             "type": "integer",
-            "format": "int64",
-            "refType": null
+            "format": "int64"
           },
           "records": {
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/Comments"
-            },
-            "refType": "Comments"
+            }
           },
           "total": {
             "type": "integer",
-            "format": "int64",
-            "refType": null
+            "format": "int64"
           },
           "current": {
             "type": "integer",
-            "format": "int64",
-            "refType": null
+            "format": "int64"
           },
           "pages": {
             "type": "integer",
-            "format": "int64",
-            "refType": null
+            "format": "int64"
           }
         },
         "description": "响应数据"
