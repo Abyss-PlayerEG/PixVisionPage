@@ -2,7 +2,7 @@
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { getWorkImageUrl, getAvatarUrl } from '@/config/api'
-import { fetchWorkDetail, fetchCommentList, addComment, deleteComment } from '@/api/workApi'
+import { fetchWorkDetail, fetchCommentList, addComment, deleteComment, toggleLike, toggleStar, fetchLikeStatus, fetchStarStatus } from '@/api/workApi'
 import { getCurrentUser } from '@/api/profileApi'
 import { showSuccess, showError } from '@/utils/notification'
 import { showConfirm } from '@/utils/confirmDialog'
@@ -21,6 +21,14 @@ const currentUser = ref(getCurrentUser())
 const now = ref(Date.now())
 let timeTimer = null
 
+// 点赞/收藏状态
+const liked = ref(false)
+const starred = ref(false)
+const likeCount = ref(0)
+const starCount = ref(0)
+const likePending = ref(false)
+const starPending = ref(false)
+
 // 回复状态
 const replyingTo = ref(null)
 const replyText = ref('')
@@ -35,7 +43,7 @@ const workImgUrl = computed(() => {
 })
 const workMeta = computed(() => {
   if (!workDetail.value) return {}
-  return { likeCount: workDetail.value.like_count || 0, starCount: workDetail.value.star_count || 0, viewCount: workDetail.value.view_count || 0, createTime: workDetail.value.create_time || '' }
+  return { likeCount: likeCount.value, starCount: starCount.value, viewCount: workDetail.value.view_count || 0, createTime: workDetail.value.create_time || '' }
 })
 
 const handleBack = () => {
@@ -80,6 +88,32 @@ const startReply = (comment, parentId, userId) => {
 const cancelReply = () => {
   replyingTo.value = null
   replyText.value = ''
+}
+
+const handleToggleLike = async () => {
+  const id = Number(workId.value)
+  if (!id || likePending.value) return
+  if (!currentUser.value) { goLogin(); return }
+  likePending.value = true
+  const result = await toggleLike(id)
+  if (result.success && result.data !== undefined) {
+    liked.value = result.data
+    likeCount.value += result.data ? 1 : -1
+  }
+  likePending.value = false
+}
+
+const handleToggleStar = async () => {
+  const id = Number(workId.value)
+  if (!id || starPending.value) return
+  if (!currentUser.value) { goLogin(); return }
+  starPending.value = true
+  const result = await toggleStar(id)
+  if (result.success && result.data !== undefined) {
+    starred.value = result.data
+    starCount.value += result.data ? 1 : -1
+  }
+  starPending.value = false
 }
 
 const handleSubmitReply = async () => {
@@ -165,9 +199,17 @@ onMounted(async () => {
   const [detailResult, commentResult] = await Promise.all([fetchWorkDetail(id), fetchCommentList(id, 'newest')])
   if (detailResult.success) {
     workDetail.value = detailResult.data
+    likeCount.value = detailResult.data.like_count || 0
+    starCount.value = detailResult.data.star_count || 0
     publisher.value = { avatar: getAvatarUrl(''), displayName: '创作者 #' + detailResult.data.user_id, username: 'user_' + detailResult.data.user_id, bio: '暂无简介', works: 0, followers: 0, following: 0 }
   }
   if (commentResult.success) comments.value = commentResult.data
+  // 初始化点赞/收藏状态（需登录）
+  if (currentUser.value) {
+    const [likeStatus, starStatus] = await Promise.all([fetchLikeStatus(id), fetchStarStatus(id)])
+    if (likeStatus.success) liked.value = likeStatus.data
+    if (starStatus.success) starred.value = starStatus.data
+  }
   loading.value = false
 })
 
@@ -189,52 +231,34 @@ onUnmounted(() => {
 
     <div class="wd-container">
       <main class="wd-main">
+
+        <div class="wd-work-info">
+          <h1 class="wd-work-title">{{ workTitle }}</h1>
+          <div class="wd-work-meta">
+            <span v-if="workMeta.createTime">发布于 {{ formatTime(workMeta.createTime) }}</span>
+            <span class="wd-meta-stat">
+              <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+              {{ workMeta.viewCount }}
+            </span>
+          </div>
+        </div>
+
         <div class="wd-image-stage">
           <div v-if="loading" class="wd-loading">加载中...</div>
           <img v-else-if="workImgUrl" :src="workImgUrl" :alt="workTitle" />
           <div v-else class="wd-comments-empty">暂无作品图片</div>
         </div>
 
-        <div class="wd-work-info">
-          <h1 class="wd-work-title">{{ workTitle }}</h1>
-          <div class="wd-work-meta">
-            <span>{{ workMeta.likeCount }} 赞</span>
-            <span>{{ workMeta.starCount }} 收藏</span>
-            <span>{{ workMeta.viewCount }} 浏览</span>
-            <span v-if="workMeta.createTime">发布于 {{ formatTime(workMeta.createTime) }}</span>
-          </div>
-        </div>
-
-        <!-- 手机端发布者卡片 -->
-        <div class="wd-mobile-publisher">
-          <div class="publisher-card">
-            <div class="publisher-header">
-              <div class="publisher-avatar">
-                <img :src="publisher.avatar" alt="publisher avatar" />
-              </div>
-              <div>
-                <p class="publisher-name">{{ publisher.displayName }}</p>
-                <p class="publisher-username">@{{ publisher.username }}</p>
-              </div>
-            </div>
-            <div class="publisher-stats">
-              <div class="publisher-stat"><div class="publisher-stat-value">{{ publisher.works }}</div><div class="publisher-stat-label">作品</div></div>
-              <div class="publisher-stat"><div class="publisher-stat-value">{{ publisher.followers.toLocaleString() }}</div><div class="publisher-stat-label">粉丝</div></div>
-              <div class="publisher-stat"><div class="publisher-stat-value">{{ publisher.following }}</div><div class="publisher-stat-label">关注</div></div>
-            </div>
-            <button class="publisher-follow">关注</button>
-            <p class="publisher-bio">{{ publisher.bio }}</p>
-            <div class="publisher-contact">
-              <div class="publisher-contact-item">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M22 7l-10 7L2 7"/></svg>
-                联系邮箱
-              </div>
-              <div class="publisher-contact-item">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
-                所在地
-              </div>
-            </div>
-          </div>
+        <!-- 点赞收藏操作栏 -->
+        <div class="wd-action-bar">
+          <button class="wd-action-btn" :class="{ 'wd-action-btn--active': liked }" @click="handleToggleLike" :disabled="likePending">
+            <svg viewBox="0 0 1024 1024" width="22" height="22"><path d="M885.9 533.7c16.8-22.2 26.1-49.4 26.1-77.7 0-44.9-25.1-87.4-65.5-111.1a67.67 67.67 0 0 0-34.3-9.3H572.4l6-122.9c1.4-29.7-9.1-57.9-29.5-79.4-20.5-21.5-48.1-33.4-77.9-33.4-52 0-98 35-111.8 85.1l-85.9 311h-0.3v428h472.3c9.2 0 18.2-1.8 26.5-5.4 47.6-20.3 78.3-66.8 78.3-118.4 0-12.6-1.8-25-5.4-37 16.8-22.2 26.1-49.4 26.1-77.7 0-12.6-1.8-25-5.4-37 16.8-22.2 26.1-49.4 26.1-77.7-0.2-12.6-2-25.1-5.6-37.1zM112 528v364c0 17.7 14.3 32 32 32h65V496h-65c-17.7 0-32 14.3-32 32z" fill="currentColor"/></svg>
+            <span>{{ likeCount }}</span>
+          </button>
+          <button class="wd-action-btn" :class="{ 'wd-action-btn--active': starred }" @click="handleToggleStar" :disabled="starPending">
+            <svg viewBox="0 0 1024 1024" width="22" height="22"><path d="M565.273 34.627L677.369 272.17c8.706 18.32 25.411 31.051 44.823 33.996l250.776 38.081c48.698 7.411 68.225 70.046 32.934 105.98L824.407 635.164c-13.998 14.23-20.352 34.815-17.059 54.935l42.82 261.127c8.346 50.696-42.643 89.452-86.226 65.519L539.634 893.474c-17.286-9.526-37.992-9.526-55.278 0l-224.314 123.27c-43.583 23.934-94.572-14.822-86.22-65.518L216.638 690.1c3.32-20.12-3.089-40.705-17.087-54.935L18.11 450.227c-35.285-35.934-15.818-98.574 32.934-105.98l250.75-38.081c19.35-2.94 36.082-15.675 44.756-33.996L458.673 34.627c21.825-46.168 84.836-46.168 106.6 0z" fill="currentColor"/></svg>
+            <span>{{ starCount }}</span>
+          </button>
         </div>
 
         <section class="wd-comments">
@@ -376,6 +400,40 @@ onUnmounted(() => {
 .wd-comment-reply { background: transparent; padding: 8px 10px; }
 .wd-comment-reply:hover { background: transparent; }
 .wd-comment-submit:disabled { opacity: 0.5; cursor: not-allowed; }
+
+/* wd-work-meta 图标统计 */
+.wd-meta-stat {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: #7e7e7e;
+}
+
+/* 点赞收藏操作栏 */
+.wd-action-bar {
+  display: flex;
+  gap: 24px;
+  padding: 20px 14px;
+  border-radius: 10px;
+}
+.wd-action-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: #7e7e7e;
+  font-size: 15px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: color 0.2s, transform 0.15s;
+}
+.wd-action-btn:hover { color: #cecece; }
+.wd-action-btn:active { transform: scale(0.95); }
+.wd-action-btn:disabled { cursor: wait; }
+.wd-action-btn--active { color: #4a9eff; }
+.wd-action-btn--active:hover { color: #66c0ff; }
 
 /* 未登录提示 */
 .wd-login-prompt {

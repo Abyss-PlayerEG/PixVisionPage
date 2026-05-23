@@ -65,6 +65,18 @@ export const COMMENT_API = {
 // 作品图片获取接口
 export const WORK_IMAGE_API = `${API_BASE_URL}/api/image/work/get`;
 
+// 点赞相关接口
+export const LIKE_API = {
+  TOGGLE: `${API_BASE_URL}/api/like/toggle`,   // POST，路径后拼 /workId
+  STATUS: `${API_BASE_URL}/api/like/status`,   // GET，路径后拼 /workId
+};
+
+// 收藏相关接口
+export const STAR_API = {
+  TOGGLE: `${API_BASE_URL}/api/star/toggle`,   // POST，路径后拼 /workId
+  STATUS: `${API_BASE_URL}/api/star/status`,   // GET，路径后拼 /workId
+};
+
 // 获取作品图片完整 URL
 export const getWorkImageUrl = (filePath) => {
   if (!filePath) {

@@ -2,7 +2,7 @@
  * 作品相关 API 调用
  */
 
-import { WORK_API, COMMENT_API, getWorkImageUrl, getAvatarUrl } from '../config/api';
+import { WORK_API, COMMENT_API, LIKE_API, STAR_API, getWorkImageUrl, getAvatarUrl } from '../config/api';
 
 /**
  * 获取单个作品详细信息
@@ -140,6 +140,118 @@ export const deleteComment = async (commentId) => {
   } catch (error) {
     console.error('[API] 删除评论请求失败:', error);
     return { success: false, message: '网络错误，请稍后重试' };
+  }
+};
+
+/**
+ * 切换点赞状态（点赞/取消）
+ * @param {number} workId - 作品 ID
+ * @returns {Promise<Object>} { success, data: boolean (true=已点赞, false=未点赞), message }
+ */
+export const toggleLike = async (workId) => {
+  try {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      return { success: false, message: '请先登录后再操作' };
+    }
+    const url = `${LIKE_API.TOGGLE}/${workId}`;
+    console.log('[API] 切换点赞:', url);
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: { 'Authorization': `Bearer ${token}` },
+    });
+    const result = await response.json();
+    console.log('[API] 点赞响应:', JSON.stringify(result, null, 2));
+    const statusCode = result.code || result.recode;
+    if (statusCode === 200) {
+      return { success: true, data: result.data, message: result.message };
+    }
+    return { success: false, message: result.message || '操作失败' };
+  } catch (error) {
+    console.error('[API] 点赞请求失败:', error);
+    return { success: false, message: '网络错误，请稍后重试' };
+  }
+};
+
+/**
+ * 切换收藏状态（收藏/取消）
+ * @param {number} workId - 作品 ID
+ * @returns {Promise<Object>} { success, data: boolean (true=已收藏, false=未收藏), message }
+ */
+export const toggleStar = async (workId) => {
+  try {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      return { success: false, message: '请先登录后再操作' };
+    }
+    const url = `${STAR_API.TOGGLE}/${workId}`;
+    console.log('[API] 切换收藏:', url);
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: { 'Authorization': `Bearer ${token}` },
+    });
+    const result = await response.json();
+    console.log('[API] 收藏响应:', JSON.stringify(result, null, 2));
+    const statusCode = result.code || result.recode;
+    if (statusCode === 200) {
+      return { success: true, data: result.data, message: result.message };
+    }
+    return { success: false, message: result.message || '操作失败' };
+  } catch (error) {
+    console.error('[API] 收藏请求失败:', error);
+    return { success: false, message: '网络错误，请稍后重试' };
+  }
+};
+
+/**
+ * 查询当前用户对作品的点赞状态
+ * @param {number} workId - 作品 ID
+ * @returns {Promise<Object>} { success, data: boolean, message }
+ */
+export const fetchLikeStatus = async (workId) => {
+  try {
+    const token = localStorage.getItem('token');
+    if (!token) return { success: false, message: '未登录' };
+    const url = `${LIKE_API.STATUS}/${workId}`;
+    const response = await fetch(url, {
+      method: 'GET',
+      headers: { 'Authorization': `Bearer ${token}` },
+    });
+    const result = await response.json();
+    const statusCode = result.code || result.recode;
+    if (statusCode === 200) {
+      return { success: true, data: result.data };
+    }
+    return { success: false, message: result.message };
+  } catch (error) {
+    console.error('[API] 点赞状态查询失败:', error);
+    return { success: false, message: '网络错误' };
+  }
+};
+
+/**
+ * 查询当前用户对作品的收藏状态
+ * @param {number} workId - 作品 ID
+ * @returns {Promise<Object>} { success, data: boolean, message }
+ */
+export const fetchStarStatus = async (workId) => {
+  try {
+    const token = localStorage.getItem('token');
+    if (!token) return { success: false, message: '未登录' };
+    const url = `${STAR_API.STATUS}/${workId}`;
+    const response = await fetch(url, {
+      method: 'GET',
+      headers: { 'Authorization': `Bearer ${token}` },
+    });
+    const result = await response.json();
+    const statusCode = result.code || result.recode;
+    if (statusCode === 200) {
+      return { success: true, data: result.data };
+    }
+    return { success: false, message: result.message };
+  } catch (error) {
+    console.error('[API] 收藏状态查询失败:', error);
+    return { success: false, message: '网络错误' };
   }
 };
 
