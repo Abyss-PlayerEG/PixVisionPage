@@ -1,5 +1,5 @@
 <script setup>
-import { ref, watch, nextTick, onMounted, onUnmounted } from 'vue'
+import { ref, computed, watch, nextTick, onMounted, onUnmounted } from 'vue'
 import gsap from 'gsap'
 
 const props = defineProps({
@@ -8,6 +8,16 @@ const props = defineProps({
   show: { type: Boolean, default: false },
   yesText: { type: String, default: '是' },
   noText: { type: String, default: '否' },
+  type: { type: String, default: 'info', validator: (v) => ['info', 'warning', 'danger'].includes(v) },
+})
+
+const typeConfig = computed(() => {
+  const configs = {
+    danger: { color: '#ff5c5c', hoverColor: '#e04848', iconBg: 'rgba(255, 92, 92, 0.1)' },
+    warning: { color: '#f0a020', hoverColor: '#d48e18', iconBg: 'rgba(240, 160, 32, 0.1)' },
+    info: { color: '#00A947', hoverColor: '#008e3a', iconBg: 'rgba(0, 169, 71, 0.1)' },
+  }
+  return configs[props.type] || configs.info
 })
 
 const emit = defineEmits(['update:show', 'confirm', 'cancel', 'close'])
@@ -105,11 +115,18 @@ defineExpose({ showDialog, cancel })
         class="cd-dialog"
       >
         <!-- 图标区域 -->
-        <div class="cd-icon">
-          <svg viewBox="0 0 24 24" width="28" height="28">
+        <div class="cd-icon" :class="`cd-icon--${type}`" :style="{ background: typeConfig.iconBg, color: typeConfig.color }">
+          <!-- info: 消息圆圈 -->
+          <svg v-if="type === 'info'" viewBox="0 0 24 24" width="28" height="28">
             <circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" stroke-width="2"/>
-            <path d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-            <line x1="12" y1="17" x2="12.01" y2="17" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>
+            <line x1="12" y1="8" x2="12" y2="8.01" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>
+            <path d="M12 11v5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+          <!-- warning / danger: 三角警告 -->
+          <svg v-else viewBox="0 0 24 24" width="28" height="28">
+            <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <line x1="12" y1="9" x2="12" y2="13" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            <circle cx="12" cy="17" r="0.5" fill="currentColor" stroke="none"/>
           </svg>
         </div>
 
@@ -122,7 +139,7 @@ defineExpose({ showDialog, cancel })
         <!-- 按钮区 -->
         <div class="cd-actions">
           <button class="cd-btn cd-btn--no" @click="cancel">{{ noText }}</button>
-          <button class="cd-btn cd-btn--yes" @click="confirm">{{ yesText }}</button>
+          <button class="cd-btn cd-btn--yes" :class="`cd-btn--yes-${type}`" :style="{ background: typeConfig.color }" @click="confirm">{{ yesText }}</button>
         </div>
       </div>
     </div>
@@ -163,8 +180,6 @@ defineExpose({ showDialog, cancel })
   height: 56px;
   margin: 0 auto 16px;
   border-radius: 50%;
-  background: rgba(255, 255, 255, 0.05);
-  color: #4a9eff;
 }
 
 /* 标题 */
@@ -215,11 +230,10 @@ defineExpose({ showDialog, cancel })
 }
 
 .cd-btn--yes {
-  background: #4a9eff;
   color: #ffffff;
 }
 .cd-btn--yes:hover {
-  background: #3a8eef;
+  filter: brightness(0.9);
 }
 .cd-btn--yes:active {
   transform: scale(0.97);

@@ -11,12 +11,13 @@ const confirmDelete = async () => {
     message: '确定要删除这个项目吗？此操作不可撤销。',
     yesText: '删除',
     noText: '取消',
+    type: 'danger',
   })
   if (confirmed) showSuccess('已删除')
 }
 
 const confirmPublish = async () => {
-  const confirmed = await showConfirm({ message: '确定要发布这个作品吗？' })
+  const confirmed = await showConfirm({ message: '确定要发布这个作品吗？', type: 'info' })
   if (confirmed) showSuccess('发布成功！')
   else showInfo('已取消发布')
 }
@@ -27,6 +28,7 @@ const confirmLogout = async () => {
     message: '确定要退出当前账号吗？',
     yesText: '退出',
     noText: '留在此页',
+    type: 'warning',
   })
   if (confirmed) showSuccess('已退出登录')
 }
@@ -37,6 +39,7 @@ const confirmCustom = async () => {
     message: '当前文件已有历史版本，覆盖后旧版本将无法恢复。是否继续？',
     yesText: '覆盖',
     noText: '保留',
+    type: 'warning',
   })
   if (confirmed) showSuccess('已覆盖保存')
   else showError('已取消覆盖')
@@ -71,16 +74,16 @@ const onComponentCancel = () => {
       <p class="demo-desc">直接 await 调用，返回 true/false，无需管理组件状态。</p>
       <div class="button-group">
         <button @click="confirmDelete" class="btn btn-error">
-          删除确认
+          删除确认（danger）
         </button>
         <button @click="confirmPublish" class="btn btn-success">
-          发布确认
+          发布确认（info）
         </button>
         <button @click="confirmLogout" class="btn btn-warning">
-          退出登录
+          退出登录（warning）
         </button>
         <button @click="confirmCustom" class="btn btn-info">
-          覆盖保存
+          覆盖保存（warning）
         </button>
       </div>
       <div class="code-block">
@@ -90,7 +93,8 @@ const onComponentCancel = () => {
 const confirmed = await showConfirm({
   title: '删除确认',
   message: '确定要删除吗？',
-  yesText: '删除'
+  yesText: '删除',
+  type: 'danger'   // 'info' | 'warning' | 'danger'
 })
 
 if (confirmed) {
@@ -118,6 +122,7 @@ if (confirmed) {
         :message="componentMode === 'delete' ? '此操作会将数据永久删除且无法恢复。' : '你确定要继续执行此操作吗？'"
         :yes-text="componentMode === 'delete' ? '确认删除' : '是'"
         :no-text="componentMode === 'delete' ? '保留数据' : '否'"
+        :type="componentMode === 'delete' ? 'danger' : 'info'"
         @update:show="componentShow = $event"
         @confirm="onComponentConfirm"
         @cancel="onComponentCancel"
@@ -130,6 +135,7 @@ if (confirmed) {
   message="你确定要继续吗？"
   yes-text="是"
   no-text="否"
+  type="info"          <!-- 'info' | 'warning' | 'danger' -->
   @confirm="onConfirm"
   @cancel="onCancel"
 /&gt;</code></pre>
@@ -178,6 +184,24 @@ if (confirmed) {
             <td>'否'</td>
             <td>取消按钮文字</td>
           </tr>
+          <tr>
+            <td>type</td>
+            <td>String</td>
+            <td>'info'</td>
+            <td>场景类型: 'info' 正常 | 'warning' 警告 | 'danger' 严重</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h3 style="margin-top: 24px; font-size: 15px; color: #aaaaaa;">类型效果对照</h3>
+      <table class="demo-table" style="margin-top: 12px;">
+        <thead>
+          <tr><th>type</th><th>按钮色</th><th>图标</th><th>适用场景</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><code>info</code></td><td><span class="color-dot" style="background:#00A947"></span> #00A947 绿</td><td>ⓘ 圆圈</td><td>普通消息确认</td></tr>
+          <tr><td><code>warning</code></td><td><span class="color-dot" style="background:#f0a020"></span> #f0a020 黄</td><td>△ 三角</td><td>警告提示</td></tr>
+          <tr><td><code>danger</code></td><td><span class="color-dot" style="background:#ff5c5c"></span> #ff5c5c 红</td><td>△ 三角</td><td>删除等危险操作</td></tr>
         </tbody>
       </table>
 
@@ -305,6 +329,15 @@ h2 {
 }
 
 .demo-table tr:last-child td { border-bottom: none; }
+
+.color-dot {
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  vertical-align: middle;
+  margin-right: 6px;
+}
 
 @media (max-width: 768px) {
   .confirm-demo {

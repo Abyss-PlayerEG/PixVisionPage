@@ -8,10 +8,11 @@ import ConfirmDialog from '../components/ConfirmDialog.vue'
  * @param {string} [options.title='确认'] - 标题
  * @param {string} [options.yesText='是'] - 确认按钮文字
  * @param {string} [options.noText='否'] - 取消按钮文字
+ * @param {string} [options.type='info'] - 场景类型: 'info' 正常消息 | 'warning' 警告 | 'danger' 严重
  * @returns {Promise<boolean>} true=确认, false=取消
  *
  * @example
- * const confirmed = await showConfirm({ message: '确定要删除吗？' })
+ * const confirmed = await showConfirm({ message: '确定要删除吗？', type: 'danger' })
  * if (confirmed) { ... }
  */
 export const showConfirm = (options = {}) => {
@@ -20,6 +21,7 @@ export const showConfirm = (options = {}) => {
     title = '确认',
     yesText = '是',
     noText = '否',
+    type = 'info',
   } = options
 
   if (!message) {
@@ -53,6 +55,7 @@ export const showConfirm = (options = {}) => {
           title,
           yesText,
           noText,
+          type,
           show: this.show,
           'onUpdate:show': (val) => { this.show = val },
           onConfirm: () => {

@@ -107,7 +107,7 @@ const handleSubmitReply = async () => {
 }
 
 const handleDeleteComment = async (commentId) => {
-  const ok = await showConfirm({ title: '删除评论', message: '确定要删除这条评论吗？', yesText: '删除', noText: '取消' })
+  const ok = await showConfirm({ title: '删除评论', message: '确定要删除这条评论吗？', yesText: '删除', noText: '取消', type: 'danger' })
   if (!ok) return
   const result = await deleteComment(commentId)
   if (result.success) {
