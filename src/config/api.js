@@ -52,6 +52,13 @@ export const getAvatarUrl = (avatarPath) => {
 // 作品相关接口
 export const WORK_API = {
   PAGE: `${API_BASE_URL}/api/work/page`,
+  DETAIL: `${API_BASE_URL}/api/work/detail`,  // 查询单个作品（公开接口）
+};
+
+// 评论相关接口
+export const COMMENT_API = {
+  LIST: `${API_BASE_URL}/api/comment/list`,    // 查询评论列表（公开接口，路径后拼 workId）
+  ADD: `${API_BASE_URL}/api/comment/add`,       // 新增评论（需登录）
 };
 
 // 作品图片获取接口

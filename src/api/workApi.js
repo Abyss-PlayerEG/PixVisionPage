@@ -2,29 +2,114 @@
  * 作品相关 API 调用
  */
 
-import { WORK_API, getWorkImageUrl } from '../config/api';
+import { WORK_API, COMMENT_API, getWorkImageUrl, getAvatarUrl } from '../config/api';
+
+/**
+ * 获取单个作品详细信息
+ * @param {number} workId - 作品 ID
+ * @returns {Promise<Object>} { success, data: Works, message }
+ */
+export const fetchWorkDetail = async (workId) => {
+  try {
+    const url = `${WORK_API.DETAIL}/${workId}`;
+    console.log('[API] 请求作品详情:', url);
+    const response = await fetch(url, { method: 'GET', headers: { 'Content-Type': 'application/json' } });
+    const result = await response.json();
+    console.log('[API] 作品详情响应:', JSON.stringify(result, null, 2));
+    const statusCode = result.code || result.recode;
+    if (statusCode === 200 && result.data) {
+      return { success: true, data: result.data };
+    }
+    return { success: false, message: result.message || '作品不存在或已删除' };
+  } catch (error) {
+    console.error('[API] 作品详情请求失败:', error);
+    return { success: false, message: '网络错误，请稍后重试' };
+  }
+};
+
+/**
+ * 获取作品评论列表
+ * @param {number} workId - 作品 ID
+ * @param {string} [orderBy='newest'] - 排序方式
+ * @returns {Promise<Object>}
+ */
+export const fetchCommentList = async (workId, orderBy = 'newest') => {
+  try {
+    const queryParams = new URLSearchParams();
+    if (orderBy) queryParams.append('orderBy', orderBy);
+    const queryString = queryParams.toString();
+    const url = `${COMMENT_API.LIST}/${workId}${queryString ? '?' + queryString : ''}`;
+    console.log('[API] 请求评论列表:', url);
+    const response = await fetch(url, { method: 'GET', headers: { 'Content-Type': 'application/json' } });
+    const result = await response.json();
+    console.log('[API] 评论列表响应:', JSON.stringify(result, null, 2));
+    const statusCode = result.code || result.recode;
+    if (statusCode === 200 && result.data) {
+      const comments = result.data.map(transformComment);
+      return { success: true, data: comments };
+    }
+    return { success: false, message: result.message || '获取评论失败' };
+  } catch (error) {
+    console.error('[API] 评论列表请求失败:', error);
+    return { success: false, message: '网络错误，请稍后重试' };
+  }
+};
+
+/** 转换评论数据，拼接头像 URL 并递归处理子评论 */
+const transformComment = (comment) => {
+  const transformed = { ...comment, avatarUrl: getAvatarUrl(comment.user_avatar || '') };
+  if (comment.children && Array.isArray(comment.children)) {
+    transformed.children = comment.children.map(transformComment);
+  }
+  return transformed;
+};
+
+/**
+ * 发表评论
+ * @param {Object} params
+ * @param {number} params.workId
+ * @param {number} params.commentFloor - 1=一级, 2=二级
+ * @param {string} params.commentText - 最多125字
+ * @param {number} [params.parentCommentId]
+ * @returns {Promise<Object>}
+ */
+export const addComment = async ({ workId, commentFloor, commentText, parentCommentId }) => {
+  try {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      return { success: false, message: '请先登录后再发表评论' };
+    }
+    const formData = new URLSearchParams();
+    formData.append('workId', workId);
+    formData.append('commentFloor', commentFloor);
+    formData.append('commentText', commentText);
+    if (parentCommentId !== undefined && parentCommentId !== null) {
+      formData.append('parentCommentId', parentCommentId);
+    }
+    console.log('[API] 发表评论:', { workId, commentFloor, commentText, parentCommentId });
+    const response = await fetch(COMMENT_API.ADD, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'Authorization': `Bearer ${token}` },
+      body: formData,
+    });
+    const result = await response.json();
+    console.log('[API] 评论发表响应:', JSON.stringify(result, null, 2));
+    const statusCode = result.code || result.recode;
+    if (statusCode === 200) {
+      return { success: true, data: result.data, message: result.message };
+    }
+    return { success: false, message: result.message || '评论发表失败' };
+  } catch (error) {
+    console.error('[API] 评论发表请求失败:', error);
+    return { success: false, message: '网络错误，请稍后重试' };
+  }
+};
 
 /**
  * 获取作品分页数据
- * @param {Object} params - 查询参数
- * @param {number} params.current - 当前页码 (默认 1)
- * @param {number} params.size - 每页数量 (默认 10, 最大 500)
- * @param {string} [params.workTitle] - 作品标题 (模糊查询)
- * @param {number} [params.userId] - 用户 ID
- * @param {number} [params.seriesId] - 系列 ID
- * @param {boolean} [params.isOriginal] - 是否原创
- * @returns {Promise<Object>} 标准化返回格式
  */
-export const fetchWorkPage = async ({ 
-  current = 1, 
-  size = 10, 
-  workTitle, 
-  userId, 
-  seriesId, 
-  isOriginal 
-} = {}) => {
+export const fetchWorkPage = async ({ current = 1, size = 10, workTitle, userId, seriesId, isOriginal } = {}) => {
   try {
-    // 构建查询参数
     const queryParams = new URLSearchParams();
     queryParams.append('current', current);
     queryParams.append('size', size);
@@ -32,167 +117,84 @@ export const fetchWorkPage = async ({
     if (userId !== undefined) queryParams.append('userId', userId);
     if (seriesId !== undefined) queryParams.append('seriesId', seriesId);
     if (isOriginal !== undefined) queryParams.append('isOriginal', isOriginal);
-
     const url = `${WORK_API.PAGE}/${current}/${size}?${queryParams.toString()}`;
-
-    const response = await fetch(url, {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    });
-
+    const response = await fetch(url, { method: 'GET', headers: { 'Content-Type': 'application/json' } });
     const result = await response.json();
     console.log('[API] 原始响应数据:', result);
-
-    // 兼容 code 和 recode 字段
     const statusCode = result.code || result.recode;
-
     if (statusCode === 200 && result.data) {
-      return {
-        success: true,
-        data: result.data,
-        message: result.message,
-      };
-    } else {
-      return {
-        success: false,
-        message: result.message || '获取作品列表失败',
-      };
+      return { success: true, data: result.data, message: result.message };
     }
+    return { success: false, message: result.message || '获取作品列表失败' };
   } catch (error) {
     console.error('获取作品列表失败:', error);
-    return {
-      success: false,
-      message: '网络错误，请稍后重试',
-    };
+    return { success: false, message: '网络错误，请稍后重试' };
   }
 };
 
 /**
  * 将作品数据转换为瀑布流组件所需格式
- * @param {Array} records - 作品记录数组
- * @returns {Array} 转换后的图片数据数组
  */
 export const transformWorksToWaterfallFormat = (records) => {
-  if (!records || !Array.isArray(records)) {
-    return [];
-  }
-
-  // 定义可选的基础高度 (5个档位，增加视觉丰富度)
+  if (!records || !Array.isArray(records)) return [];
   const baseHeights = [260, 310, 360, 410, 460];
-  
-  // 模拟列高度追踪
-  const CONTAINER_HEIGHT = window.innerHeight * 0.9; 
+  const CONTAINER_HEIGHT = window.innerHeight * 0.9;
   let simulatedColumnHeight = 0;
-  
-  // 用于记录每一列的图片索引范围，方便最后交换
   const columns = [];
   let currentColumnIndices = [];
-
   const result = records.map((work, index) => {
-    // 调试日志：检查第一条数据的 thumb_url 字段
     if (index === 0) {
       console.log('[API] 第一条作品原始数据:', work);
       console.log('[API] thumb_url:', work.thumb_url, '| img_url:', work.img_url);
     }
-
     let currentHeight;
-
-    // 计算加入这张图后的预估高度
-    const gap = 8; // 间距
+    const gap = 8;
     const projectedHeight = simulatedColumnHeight + (simulatedColumnHeight > 0 ? gap : 0);
-    
-    // 如果剩余空间不足 350px，则最后一张图的高度设为剩余高度
     if (CONTAINER_HEIGHT - projectedHeight < 350) {
-      currentHeight = Math.max(CONTAINER_HEIGHT - projectedHeight, 100); // 确保最小高度
-      
-      // 记录当前列的最后一个索引
+      currentHeight = Math.max(CONTAINER_HEIGHT - projectedHeight, 100);
       currentColumnIndices.push(index);
       columns.push([...currentColumnIndices]);
-      currentColumnIndices = []; // 开启新列
-      
-      // 重置模拟列高
+      currentColumnIndices = [];
       simulatedColumnHeight = 0;
     } else {
-      // 否则从预设值中随机选择
       currentHeight = baseHeights[Math.floor(Math.random() * baseHeights.length)];
       simulatedColumnHeight = projectedHeight + currentHeight;
       currentColumnIndices.push(index);
     }
-    
-    // 瀑布流使用 thumb_url（缩略图）以提升加载性能
     const imageUrl = getWorkImageUrl(work.thumb_url);
-    if (index === 0) {
-      console.log('[API] 第一条缩略图生成的 URL:', imageUrl);
-    }
-
-    // 全尺寸图片URL（用于详情页）
+    if (index === 0) console.log('[API] 第一条缩略图生成的 URL:', imageUrl);
     const fullImageUrl = work.img_url ? getWorkImageUrl(work.img_url) : imageUrl;
-
-    return {
-      src: imageUrl,
-      alt: work.work_title || '',
-      height: currentHeight,
-      // 保留原始数据以便后续使用
-      workId: work.work_id,
-      workTitle: work.work_title,
-      userId: work.user_id,
-      imgUrl: fullImageUrl,  // 全尺寸图，点击跳转详情页时使用
-    };
+    return { src: imageUrl, alt: work.work_title || '', height: currentHeight, workId: work.work_id, workTitle: work.work_title, userId: work.user_id, imgUrl: fullImageUrl };
   });
-
-  // 如果最后一列还有残留索引，也加入记录
-  if (currentColumnIndices.length > 0) {
-    columns.push([...currentColumnIndices]);
-  }
-
-  // 执行分组交换逻辑
+  if (currentColumnIndices.length > 0) columns.push([...currentColumnIndices]);
   columns.forEach((colIndices, colIndex) => {
     if (colIndices.length < 2) return;
-
     const remainder = colIndex % 3;
-    
     if (remainder === 1) {
-      // 第 2, 5, 8... 列：交换最后一张和倒数第二张
       const lastIdx = colIndices[colIndices.length - 1];
       const secondLastIdx = colIndices[colIndices.length - 2];
       const tempHeight = result[lastIdx].height;
       result[lastIdx].height = result[secondLastIdx].height;
       result[secondLastIdx].height = tempHeight;
     } else if (remainder === 2) {
-      // 第 3, 6, 9... 列：交换最后一张和第一张
       const lastIdx = colIndices[colIndices.length - 1];
       const firstIdx = colIndices[0];
       const tempHeight = result[lastIdx].height;
       result[lastIdx].height = result[firstIdx].height;
       result[firstIdx].height = tempHeight;
     }
-    // remainder === 0 (第 1, 4, 7... 列) 不做任何交换
   });
-
-  // 单独处理最后一列：计算总高度，将留白部分全部加给最后一张图片
   if (columns.length > 0) {
     const lastColIndices = columns[columns.length - 1];
     if (lastColIndices.length > 0) {
       let currentColTotalHeight = 0;
-      
-      // 计算当前列所有图片的总高度（含间距）
-      lastColIndices.forEach((idx, i) => {
-        currentColTotalHeight += result[idx].height;
-        if (i > 0) currentColTotalHeight += 8; // 加上间距
-      });
-
-      // 计算留白空间
+      lastColIndices.forEach((idx, i) => { currentColTotalHeight += result[idx].height; if (i > 0) currentColTotalHeight += 8; });
       const remainingSpace = CONTAINER_HEIGHT - currentColTotalHeight;
-      
-      // 如果有留白（且留白不是负数），加到最后一张图上
       if (remainingSpace > 0) {
         const lastImgIdx = lastColIndices[lastColIndices.length - 1];
         result[lastImgIdx].height += remainingSpace;
       }
     }
   }
-  
   return result;
 };
