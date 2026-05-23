@@ -244,6 +244,7 @@
 }
 
 #num2z_2{
+    border-top:2px solid #3a3a3a;
     width: 100%;
     min-height: 200px;
     background-color: #000000;
@@ -305,7 +306,7 @@
     position: relative;
     z-index: 4;
     background-color: #000;
-    padding: 200px 5% 0 5%;
+    padding:0 5%;
 
     display: flex;
     flex-direction: column;
@@ -316,6 +317,15 @@
     h1{
         font-size: 60px;
         height: 100px;
+    }
+
+    hr{
+        margin-bottom: 20px;
+        opacity: .5;
+    }
+    
+    p{
+        margin-bottom: 230px;
     }
 
     /* div{
@@ -457,6 +467,23 @@
     flex-direction: column;
     gap: 24px;
     background-color:#000;
+
+    hr {
+        width: 60px;
+        height: 2px;
+        border: none;
+        background: rgba(255, 255, 255, 0.3);
+        margin: 0;
+        flex-shrink: 0;
+    }
+
+    > p {
+        font-size: 14px;
+        color: #7e7e7e;
+        letter-spacing: 1px;
+        margin: 0;
+        flex-shrink: 0;
+    }
 
     h1{
         font-size: clamp(36px, 5vw, 60px);

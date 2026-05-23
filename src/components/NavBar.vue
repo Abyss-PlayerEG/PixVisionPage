@@ -1,7 +1,12 @@
 <script setup>
 import { ref, computed, onMounted, onUnmounted } from 'vue';
 import { useRouter } from 'vue-router';
+import { useAuth } from '@/composables/useAuth';
+import fallbackAvatar from '@/assets/IMG/suliusu.jpg';
+
 const router = useRouter();
+const { isLoggedIn, userAvatar, checkAuth } = useAuth();
+const avatarLoaded = ref(false);
 
 // 配置常量
 const HDcont = 1900; // 滚动阈值，可在此处修改
@@ -164,6 +169,9 @@ const handleBtnLeave = () => {
 };
 
 onMounted(() => {
+  // 检查登录状态
+  checkAuth();
+
   // 检查初始滚动位置
   const scrollTop = window.scrollY || document.documentElement.scrollTop;
   isScrolled.value = scrollTop > HDcont;
@@ -223,8 +231,24 @@ onUnmounted(() => {
 
         <!-- 右侧个人选项 -->
         <section class="navTag n3_cont">
-            <div class="show_zone"></div>
-            <div class="login_btn" @click="$router.push('/login')">JoinUs</div>
+            <div v-if="!isLoggedIn" class="login_btn" @click="$router.push('/login')">JoinUs</div>
+            <div v-else class="avatar_pill" @click="$router.push('/profile/me')">
+                <div class="avatar_stack">
+                    <img :src="fallbackAvatar" class="user_avatar avatar_bg" alt="" />
+                    <img
+                        v-show="avatarLoaded"
+                        :src="userAvatar"
+                        class="user_avatar avatar_fg"
+                        alt=""
+                        @load="avatarLoaded = true"
+                        @error="avatarLoaded = false"
+                    />
+                </div>
+                <span class="pill_meta">
+                    <span class="pill_label">me</span>
+                    <span class="online_dot"></span>
+                </span>
+            </div>
         </section>
     </section>
 
@@ -311,7 +335,7 @@ onUnmounted(() => {
 
 .n2_btn_wrapper {
     position: relative;
-    margin-right: 50px;
+    margin-right: 20px;
 }
 
 .n2_btn{
@@ -319,7 +343,7 @@ onUnmounted(() => {
     font-size: clamp(16px,18px,20px) ;
     cursor: pointer;
     transition: all 0.3s ease;
-    padding: 0 10px;
+    padding:0 10px;
 }
 
 .n2_btn:hover {
@@ -382,9 +406,82 @@ onUnmounted(() => {
     box-shadow: 0 4px 24px rgba(0, 0, 0, 0.1); /* 柔光阴影 */
 }
 
-.login_btn:hover{ 
+.login_btn:hover{
     color: rgba(255, 255, 255);
     border: 1px solid rgba(255, 255, 255);
+}
+
+/* 头像药丸容器（已登录状态） */
+.avatar_pill {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    height: 36px;
+    padding: 0 18px 0 5px;
+    cursor: pointer;
+    margin-left: 10px;
+
+    transition: all 0.3s ease;
+
+    border-radius: 18px;
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.1);
+}
+
+.avatar_pill:hover {
+    border: 1px solid rgba(255, 255, 255);
+}
+
+.avatar_stack {
+    position: relative;
+    width: 26px;
+    height: 26px;
+    flex-shrink: 0;
+}
+
+.user_avatar {
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+.avatar_bg {
+    position: absolute;
+    top: 0;
+    left: 0;
+    z-index: 1;
+}
+
+.avatar_fg {
+    position: absolute;
+    top: 0;
+    left: 0;
+    z-index: 2;
+}
+
+.pill_meta {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    margin-left: 10px;
+  }
+  
+  .pill_label {
+    transform: translateY(-1.5px); 
+    color: rgba(255, 255, 255, 0.6);
+    font-size: 13px;
+    font-weight: 500;
+}
+
+.online_dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background-color: #4ade80;
+    box-shadow: 0 0 6px rgba(74, 222, 128, 0.5);
+    flex-shrink: 0;
 }
 
 /* 玻璃遮罩层 - 层级低于导航栏 */

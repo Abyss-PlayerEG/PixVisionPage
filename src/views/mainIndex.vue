@@ -223,6 +223,9 @@ onUnmounted(() => {
   </section>
 
   <section id="num3z">
+    <hr>
+    <p>Wait a moment. Would you like to know more?</p>
+
     <h1>Every collection tells a story .</h1>
     <div>
       <span>视觉的归档,&nbsp;&nbsp;&nbsp;</span>
