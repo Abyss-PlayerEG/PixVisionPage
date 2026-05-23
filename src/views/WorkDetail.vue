@@ -28,6 +28,7 @@ const likeCount = ref(0)
 const starCount = ref(0)
 const likePending = ref(false)
 const starPending = ref(false)
+const downloadPending = ref(false)
 
 // 回复状态
 const replyingTo = ref(null)
@@ -115,6 +116,31 @@ const handleToggleStar = async () => {
     starCount.value += result.data ? 1 : -1
   }
   starPending.value = false
+}
+
+const handleDownload = async () => {
+  const url = workImgUrl.value
+  if (!url || downloadPending.value) return
+  const ok = await showConfirm({ title: '下载作品', message: '确定要下载该作品图片吗？', yesText: '下载', noText: '取消', type: 'info' })
+  if (!ok) return
+  downloadPending.value = true
+  try {
+    const response = await fetch(url)
+    if (!response.ok) throw new Error('网络错误')
+    const blob = await response.blob()
+    const blobUrl = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = blobUrl
+    a.download = workTitle.value + '.png'
+    document.body.appendChild(a)
+    a.click()
+    document.body.removeChild(a)
+    URL.revokeObjectURL(blobUrl)
+    showSuccess('下载成功')
+  } catch {
+    showError('网络错误，请稍后重试')
+  }
+  downloadPending.value = false
 }
 
 const handleSubmitReply = async () => {
@@ -259,6 +285,9 @@ onUnmounted(() => {
           <button class="wd-action-btn" :class="{ 'wd-action-btn--active': starred }" @click="handleToggleStar" :disabled="starPending">
             <svg viewBox="0 0 1024 1024" width="22" height="22"><path d="M565.273 34.627L677.369 272.17c8.706 18.32 25.411 31.051 44.823 33.996l250.776 38.081c48.698 7.411 68.225 70.046 32.934 105.98L824.407 635.164c-13.998 14.23-20.352 34.815-17.059 54.935l42.82 261.127c8.346 50.696-42.643 89.452-86.226 65.519L539.634 893.474c-17.286-9.526-37.992-9.526-55.278 0l-224.314 123.27c-43.583 23.934-94.572-14.822-86.22-65.518L216.638 690.1c3.32-20.12-3.089-40.705-17.087-54.935L18.11 450.227c-35.285-35.934-15.818-98.574 32.934-105.98l250.75-38.081c19.35-2.94 36.082-15.675 44.756-33.996L458.673 34.627c21.825-46.168 84.836-46.168 106.6 0z" fill="currentColor"/></svg>
             <span>{{ starCount }}</span>
+          </button>
+          <button class="wd-action-btn wd-download-btn" @click="handleDownload" :disabled="downloadPending">
+            <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
           </button>
         </div>
 
@@ -435,6 +464,11 @@ onUnmounted(() => {
 .wd-action-btn:disabled { cursor: wait; }
 .wd-action-btn--active { color: #4a9eff; }
 .wd-action-btn--active:hover { color: #66c0ff; }
+
+/* 下载按钮推到右侧 */
+.wd-download-btn {
+  margin-left: auto;
+}
 
 /* 未登录提示 */
 .wd-login-prompt {
