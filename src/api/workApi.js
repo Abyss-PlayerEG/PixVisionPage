@@ -120,7 +120,7 @@ export const transformWorksToWaterfallFormat = (records) => {
       currentColumnIndices.push(index);
     }
     
-    const imageUrl = getWorkImageUrl(work.img_url);
+    const imageUrl = getWorkImageUrl(work.thumb_url);
     if (index === 0) {
       console.log('[API] 第一条图片生成的 URL:', imageUrl);
     }
