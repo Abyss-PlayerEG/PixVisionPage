@@ -91,9 +91,10 @@ export const transformWorksToWaterfallFormat = (records) => {
   let currentColumnIndices = [];
 
   const result = records.map((work, index) => {
-    // 调试日志：检查第一条数据的字段
+    // 调试日志：检查第一条数据的 thumb_url 字段
     if (index === 0) {
       console.log('[API] 第一条作品原始数据:', work);
+      console.log('[API] thumb_url:', work.thumb_url, '| img_url:', work.img_url);
     }
 
     let currentHeight;
@@ -120,10 +121,14 @@ export const transformWorksToWaterfallFormat = (records) => {
       currentColumnIndices.push(index);
     }
     
+    // 瀑布流使用 thumb_url（缩略图）以提升加载性能
     const imageUrl = getWorkImageUrl(work.thumb_url);
     if (index === 0) {
-      console.log('[API] 第一条图片生成的 URL:', imageUrl);
+      console.log('[API] 第一条缩略图生成的 URL:', imageUrl);
     }
+
+    // 全尺寸图片URL（用于详情页）
+    const fullImageUrl = work.img_url ? getWorkImageUrl(work.img_url) : imageUrl;
 
     return {
       src: imageUrl,
@@ -133,6 +138,7 @@ export const transformWorksToWaterfallFormat = (records) => {
       workId: work.work_id,
       workTitle: work.work_title,
       userId: work.user_id,
+      imgUrl: fullImageUrl,  // 全尺寸图，点击跳转详情页时使用
     };
   });
 

@@ -54,14 +54,14 @@ watch(isLoading, (loading) => {
 
 // --- Handlers ---
 // 瀑布流图片点击 → 携带作品信息跳转详情页
-// 通过 query 传图，避免详情页二次请求（后续可切换为按 workId 拉取）
+// 传递 imgUrl（全尺寸图）用于详情页展示，src（缩略图）用于快速预览
 const handleImageClick = (imgData) => {
   if (!imgData.workId) return
   router.push({
     name: 'workDetail',
     params: { id: imgData.workId },
     query: {
-      img: imgData.src,
+      img: imgData.imgUrl || imgData.src,
       title: imgData.workTitle || '',
     },
   })
