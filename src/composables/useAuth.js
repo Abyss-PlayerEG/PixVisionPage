@@ -32,7 +32,9 @@ export function useAuth() {
   }
 
   const userAvatar = computed(() => {
-    return getAvatarUrl(userInfo.value?.avatar || '')
+    // 兼容 avatar_url（后端标准字段）和 avatar（旧字段）
+    const avatarPath = userInfo.value?.avatar_url || userInfo.value?.avatar || ''
+    return getAvatarUrl(avatarPath)
   })
 
   const userNickname = computed(() => {
