@@ -186,18 +186,21 @@
 /* 联系方式区域 */
 .contact-section {
     display: flex;
-    flex-direction: column;
+    flex-direction: row;
+    flex-wrap: wrap;
     gap: 8px;
     margin-top: 0px;
     padding-top: 12px;
     border-top: 1px solid rgba(255, 255, 255, 0.08);
+    justify-content: space-between;
 }
 
 .contact-item {
     display: flex;
     align-items: center;
-    gap: 12px;
-    padding: 10px 12px;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
     background: rgba(255, 255, 255, 0.04);
     border-radius: 8px;
     transition: all 0.2s ease;
@@ -206,11 +209,11 @@
 
 .contact-item:hover {
     background: rgba(255, 255, 255, 0.08);
-    transform: translateX(3px);
+    transform: scale(1.08);
 }
 
 .contact-item:active {
-    transform: translateX(3px) scale(0.98);
+    transform: scale(0.95);
 }
 
 .contact-icon {
@@ -242,25 +245,6 @@
 .contact-item:hover .contact-icon {
     color: rgba(255, 255, 255, 0.9);
     transform: scale(1.05);
-}
-
-.contact-name {
-    color: rgba(255, 255, 255, 0.65);
-    font-size: 13px;
-    font-weight: 500;
-    flex-shrink: 0;
-    min-width: 50px;
-}
-
-.contact-value {
-    color: rgba(255, 255, 255, 0.9);
-    font-size: 13px;
-    font-weight: 400;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    flex: 1;
-    text-align: right;
 }
 
 /* 菜单列表 */
@@ -307,6 +291,9 @@
 .sidebar-footer {
     margin-top: auto; /* 推到底部 */
     padding-top: 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
 }
 
 .home-btn {
@@ -343,6 +330,45 @@
 }
 
 .home-text {
+    font-size: 15px;
+    font-weight: 500;
+}
+
+/* 退出登录按钮 */
+.logout-btn {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    padding: 12px 16px;
+    background: transparent;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    color: rgba(255, 100, 100, 0.7);
+    font-size: 15px;
+    font-weight: 500;
+}
+
+.logout-btn:hover {
+    background: rgba(255, 80, 80, 0.15);
+    color: rgba(255, 100, 100, 0.95);
+}
+
+.logout-btn:active {
+    background: rgba(255, 80, 80, 0.25);
+    transform: scale(0.98);
+}
+
+.logout-icon {
+    width: 20px;
+    height: 20px;
+    flex-shrink: 0;
+}
+
+.logout-text {
     font-size: 15px;
     font-weight: 500;
 }

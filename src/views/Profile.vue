@@ -1,7 +1,8 @@
 <script setup>
-import { onMounted } from 'vue'
+import { onMounted, computed } from 'vue'
 import { useProfile } from '@/composables/useProfile.js'
 import { showSuccess, showError } from '@/utils/notification.js'
+import ConfirmDialog from '@/components/ConfirmDialog.vue'
 
 // 使用 Composable 获取 Profile 页面的状态和方法
 const {
@@ -13,7 +14,11 @@ const {
   fetchUserProfile,
   copyUUID,
   switchMenu,
-  goHome
+  goHome,
+  handleLogout,
+  showLogoutDialog,
+  confirmLogout,
+  cancelLogout
 } = useProfile()
 
 // 组件挂载时获取用户信息
@@ -21,7 +26,11 @@ onMounted(() => {
   fetchUserProfile()
 })
 
-// 处理联系方式点击事件
+// 判断是否显示作品相关区域（仅创作者 22 和系统管理员 77 可见）
+const canShowWorks = computed(() => {
+  const role = userInfo.value.userRole
+  return role === 22 || role === 77
+})
 const handleContactClick = (item) => {
   if (item.user_data_name === 'Bilibili') {
     // Bilibili：跳转到 B 站主页
@@ -73,7 +82,7 @@ const handleContactClick = (item) => {
       </div>
       
       <!-- 统计数据区域（2×2 网格） -->
-      <div class="stats-grid">
+      <div v-if="canShowWorks" class="stats-grid">
         <div class="stat-item" title="作品">
           <svg class="stat-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <rect x="3" y="3" width="7" height="7"></rect>
@@ -109,7 +118,7 @@ const handleContactClick = (item) => {
           :key="index" 
           class="contact-item"
           @click="handleContactClick(item)"
-          :title="item.user_data_name === 'Bilibili' ? '点击跳转B站主页' : '点击复制'"
+          :title="item.user_data_name === 'Bilibili' ? '点击跳转B站主页' : '点击复制' + item.user_data_name"
         >
           <!-- 根据类型显示对应图标 -->
           <svg v-if="item.user_data_name === '电话'" class="contact-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -134,8 +143,6 @@ const handleContactClick = (item) => {
             <line x1="8" y1="12" x2="16" y2="12"></line>
           </svg>
           
-          <span class="contact-name">{{ item.user_data_name }}</span>
-          <span class="contact-value">{{ item.user_data }}</span>
         </div>
       </div>
     </div>
@@ -143,6 +150,7 @@ const handleContactClick = (item) => {
     <!-- 菜单选项 -->
     <div class="menu-list">
       <div 
+        v-if="canShowWorks"
         class="menu-item" 
         :class="{ active: activeMenu === 'works' }"
         @click="switchMenu('works')"
@@ -166,7 +174,7 @@ const handleContactClick = (item) => {
       </div>
     </div>
 
-    <!-- 底部：返回首页按钮 -->
+    <!-- 底部：返回首页 + 退出登录按钮 -->
     <div class="sidebar-footer">
       <button class="home-btn" @click="goHome">
         <svg class="home-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -174,6 +182,14 @@ const handleContactClick = (item) => {
           <polyline points="9 22 9 12 15 12 15 22"></polyline>
         </svg>
         <span class="home-text">返回首页</span>
+      </button>
+      <button v-if="isMyProfile" class="logout-btn" @click="handleLogout">
+        <svg class="logout-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+          <polyline points="16 17 21 12 16 7"></polyline>
+          <line x1="21" y1="12" x2="9" y2="12"></line>
+        </svg>
+        <span class="logout-text">退出登录</span>
       </button>
     </div>
   </section>
@@ -187,6 +203,18 @@ const handleContactClick = (item) => {
       <p>个人收藏区域</p>
     </div>
   </section>
+
+  <!-- 退出登录确认弹窗 -->
+  <ConfirmDialog
+    v-model:show="showLogoutDialog"
+    title="退出登录"
+    message="确定要退出登录吗？"
+    type="warning"
+    yes-text="退出"
+    no-text="取消"
+    @confirm="confirmLogout"
+    @cancel="cancelLogout"
+  />
 </template>
 
 <style scoped>

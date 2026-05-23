@@ -6,7 +6,7 @@
 import { ref, reactive } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { showSuccess, showError, showWarning } from '@/utils/notification.js'
-import { getUserProfile, getUserInfoByUsernameOrUuid } from '@/api/profileApi.js'
+import { getUserProfile, getUserInfoByUsernameOrUuid, logoutApi } from '@/api/profileApi.js'
 import { getUserDataList } from '@/api/userDataApi.js'
 import { getAvatarUrl } from '@/config/api.js'
 
@@ -26,6 +26,7 @@ export const useProfile = () => {
     uuid: '',
     fullUuid: '', // 保存完整 UUID 用于复制
     userId: null, // 用户 ID，用于查询拓展数据
+    userRole: 0, // 用户角色：11普通用户 22创作者 55审核员 66工单管理员 77系统管理员
     workCount: 0, // 作品数量
     totalLikes: 0, // 总点赞数
     totalStars: 0, // 总收藏数
@@ -99,6 +100,7 @@ export const useProfile = () => {
         uuid: fullUuid, // 直接保存完整 UUID，由 CSS 自动截断
         fullUuid: fullUuid, // 保存完整 UUID
         userId: userId, // 保存用户 ID
+        userRole: data.user_role || 0,
         workCount: data.work_count || 0,
         totalLikes: data.total_likes || 0,
         totalStars: data.total_stars || 0,
@@ -137,6 +139,7 @@ export const useProfile = () => {
         uuid: null, // 查看他人时不显示 UUID
         fullUuid: '',
         userId: userId, // 保存用户 ID
+        userRole: data.user_role || 0,
         workCount: data.work_count || 0,
         totalLikes: data.total_likes || 0,
         totalStars: data.total_stars || 0,
@@ -173,6 +176,7 @@ export const useProfile = () => {
         uuid: null, // 查看他人时不显示 UUID
         fullUuid: '',
         userId: userId, // 保存用户 ID
+        userRole: data.user_role || 0,
         workCount: data.work_count || 0,
         totalLikes: data.total_likes || 0,
         totalStars: data.total_stars || 0,
@@ -254,6 +258,32 @@ export const useProfile = () => {
     router.push('/')
   }
 
+  // 退出登录弹窗状态
+  const showLogoutDialog = ref(false)
+
+  /**
+   * 显示退出登录确认弹窗
+   */
+  const handleLogout = () => {
+    showLogoutDialog.value = true
+  }
+
+  /**
+   * 确认退出登录 — 调接口 + 跳转首页
+   */
+  const confirmLogout = async () => {
+    showLogoutDialog.value = false
+    await logoutApi()
+    router.push('/')
+  }
+
+  /**
+   * 取消退出登录
+   */
+  const cancelLogout = () => {
+    showLogoutDialog.value = false
+  }
+
   return {
     // 状态
     userInfo,
@@ -266,6 +296,10 @@ export const useProfile = () => {
     fetchUserProfile,
     copyUUID,
     switchMenu,
-    goHome
+    goHome,
+    handleLogout,
+    showLogoutDialog,
+    confirmLogout,
+    cancelLogout
   }
 }

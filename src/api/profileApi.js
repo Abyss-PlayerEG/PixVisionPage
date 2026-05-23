@@ -5,7 +5,7 @@
  * @module profileApi
  */
 
-import { USER_API } from '../config/api';
+import { USER_API, AUTH_API } from '../config/api';
 
 /**
  * ============================================
@@ -132,6 +132,52 @@ export const getUserInfoByUsernameOrUuid = async (params = {}) => {
  */
 
 /**
+ * 退出登录
+ * @returns {Promise<Object>} 退出登录结果
+ */
+export const logoutApi = async () => {
+  try {
+    const token = localStorage.getItem('token');
+    
+    if (!token) {
+      console.warn('⚠️ 未找到 Token，直接清除本地数据');
+      logout();
+      return { success: true, message: '已退出登录' };
+    }
+
+    console.log('发送退出登录请求...');
+
+    const response = await fetch(AUTH_API.LOGOUT, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+    });
+
+    const result = await response.json();
+    console.log('退出登录接口响应:', JSON.stringify(result, null, 2));
+
+    // 无论后端返回什么，前端都清除登录状态
+    logout();
+
+    const statusCode = result.code || result.recode;
+    if (statusCode === 200) {
+      console.log('✅ 退出登录成功');
+      return { success: true, message: result.message || '已退出登录' };
+    } else {
+      console.warn('⚠️ 后端返回非200，但前端已清除登录状态');
+      return { success: true, message: '已退出登录' };
+    }
+  } catch (error) {
+    console.error('退出登录网络请求失败:', error);
+    // 网络错误也清除本地数据
+    logout();
+    return { success: true, message: '已退出登录' };
+  }
+};
+
+/**
  * 获取当前登录用户信息
  * @returns {Object|null} 用户信息对象，如果未登录则返回 null
  */
@@ -149,20 +195,20 @@ export const getCurrentUser = () => {
 };
 
 /**
- * 检查用户是否已登录
- * @returns {boolean} 是否已登录
- */
-export const isLoggedIn = () => {
-  return !!localStorage.getItem('token');
-};
-
-/**
  * 退出登录
  */
 export const logout = () => {
   localStorage.removeItem('token');
   localStorage.removeItem('userInfo');
   console.log('已退出登录');
+};
+
+/**
+ * 检查用户是否已登录
+ * @returns {boolean} 是否已登录
+ */
+export const isLoggedIn = () => {
+  return !!localStorage.getItem('token');
 };
 
 /**

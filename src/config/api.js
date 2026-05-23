@@ -13,6 +13,7 @@ export const AVATAR_API = `${API_BASE_URL}/api/image/avatar/get`;
 export const AUTH_API = {
   LOGIN: `${API_BASE_URL}/api/auth/login`,
   REGISTER: `${API_BASE_URL}/api/auth/register`,
+  LOGOUT: `${API_BASE_URL}/api/auth/logout`,
 };
 
 // 邮件验证码相关接口
