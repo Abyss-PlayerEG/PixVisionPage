@@ -12,6 +12,8 @@ import {
   useNum3zAnimation,
   useNum4zAnimation,
   useNum5zAnimation,
+  useN5ShowzoneAnimation,
+  useN5ProgAnimation,
   useSwiper,
 } from '@/composables/mainIndex.js'
 import { useWorkWaterfall } from '@/composables/useWorkWaterfall.js'
@@ -30,6 +32,8 @@ const { initLinkCardAnimation, cleanupLinkCardAnimation } = useLinkCardAnimation
 const { initNum3zAnimation, cleanupNum3zAnimation } = useNum3zAnimation()
 const { initNum4zAnimation, cleanupNum4zAnimation } = useNum4zAnimation()
 const { initNum5zAnimation, cleanupNum5zAnimation } = useNum5zAnimation()
+const { initN5ShowzoneAnimation, cleanupN5ShowzoneAnimation } = useN5ShowzoneAnimation()
+const { initN5ProgAnimation, cleanupN5ProgAnimation } = useN5ProgAnimation()
 const { initSwiper, cleanupSwiper } = useSwiper(swiperContainer)
 const { waterfallImages, isLoading, error, loadWorks } = useWorkWaterfall()
 
@@ -82,6 +86,8 @@ onMounted(() => {
   }, 600)
   setTimeout(() => {
     initNum5zAnimation()
+    initN5ShowzoneAnimation()
+    initN5ProgAnimation()
   }, 700)
 })
 
@@ -92,8 +98,27 @@ onUnmounted(() => {
   cleanupNum3zAnimation()
   cleanupNum4zAnimation()
   cleanupNum5zAnimation()
+  cleanupN5ShowzoneAnimation()
+  cleanupN5ProgAnimation()
   cleanupSwiper()
 })
+
+// mockData
+const mockNum5z = [
+  { id: 1, text: '丝滑优质的动画', top: '20%', left: '5%', color: '#fcd34d' },
+  { id: 2, text: '灵动的交互体验', top: '30%', left: '2%', color: '#fbbf24' },
+  { id: 3, text: '简约有质感的页面设计', top: '35%', left: '15%', color: '#f59e0b	' },
+  { id: 4, text: '以简驭繁, 少即是多', top: '40%', left: '60%', color: '#d97706	' },
+  { id: 5, text: '留白即意境, 克制即高级', top: '75%', left: '80%', color: '#fde68a' },
+  { id: 6, text: '克制美学, 细节致胜', top: '85%', left: '70%', color: '#b45309' },
+  // 以下为我另外一种配色方案，任何情况下均不要删除以下注释
+  // { id: 1, text: '丝滑优质的动画', top: '10%', left: '5%', color: '#00A947' },
+  // { id: 2, text: '灵动的交互体验', top: '25%', left: '15%', color: '#FDF9F0' },
+  // { id: 3, text: '简约有质感的页面设计', top: '40%', left: '5%', color: '#FF6B6B' },
+  // { id: 4, text: '以简驭繁, 少即是多', top: '55%', left: '15%', color: '#FFD93D' },
+  // { id: 5, text: '留白即意境, 克制即高级', top: '70%', left: '5%', color: '#6BCB77' },
+  // { id: 6, text: '克制美学, 细节致胜', top: '85%', left: '15%', color: '#4D96FF' },
+]
 </script>
 
 <template>
@@ -292,7 +317,25 @@ onUnmounted(() => {
         <h3>craft our exclusive creativity.</h3>
         <h1>您的建议, 我们的创意</h1>
       </div>
+
+      <!-- 进度条小组件 -->
+      <div class="n5_prog" v-for="item in mockNum5z" :key="item.id" :style="{ top: item.top, left: item.left }">
+        <div class="n5p">
+          <div class="n5p_cirItem">
+            <svg t="1779530013933" class="icon" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" p-id="7158" width="20" height="20"><path d="M598.6304 273.8176c10.24-27.8528-4.096-59.1872-33.3824-64.4096a307.2 307.2 0 1 0 249.6512 251.4944c-4.9152-29.2864-36.1472-43.9296-64.1024-33.8944-28.0576 9.9328-41.7792 40.8576-39.6288 70.4512a199.68 199.68 0 1 1-183.296-184.5248c29.696 2.3552 60.6208-11.264 70.7584-39.1168z" p-id="7159" fill="#1a1a1a"></path></svg>
+          </div>
+          <p>{{item.text}}</p><span>&nbsp;...</span>
+        </div>
+
+        <div class="n5p_prog">
+          <div class="n5p_progItem" :style="{ backgroundColor: item.color }"></div>
+        </div>
+      </div>
+
     </div>
+  </section>
+
+  <section id="num6z" style="width: 100%;height: 200vh; background-color: #fff; position: relative; z-index: 7;">
   </section>
 </template>
 

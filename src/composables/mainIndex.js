@@ -464,6 +464,220 @@ export const useNum5zAnimation = () => {
 }
 
 /* ===========================
+ * Num5z Showzone ScrollTrigger 入场
+ * 触发点 '#num5z top 60%' —— 滚动到此阈值触发，回滚时收回
+ * 依次出场：n5_item(0s) → h3(0.15s) → h3(0.3s) → h1(0.45s)
+ * toggleActions: "play none none reverse" —— 触发式，双向响应
+ * =========================== */
+export const useN5ShowzoneAnimation = () => {
+  let scrollTriggers = []
+
+  const initN5ShowzoneAnimation = () => {
+    const item = document.querySelector('#num5z .n5_item')
+    const h3s = document.querySelectorAll('#num5z .n5_showzone h3')
+    const h1 = document.querySelector('#num5z .n5_showzone h1')
+
+    if (!item || !h3s.length || !h1) return
+
+    const itemAnim = gsap.fromTo(item,
+      { opacity: 0, y: 200 },
+      {
+        opacity: 1, y: 0,
+        duration: 0.8, ease: 'power2.out',
+        scrollTrigger: {
+          trigger: '#num5z',
+          start: 'top 60%',
+          toggleActions: 'restart none none reverse',
+        },
+      },
+    )
+
+    const h3Anims = []
+    h3s.forEach((h3, i) => {
+      const anim = gsap.fromTo(h3,
+        { opacity: 0, y: 200 },
+        {
+          opacity: 1, y: 0,
+          duration: 0.8, delay: 0.15 + i * 0.15, ease: 'power2.out',
+          scrollTrigger: {
+            trigger: '#num5z',
+            start: 'top 60%',
+            toggleActions: 'restart none none reverse',
+          },
+        },
+      )
+      h3Anims.push(anim)
+    })
+
+    const h1Anim = gsap.fromTo(h1,
+      { opacity: 0, y: 200 },
+      {
+        opacity: 1, y: 0,
+        duration: 0.8, delay: 0.45, ease: 'power2.out',
+        scrollTrigger: {
+          trigger: '#num5z',
+          start: 'top 60%',
+          toggleActions: 'restart none none reverse',
+        },
+      },
+    )
+
+    if (itemAnim.scrollTrigger) scrollTriggers.push(itemAnim.scrollTrigger)
+    h3Anims.forEach((anim) => {
+      if (anim.scrollTrigger) scrollTriggers.push(anim.scrollTrigger)
+    })
+    if (h1Anim.scrollTrigger) scrollTriggers.push(h1Anim.scrollTrigger)
+  }
+
+  const cleanupN5ShowzoneAnimation = () => {
+    scrollTriggers.forEach((trigger) => {
+      if (trigger) trigger.kill()
+    })
+    scrollTriggers = []
+  }
+
+  return {
+    initN5ShowzoneAnimation,
+    cleanupN5ShowzoneAnimation,
+  }
+}
+
+/* ===========================
+ * Num5z Progress 动画 —— 主 ScrollTrigger scrub 驱动
+ * 每个 .n5_prog 独立切片进度，后一个在前一个 50% 时开始
+ * 动画内容：
+ *   入场：y 200→0 / scale 0.8→1 / opacity 0→1（触发式，抵达切片起点时播放，离开时收回）
+ *   .n5p_cirItem svg —— 顺时针自转 360°（scrub）
+ *   .n5p_progItem   —— 宽度 10% → 98%（scrub，不填满）
+ *   .n5p span i     —— 单个 "." 正弦跳动（scrub，逐点相位偏移）
+ * =========================== */
+export const useN5ProgAnimation = () => {
+  let st = null
+  /** @type {{ entered: boolean, swapped: boolean }[]} */
+  const progStates = []
+  const originalSvgs = []
+
+  const DONE_SVG = '<svg t="1779533952942" class="icon" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" p-id="8097" width="20" height="20"><path d="M1024 512c0 282.773-229.227 512-512 512S0 794.773 0 512 229.227 0 512 0s512 229.227 512 512zM268.992 269.653a82.197 82.197 0 1 0 0 164.416 82.197 82.197 0 0 0 0-164.416z m486.016 0a82.197 82.197 0 1 0 0 164.416 82.197 82.197 0 0 0 0-164.416z m-22.101 360.32C712 725.504 614.293 820.523 512.49 820.523s-205.526-95.019-226.432-190.55c0 0-6.72-28.309-32.918-28.309-22.101 0-21.93 28.31-21.93 28.31 21.888 135.637 139.477 239.231 281.28 239.231 141.824 0 259.413-103.594 281.28-239.232 0 0 6.314-28.309-19.968-28.309-31.147 0-40.896 28.31-40.896 28.31z" p-id="8098" fill="#1a1a1a"></path></svg>'
+
+  const initN5ProgAnimation = () => {
+    const progs = document.querySelectorAll('#num5z .n5_prog')
+    if (!progs.length) return
+
+    // 初始隐藏 + 状态初始化 + 保存原始 SVG
+    progs.forEach((prog) => {
+      gsap.set(prog, { opacity: 0, y: 200, scale: 0.8 })
+      progStates.push({ entered: false, swapped: false })
+      const cirItem = prog.querySelector('.n5p_cirItem')
+      originalSvgs.push(cirItem ? cirItem.innerHTML : '')
+    })
+
+    // 拆分每个 prog 的 span "..." 为独立 <i> 字符，收集引用
+    const allDots = []
+    progs.forEach((prog) => {
+      const span = prog.querySelector('.n5p span')
+      if (span) {
+        span.innerHTML = span.textContent
+          .split('')
+          .map((c) => (c === '.' ? `<i>.</i>` : c))
+          .join('')
+        allDots.push([...span.querySelectorAll('i')])
+      } else {
+        allDots.push([])
+      }
+    })
+
+    st = ScrollTrigger.create({
+      trigger: '#num5z',
+      start: 'top top',
+      end: 'bottom 15%',
+      scrub: true,
+      onUpdate: (self) => {
+        const total = progs.length
+        const totalRange = 0.85
+        const sliceWidth = (totalRange * 2) / (total + 1)
+        const stagger = sliceWidth / 2
+
+        progs.forEach((prog, i) => {
+          const sliceStart = i * stagger
+          const sliceEnd = sliceStart + sliceWidth
+          const local = gsap.utils.clamp(0, 1,
+            (self.progress - sliceStart) / (sliceEnd - sliceStart),
+          )
+
+          // 0. 入场 / 出场
+          const state = progStates[i]
+          if (local > 0 && !state.entered) {
+            state.entered = true
+            gsap.to(prog, { opacity: 1, y: 0, scale: 1, duration: 0.6, ease: 'power2.out', overwrite: 'auto' })
+          } else if (local <= 0 && state.entered) {
+            state.entered = false
+            gsap.to(prog, { opacity: 0, y: 200, scale: 0.8, duration: 0.35, ease: 'power2.in', overwrite: 'auto' })
+          }
+
+          // 1. SVG 顺时针自转 + 完成后替换为笑脸
+          const cirItem = prog.querySelector('.n5p_cirItem')
+          const svg = cirItem ? cirItem.querySelector('svg') : null
+          if (svg) {
+            gsap.set(svg, { rotation: local * 360 })
+          }
+
+          if (local >= 1 && !state.swapped) {
+            state.swapped = true
+            if (cirItem) {
+              const curSvg = cirItem.querySelector('svg')
+              if (curSvg) {
+                gsap.to(curSvg, { opacity: 0, duration: 0.2, onComplete: () => {
+                  cirItem.innerHTML = DONE_SVG
+                  gsap.fromTo(cirItem.querySelector('svg'), { opacity: 0 }, { opacity: 1, duration: 0.2 })
+                }})
+              }
+            }
+          } else if (local < 1 && state.swapped) {
+            state.swapped = false
+            if (cirItem) {
+              const curSvg = cirItem.querySelector('svg')
+              if (curSvg) {
+                gsap.to(curSvg, { opacity: 0, duration: 0.2, onComplete: () => {
+                  cirItem.innerHTML = originalSvgs[i]
+                  gsap.fromTo(cirItem.querySelector('svg'), { opacity: 0 }, { opacity: 1, duration: 0.2 })
+                }})
+              }
+            }
+          }
+
+          // 2. 进度条宽度 10% → 98%
+          const bar = prog.querySelector('.n5p_progItem')
+          if (bar) {
+            gsap.set(bar, { width: `${10 + local * 88}%` })
+          }
+
+          // 3. 逐点跳动
+          const dots = allDots[i]
+          dots.forEach((dot, j) => {
+            const y = Math.sin(local * Math.PI) * Math.sin(local * Math.PI * 4 + j * Math.PI / 3) * 6
+            gsap.set(dot, { y })
+          })
+        })
+      },
+    })
+  }
+
+  const cleanupN5ProgAnimation = () => {
+    if (st) {
+      st.kill()
+      st = null
+    }
+    progStates.length = 0
+    originalSvgs.length = 0
+  }
+
+  return {
+    initN5ProgAnimation,
+    cleanupN5ProgAnimation,
+  }
+}
+
+/* ===========================
  * Swiper 拖拽轮播 (惯性 + 触摸)
  * walk = 鼠标位移 × 1.5 —— 增大滚动倍率，拖拽手感更快
  * velocity = 鼠标速度 × 15 —— 将 px/ms 转换为每帧位移量级
