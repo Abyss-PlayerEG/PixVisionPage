@@ -10,6 +10,7 @@ import {
   useArrowAnimation,
   useLinkCardAnimation,
   useNum3zAnimation,
+  useNum4zAnimation,
   useSwiper,
 } from '@/composables/mainIndex.js'
 import { useWorkWaterfall } from '@/composables/useWorkWaterfall.js'
@@ -26,6 +27,7 @@ const { initCopyAnimation, cleanupCopyAnimation } = useCopyAnimation()
 const { triggerArrowAnimation, cleanupArrowAnimation } = useArrowAnimation()
 const { initLinkCardAnimation, cleanupLinkCardAnimation } = useLinkCardAnimation()
 const { initNum3zAnimation, cleanupNum3zAnimation } = useNum3zAnimation()
+const { initNum4zAnimation, cleanupNum4zAnimation } = useNum4zAnimation()
 const { initSwiper, cleanupSwiper } = useSwiper(swiperContainer)
 const { waterfallImages, isLoading, error, loadWorks } = useWorkWaterfall()
 
@@ -72,6 +74,10 @@ onMounted(() => {
   setTimeout(() => {
     initNum3zAnimation()
   }, 500)
+  // num4z 在 num3z 之后，延迟 600ms 确保前面的 ScrollTrigger 全部就绪
+  setTimeout(() => {
+    initNum4zAnimation()
+  }, 600)
 })
 
 onUnmounted(() => {
@@ -79,6 +85,7 @@ onUnmounted(() => {
   cleanupArrowAnimation()
   cleanupLinkCardAnimation()
   cleanupNum3zAnimation()
+  cleanupNum4zAnimation()
   cleanupSwiper()
 })
 </script>

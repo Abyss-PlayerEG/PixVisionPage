@@ -347,6 +347,83 @@ export const useNum3zAnimation = () => {
 }
 
 /* ===========================
+ * Num4z 区域 ScrollTrigger 入场
+ * 触发点 'top 60%' —— 比 num3z 更晚触发，网格区域作为整体出现
+ * 依次出场：h1(0s) → n4_font span(0.2s 后) → GridLayout 整体(0.4s 后)
+ * =========================== */
+export const useNum4zAnimation = () => {
+  let scrollTriggers = []
+
+  const initNum4zAnimation = () => {
+    const h1 = document.querySelector('#num4z h1')
+    const fontSpan = document.querySelector('#num4z .n4_font span')
+    const gridLayout = document.querySelector('#num4z .n4_GridLayout')
+
+    if (!h1 || !fontSpan || !gridLayout) return
+
+    const h1Anim = gsap.fromTo(h1,
+      { opacity: 0, y: 50 },
+      {
+        opacity: 1, y: 0,
+        duration: 0.8, ease: 'power2.out',
+        scrollTrigger: {
+          trigger: '#num4z',
+          start: 'top 60%',
+          once: true,
+          toggleActions: 'play none none none'
+        }
+      }
+    )
+
+    const fontAnim = gsap.fromTo(fontSpan,
+      { opacity: 0, y: 20 },
+      {
+        opacity: 1, y: 0,
+        duration: 0.8, delay: 0.2, ease: 'power2.out',
+        scrollTrigger: {
+          trigger: '#num4z',
+          start: 'top 60%',
+          once: true,
+          toggleActions: 'play none none none'
+        }
+      }
+    )
+
+    const gridAnim = gsap.fromTo(gridLayout,
+      { opacity: 0, y: 60 },
+      {
+        opacity: 1, y: 0,
+        duration: 0.8, delay: 0.4, ease: 'power2.out',
+        scrollTrigger: {
+          trigger: '#num4z',
+          start: 'top 60%',
+          once: true,
+          toggleActions: 'play none none none'
+        }
+      }
+    )
+
+    if (h1Anim.scrollTrigger) scrollTriggers.push(h1Anim.scrollTrigger)
+    if (fontAnim.scrollTrigger) scrollTriggers.push(fontAnim.scrollTrigger)
+    if (gridAnim.scrollTrigger) scrollTriggers.push(gridAnim.scrollTrigger)
+  }
+
+  const cleanupNum4zAnimation = () => {
+    scrollTriggers.forEach(trigger => {
+      if (trigger) {
+        trigger.kill()
+      }
+    })
+    scrollTriggers = []
+  }
+
+  return {
+    initNum4zAnimation,
+    cleanupNum4zAnimation
+  }
+}
+
+/* ===========================
  * Swiper 拖拽轮播 (惯性 + 触摸)
  * walk = 鼠标位移 × 1.5 —— 增大滚动倍率，拖拽手感更快
  * velocity = 鼠标速度 × 15 —— 将 px/ms 转换为每帧位移量级

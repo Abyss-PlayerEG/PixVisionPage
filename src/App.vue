@@ -3,7 +3,7 @@ import { RouterView } from 'vue-router';
 </script>
 
 <template>
-  <RouterView/>
+  <RouterView />
 </template>
 
 <style>
@@ -31,13 +31,13 @@ html,body{
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #505050; 
+  background: #505050;
   border-radius: 4px;
   transition: background 0.3s ease;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #777777; 
+  background: #777777;
 }
 
 ::-webkit-scrollbar-corner {
