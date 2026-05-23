@@ -2,7 +2,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { getWorkImageUrl, getAvatarUrl } from '@/config/api'
-import { fetchWorkDetail, fetchCommentList, addComment } from '@/api/workApi'
+import { fetchWorkDetail, fetchCommentList, addComment, deleteComment } from '@/api/workApi'
 import { getCurrentUser } from '@/api/profileApi'
 
 const route = useRoute()
@@ -87,6 +87,16 @@ const handleSubmitReply = async () => {
   replySubmitting.value = false
 }
 
+const handleDeleteComment = async (commentId) => {
+  if (!confirm('确定要删除这条评论吗？')) return
+  const result = await deleteComment(commentId)
+  if (result.success) {
+    await loadComments()
+  } else {
+    alert(result.message || '删除失败')
+  }
+}
+
 const loadComments = async () => {
   const id = Number(workId.value)
   if (!id) return
@@ -153,6 +163,38 @@ onMounted(async () => {
           </div>
         </div>
 
+        <!-- 手机端发布者卡片 -->
+        <div class="wd-mobile-publisher">
+          <div class="publisher-card">
+            <div class="publisher-header">
+              <div class="publisher-avatar">
+                <img :src="publisher.avatar" alt="publisher avatar" />
+              </div>
+              <div>
+                <p class="publisher-name">{{ publisher.displayName }}</p>
+                <p class="publisher-username">@{{ publisher.username }}</p>
+              </div>
+            </div>
+            <div class="publisher-stats">
+              <div class="publisher-stat"><div class="publisher-stat-value">{{ publisher.works }}</div><div class="publisher-stat-label">作品</div></div>
+              <div class="publisher-stat"><div class="publisher-stat-value">{{ publisher.followers.toLocaleString() }}</div><div class="publisher-stat-label">粉丝</div></div>
+              <div class="publisher-stat"><div class="publisher-stat-value">{{ publisher.following }}</div><div class="publisher-stat-label">关注</div></div>
+            </div>
+            <button class="publisher-follow">关注</button>
+            <p class="publisher-bio">{{ publisher.bio }}</p>
+            <div class="publisher-contact">
+              <div class="publisher-contact-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M22 7l-10 7L2 7"/></svg>
+                联系邮箱
+              </div>
+              <div class="publisher-contact-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                所在地
+              </div>
+            </div>
+          </div>
+        </div>
+
         <section class="wd-comments">
           <div class="wd-comments-header">
             <h2>评论</h2>
@@ -180,6 +222,9 @@ onMounted(async () => {
                 <p class="wd-comment-text">{{ comment.comment_text }}</p>
                 <span class="wd-comment-time">{{ formatTime(comment.time) }}</span>
                 <button class="wd-comment-reply-btn" @click="startReply(comment)">回复</button>
+                <button v-if="currentUser && currentUser.user_id === comment.user_id" class="wd-comment-delete-btn" @click="handleDeleteComment(comment.comment_id)" title="删除">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
+                </button>
                 <div v-if="comment.children && comment.children.length" class="wd-comment-replies">
                   <div v-for="reply in comment.children" :key="reply.comment_id" class="wd-comment-item wd-comment-reply">
                     <div class="wd-comment-avatar">
@@ -190,6 +235,9 @@ onMounted(async () => {
                       <p class="wd-comment-text">{{ reply.comment_text }}</p>
                       <span class="wd-comment-time">{{ formatTime(reply.time) }}</span>
                       <button class="wd-comment-reply-btn" @click="startReply(reply, comment.comment_id)">回复</button>
+                      <button v-if="currentUser && currentUser.user_id === reply.user_id" class="wd-comment-delete-btn" @click="handleDeleteComment(reply.comment_id)" title="删除">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
+                      </button>
                     </div>
                   </div>
                 </div>
@@ -269,6 +317,19 @@ onMounted(async () => {
   transition: color 0.2s;
 }
 .wd-comment-reply-btn:hover { color: #ffffff; }
+
+.wd-comment-delete-btn {
+  margin-top: 4px;
+  margin-left: 4px;
+  padding: 2px;
+  border: none;
+  background: transparent;
+  color: #7e7e7e;
+  cursor: pointer;
+  transition: color 0.2s;
+}
+.wd-comment-delete-btn:hover { color: #ff5c5c; }
+.wd-comment-delete-btn svg { width: 14px; height: 14px; }
 
 .wd-reply-input {
   margin-top: 12px;

@@ -59,6 +59,7 @@ export const WORK_API = {
 export const COMMENT_API = {
   LIST: `${API_BASE_URL}/api/comment/list`,    // 查询评论列表（公开接口，路径后拼 workId）
   ADD: `${API_BASE_URL}/api/comment/add`,       // 新增评论（需登录）
+  DELETE: `${API_BASE_URL}/api/comment/delete`, // 删除评论（需登录，仅可删除自己的评论）
 };
 
 // 作品图片获取接口

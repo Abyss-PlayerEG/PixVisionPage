@@ -324,6 +324,11 @@
   top: 88px;
 }
 
+/* 手机端发布者卡片（桌面端隐藏） */
+.wd-mobile-publisher {
+  display: none;
+}
+
 .publisher-card {
   border-radius: 16px;
   padding: 24px;
@@ -519,6 +524,15 @@
 
   .wd-work-title {
     font-size: 20px;
+  }
+
+  /* 隐藏侧边栏，显示内联发布者卡片 */
+  .wd-sidebar {
+    display: none;
+  }
+
+  .wd-mobile-publisher {
+    display: block;
   }
 
   .publisher-card {

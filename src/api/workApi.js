@@ -106,6 +106,36 @@ export const addComment = async ({ workId, commentFloor, commentText, parentComm
 };
 
 /**
+ * 删除评论（仅可删除自己的评论）
+ * @param {number} commentId - 评论 ID
+ * @returns {Promise<Object>} { success, data, message }
+ */
+export const deleteComment = async (commentId) => {
+  try {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      return { success: false, message: '请先登录后再操作' };
+    }
+    const url = `${COMMENT_API.DELETE}?commentId=${commentId}`;
+    console.log('[API] 删除评论:', url);
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'Authorization': `Bearer ${token}` },
+    });
+    const result = await response.json();
+    console.log('[API] 删除评论响应:', JSON.stringify(result, null, 2));
+    const statusCode = result.code || result.recode;
+    if (statusCode === 200 && result.data === true) {
+      return { success: true, message: result.message || '评论已删除' };
+    }
+    return { success: false, message: result.message || '删除评论失败' };
+  } catch (error) {
+    console.error('[API] 删除评论请求失败:', error);
+    return { success: false, message: '网络错误，请稍后重试' };
+  }
+};
+
+/**
  * 获取作品分页数据
  */
 export const fetchWorkPage = async ({ current = 1, size = 10, workTitle, userId, seriesId, isOriginal } = {}) => {
