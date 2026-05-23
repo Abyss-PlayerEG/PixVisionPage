@@ -4,7 +4,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { getWorkImageUrl, getAvatarUrl } from '@/config/api'
 import { fetchWorkDetail, fetchCommentList, addComment, deleteComment, toggleLike, toggleStar, fetchLikeStatus, fetchStarStatus } from '@/api/workApi'
 import { getCurrentUser } from '@/api/profileApi'
-import { showSuccess, showError } from '@/utils/notification'
+import { showSuccess, showError, showInfo } from '@/utils/notification'
 import { showConfirm } from '@/utils/confirmDialog'
 
 const route = useRoute()
@@ -76,6 +76,7 @@ const handleSubmitComment = async () => {
 }
 
 const startReply = (comment, parentId, userId) => {
+  if (!currentUser.value) { showInfo('请先登录'); return }
   replyingTo.value = {
     commentId: comment.comment_id,
     parentId: parentId !== undefined ? parentId : comment.comment_id,
@@ -93,7 +94,7 @@ const cancelReply = () => {
 const handleToggleLike = async () => {
   const id = Number(workId.value)
   if (!id || likePending.value) return
-  if (!currentUser.value) { goLogin(); return }
+  if (!currentUser.value) { showInfo('请先登录'); return }
   likePending.value = true
   const result = await toggleLike(id)
   if (result.success && result.data !== undefined) {
@@ -106,7 +107,7 @@ const handleToggleLike = async () => {
 const handleToggleStar = async () => {
   const id = Number(workId.value)
   if (!id || starPending.value) return
-  if (!currentUser.value) { goLogin(); return }
+  if (!currentUser.value) { showInfo('请先登录'); return }
   starPending.value = true
   const result = await toggleStar(id)
   if (result.success && result.data !== undefined) {
