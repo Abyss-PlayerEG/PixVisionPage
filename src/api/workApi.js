@@ -35,12 +35,17 @@ export const fetchWorkDetail = async (workId) => {
  */
 export const fetchCommentList = async (workId, orderBy = 'newest') => {
   try {
+    const token = localStorage.getItem('token');
+    const headers = { 'Content-Type': 'application/json' };
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
     const queryParams = new URLSearchParams();
     if (orderBy) queryParams.append('orderBy', orderBy);
     const queryString = queryParams.toString();
     const url = `${COMMENT_API.LIST}/${workId}${queryString ? '?' + queryString : ''}`;
     console.log('[API] 请求评论列表:', url);
-    const response = await fetch(url, { method: 'GET', headers: { 'Content-Type': 'application/json' } });
+    const response = await fetch(url, { method: 'GET', headers });
     const result = await response.json();
     console.log('[API] 评论列表响应:', JSON.stringify(result, null, 2));
     const statusCode = result.code || result.recode;
@@ -71,26 +76,29 @@ const transformComment = (comment) => {
  * @param {number} params.commentFloor - 1=一级, 2=二级
  * @param {string} params.commentText - 最多125字
  * @param {number} [params.parentCommentId]
+ * @param {number} [params.repliedUserId]
  * @returns {Promise<Object>}
  */
-export const addComment = async ({ workId, commentFloor, commentText, parentCommentId }) => {
+export const addComment = async ({ workId, commentFloor, commentText, parentCommentId, repliedUserId }) => {
   try {
     const token = localStorage.getItem('token');
     if (!token) {
       return { success: false, message: '请先登录后再发表评论' };
     }
-    const formData = new URLSearchParams();
-    formData.append('workId', workId);
-    formData.append('commentFloor', commentFloor);
-    formData.append('commentText', commentText);
+    const params = new URLSearchParams();
+    params.append('workId', workId);
+    params.append('commentFloor', commentFloor);
+    params.append('commentText', commentText);
     if (parentCommentId !== undefined && parentCommentId !== null) {
-      formData.append('parentCommentId', parentCommentId);
+      params.append('parentCommentId', parentCommentId);
     }
-    console.log('[API] 发表评论:', { workId, commentFloor, commentText, parentCommentId });
-    const response = await fetch(COMMENT_API.ADD, {
+    if (repliedUserId !== undefined && repliedUserId !== null) {
+      params.append('repliedUserId', repliedUserId);
+    }
+    console.log('[API] 发表评论:', { workId, commentFloor, commentText, parentCommentId, repliedUserId });
+    const response = await fetch(`${COMMENT_API.ADD}?${params.toString()}`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'Authorization': `Bearer ${token}` },
-      body: formData,
+      headers: { 'Authorization': `Bearer ${token}` },
     });
     const result = await response.json();
     console.log('[API] 评论发表响应:', JSON.stringify(result, null, 2));
