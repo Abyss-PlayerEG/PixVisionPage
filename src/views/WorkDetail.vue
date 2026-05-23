@@ -4,6 +4,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { getWorkImageUrl, getAvatarUrl } from '@/config/api'
 import { fetchWorkDetail, fetchCommentList, addComment, deleteComment } from '@/api/workApi'
 import { getCurrentUser } from '@/api/profileApi'
+import { showSuccess, showError } from '@/utils/notification'
 
 const route = useRoute()
 const router = useRouter()
@@ -46,8 +47,8 @@ const handleSubmitComment = async () => {
   if (!id) return
   commentSubmitting.value = true
   const result = await addComment({ workId: id, commentFloor: 1, commentText: text })
-  if (result.success) { newComment.value = ''; await loadComments() }
-  else { alert(result.message || '评论发表失败') }
+  if (result.success) { newComment.value = ''; await loadComments(); showSuccess('评论发表成功') }
+  else { showError(result.message || '评论发表失败') }
   commentSubmitting.value = false
 }
 
@@ -81,8 +82,9 @@ const handleSubmitReply = async () => {
     replyText.value = ''
     replyingTo.value = null
     await loadComments()
+    showSuccess('回复发表成功')
   } else {
-    alert(result.message || '回复失败')
+    showError(result.message || '回复失败')
   }
   replySubmitting.value = false
 }
@@ -92,8 +94,9 @@ const handleDeleteComment = async (commentId) => {
   const result = await deleteComment(commentId)
   if (result.success) {
     await loadComments()
+    showSuccess('评论已删除')
   } else {
-    alert(result.message || '删除失败')
+    showError(result.message || '删除失败')
   }
 }
 

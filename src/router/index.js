@@ -53,6 +53,11 @@ const router = createRouter({
                 name: 'icons',
                 component: () => import('../views/demo/IconDemo.vue'),
             },
+            {
+                path: '/demo/confirm',
+                name: 'confirmDialogDemo',
+                component: () => import('../views/demo/ConfirmDialogDemo.vue'),
+            },
         ] : []),
     ],
 })
