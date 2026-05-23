@@ -1,0 +1,118 @@
+/* 
+==========================
+有点像中世纪字体
+==========================
+*/
+@font-face {
+  font-family: "sul-tb2"; 
+  src: url("/FONTS/TogebaraBold-2.otf") format("opentype");
+  font-weight: 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* 
+=============================
+Gilroy 字体集合 - 统一命名规则：
+sul- + 字体简写 + 数字
+=============================
+ */
+
+/* Gilroy-Black-15.otf */
+@font-face {
+  font-family: "sul-gb15";
+  src: url("/FONTS/Gilroy-Black-15.otf") format("opentype");
+  font-weight: 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* Gilroy-Bold-4.otf */
+@font-face {
+  font-family: "sul-gbo4";
+  src: url("/FONTS/Gilroy-Bold-4.otf") format("opentype");
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* Gilroy-ExtraBold.otf */
+@font-face {
+  font-family: "sul-geb";
+  src: url("/FONTS/Gilroy-ExtraBold.otf") format("opentype");
+  font-weight: 800;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* Gilroy-Heavy-9.otf */
+@font-face {
+  font-family: "sul-gh9";
+  src: url("/FONTS/Gilroy-Heavy-9.otf") format("opentype");
+  font-weight: 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* Gilroy-Light-11.otf */
+@font-face {
+  font-family: "sul-gl11";
+  src: url("/FONTS/Gilroy-Light-11.otf") format("opentype");
+  font-weight: 300;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* Gilroy-Medium-1.otf */
+@font-face {
+  font-family: "sul-gm1";
+  src: url("/FONTS/Gilroy-Medium-1.otf") format("opentype");
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* Gilroy-Regular.otf */
+@font-face {
+  font-family: "sul-gr";
+  src: url("/FONTS/Gilroy-Regular.otf") format("opentype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* Gilroy-SemiBold-12.otf */
+@font-face {
+  font-family: "sul-gsb12";
+  src: url("/FONTS/Gilroy-SemiBold-12.otf") format("opentype");
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* Gilroy-ThinItalic-14.otf */
+@font-face {
+  font-family: "sul-gt14";
+  src: url("/FONTS/Gilroy-ThinItalic-14.otf") format("opentype");
+  font-weight: 100;
+  font-style: italic;
+  font-display: swap;
+}
+
+/* Radomir-Tinkov-Gilroy-Heavy-9.otf（原版正版） */
+@font-face {
+  font-family: "sul-rgh9";
+  src: url("/FONTS/Radomir-Tinkov-Gilroy-Heavy-9.otf") format("opentype");
+  font-weight: 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* gilroy-black-6.otf */
+@font-face {
+  font-family: "sul-gbk6";
+  src: url("/FONTS/gilroy-black-6.otf") format("opentype");
+  font-weight: 900;
+  font-style: normal;
+  font-display: swap;
+}

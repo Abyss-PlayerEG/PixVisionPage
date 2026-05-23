@@ -424,6 +424,46 @@ export const useNum4zAnimation = () => {
 }
 
 /* ===========================
+ * Num5z 区域 ScrollTrigger 缩放
+ * 随滚动将 .num5z 从 scale(0.9) 缩放到 scale(1)
+ * 触发区间：元素距顶部 80% → 60%
+ * =========================== */
+export const useNum5zAnimation = () => {
+  let st = null
+
+  const initNum5zAnimation = () => {
+    const el = document.querySelector('.num5z')
+    if (!el) return
+
+    st = ScrollTrigger.create({
+      trigger: el,
+      start: 'top 95%',
+      end: 'top 15%',
+      scrub: true,
+      onUpdate: (self) => {
+        const r = 40 - self.progress * 30
+        gsap.set(el, {
+          scale: 0.9 + self.progress * 0.1,
+          borderRadius: `${r}px ${r}px 0 0`,
+        })
+      },
+    })
+  }
+
+  const cleanupNum5zAnimation = () => {
+    if (st) {
+      st.kill()
+      st = null
+    }
+  }
+
+  return {
+    initNum5zAnimation,
+    cleanupNum5zAnimation,
+  }
+}
+
+/* ===========================
  * Swiper 拖拽轮播 (惯性 + 触摸)
  * walk = 鼠标位移 × 1.5 —— 增大滚动倍率，拖拽手感更快
  * velocity = 鼠标速度 × 15 —— 将 px/ms 转换为每帧位移量级

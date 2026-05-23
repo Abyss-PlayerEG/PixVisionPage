@@ -11,6 +11,7 @@ import {
   useLinkCardAnimation,
   useNum3zAnimation,
   useNum4zAnimation,
+  useNum5zAnimation,
   useSwiper,
 } from '@/composables/mainIndex.js'
 import { useWorkWaterfall } from '@/composables/useWorkWaterfall.js'
@@ -28,6 +29,7 @@ const { triggerArrowAnimation, cleanupArrowAnimation } = useArrowAnimation()
 const { initLinkCardAnimation, cleanupLinkCardAnimation } = useLinkCardAnimation()
 const { initNum3zAnimation, cleanupNum3zAnimation } = useNum3zAnimation()
 const { initNum4zAnimation, cleanupNum4zAnimation } = useNum4zAnimation()
+const { initNum5zAnimation, cleanupNum5zAnimation } = useNum5zAnimation()
 const { initSwiper, cleanupSwiper } = useSwiper(swiperContainer)
 const { waterfallImages, isLoading, error, loadWorks } = useWorkWaterfall()
 
@@ -78,6 +80,9 @@ onMounted(() => {
   setTimeout(() => {
     initNum4zAnimation()
   }, 600)
+  setTimeout(() => {
+    initNum5zAnimation()
+  }, 700)
 })
 
 onUnmounted(() => {
@@ -86,6 +91,7 @@ onUnmounted(() => {
   cleanupLinkCardAnimation()
   cleanupNum3zAnimation()
   cleanupNum4zAnimation()
+  cleanupNum5zAnimation()
   cleanupSwiper()
 })
 </script>
@@ -270,6 +276,21 @@ onUnmounted(() => {
         :class="'grid-card--' + item"
       >
         <div class="grid-card__skeleton"></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="num5z">
+    <div class="num5z">
+      <div class="n5_showzone">
+        <div class="n5_item">
+          <svg t="1779516670205" class="icon" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" p-id="11696" width="50" height="50"><path d="M956.15 68.81c-21-21-50.04-31.96-79.67-30.09l-393.84 24.9c-5.67 0.36-10.63 3.06-14.03 7.09-0.45 0.38-0.9 0.77-1.32 1.2L72.64 466.54c-46.79 46.79-46.79 122.92 0 169.71l315.92 315.92c46.79 46.79 122.92 46.79 169.71 0l397.28-397.28c0.45-0.45 0.87-0.92 1.28-1.42 0.14-0.17 0.27-0.36 0.41-0.53 0.25-0.32 0.49-0.64 0.72-0.98 0.15-0.22 0.29-0.45 0.43-0.67 0.19-0.31 0.38-0.62 0.55-0.93 0.13-0.24 0.26-0.49 0.38-0.74 0.16-0.31 0.3-0.63 0.44-0.95 0.11-0.26 0.22-0.51 0.31-0.78 0.12-0.32 0.24-0.65 0.34-0.98 0.09-0.27 0.17-0.54 0.25-0.81 0.09-0.33 0.17-0.66 0.24-0.99 0.06-0.29 0.13-0.58 0.18-0.87 0.06-0.32 0.1-0.64 0.14-0.96 0.04-0.31 0.08-0.62 0.1-0.93 0.01-0.11 0.03-0.21 0.04-0.32l24.87-393.53c1.88-29.65-9.08-58.69-30.08-79.69z m-203.54 203.4c48.82 48.82 48.82 127.96 0 176.78-48.82 48.82-127.96 48.82-176.78 0s-48.82-127.96 0-176.78 127.96-48.82 176.78 0z" fill="#1a1a1a" p-id="11697"></path></svg>
+          <div>Design Concept</div>
+        </div>
+
+        <h3>Draw on your valuable advice, </h3>
+        <h3>craft our exclusive creativity.</h3>
+        <h1>您的建议, 我们的创意</h1>
       </div>
     </div>
   </section>
