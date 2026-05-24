@@ -211,8 +211,9 @@ export const useArrowAnimation = (selector = '.n1_btn svg') => {
 }
 
 /* ===========================
- * N1 背景图片 Ken Burns 缓动 + 鼠标斥力（双层视差）
- * Ken Burns：背景 1→1.06，底部图层 1→1.08，yoyo 往复
+ * N1 背景图片 Ken Burns 缓动 + 鼠标斥力（双层视差）+ 滚动缩放
+ * 滚动缩放：随 #num1z 滚动，wrapper 从 1→1.1 逐渐放大（scrub）
+ * Ken Burns：背景 1→1.06，底部图层 1→1.08，叠加于滚动缩放之上
  * 斥力：背景 ±15px，底部图层 ±22px —— 前景位移更大，形成深度差
  * =========================== */
 export const useN1ImageEffect = () => {
@@ -224,6 +225,9 @@ export const useN1ImageEffect = () => {
   let bottomQuickY = null
   let bgImg = null
   let bottomImg = null
+  let bgWrap = null
+  let bottomWrap = null
+  let scrollSt = null
   let raf = null
   let leaveTimer = null
   let isInside = false
@@ -271,10 +275,13 @@ export const useN1ImageEffect = () => {
   const initN1ImageEffect = () => {
     bgImg = document.querySelector('.n1_bg')
     bottomImg = document.querySelector('.n1_bg_bottom')
-    if (!bgImg || !bottomImg) return
+    bgWrap = document.querySelector('.n1_bg_wrap')
+    bottomWrap = document.querySelector('.n1_bg_bottom_wrap')
+    if (!bgImg) return
 
-    gsap.set([bgImg, bottomImg], { willChange: 'transform' })
+    gsap.set([bgImg, bottomImg].filter(Boolean), { willChange: 'transform' })
 
+    // Ken Burns 呼吸：在 scroll 缩放基础上叠加
     bgTween = gsap.to(bgImg, {
       scale: 1.06,
       duration: 10,
@@ -283,18 +290,38 @@ export const useN1ImageEffect = () => {
       yoyo: true,
     })
 
-    bottomTween = gsap.to(bottomImg, {
-      scale: 1.08,
-      duration: 10,
-      ease: 'sine.inOut',
-      repeat: -1,
-      yoyo: true,
-    })
+    if (bottomImg) {
+      bottomTween = gsap.to(bottomImg, {
+        scale: 1.08,
+        duration: 10,
+        ease: 'sine.inOut',
+        repeat: -1,
+        yoyo: true,
+      })
+    }
+
+    // 滚动缩放：wrapper 随 #num1z 滚动从 1→1.1
+    if (bgWrap) {
+      gsap.set(bgWrap, { transformOrigin: 'center center' })
+      scrollSt = ScrollTrigger.create({
+        trigger: '#num1z',
+        start: 'top top',
+        end: 'bottom top',
+        scrub: true,
+        onUpdate: (self) => {
+          const s = 1 + self.progress * 0.1
+          gsap.set(bgWrap, { scale: s })
+          if (bottomWrap) gsap.set(bottomWrap, { scale: s })
+        },
+      })
+    }
 
     bgQuickX = gsap.quickTo(bgImg, 'x', { duration: 0.6, ease: 'power2.out' })
     bgQuickY = gsap.quickTo(bgImg, 'y', { duration: 0.6, ease: 'power2.out' })
-    bottomQuickX = gsap.quickTo(bottomImg, 'x', { duration: 0.5, ease: 'power2.out' })
-    bottomQuickY = gsap.quickTo(bottomImg, 'y', { duration: 0.5, ease: 'power2.out' })
+    if (bottomImg) {
+      bottomQuickX = gsap.quickTo(bottomImg, 'x', { duration: 0.5, ease: 'power2.out' })
+      bottomQuickY = gsap.quickTo(bottomImg, 'y', { duration: 0.5, ease: 'power2.out' })
+    }
 
     window.addEventListener('mousemove', onMove, { passive: true })
   }
@@ -307,6 +334,10 @@ export const useN1ImageEffect = () => {
     if (bottomTween) {
       bottomTween.kill()
       bottomTween = null
+    }
+    if (scrollSt) {
+      scrollSt.kill()
+      scrollSt = null
     }
     window.removeEventListener('mousemove', onMove)
     if (raf) {
