@@ -268,18 +268,6 @@ const initLogoSpin = () => {
       },
     });
 
-    // Logo 初始 90%，滚动到 #num1z 阈值时还原至 100%
-    const logo = document.querySelector('.n1_logo')
-    if (logo) {
-      gsap.set(logo, { scale: 0.9, transformOrigin: 'left center' })
-      ScrollTrigger.create({
-        trigger: '#num1z',
-        start: 'top top',
-        onEnter: () => gsap.to(logo, { scale: 1, duration: 0.35, ease: 'power2.out' }),
-        onLeaveBack: () => gsap.to(logo, { scale: 0.9, duration: 0.35, ease: 'power2.out' }),
-      })
-    }
-
   });
 };
 
