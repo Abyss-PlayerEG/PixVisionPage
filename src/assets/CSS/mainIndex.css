@@ -15,9 +15,47 @@
     overflow: hidden;
 
     video{
-        width: 103%;
+        position: absolute;
+        top: -5vh;
+        left: -5vw;
+        width: calc(100% + 10vw);
+        height: calc(100% + 10vh);
+        object-fit: cover;
+        transform: translateZ(0);
+        backface-visibility: hidden;
+    }
+
+    .n1_bg_wrap{
+        position: absolute;
+        inset: -2%;
+        overflow: hidden;
+    }
+
+    .n1_bg{
+        width: 100%;
         height: 100%;
         object-fit: cover;
+        transform: translateZ(0);
+        backface-visibility: hidden;
+    }
+
+    .n1_bg_bottom_wrap{
+        position: absolute;
+        bottom: -5%;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 110%;
+        overflow: hidden;
+        z-index: 2;
+        pointer-events: none;
+    }
+
+    .n1_bg_bottom{
+        display: block;
+        width: 100%;
+        height: auto;
+        transform: translateZ(0);
+        backface-visibility: hidden;
     }
 }
 
@@ -32,7 +70,8 @@
     left: 5%;
     
     /* 标题样式 */
-    font-size: 48px;
+    font-family: sul-gbk6;
+    font-size: 52px;
     font-weight: 700;
     color: #ffffff;
     letter-spacing: 2px;
@@ -52,9 +91,11 @@
     left: 5%;
     
     /* 副标题样式 */
+    font-family: sul-gbk6;
     font-size: 24px;
     font-weight: 400;
-    color: rgba(255, 255, 255, 0.85);
+    /* color: rgba(255, 255, 255, 0.85); */
+    color: #cecece;
     letter-spacing: 1px;
     line-height: 80px;
     text-shadow: 0 1px 5px rgba(0, 0, 0, 0.2);
@@ -315,6 +356,7 @@
     color: #cecece;
 
     h1{
+        font-family: sul-gbk6;
         font-size: 60px;
         height: 100px;
     }
@@ -491,6 +533,7 @@
         flex-shrink: 0;
         margin: 0;
         line-height: 1.15;
+        font-family: sul-gbk6;
     }
 }
 
@@ -757,4 +800,12 @@
             }
         }
     }
+}
+
+#num6z{
+    width: 100%;
+    height: 100vh;
+    position: relative;
+    z-index: 7;
+    background-color: #000;
 }

@@ -7,23 +7,23 @@ gsap.registerPlugin(ScrollTrigger)
 // 文案库 - 方便后续增删改
 const copyLibrary = [
   {
-    title: "探索无限可能",
+    title: "Explore infinite possibilities",
     subtitle: "用创意点亮每一个像素的瞬间"
   },
   {
-    title: "视觉的艺术",
+    title: "The Art of Vision",
     subtitle: "让每一帧都成为永恒的记忆"
   },
   {
-    title: "创新无止境",
+    title: "Innovation knows no bounds",
     subtitle: "在数字世界中发现新的维度"
   },
   {
-    title: "灵感的力量",
+    title: "The Power of Inspiration",
     subtitle: "捕捉那些稍纵即逝的美好"
   },
   {
-    title: "设计的温度",
+    title: "Designed temperature",
     subtitle: "用心感受每一次创作的喜悦"
   }
 ]
@@ -207,6 +207,121 @@ export const useArrowAnimation = (selector = '.n1_btn svg') => {
   return {
     triggerArrowAnimation,
     cleanupArrowAnimation
+  }
+}
+
+/* ===========================
+ * N1 背景图片 Ken Burns 缓动 + 鼠标斥力（双层视差）
+ * Ken Burns：背景 1→1.06，底部图层 1→1.08，yoyo 往复
+ * 斥力：背景 ±15px，底部图层 ±22px —— 前景位移更大，形成深度差
+ * =========================== */
+export const useN1ImageEffect = () => {
+  let bgTween = null
+  let bottomTween = null
+  let bgQuickX = null
+  let bgQuickY = null
+  let bottomQuickX = null
+  let bottomQuickY = null
+  let bgImg = null
+  let bottomImg = null
+  let raf = null
+  let leaveTimer = null
+  let isInside = false
+
+  const resetAll = () => {
+    bgQuickX(0)
+    bgQuickY(0)
+    bottomQuickX(0)
+    bottomQuickY(0)
+  }
+
+  const onMove = (e) => {
+    if (raf) return
+    raf = requestAnimationFrame(() => {
+      raf = null
+      const section = document.querySelector('#num1z')
+      if (!section) return
+      const rect = section.getBoundingClientRect()
+      const inBounds =
+        e.clientX >= rect.left && e.clientX <= rect.right &&
+        e.clientY >= rect.top && e.clientY <= rect.bottom
+
+      if (!inBounds) {
+        if (isInside) {
+          isInside = false
+          clearTimeout(leaveTimer)
+          leaveTimer = setTimeout(resetAll, 300)
+        }
+        return
+      }
+      isInside = true
+      clearTimeout(leaveTimer)
+
+      const cx = rect.left + rect.width / 2
+      const cy = rect.top + rect.height / 2
+      const nx = (e.clientX - cx) / (rect.width / 2)
+      const ny = (e.clientY - cy) / (rect.height / 2)
+      bgQuickX(-nx * 15)
+      bgQuickY(-ny * 15)
+      bottomQuickX(-nx * 22)
+      bottomQuickY(-ny * 22)
+    })
+  }
+
+  const initN1ImageEffect = () => {
+    bgImg = document.querySelector('.n1_bg')
+    bottomImg = document.querySelector('.n1_bg_bottom')
+    if (!bgImg || !bottomImg) return
+
+    gsap.set([bgImg, bottomImg], { willChange: 'transform' })
+
+    bgTween = gsap.to(bgImg, {
+      scale: 1.06,
+      duration: 10,
+      ease: 'sine.inOut',
+      repeat: -1,
+      yoyo: true,
+    })
+
+    bottomTween = gsap.to(bottomImg, {
+      scale: 1.08,
+      duration: 10,
+      ease: 'sine.inOut',
+      repeat: -1,
+      yoyo: true,
+    })
+
+    bgQuickX = gsap.quickTo(bgImg, 'x', { duration: 0.6, ease: 'power2.out' })
+    bgQuickY = gsap.quickTo(bgImg, 'y', { duration: 0.6, ease: 'power2.out' })
+    bottomQuickX = gsap.quickTo(bottomImg, 'x', { duration: 0.5, ease: 'power2.out' })
+    bottomQuickY = gsap.quickTo(bottomImg, 'y', { duration: 0.5, ease: 'power2.out' })
+
+    window.addEventListener('mousemove', onMove, { passive: true })
+  }
+
+  const cleanupN1ImageEffect = () => {
+    if (bgTween) {
+      bgTween.kill()
+      bgTween = null
+    }
+    if (bottomTween) {
+      bottomTween.kill()
+      bottomTween = null
+    }
+    window.removeEventListener('mousemove', onMove)
+    if (raf) {
+      cancelAnimationFrame(raf)
+      raf = null
+    }
+    if (leaveTimer) {
+      clearTimeout(leaveTimer)
+      leaveTimer = null
+    }
+  }
+
+  return {
+    initN1ImageEffect,
+    cleanupN1ImageEffect,
   }
 }
 
@@ -424,27 +539,55 @@ export const useNum4zAnimation = () => {
 }
 
 /* ===========================
- * Num5z 区域 ScrollTrigger 缩放
- * 随滚动将 .num5z 从 scale(0.9) 缩放到 scale(1)
- * 触发区间：元素距顶部 80% → 60%
+ * Num5z 区域 ScrollTrigger 动画
+ * 入场 scrub：随滚动将 .num5z 从 scale(0.9) 缩放到 scale(1)，顶部圆角 40→10px
+ * 离场 toggle：#num5z 底部到达视口 top 60% 时播放，底部圆角变为 10 10 40 40 + scale→0.9
  * =========================== */
 export const useNum5zAnimation = () => {
   let st = null
+  let closingSt = null
+  let closingTween = null
 
   const initNum5zAnimation = () => {
     const el = document.querySelector('.num5z')
     if (!el) return
 
+    // 入场 scrub 动画
     st = ScrollTrigger.create({
       trigger: el,
       start: 'top 95%',
       end: 'top 15%',
       scrub: true,
       onUpdate: (self) => {
+        if (closingTween?.isActive()) return
         const r = 40 - self.progress * 30
         gsap.set(el, {
           scale: 0.9 + self.progress * 0.1,
           borderRadius: `${r}px ${r}px 0 0`,
+        })
+      },
+    })
+
+    // 离场 toggle 动画：底部到达 bottom 时播放
+    closingSt = ScrollTrigger.create({
+      trigger: '#num5z',
+      start: 'bottom bottom',
+      onEnter: () => {
+        closingTween?.kill()
+        closingTween = gsap.to(el, {
+          scale: 0.9,
+          borderRadius: '10px 10px 40px 40px',
+          duration: 0.5,
+          ease: 'power2.out',
+        })
+      },
+      onLeaveBack: () => {
+        closingTween?.kill()
+        closingTween = gsap.to(el, {
+          scale: 1,
+          borderRadius: '10px 10px 0 0',
+          duration: 0.5,
+          ease: 'power2.out',
         })
       },
     })
@@ -454,6 +597,14 @@ export const useNum5zAnimation = () => {
     if (st) {
       st.kill()
       st = null
+    }
+    if (closingSt) {
+      closingSt.kill()
+      closingSt = null
+    }
+    if (closingTween) {
+      closingTween.kill()
+      closingTween = null
     }
   }
 

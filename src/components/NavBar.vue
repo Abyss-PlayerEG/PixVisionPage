@@ -267,6 +267,7 @@ const initLogoSpin = () => {
         scrub: 0.5,
       },
     });
+
   });
 };
 

@@ -8,6 +8,7 @@ import Waterfall from '@/components/Waterfall.vue'
 import {
   useCopyAnimation,
   useArrowAnimation,
+  useN1ImageEffect,
   useLinkCardAnimation,
   useNum3zAnimation,
   useNum4zAnimation,
@@ -28,6 +29,7 @@ const swiperContainer = ref(null)
 // --- Composables ---
 const { initCopyAnimation, cleanupCopyAnimation } = useCopyAnimation()
 const { triggerArrowAnimation, cleanupArrowAnimation } = useArrowAnimation()
+const { initN1ImageEffect, cleanupN1ImageEffect } = useN1ImageEffect()
 const { initLinkCardAnimation, cleanupLinkCardAnimation } = useLinkCardAnimation()
 const { initNum3zAnimation, cleanupNum3zAnimation } = useNum3zAnimation()
 const { initNum4zAnimation, cleanupNum4zAnimation } = useNum4zAnimation()
@@ -69,6 +71,7 @@ const handleImageClick = (imgData) => {
 
 // --- Lifecycle ---
 onMounted(() => {
+  initN1ImageEffect()
   initCopyAnimation()
   initLinkCardAnimation()
   initSwiper()
@@ -93,6 +96,7 @@ onMounted(() => {
 
 onUnmounted(() => {
   cleanupCopyAnimation()
+  cleanupN1ImageEffect()
   cleanupArrowAnimation()
   cleanupLinkCardAnimation()
   cleanupNum3zAnimation()
@@ -109,8 +113,8 @@ const mockNum5z = [
   { id: 2, text: '灵动的交互体验', top: '30%', left: '2%', color: '#fbbf24' },
   { id: 3, text: '简约有质感的页面设计', top: '35%', left: '15%', color: '#f59e0b	' },
   { id: 4, text: '以简驭繁, 少即是多', top: '40%', left: '60%', color: '#d97706	' },
-  { id: 5, text: '留白即意境, 克制即高级', top: '75%', left: '80%', color: '#fde68a' },
-  { id: 6, text: '克制美学, 细节致胜', top: '85%', left: '70%', color: '#b45309' },
+  { id: 5, text: '留白即意境, 克制即高级', top: '65%', left: '80%', color: '#fde68a' },
+  { id: 6, text: '克制美学, 细节致胜', top: '75%', left: '70%', color: '#b45309' },
   // 以下为我另外一种配色方案，任何情况下均不要删除以下注释
   // { id: 1, text: '丝滑优质的动画', top: '10%', left: '5%', color: '#00A947' },
   // { id: 2, text: '灵动的交互体验', top: '25%', left: '15%', color: '#FDF9F0' },
@@ -127,7 +131,7 @@ const mockNum5z = [
   <section id="num1z">
     <div class="n1_showzone">
       <!-- 视频背景 -->
-      <video
+      <!-- <video
         src="../assets/Video/灰质海滩.mp4"
         autoplay
         muted
@@ -135,7 +139,13 @@ const mockNum5z = [
         playsinline
         disablePictureInPicture
         controlslist="nodownload nofullscreen noremoteplayback"
-      ></video>
+      ></video> -->
+
+      <!-- 图片背景：林间雾野 -->
+      <div class="n1_bg_wrap"><img class="n1_bg" src="../assets/IMG/林间雾野.jpg" alt="" /></div>
+
+      <!-- 底部抠图层叠 -->
+      <div class="n1_bg_bottom_wrap"><img class="n1_bg_bottom" src="../assets/IMG/林间雾野bottom.png" alt="" /></div>
 
       <!-- 文案展示 -->
       <div class="n1_showCopy1"></div>
@@ -335,7 +345,7 @@ const mockNum5z = [
     </div>
   </section>
 
-  <section id="num6z" style="width: 100%;height: 200vh; background-color: #fff; position: relative; z-index: 7;">
+  <section id="num6z">
   </section>
 </template>
 
