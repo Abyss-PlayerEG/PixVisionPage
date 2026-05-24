@@ -109,7 +109,7 @@ export const useCopyAnimation = () => {
 
     if (titleChars.length > 0) {
       animationTimeline.to(titleChars, {
-        y: '-100%',
+        y: '-50%',
         opacity: 0,
         duration: 0.5,
         stagger: 0.03,
@@ -119,7 +119,7 @@ export const useCopyAnimation = () => {
 
     if (subtitleChars.length > 0) {
       animationTimeline.to(subtitleChars, {
-        y: '-100%',
+        y: '-50%',
         opacity: 0,
         duration: 0.5,
         stagger: 0.03,
