@@ -346,6 +346,7 @@ const mockNum5z = [
   </section>
 
   <section id="num6z">
+    <div class="num6z"></div>
   </section>
 </template>
 

@@ -26,15 +26,27 @@
           class="gallery-column"
           :style="{ width: columnWidth + 'px' }"
         >
-          <img
+          <div
             v-for="(img, imgIndex) in column"
             :key="imgIndex"
-            :src="img.src"
-            :alt="img.alt || ''"
-            :style="{ height: img.height + 'px', width: '100%' }"
-            loading="lazy"
-            @click="emit('image-click', img)"
-          />
+            class="image-card"
+            :style="{ height: img.height + 'px' }"
+          >
+            <div
+              class="image-skeleton"
+              :class="{ 'skeleton-hidden': loadedImages[img.workId || img.src] }"
+            ></div>
+            <img
+              :src="img.src"
+              :alt="img.alt || ''"
+              class="gallery-image"
+              :class="{ 'image-loaded': loadedImages[img.workId || img.src] }"
+              loading="lazy"
+              @load="onImageLoad(img)"
+              @error="onImageError(img)"
+              @click="emit('image-click', img)"
+            />
+          </div>
         </div>
       </template>
     </div>
@@ -42,7 +54,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onUnmounted, nextTick, watch } from 'vue'
+import { reactive, ref, computed, onMounted, onUnmounted, nextTick, watch } from 'vue'
 import gsap from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
 
@@ -71,6 +83,17 @@ const trackRef = ref(null)
 const images = ref([])
 const skeletonColumns = ref([])
 const activeColumns = ref(0)
+
+// Per-image loading state: tracks which images have loaded (or errored)
+const loadedImages = reactive({})
+
+const onImageLoad = (img) => {
+  loadedImages[img.workId || img.src] = true
+}
+
+const onImageError = (img) => {
+  loadedImages[img.workId || img.src] = true
+}
 let scrollTriggerInstance = null
 let lastTotalWidth = 0
 
@@ -94,6 +117,8 @@ const buildSkeleton = () => {
 // ---------- Data sync ----------
 watch(() => props.externalImages, (newVal) => {
   images.value = newVal
+  // Reset per-image load state for new data
+  Object.keys(loadedImages).forEach(key => delete loadedImages[key])
 }, { deep: true })
 
 // ---------- Column layout ----------
@@ -286,17 +311,50 @@ onUnmounted(() => {
   100% { background-position: -200% 0; }
 }
 
-.gallery-column img {
-  display: block;
+/* 图片卡片 —— 包裹图片和骨架屏的容器 */
+.image-card {
+  position: relative;
   width: 100%;
-  object-fit: cover;
+  flex-shrink: 0;
   border-radius: 8px;
-  background-color: #e0e0e0;
-  transition: transform 0.3s ease;
+  overflow: hidden;
+  cursor: pointer;
 }
 
-/* hover 微放大 —— 仅 scale(1.02) 轻微反馈，不喧宾夺主 */
-.gallery-column img:hover {
+/* 单图骨架屏 —— 与全局骨架屏共用 shimmer 动画，绝对定位覆盖卡片 */
+.image-skeleton {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, #1a1a1a 25%, #2a2a2a 50%, #1a1a1a 75%);
+  background-size: 200% 100%;
+  border-radius: 8px;
+  animation: skeletonShimmer 1.8s infinite ease-in-out;
+  opacity: 1;
+  transition: opacity 0.5s ease;
+  z-index: 1;
+}
+
+.image-skeleton.skeleton-hidden {
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* 真实图片 —— 初始透明，加载完成后淡入 */
+.gallery-image {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 8px;
+  opacity: 0;
+  transition: opacity 0.5s ease, transform 0.3s ease;
+}
+
+.gallery-image.image-loaded {
+  opacity: 1;
+}
+
+.gallery-image.image-loaded:hover {
   transform: scale(1.02);
 }
 </style>

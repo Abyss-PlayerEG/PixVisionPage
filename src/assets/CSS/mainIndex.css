@@ -809,3 +809,11 @@
     z-index: 7;
     background-color: #000;
 }
+
+.num6z{
+    width: 100%;
+    height: 100vh;
+    position: sticky;
+    top: 0;
+    background-color: #fff;
+}
