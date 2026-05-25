@@ -1031,16 +1031,21 @@ export const useSwiper = (containerRef) => {
 
 // ==================== num6z — 打字机药丸动画 ====================
 /**
- * num6z 打字机效果 —— ScrollTrigger scrub 驱动的逐词渐现动画。
+ * num6z 打字机效果 —— 两个独立 ScrollTrigger 分别驱动入场与退场。
  *
- * 流程：
- * 1. 药丸（圆角矩形占位块）逐个出现 — 模拟聊天软件中网络卡顿时的气泡骨架
- * 2. 药丸消失 + 文字出现 — 占位被真实内容"填充"
+ * 入场（#num6z, top→bottom）：scrub 全段。
+ *   1. 药丸 + 绿色徽章逐个出现
+ *   2. 药丸消失 + 文字出现
+ *   3. 渐变文字扫光
  *
- * 使用 scrub 将时间轴进度直接映射到滚动位置，用户可自由控制播放/倒放。
+ * 退场（#num7z, top bottom→top top）：入场完成、粘性解除、进入 #num7z 后触发。
+ *   4. 药丸 z-index 提升，逐个重现遮挡文字
+ *      徽章绿色褪为灰色药丸，内部文字/图标淡出
+ *      渐变文字仅被遮盖，不反向扫光
  */
 export const useNum6zAnimation = () => {
-  let tl = null
+  let tlEntrance = null
+  let tlExit = null
 
   const initNum6zAnimation = () => {
     const allPills = gsap.utils.toArray('.n6_pill, .n6_badge')
@@ -1050,55 +1055,84 @@ export const useNum6zAnimation = () => {
 
     if (allPills.length === 0 || words.length === 0) return
 
-    tl = gsap.timeline({
+    // === 入场：#num6z 全段 scrub ===
+    tlEntrance = gsap.timeline({
       scrollTrigger: {
         trigger: '#num6z',
-        start: 'top top',
+        start: 'top 50%',
         end: 'bottom bottom',
         scrub: 0.6,
-        id: 'num6z-typing',
+        id: 'num6z-entrance',
       },
     })
 
     // Phase 1: 词药丸 + 绿色徽章逐个出现
-    tl.to(allPills, {
+    tlEntrance.to(allPills, {
       opacity: 1,
       stagger: { each: 0.04, from: 'start' },
       duration: 0.3,
     })
 
     // Phase 2: 词药丸消失 + 文字出现（徽章不消失，已是最终态）
-    tl.to(wordPills, {
+    tlEntrance.to(wordPills, {
       opacity: 0,
       stagger: { each: 0.04, from: 'start' },
       duration: 0.3,
     }, '<+=0.25')
-    tl.to(words, {
+    tlEntrance.to(words, {
       opacity: 1,
       stagger: { each: 0.04, from: 'start' },
       duration: 0.3,
     }, '<')
 
-    // Phase 3: 渐变文字依次扫光 — Pixel 先完成，vision 紧随其后
+    // Phase 3: 渐变文字依次扫光
     if (gradientWords.length > 0) {
-      tl.to(gradientWords[0], {
+      tlEntrance.to(gradientWords[0], {
         backgroundPositionX: '0%',
         duration: 0.4,
       }, '>-=0.1')
       if (gradientWords.length > 1) {
-        tl.to(gradientWords[1], {
+        tlEntrance.to(gradientWords[1], {
           backgroundPositionX: '0%',
           duration: 0.4,
         }, '>')
       }
     }
+
+    // === 退场：#num7z 进入视口时触发，入场已完成、粘性已解除 ===
+    tlExit = gsap.timeline({
+      scrollTrigger: {
+        trigger: '#num7z',
+        start: 'top 90%',
+        end: 'top 80%',
+        scrub: 0.6,
+        id: 'num6z-exit',
+      },
+    })
+
+    // Phase 4: 按 DOM 顺序逐位退场，药丸重现遮挡文字，徽章褪为灰色
+    tlExit.set(wordPills, { zIndex: 2 })
+    const exitSlots = gsap.utils.toArray('.n6_word-wrapper, .n6_badge')
+    exitSlots.forEach((slot, i) => {
+      const t = i * 0.04
+      if (slot.classList.contains('n6_word-wrapper')) {
+        const pill = slot.querySelector('.n6_pill')
+        const word = slot.querySelector('.n6_word')
+        tlExit.to(pill, { opacity: 1, duration: 0.3 }, t)
+        tlExit.to(word, { opacity: 0, duration: 0.3 }, t)
+      } else {
+        tlExit.to(slot, { backgroundColor: '#0c0c0c', duration: 0.3 }, t)
+        const text = slot.querySelector('.n6_badge-text')
+        const icon = slot.querySelector('.n6_badge-icon')
+        if (text) tlExit.to(text, { opacity: 0, duration: 0.2 }, t)
+        if (icon) tlExit.to(icon, { opacity: 0, duration: 0.2 }, t)
+      }
+    })
   }
 
   const cleanupNum6zAnimation = () => {
-    if (tl) {
-      tl.kill()
-      tl = null
-    }
+    if (tlEntrance) { tlEntrance.kill(); tlEntrance = null }
+    if (tlExit) { tlExit.kill(); tlExit = null }
   }
 
   return { initNum6zAnimation, cleanupNum6zAnimation }
