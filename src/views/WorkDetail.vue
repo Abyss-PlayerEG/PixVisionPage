@@ -1,363 +1,39 @@
 <script setup>
-import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
-import { getWorkImageUrl, getAvatarUrl } from '@/config/api'
-import { fetchWorkDetail, fetchCommentList, addComment, deleteComment, toggleLike, toggleStar, fetchLikeStatus, fetchStarStatus, fetchPublisherInfo, getLastWorkId } from '@/api/workApi'
-import { getCurrentUser } from '@/api/profileApi'
-import { showSuccess, showError, showInfo } from '@/utils/notification'
-import { showConfirm } from '@/utils/confirmDialog'
+import { getAvatarUrl } from '@/config/api'
+import { useWorkDetail } from '@/composables/useWorkDetail'
 
-const route = useRoute()
-const router = useRouter()
-const workId = computed(() => route.params.id)
-
-const loading = ref(true)
-const commentSubmitting = ref(false)
-const workDetail = ref(null)
-const publisher = ref({ avatar: getAvatarUrl(''), displayName: '加载中...', username: '', bio: '', works: 0, totalViews: 0, totalLikes: 0, totalStars: 0, contactItems: [] })
-const comments = ref([])
-const newComment = ref('')
-const currentUser = ref(getCurrentUser())
-const now = ref(Date.now())
-let timeTimer = null
-
-// 点赞/收藏状态
-const liked = ref(false)
-const starred = ref(false)
-const likeCount = ref(0)
-const starCount = ref(0)
-const likePending = ref(false)
-const starPending = ref(false)
-const downloadPending = ref(false)
-
-// 作品导航状态
-const navLoading = ref(false)
-const lastWorkId = ref(0)
-const navPrefetched = ref(null) // 缓存导航预取的作品详情，避免双重请求
-const initialLoading = ref(true) // 首次加载状态，导航时不触发
-
-// 上一个/下一个作品导航
-const goToPrevWork = async () => {
-  if (navLoading.value) return
-  const current = Number(workId.value)
-  if (!current) return
-  navLoading.value = true
-  const found = await findValidWorkId(current, 'prev')
-  navLoading.value = false
-  if (found) {
-    navPrefetched.value = found
-    window.scrollTo({ top: 0, behavior: 'smooth' })
-    router.push({ name: 'workDetail', params: { id: found.id } })
-  } else {
-    showInfo('已经是第一个作品了')
-  }
-}
-
-const goToNextWork = async () => {
-  if (navLoading.value) return
-  const current = Number(workId.value)
-  if (!current) return
-  navLoading.value = true
-  const found = await findValidWorkId(current, 'next')
-  navLoading.value = false
-  if (found) {
-    navPrefetched.value = found
-    window.scrollTo({ top: 0, behavior: 'smooth' })
-    router.push({ name: 'workDetail', params: { id: found.id } })
-  } else {
-    showInfo('已经是最后一个作品了')
-  }
-}
-
-/**
- * 从起始 ID 开始，沿方向逐个探测有效作品（跳过已删除的）
- * @param {number} startId
- * @param {'prev'|'next'} direction
- * @returns {Promise<{id:number, detail:Object}|null>} 找到的有效作品信息及详情，或 null
- */
-const findValidWorkId = async (startId, direction) => {
-  const maxAttempts = 50
-  let candidate = direction === 'next' ? startId + 1 : startId - 1
-  for (let i = 0; i < maxAttempts; i++) {
-    if (candidate <= 0) return null
-    if (direction === 'next' && lastWorkId.value > 0 && candidate > lastWorkId.value) return null
-    const result = await fetchWorkDetail(candidate)
-    if (result.success) return { id: candidate, detail: result.data }
-    candidate += direction === 'next' ? 1 : -1
-  }
-  return null
-}
-
-// 回复状态
-const replyingTo = ref(null)
-const replyText = ref('')
-const replySubmitting = ref(false)
-
-const workTitle = computed(() => workDetail.value?.work_title || route.query.title || '未命名作品')
-const workImgUrl = computed(() => {
-  if (workDetail.value) return getWorkImageUrl(workDetail.value.img_url || '')
-  if (route.query.img) return route.query.img
-  if (route.query.filePath) return getWorkImageUrl(route.query.filePath)
-  return ''
-})
-const workMeta = computed(() => {
-  if (!workDetail.value) return {}
-  return { likeCount: likeCount.value, starCount: starCount.value, viewCount: workDetail.value.view_count || 0, createTime: workDetail.value.create_time || '' }
-})
-
-const handleBack = () => {
-  if (window.history.length > 1) router.back()
-  else router.push({ name: 'home' })
-}
-
-const goLogin = () => {
-  router.push({ name: 'login', query: { redirect: route.fullPath } })
-}
-
-const goToProfile = (userId, username) => {
-  if (currentUser.value && currentUser.value.user_id === userId) {
-    router.push({ name: 'profileMe' })
-  } else {
-    router.push({ name: 'profileVisitor', params: { identifier: username || userId } })
-  }
-}
-
-const handleContactClick = (item) => {
-  if (item.name === 'Bilibili') {
-    const uid = item.content
-    const url = `https://space.bilibili.com/${uid}`
-    window.open(url, '_blank')
-  } else {
-    navigator.clipboard.writeText(item.content).then(() => {
-      showSuccess(`${item.name}已复制`, '复制成功')
-    }).catch(err => {
-      console.error('复制失败:', err)
-      showError('复制失败，请手动复制', '错误')
-    })
-  }
-}
-
-const handleSubmitComment = async () => {
-  const text = newComment.value.trim()
-  if (!text || commentSubmitting.value) return
-  const id = Number(workId.value)
-  if (!id) return
-  commentSubmitting.value = true
-  const result = await addComment({ workId: id, commentFloor: 1, commentText: text })
-  if (result.success) { newComment.value = ''; await loadComments(); showSuccess(result.message || '评论发表成功') }
-  else { showError(result.message || '评论发表失败') }
-  commentSubmitting.value = false
-}
-
-const startReply = (comment, parentId, userId) => {
-  if (!currentUser.value) { showInfo('请先登录'); return }
-  replyingTo.value = {
-    commentId: comment.comment_id,
-    parentId: parentId !== undefined ? parentId : comment.comment_id,
-    nickname: comment.nickname || '匿名用户',
-    userId: userId,
-  }
-  replyText.value = ''
-}
-
-const cancelReply = () => {
-  replyingTo.value = null
-  replyText.value = ''
-}
-
-const handleToggleLike = async () => {
-  const id = Number(workId.value)
-  if (!id || likePending.value) return
-  if (!currentUser.value) { showInfo('请先登录'); return }
-  likePending.value = true
-  const result = await toggleLike(id)
-  if (result.success && result.data !== undefined) {
-    liked.value = result.data
-    likeCount.value += result.data ? 1 : -1
-  }
-  likePending.value = false
-}
-
-const handleToggleStar = async () => {
-  const id = Number(workId.value)
-  if (!id || starPending.value) return
-  if (!currentUser.value) { showInfo('请先登录'); return }
-  starPending.value = true
-  const result = await toggleStar(id)
-  if (result.success && result.data !== undefined) {
-    starred.value = result.data
-    starCount.value += result.data ? 1 : -1
-  }
-  starPending.value = false
-}
-
-const handleDownload = async () => {
-  const url = workImgUrl.value
-  if (!url || downloadPending.value) return
-  const ok = await showConfirm({ title: '下载作品', message: '确定要下载该作品图片吗？', yesText: '下载', noText: '取消', type: 'info' })
-  if (!ok) return
-  downloadPending.value = true
-  try {
-    const response = await fetch(url)
-    if (!response.ok) throw new Error('网络错误')
-    const blob = await response.blob()
-    const blobUrl = URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = blobUrl
-    a.download = workTitle.value + '.png'
-    document.body.appendChild(a)
-    a.click()
-    document.body.removeChild(a)
-    URL.revokeObjectURL(blobUrl)
-    showSuccess('下载成功')
-  } catch {
-    showError('网络错误，请稍后重试')
-  }
-  downloadPending.value = false
-}
-
-const handleSubmitReply = async () => {
-  const text = replyText.value.trim()
-  if (!text || replySubmitting.value || !replyingTo.value) return
-  const id = Number(workId.value)
-  if (!id) return
-  replySubmitting.value = true
-  const result = await addComment({
-    workId: id,
-    commentFloor: 2,
-    commentText: text,
-    parentCommentId: replyingTo.value.parentId,
-    repliedUserId: replyingTo.value.userId || undefined,
-  })
-  if (result.success) {
-    replyText.value = ''
-    replyingTo.value = null
-    await loadComments()
-    showSuccess(result.message || '回复发表成功')
-  } else {
-    showError(result.message || '回复失败')
-  }
-  replySubmitting.value = false
-}
-
-const handleDeleteComment = async (commentId) => {
-  const ok = await showConfirm({ title: '删除评论', message: '确定要删除这条评论吗？', yesText: '删除', noText: '取消', type: 'danger' })
-  if (!ok) return
-  const result = await deleteComment(commentId)
-  if (result.success) {
-    await loadComments()
-    showSuccess(result.message || '评论已删除')
-  } else {
-    showError(result.message || '删除失败')
-  }
-}
-
-const highlightComment = (commentId) => {
-  const el = document.querySelector(`[data-comment-id="${commentId}"]`)
-  if (!el) return
-  // 清除上一次高亮的定时器，防止旧定时器截断新动画
-  if (el._ht) { clearTimeout(el._ht); el._ht = null }
-  el.classList.remove('wd-comment-highlight')
-  // 强制重排使浏览器"忘记"动画状态，确保重新添加时动画从头播放
-  void el.offsetWidth
-  el.classList.add('wd-comment-highlight')
-  el.scrollIntoView({ behavior: 'smooth', block: 'center' })
-  el._ht = setTimeout(() => {
-    el.classList.remove('wd-comment-highlight')
-    el._ht = null
-  }, 1500)
-}
-
-const loadComments = async () => {
-  const id = Number(workId.value)
-  if (!id) return
-  const result = await fetchCommentList(id, 'newest')
-  if (result.success) comments.value = result.data
-}
-
-const formatTime = (timeStr) => {
-  if (!timeStr) return ''
-  void now.value // 建立响应式依赖，定时器更新 now 时模板自动重算
-  try {
-    const date = new Date(timeStr)
-    const diff = Date.now() - date.getTime()
-    const minutes = Math.floor(diff / 60000)
-    const hours = Math.floor(diff / 3600000)
-    const days = Math.floor(diff / 86400000)
-    if (minutes < 1) return '刚刚'
-    if (minutes < 60) return `${minutes}分钟前`
-    if (hours < 24) return `${hours}小时前`
-    if (days < 7) return `${days}天前`
-    return date.toLocaleDateString('zh-CN')
-  } catch { return timeStr }
-}
-
-/** 加载作品核心数据（作品详情、评论、点赞/收藏状态、发布者信息） */
-const loadWorkData = async () => {
-  const id = Number(workId.value)
-  if (!id) { loading.value = false; initialLoading.value = false; return }
-  if (initialLoading.value) loading.value = true
-  // 每次切换作品时重置回复状态
-  replyingTo.value = null
-  replyText.value = ''
-  // 复用导航预取的作品详情，避免重复请求
-  let detailResult
-  if (navPrefetched.value && navPrefetched.value.id === id) {
-    detailResult = { success: true, data: navPrefetched.value.detail }
-    navPrefetched.value = null
-  } else {
-    detailResult = await fetchWorkDetail(id)
-  }
-  const [commentResult] = await Promise.all([fetchCommentList(id, 'newest')])
-  if (detailResult.success) {
-    workDetail.value = detailResult.data
-    likeCount.value = detailResult.data.like_count || 0
-    starCount.value = detailResult.data.star_count || 0
-  } else {
-    workDetail.value = null
-    likeCount.value = 0
-    starCount.value = 0
-  }
-  if (commentResult.success) comments.value = commentResult.data
-  else comments.value = []
-  // 初始化点赞/收藏状态（需登录）
-  if (currentUser.value) {
-    const [likeStatus, starStatus] = await Promise.all([fetchLikeStatus(id), fetchStarStatus(id)])
-    if (likeStatus.success) liked.value = likeStatus.data
-    else liked.value = false
-    if (starStatus.success) starred.value = starStatus.data
-    else starred.value = false
-  } else {
-    liked.value = false
-    starred.value = false
-  }
-  // 获取发布者信息（从作品 user_id 查询）
-  if (detailResult.success && detailResult.data.user_id) {
-    const pubResult = await fetchPublisherInfo(detailResult.data.user_id)
-    publisher.value = pubResult.data
-  } else {
-    publisher.value = { avatar: getAvatarUrl(''), displayName: '', username: '', bio: '', works: 0, totalViews: 0, totalLikes: 0, totalStars: 0, contactItems: [] }
-  }
-  loading.value = false
-  initialLoading.value = false
-}
-
-onMounted(async () => {
-  timeTimer = setInterval(() => { now.value = Date.now() }, 30000)
-  // 缓存最大作品 ID（用于导航边界判断）
-  const lastIdResult = await getLastWorkId()
-  if (lastIdResult.success) lastWorkId.value = lastIdResult.data
-  await loadWorkData()
-})
-
-// 路由参数变化时重新加载数据（上一个/下一个作品导航等场景）
-watch(() => route.params.id, () => {
-  loadWorkData()
-})
-
-onUnmounted(() => {
-  if (timeTimer) { clearInterval(timeTimer); timeTimer = null }
-})
+const {
+  // 基础状态
+  loading, initialLoading, commentSubmitting,
+  workDetail, publisher, comments,
+  newComment, currentUser,
+  // 点赞/收藏
+  liked, starred, likeCount, starCount,
+  likePending, starPending, downloadPending,
+  // 导航
+  navLoading,
+  // 回复
+  replyingTo, replyText, replySubmitting,
+  // 计算属性
+  workTitle, workImgUrl, workMeta,
+  // 方法
+  handleBack,
+  goLogin,
+  goToProfile,
+  handleContactClick,
+  handleSubmitComment,
+  startReply, cancelReply,
+  handleSubmitReply,
+  handleDeleteComment,
+  loadComments,
+  highlightComment,
+  formatTime,
+  handleToggleLike,
+  handleToggleStar,
+  handleDownload,
+  goToPrevWork,
+  goToNextWork,
+} = useWorkDetail()
 </script>
 
 <template>
@@ -394,7 +70,7 @@ onUnmounted(() => {
         <!-- 点赞收藏操作栏 -->
         <div class="wd-action-bar">
           <button class="wd-action-btn" :class="{ 'wd-action-btn--active': liked }" @click="handleToggleLike" :disabled="likePending">
-            <svg viewBox="0 0 1024 1024" width="22" height="22"><path d="M885.9 533.7c16.8-22.2 26.1-49.4 26.1-77.7 0-44.9-25.1-87.4-65.5-111.1a67.67 67.67 0 0 0-34.3-9.3H572.4l6-122.9c1.4-29.7-9.1-57.9-29.5-79.4-20.5-21.5-48.1-33.4-77.9-33.4-52 0-98 35-111.8 85.1l-85.9 311h-0.3v428h472.3c9.2 0 18.2-1.8 26.5-5.4 47.6-20.3 78.3-66.8 78.3-118.4 0-12.6-1.8-25-5.4-37 16.8-22.2 26.1-49.4 26.1-77.7 0-12.6-1.8-25-5.4-37 16.8-22.2 26.1-49.4 26.1-77.7-0.2-12.6-2-25.1-5.6-37.1zM112 528v364c0 17.7 14.3 32 32 32h65V496h-65c-17.7 0-32 14.3-32 32z" fill="currentColor"/></svg>
+            <svg viewBox="0 0 1024 1024" width="22" height="22"><path d="M885.9 533.7c16.8-22.2 26.1-49.4 26.1-77.7 0-44.9-25.1-87.4-65.5-111.1a67.67 67.67 0 0 0-34.3-9.3H572.4l6-122.9c1.4-29.7-9.1-57.9-29.5-79.4-20.5-21.5-48.1-33.4-77.9-33.4-52 0-98 35-111.8 85.1l-85.9 311h-0.3v428h472.3c9.2 0 18.2-1.8 26.5-5.4 47.6-20.3 78.3-66.8 78.3-118.4 0-12.6-1.8-25-5.4-37 16.8-22.2 26.1-49.4 26.1-77.7-0.2-12.6-2-25.1-5.6-37.1zM112 528v364c0 17.7 14.3 32 32 32h65V496h-65c-17.7 0-32 14.3-32 32z" fill="currentColor"/></svg>
             <span>{{ likeCount }}</span>
           </button>
           <button class="wd-action-btn" :class="{ 'wd-action-btn--active': starred }" @click="handleToggleStar" :disabled="starPending">
