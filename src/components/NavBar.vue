@@ -459,7 +459,7 @@ onUnmounted(() => {
       margin:0;
       position: relative;
       z-index: 2;
-      background: linear-gradient(to right, #37624B 0%, #6EC597 49.5%, #fff 50.5%, #fff 100%);
+      background: linear-gradient(to right, #19b859 0%, #6EC597 49.5%, #fff 50.5%, #fff 100%);
       background-size: 200% 100%;
       background-position-x: 100%;
       -webkit-background-clip: text;

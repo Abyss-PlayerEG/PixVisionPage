@@ -42,8 +42,8 @@ const { initSwiper, cleanupSwiper } = useSwiper(swiperContainer)
 const { waterfallImages, isLoading, error, loadWorks } = useWorkWaterfall()
 
 // num6z 打字机效果 — 将文案拆分为单词数组
-const n6Copy1Words = 'The world holds boundless romance waiting to be explored. Leave the trivial troubles behind, chase the wind and chase the sunset, wander between mountains and seas.'.split(' ')
-const n6Copy2Words = 'No need to confine oneself to narrow boundaries, let the soul roam freely. Every step you take carves unique marks on life. Embrace uncertainty bravely, believe that all encounters have meaning, and live out the most authentic and unrestrained self in fleeting years.'.split(' ')
+const n6Copy1Words = 'The Pixel holds boundless romance waiting to be explored. Leave the trivial troubles behind, chase the wind and chase the sunset, wander between mountains and seas.'.split(' ')
+const n6Copy2Words = 'No need to confine oneself to narrow boundaries, let the vision roam freely. Every step you take carves unique marks on life. Embrace uncertainty bravely, believe that all encounters have meaning, and live out the most authentic and unrestrained self in fleeting years.'.split(' ')
 
 // --- Watchers ---
 // API 异常 → 弹出通知提示
@@ -358,17 +358,47 @@ const mockNum5z = [
   <section id="num6z">
     <div class="num6z">
       <div class="n6_copy">
-        <span v-for="(word, i) in n6Copy1Words" :key="'a'+i" class="n6_word-wrapper">
-          <span class="n6_pill"></span>
-          <span class="n6_word">{{ word }}</span>
-        </span>
+        <template v-for="(word, i) in n6Copy1Words" :key="'a'+i">
+          <!-- The: 绿色药丸 + 笑脸 SVG 左 + 文字右 -->
+          <span v-if="i === 0" class="n6_badge n6_badge--smile">
+            <svg class="n6_badge-icon" viewBox="0 0 24 24" fill="none" stroke="#1a1a1a" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="10"/>
+              <path d="M8 14s1.5 2 4 2 4-2 4-2"/>
+              <line x1="9" y1="9" x2="9.01" y2="9"/>
+              <line x1="15" y1="9" x2="15.01" y2="9"/>
+            </svg>
+            <span class="n6_badge-text">{{ word }}</span>
+          </span>
+          <!-- Pixel: 渐变上色文字 -->
+          <span v-else-if="i === 1" class="n6_word-wrapper">
+            <span class="n6_pill"></span>
+            <span class="n6_word n6_word--gradient">{{ word }}</span>
+          </span>
+          <!-- 普通词 -->
+          <span v-else class="n6_word-wrapper">
+            <span class="n6_pill"></span>
+            <span class="n6_word">{{ word }}</span>
+          </span>
+        </template>
       </div>
 
       <div class="n6_copy">
-        <span v-for="(word, i) in n6Copy2Words" :key="'b'+i" class="n6_word-wrapper">
-          <span class="n6_pill"></span>
-          <span class="n6_word">{{ word }}</span>
-        </span>
+        <template v-for="(word, i) in n6Copy2Words" :key="'b'+i">
+          <!-- oneself: 绿色药丸 + 文字 -->
+          <span v-if="word === 'oneself'" class="n6_badge n6_badge--text">
+            <span class="n6_badge-text">{{ word }}</span>
+          </span>
+          <!-- vision: 渐变上色文字 -->
+          <span v-else-if="word === 'vision'" class="n6_word-wrapper">
+            <span class="n6_pill"></span>
+            <span class="n6_word n6_word--gradient">{{ word }}</span>
+          </span>
+          <!-- 普通词 -->
+          <span v-else class="n6_word-wrapper">
+            <span class="n6_pill"></span>
+            <span class="n6_word">{{ word }}</span>
+          </span>
+        </template>
       </div>
     </div>
   </section>

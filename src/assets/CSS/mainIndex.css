@@ -857,5 +857,40 @@
         position: relative;
         opacity: 0;
         z-index: 1;
+        color: #FDF9F0;
+    }
+
+    /* 渐变文字（oneself） — 匹配 NavBar 标题渐变，background-position 由 GSAP Phase 3 驱动扫光 */
+    .n6_word--gradient{
+        background: linear-gradient(to right,#19b859  0%, #4dcc7d 49.5%, #fff 50.5%, #fff 100%);
+        background-size: 200% 100%;
+        background-position-x: 100%;
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+    }
+
+    /* 绿色徽章 — 行内圆角药丸，背景 #00A947，初始透明由 GSAP Phase 1 驱动淡入后保持 */
+    .n6_badge{
+        display: inline-flex;
+        align-items: center;
+        gap: 0.3em;
+        background: #00A947;
+        border-radius: 999px;
+        padding: 0.04em 0.55em;
+        margin-right: 0.3em;
+        vertical-align: baseline;
+        opacity: 0;
+    }
+
+    .n6_badge-icon{
+        width: 0.9em;
+        height: 0.9em;
+        flex-shrink: 0;
+    }
+
+    .n6_badge-text{
+        color: #1a1a1a;
+        line-height: 1.3;
     }
 }

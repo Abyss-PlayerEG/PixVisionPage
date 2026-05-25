@@ -1043,10 +1043,12 @@ export const useNum6zAnimation = () => {
   let tl = null
 
   const initNum6zAnimation = () => {
-    const pills = document.querySelectorAll('.n6_pill')
-    const words = document.querySelectorAll('.n6_word')
+    const allPills = gsap.utils.toArray('.n6_pill, .n6_badge')
+    const wordPills = gsap.utils.toArray('.n6_pill')
+    const words = gsap.utils.toArray('.n6_word')
+    const gradientWords = gsap.utils.toArray('.n6_word--gradient')
 
-    if (pills.length === 0 || words.length === 0) return
+    if (allPills.length === 0 || words.length === 0) return
 
     tl = gsap.timeline({
       scrollTrigger: {
@@ -1058,15 +1060,15 @@ export const useNum6zAnimation = () => {
       },
     })
 
-    // Phase 1: 药丸逐个出现
-    tl.to(pills, {
+    // Phase 1: 词药丸 + 绿色徽章逐个出现
+    tl.to(allPills, {
       opacity: 1,
       stagger: { each: 0.04, from: 'start' },
       duration: 0.3,
     })
 
-    // Phase 2: 紧随 Phase 1 启动 —— 药丸消失 + 文字出现（同步交叉淡入）
-    tl.to(pills, {
+    // Phase 2: 词药丸消失 + 文字出现（徽章不消失，已是最终态）
+    tl.to(wordPills, {
       opacity: 0,
       stagger: { each: 0.04, from: 'start' },
       duration: 0.3,
@@ -1076,6 +1078,20 @@ export const useNum6zAnimation = () => {
       stagger: { each: 0.04, from: 'start' },
       duration: 0.3,
     }, '<')
+
+    // Phase 3: 渐变文字依次扫光 — Pixel 先完成，vision 紧随其后
+    if (gradientWords.length > 0) {
+      tl.to(gradientWords[0], {
+        backgroundPositionX: '0%',
+        duration: 0.4,
+      }, '>-=0.1')
+      if (gradientWords.length > 1) {
+        tl.to(gradientWords[1], {
+          backgroundPositionX: '0%',
+          duration: 0.4,
+        }, '>')
+      }
+    }
   }
 
   const cleanupNum6zAnimation = () => {
