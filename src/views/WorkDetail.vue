@@ -64,6 +64,7 @@ const {
         </div>
 
         <div class="wd-image-stage">
+          <div v-if="workImgUrl" class="wd-stage-blur" :style="{ backgroundImage: 'url(' + workImgUrl + ')' }"></div>
           <div v-if="loading" class="wd-loading">加载中...</div>
           <img v-else-if="workImgUrl" :src="workImgUrl" :alt="workTitle" />
           <div v-else class="wd-comments-empty">暂无作品图片</div>

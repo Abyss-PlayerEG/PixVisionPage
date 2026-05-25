@@ -3,7 +3,7 @@
  * 封装作品详情、评论、点赞/收藏、发布者信息、作品导航等所有联调相关的业务逻辑
  */
 
-import { ref, watch, onMounted, onUnmounted, computed } from 'vue'
+import { ref, watch, onMounted, onUnmounted, computed, nextTick } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { getWorkImageUrl, getAvatarUrl } from '@/config/api'
 import { fetchWorkDetail, fetchCommentList, addComment, deleteComment, toggleLike, toggleStar, fetchLikeStatus, fetchStarStatus, fetchPublisherInfo, getLastWorkId, fetchRandomWork } from '@/api/workApi'
