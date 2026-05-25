@@ -3,6 +3,8 @@
  */
 
 import { WORK_API, COMMENT_API, LIKE_API, STAR_API, getWorkImageUrl, getAvatarUrl } from '../config/api';
+import { getUserInfoByUsernameOrUuid } from './profileApi';
+import { getUserDataList } from './userDataApi';
 
 /**
  * 获取单个作品详细信息
@@ -23,6 +25,28 @@ export const fetchWorkDetail = async (workId) => {
     return { success: false, message: result.message || '作品不存在或已删除' };
   } catch (error) {
     console.error('[API] 作品详情请求失败:', error);
+    return { success: false, message: '网络错误，请稍后重试' };
+  }
+};
+
+/**
+ * 获取当前最大作品 ID
+ * @returns {Promise<Object>} { success, data: number (lastId), message }
+ */
+export const getLastWorkId = async () => {
+  try {
+    const url = WORK_API.LAST_ID;
+    console.log('[API] 请求最大作品ID:', url);
+    const response = await fetch(url, { method: 'GET', headers: { 'Content-Type': 'application/json' } });
+    const result = await response.json();
+    console.log('[API] 最大作品ID响应:', JSON.stringify(result, null, 2));
+    const statusCode = result.code || result.recode;
+    if (statusCode === 200 && result.data !== null && result.data !== undefined) {
+      return { success: true, data: Number(result.data) };
+    }
+    return { success: false, message: result.message || '获取最大作品ID失败' };
+  } catch (error) {
+    console.error('[API] 获取最大作品ID请求失败:', error);
     return { success: false, message: '网络错误，请稍后重试' };
   }
 };
@@ -347,4 +371,81 @@ export const transformWorksToWaterfallFormat = (records) => {
     }
   }
   return result;
+};
+
+/**
+ * 获取作品发布者的详细信息（包括用户资料和联系方式）
+ * @param {number} userId - 发布者用户 ID
+ * @returns {Promise<Object>} { success, data: { avatar, displayName, username, bio, works, totalViews, totalLikes, totalStars, contactItems } }
+ */
+export const fetchPublisherInfo = async (userId) => {
+  try {
+    console.log('[API] 获取发布者信息: userId=', userId);
+
+    // 并行获取用户基本资料和拓展数据（联系方式）
+    const [profileResult, contactResult] = await Promise.all([
+      getUserInfoByUsernameOrUuid({ userId }),
+      getUserDataList(userId),
+    ]);
+
+    const userData = profileResult.success ? profileResult.data : null;
+    const contactData = contactResult.success ? contactResult.data : [];
+
+    // 构建联系方式列表（含名称和内容，供模板使用）
+    const contactItems = contactData.map(item => ({
+      name: item.user_data_name,
+      content: item.user_data,
+    }));
+
+    if (userData) {
+      console.log('[API] 发布者信息获取成功:', { nickname: userData.nickname, username: userData.username });
+      return {
+        success: true,
+        data: {
+          avatar: getAvatarUrl(userData.avatar_url || ''),
+          displayName: userData.nickname || '未设置昵称',
+          username: userData.username || '',
+          bio: '',
+          works: userData.work_count || 0,
+          totalViews: userData.total_views || 0,
+          totalLikes: userData.total_likes || 0,
+          totalStars: userData.total_stars || 0,
+          contactItems,
+        },
+      };
+    }
+
+    // 用户信息获取失败时降级为 mock 数据
+    console.warn('[API] 发布者信息获取失败，使用降级数据');
+    return {
+      success: false,
+      data: {
+        avatar: getAvatarUrl(''),
+        displayName: `创作者 #${userId}`,
+        username: `user_${userId}`,
+        bio: '',
+        works: 0,
+        totalViews: 0,
+        totalLikes: 0,
+        totalStars: 0,
+        contactItems: [],
+      },
+    };
+  } catch (error) {
+    console.error('[API] 获取发布者信息异常:', error);
+    return {
+      success: false,
+      data: {
+        avatar: getAvatarUrl(''),
+        displayName: `创作者 #${userId}`,
+        username: `user_${userId}`,
+        bio: '',
+        works: 0,
+        totalViews: 0,
+        totalLikes: 0,
+        totalStars: 0,
+        contactItems: [],
+      },
+    };
+  }
 };

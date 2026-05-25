@@ -4,7 +4,8 @@
  */
 
 // 后端 API 基础 URL
-export const API_BASE_URL = 'http://124.221.107.68:1899/';
+// export const API_BASE_URL = 'http://124.221.107.68:1899/';
+export const API_BASE_URL = 'http://127.0.0.1:9090/';
 
 // 头像获取接口
 export const AVATAR_API = `${API_BASE_URL}/api/image/avatar/get`;
@@ -54,6 +55,7 @@ export const getAvatarUrl = (avatarPath) => {
 export const WORK_API = {
   PAGE: `${API_BASE_URL}/api/work/page`,
   DETAIL: `${API_BASE_URL}/api/work/detail`,  // 查询单个作品（公开接口）
+  LAST_ID: `${API_BASE_URL}/api/work/last-id`, // 获取最大作品 ID
 };
 
 // 评论相关接口

@@ -66,20 +66,21 @@ export const getUserProfile = async () => {
 };
 
 /**
- * 根据用户名或 UUID 查询其他用户的信息（公开接口，无需登录）
+ * 根据用户名、UUID 或用户 ID 查询其他用户的信息（公开接口，无需登录）
  * @param {Object} params - 查询参数
- * @param {string} [params.username] - 用户名（可选，与 uuid 二选一）
- * @param {string} [params.uuid] - 用户 UUID（可选，与 username 二选一）
+ * @param {string} [params.username] - 用户名（可选，与 uuid/userId 三选一）
+ * @param {string} [params.uuid] - 用户 UUID（可选，与 username/userId 三选一）
+ * @param {number} [params.userId] - 用户 ID（可选，与 username/uuid 三选一）
  * @returns {Promise<Object>} 用户信息结果
  */
 export const getUserInfoByUsernameOrUuid = async (params = {}) => {
   try {
-    const { username, uuid } = params;
+    const { username, uuid, userId } = params;
     
-    // 校验参数：username 和 uuid 至少提供一个
-    if (!username && !uuid) {
-      console.error('❌ 请提供用户名或 UUID');
-      return { success: false, message: '请提供用户名或 UUID' };
+    // 校验参数：username、uuid、userId 至少提供一个
+    if (!username && !uuid && !userId) {
+      console.error('❌ 请提供用户名、UUID 或用户 ID');
+      return { success: false, message: '请提供用户名、UUID 或用户 ID' };
     }
 
     // 构建查询参数
@@ -89,6 +90,9 @@ export const getUserInfoByUsernameOrUuid = async (params = {}) => {
     }
     if (uuid) {
       queryParams.append('uuid', uuid);
+    }
+    if (userId !== undefined && userId !== null) {
+      queryParams.append('userId', userId);
     }
 
     const queryString = queryParams.toString();
