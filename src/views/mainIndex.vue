@@ -15,6 +15,7 @@ import {
   useNum5zAnimation,
   useN5ShowzoneAnimation,
   useN5ProgAnimation,
+  useNum6zAnimation,
   useSwiper,
 } from '@/composables/mainIndex.js'
 import { useWorkWaterfall } from '@/composables/useWorkWaterfall.js'
@@ -36,8 +37,13 @@ const { initNum4zAnimation, cleanupNum4zAnimation } = useNum4zAnimation()
 const { initNum5zAnimation, cleanupNum5zAnimation } = useNum5zAnimation()
 const { initN5ShowzoneAnimation, cleanupN5ShowzoneAnimation } = useN5ShowzoneAnimation()
 const { initN5ProgAnimation, cleanupN5ProgAnimation } = useN5ProgAnimation()
+const { initNum6zAnimation, cleanupNum6zAnimation } = useNum6zAnimation()
 const { initSwiper, cleanupSwiper } = useSwiper(swiperContainer)
 const { waterfallImages, isLoading, error, loadWorks } = useWorkWaterfall()
+
+// num6z 打字机效果 — 将文案拆分为单词数组
+const n6Copy1Words = 'The world holds boundless romance waiting to be explored. Leave the trivial troubles behind, chase the wind and chase the sunset, wander between mountains and seas.'.split(' ')
+const n6Copy2Words = 'No need to confine oneself to narrow boundaries, let the soul roam freely. Every step you take carves unique marks on life. Embrace uncertainty bravely, believe that all encounters have meaning, and live out the most authentic and unrestrained self in fleeting years.'.split(' ')
 
 // --- Watchers ---
 // API 异常 → 弹出通知提示
@@ -92,6 +98,9 @@ onMounted(() => {
     initN5ShowzoneAnimation()
     initN5ProgAnimation()
   }, 700)
+  setTimeout(() => {
+    initNum6zAnimation()
+  }, 800)
 })
 
 onUnmounted(() => {
@@ -104,6 +113,7 @@ onUnmounted(() => {
   cleanupNum5zAnimation()
   cleanupN5ShowzoneAnimation()
   cleanupN5ProgAnimation()
+  cleanupNum6zAnimation()
   cleanupSwiper()
 })
 
@@ -346,7 +356,21 @@ const mockNum5z = [
   </section>
 
   <section id="num6z">
-    <div class="num6z"></div>
+    <div class="num6z">
+      <div class="n6_copy">
+        <span v-for="(word, i) in n6Copy1Words" :key="'a'+i" class="n6_word-wrapper">
+          <span class="n6_pill"></span>
+          <span class="n6_word">{{ word }}</span>
+        </span>
+      </div>
+
+      <div class="n6_copy">
+        <span v-for="(word, i) in n6Copy2Words" :key="'b'+i" class="n6_word-wrapper">
+          <span class="n6_pill"></span>
+          <span class="n6_word">{{ word }}</span>
+        </span>
+      </div>
+    </div>
   </section>
 </template>
 

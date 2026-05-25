@@ -815,5 +815,47 @@
     height: 100vh;
     position: sticky;
     top: 0;
-    background-color: #fff;
+    background-color: #000;
+    padding: 200px 5% 100px 5%;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    align-items: center;
+
+    .n6_copy{
+        /* margin-bottom:40px; */
+        width: 800px;
+        color: #FDF9F0;
+        font-family: sul-gbk6;
+        font-size:40px;
+    }
+
+    /* 单词包裹器 — inline-block 为药丸提供定位基准 */
+    .n6_word-wrapper{
+        position: relative;
+        display: inline-block;
+        margin-right: 0.3em;
+        vertical-align: baseline;
+    }
+
+    /* 药丸占位块 — 圆角矩形模拟聊天骨架气泡，初始透明由 GSAP 驱动 */
+    /* top/bottom 正值向内缩进，让药丸明显矮于文字行高，避免上下行药丸粘连 */
+    .n6_pill{
+        position: absolute;
+        top: 0.1em;
+        left: -0.06em;
+        right: -0.06em;
+        bottom: 0.1em;
+        background: #1a1a1a;
+        border-radius: 999px;
+        opacity: 0;
+        z-index: 0;
+    }
+
+    /* 单词文本 — 初始透明，GSAP 驱动淡入，置于药丸上方 */
+    .n6_word{
+        position: relative;
+        opacity: 0;
+        z-index: 1;
+    }
 }

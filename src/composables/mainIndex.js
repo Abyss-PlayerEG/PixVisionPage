@@ -1029,3 +1029,62 @@ export const useSwiper = (containerRef) => {
   }
 }
 
+// ==================== num6z — 打字机药丸动画 ====================
+/**
+ * num6z 打字机效果 —— ScrollTrigger scrub 驱动的逐词渐现动画。
+ *
+ * 流程：
+ * 1. 药丸（圆角矩形占位块）逐个出现 — 模拟聊天软件中网络卡顿时的气泡骨架
+ * 2. 药丸消失 + 文字出现 — 占位被真实内容"填充"
+ *
+ * 使用 scrub 将时间轴进度直接映射到滚动位置，用户可自由控制播放/倒放。
+ */
+export const useNum6zAnimation = () => {
+  let tl = null
+
+  const initNum6zAnimation = () => {
+    const pills = document.querySelectorAll('.n6_pill')
+    const words = document.querySelectorAll('.n6_word')
+
+    if (pills.length === 0 || words.length === 0) return
+
+    tl = gsap.timeline({
+      scrollTrigger: {
+        trigger: '#num6z',
+        start: 'top top',
+        end: 'bottom bottom',
+        scrub: 0.6,
+        id: 'num6z-typing',
+      },
+    })
+
+    // Phase 1: 药丸逐个出现
+    tl.to(pills, {
+      opacity: 1,
+      stagger: { each: 0.04, from: 'start' },
+      duration: 0.3,
+    })
+
+    // Phase 2: 紧随 Phase 1 启动 —— 药丸消失 + 文字出现（同步交叉淡入）
+    tl.to(pills, {
+      opacity: 0,
+      stagger: { each: 0.04, from: 'start' },
+      duration: 0.3,
+    }, '<+=0.25')
+    tl.to(words, {
+      opacity: 1,
+      stagger: { each: 0.04, from: 'start' },
+      duration: 0.3,
+    }, '<')
+  }
+
+  const cleanupNum6zAnimation = () => {
+    if (tl) {
+      tl.kill()
+      tl = null
+    }
+  }
+
+  return { initNum6zAnimation, cleanupNum6zAnimation }
+}
+
