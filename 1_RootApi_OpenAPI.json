@@ -7,7 +7,7 @@
   },
   "servers": [
     {
-      "url": "http://127.0.0.1:9090",
+      "url": "http://localhost:9090",
       "description": "Generated server url"
     }
   ],
@@ -37,16 +37,16 @@
       "description": "提供用户访问历史记录的查询和删除功能"
     },
     {
-      "name": "用户接口 - 基础资料",
-      "description": "提供用户基本资料的查询和修改功能"
-    },
-    {
       "name": "用户接口 - 收藏",
       "description": "提供作品收藏、取消收藏及状态查询功能"
     },
     {
       "name": "用户接口 - 点赞",
       "description": "提供作品点赞、取消点赞及状态查询功能"
+    },
+    {
+      "name": "用户接口 - 用户基础资料",
+      "description": "提供用户基本资料的查询和修改功能"
     },
     {
       "name": "用户接口 - 用户拓展数据",
@@ -67,6 +67,10 @@
     {
       "name": "系统管理员接口 - 作品管理",
       "description": "提供作品管理的后台接口，包括批量更新审核状态、删除作品等操作"
+    },
+    {
+      "name": "系统管理员接口 - 用户数据变更审核",
+      "description": "提供用户数据变更审核的后台接口，包括批量审核和分页查询待审核记录等操作"
     },
     {
       "name": "系统管理员接口 - 用户管理",
@@ -371,13 +375,66 @@
         }
       }
     },
+    "/api/user/profile/role/apply": {
+      "post": {
+        "tags": [
+          "用户接口 - 用户基础资料"
+        ],
+        "summary": "用户权限变更申请接口",
+        "description": "# 用户权限变更申请（需要登录认证）\n\n## 特性\n- Token 认证（支持 Header 和 URL 参数两种方式）\n- 邮箱验证码验证\n- 智能识别升级/降权操作\n- 升级操作需要管理员审核\n- 降权操作立即生效\n\n## 参数说明：\n- Authorization: Header 中的 Token，格式为 `Bearer <token>`，或通过 URL 参数 `?token=<token>` 传递\n- targetRole: **目标角色代码**，整数类型，必填\n  * 11-普通用户\n  * 22-创作者\n  * 55-审核员\n  * 66-工单管理员\n  * 77-系统管理员\n- vCode: **邮箱验证码**，6 位大写字母或数字，字符串类型，必填\n\n## 返回说明：\n- **升级申请成功**：返回 **{\"data\": \"权限升级申请已提交，等待管理员审核\"}**\n- **降权成功**：返回 **{\"data\": \"降权成功\"}**\n- **Token 不存在**：返回 **{\"data\": null}** 和\"Token 不存在\"提示\n- **Token 已失效**：返回 **{\"data\": null}** 和\"Token 已失效\"提示\n- **验证码错误**：返回 **{\"data\": null}** 和\"验证码错误或已过期\"提示\n- **非法的目标角色**：返回 **{\"data\": null}** 和\"非法的角色代码\"提示\n- **同角色操作**：返回 **{\"data\": null}** 和\"当前已是该角色\"提示\n\n## 业务逻辑：\n1. 从请求头或 URL 参数中提取 Token\n2. 验证 Token 是否在白名单中\n3. 从 Token 中解析用户 ID\n4. 校验 targetRole 参数合法性\n5. 校验 vCode 验证码格式\n6. 查询用户当前角色和邮箱\n7. 验证邮箱验证码\n8. 比较当前角色与目标角色：\n   - 目标角色 > 当前角色：升级操作，插入审核锁定记录（type=200）\n   - 目标角色 < 当前角色：降权操作，直接更新角色并清除缓存\n   - 目标角色 = 当前角色：拒绝操作\n9. 返回对应的结果消息\n\n## 注意事项：\n- 需要携带有效的 Token 才能申请\n- Token 必须在白名单中（未过期、未登出）\n- 需要先通过 `/api/mail/send-role-change-code` 接口发送验证码\n- 验证码有效期为 **5 分钟**\n- 升级需要管理员审核通过后才生效\n- 降权立即生效，不可撤销\n- 角色层级：11 < 22 < 55 < 66 < 77\n",
+        "operationId": "applyRoleChange",
+        "parameters": [
+          {
+            "name": "targetRole",
+            "in": "query",
+            "description": "目标角色代码",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "description": "目标角色代码",
+              "example": 22,
+              "enum": [
+                "11",
+                "22",
+                "55",
+                "66",
+                "77"
+              ]
+            },
+            "example": 22
+          },
+          {
+            "name": "vCode",
+            "in": "query",
+            "description": "邮箱验证码，6 位大写字母或数字",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "ABC123"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResponsePojoString"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/user/profile/nickname/change": {
       "post": {
         "tags": [
-          "用户接口 - 基础资料"
+          "用户接口 - 用户基础资料"
         ],
         "summary": "修改用户昵称接口",
-        "description": "# 修改用户昵称（需要登录认证）\n\n## 特性\n- Token 认证（支持 Header 和 URL 参数两种方式）\n- 昵称长度限制校验（1-20字符）\n- 支持中文、英文、数字和特殊字符\n\n## 参数说明：\n- Authorization: Header 中的 Token，格式为 `Bearer <token>`，或通过 URL 参数 `?token=<token>` 传递\n- nickname: 新昵称，字符串类型，必填，长度 1-20 个字符\n\n## 返回说明：\n- **修改成功**：返回 **{\"data\": true}** 和\"昵称修改成功\"提示\n- **Token 不存在**：返回 **{\"data\": null}** 和\"Token 不存在\"提示\n- **Token 已失效**：返回 **{\"data\": null}** 和\"Token 已失效\"提示\n- **昵称为空**：返回 **{\"data\": null}** 和\"昵称不能为空\"提示\n- **昵称长度错误**：返回 **{\"data\": null}** 和\"昵称长度必须在 1-20 个字符之间\"提示\n- **修改失败**：返回 **{\"data\": false}** 和\"昵称修改失败\"提示\n\n## 业务逻辑：\n1. 从请求头或 URL 参数中提取 Token（支持 Bearer 前缀）\n2. 验证 Token 是否在白名单中\n3. 从 Token 中解析用户 ID\n4. 校验昵称参数（非空、长度 1-20）\n5. 调用服务层更新用户昵称\n6. 返回修改结果\n\n## 注意事项：\n- 需要携带有效的 Token 才能修改昵称\n- Token 必须在白名单中（未过期、未登出）\n- 昵称长度限制：**1-20 个字符**\n- 昵称可以包含中文、英文、数字和特殊字符\n- 修改成功后，下次登录时会看到新昵称\n",
+        "description": "# 修改用户昵称（需要登录认证）\n\n## 特性\n- Token 认证（支持 Header 和 URL 参数两种方式）\n- 昵称长度限制校验（1-20字符）\n- 支持中文、英文、数字和特殊字符\n- AI 内容安全审核（调用 Python AI 审核服务）\n\n## 参数说明：\n- Authorization: Header 中的 Token，格式为 `Bearer <token>`，或通过 URL 参数 `?token=<token>` 传递\n- nickname: 新昵称，字符串类型，必填，长度 1-20 个字符\n\n## 返回说明：\n- **修改成功**：返回 **{\"data\": true}** 和\"昵称修改成功\"提示\n- **AI 审核不通过（违规）**：返回 **{\"data\": false}** 和\"违规内容：{原因}\"提示\n- **AI 审核存疑（待审核）**：返回 **{\"data\": true}** 和\"昵称修改已提交，等待人工审核\"提示\n- **Token 不存在**：返回 **{\"data\": null}** 和\"Token 不存在\"提示\n- **Token 已失效**：返回 **{\"data\": null}** 和\"Token 已失效\"提示\n- **昵称为空**：返回 **{\"data\": null}** 和\"昵称不能为空\"提示\n- **昵称长度错误**：返回 **{\"data\": null}** 和\"昵称长度必须在 1-20 个字符之间\"提示\n- **修改失败**：返回 **{\"data\": false}** 和\"昵称修改失败\"提示\n\n## 业务逻辑：\n1. 从请求头或 URL 参数中提取 Token（支持 Bearer 前缀）\n2. 验证 Token 是否在白名单中\n3. 从 Token 中解析用户 ID\n4. 校验昵称参数（非空、长度 1-20）\n5. 调用 AI 审核服务对昵称内容进行安全审核\n6. 根据审核结果：\n   - 通过：直接更新昵称并记录 lock 表\n   - 存疑：暂不更新，将变更记录写入 lock 表，等待人工审核\n   - 违规：暂不更新，将违规记录写入 lock 表\n7. 返回差异化的响应消息\n\n## 注意事项：\n- 需要携带有效的 Token 才能修改昵称\n- Token 必须在白名单中（未过期、未登出）\n- 昵称长度限制：**1-20 个字符**\n- 昵称可以包含中文、英文、数字和特殊字符\n- 昵称修改会自动调用 AI 审核服务进行内容安全审核\n- AI 审核不通过（违规）时直接拦截，data 返回 false\n- AI 审核存疑时标记为待审核，管理员审核通过后昵称才会更新\n- AI 审核服务不可用时自动降级为待审核状态\n- 修改成功后，下次登录时会看到新昵称\n",
         "operationId": "updateNickname",
         "parameters": [
           {
@@ -408,7 +465,7 @@
     "/api/user/profile/email/change": {
       "post": {
         "tags": [
-          "用户接口 - 基础资料"
+          "用户接口 - 用户基础资料"
         ],
         "summary": "更改账号绑定邮箱接口",
         "description": "# 更改账号绑定邮箱（需要登录认证）\n\n## 特性\n- Token 认证（支持 Header 和 URL 参数两种方式）\n- 邮箱格式校验\n- 邮箱验证码验证\n- 邮箱唯一性检查\n- 自动清除旧验证码\n\n## 参数说明：\n- Authorization: Header 中的 Token，格式为 `Bearer <token>`，或通过 URL 参数 `?token=<token>` 传递\n- newEmail: 新邮箱地址，字符串类型，必填，需符合标准邮箱格式\n- vCode: 邮箱验证码，6 位大写字母或数字，字符串类型，必填\n\n## 返回说明：\n- **修改成功**：返回 **{\"data\": true}** 和“邮箱修改成功”提示\n- **Token 不存在**：返回 **{\"data\": null}** 和“Token 不存在”提示\n- **Token 已失效**：返回 **{\"data\": null}** 和“Token 已失效”提示\n- **新邮箱为空**：返回 **{\"data\": null}** 和“新邮箱不能为空”提示\n- **邮箱格式错误**：返回 **{\"data\": null}** 和“邮箱格式错误”提示\n- **验证码为空**：返回 **{\"data\": null}** 和“验证码不能为空”提示\n- **验证码格式错误**：返回 **{\"data\": null}** 和“验证码格式错误”提示\n- **验证码错误**：返回 **{\"data\": false}** 和“验证码错误或已过期”提示\n- **邮箱已被使用**：返回 **{\"data\": false}** 和“该邮箱已被其他账号使用”提示\n- **修改失败**：返回 **{\"data\": false}** 和“邮箱修改失败”提示\n\n## 业务逻辑：\n1. 从请求头或 URL 参数中提取 Token（支持 Bearer 前缀）\n2. 验证 Token 是否在白名单中\n3. 从 Token 中解析用户 ID\n4. 校验新邮箱参数（非空、格式正确）\n5. 校验验证码参数（非空、格式正确）\n6. 检查新邮箱是否已被其他用户使用\n7. 验证邮箱验证码（使用新邮箱作为 key）\n8. 调用服务层更新用户邮箱\n9. 返回修改结果\n\n## 注意事项：\n- 需要携带有效的 Token 才能修改邮箱\n- Token 必须在白名单中（未过期、未登出）\n- 新邮箱必须符合标准邮箱格式\n- 新邮箱不能被其他账号使用\n- 需要先通过 `/api/mail/send-change-email-code` 接口发送验证码到新邮箱\n- 验证码有效期为 **5 分钟**\n- 验证码验证成功后会自动失效（一次性使用）\n- 修改成功后，下次登录时需要使用新邮箱\n",
@@ -611,16 +668,25 @@
           "用户接口 - 用户拓展数据"
         ],
         "summary": "新增用户拓展数据接口",
-        "description": "# 新增用户拓展数据（需要登录认证）\n\n## 特性\n- Token 认证（支持 Header 和 URL 参数两种方式）\n- 数据类型名称固定为预设的社交平台名称\n- 数据内容长度限制校验（≤96字符）\n- 1对n关系（同一用户可添加多条拓展数据）\n\n## 参数说明：\n- Authorization: Header 中的 Token，格式为 `Bearer <token>`，或通过 URL 参数 `?token=<token>` 传递\n- dataName: **数据类型名称**，字符串类型，必填，**固定值**包括：\n  * 电话\n  * 邮箱\n  * QQ\n  * 微信\n  * Bilibili\n  * 其他预设社交平台名称\n- dataContent: 数据内容，字符串类型，必填，长度不超过 96 个字符，**不同数据类型有不同的格式要求**：\n  * **电话**：11位中国大陆手机号（如：13800138000）\n  * **邮箱**：标准邮箱格式（如：user@example.com）\n  * **QQ**：5-11位数字，不能以0开头（如：123456789）\n  * **微信**：6-20位，以字母开头，允许字母、数字、下划线、减号（如：wxid_123456）\n  * **Bilibili**：1-10位纯数字UID（如：123456789）\n\n## 返回说明：\n- **添加成功**：返回 **{\"data\": true}** 和\"用户拓展数据添加成功\"提示\n- **Token 不存在**：返回 **{\"data\": null}** 和\"Token 不存在\"提示\n- **Token 已失效**：返回 **{\"data\": null}** 和\"Token 已失效\"提示\n- **数据类型为空**：返回 **{\"data\": null}** 和\"数据类型不能为空\"提示\n- **数据类型不支持**：返回 **{\"data\": null}** 和\"不支持的数据类型\"提示\n- **数据内容为空**：返回 **{\"data\": null}** 和\"数据内容不能为空\"提示\n- **数据内容过长**：返回 **{\"data\": null}** 和\"数据内容长度不能超过 96 个字符\"提示\n- **数据内容格式错误**：根据不同数据类型返回相应的格式错误提示\n- **B站账号不存在**：返回 **{\"data\": null}** 和\"B站账号不存在，请检查 UID 是否正确\"提示\n- **B站检测失败**：返回 **{\"data\": null}** 和\"B站账号检测失败\"提示\n- **添加失败**：返回 **{\"data\": false}** 和\"用户拓展数据添加失败\"提示\n\n## 业务逻辑：\n1. 从请求头或 URL 参数中提取 Token（支持 Bearer 前缀）\n2. 验证 Token 是否在白名单中\n3. 从 Token 中解析用户 ID\n4. 校验数据类型名称参数（非空、是否为预设值）\n5. 校验数据内容参数（非空、长度限制）\n6. **根据数据类型进行单独的正则格式验证**\n7. **如果是 Bilibili 账号，调用 Python API 检测账号是否存在**\n8. 检查用户是否存在\n9. 调用服务层新增用户拓展数据\n10. 返回添加结果\n\n## 注意事项：\n- 需要携带有效的 Token 才能添加拓展数据\n- Token 必须在白名单中（未过期、未登出）\n- **dataName 必须为预设的固定值**，不支持自定义数据类型名称\n- 数据内容长度限制：**不超过 96 个字符**\n- **不同数据类型有不同的格式要求**，系统会自动进行正则验证\n- **Bilibili 账号会调用 Python API 检测账号是否存在**，检测失败则无法添加\n- 同一用户可以添加多条拓展数据（1 对 n 关系）\n- 每种数据类型每个用户只能有一条有效记录\n",
+        "description": "# 新增用户拓展数据（需要登录认证）\n\n## 特性\n- Token 认证（支持 Header 和 URL 参数两种方式）\n- 数据类型名称固定为预设的社交平台名称\n- 数据内容长度限制校验（≤96字符）\n- 每种数据类型每个用户只能有一条有效记录，重复新增直接返回\n\n## 参数说明：\n- Authorization: Header 中的 Token，格式为 `Bearer <token>`，或通过 URL 参数 `?token=<token>` 传递\n- dataName: **数据类型名称**，字符串类型，必填，**固定值**包括：\n  * 电话\n  * 邮箱\n  * QQ\n  * 微信\n  * Bilibili\n  * 其他预设社交平台名称\n- dataContent: 数据内容，字符串类型，必填，长度不超过 96 个字符，**不同数据类型有不同的格式要求**：\n  * **电话**：11位中国大陆手机号（如：13800138000）\n  * **邮箱**：标准邮箱格式（如：user@example.com）\n  * **QQ**：5-11位数字，不能以0开头（如：123456789）\n  * **微信**：6-20位，以字母开头，允许字母、数字、下划线、减号（如：wxid_123456）\n  * **Bilibili**：1-10位纯数字UID（如：123456789）\n\n## 返回说明：\n- **添加成功**：返回 **{\"data\": true}** 和\"用户拓展数据添加成功\"提示\n- **Token 不存在**：返回 **{\"data\": null}** 和\"Token 不存在\"提示\n- **Token 已失效**：返回 **{\"data\": null}** 和\"Token 已失效\"提示\n- **数据类型为空**：返回 **{\"data\": null}** 和\"数据类型不能为空\"提示\n- **数据类型不支持**：返回 **{\"data\": null}** 和\"不支持的数据类型\"提示\n- **数据内容为空**：返回 **{\"data\": null}** 和\"数据内容不能为空\"提示\n- **数据内容过长**：返回 **{\"data\": null}** 和\"数据内容长度不能超过 96 个字符\"提示\n- **数据内容格式错误**：根据不同数据类型返回相应的格式错误提示\n- **B站账号不存在**：返回 **{\"data\": null}** 和\"B站账号不存在，请检查 UID 是否正确\"提示\n- **B站检测失败**：返回 **{\"data\": null}** 和\"B站账号检测失败\"提示\n- **重复添加**：返回 **{\"data\": true}** 和\"该类型数据已存在，无需重复添加\"提示\n- **添加失败**：返回 **{\"data\": false}** 和\"用户拓展数据添加失败\"提示\n\n## 业务逻辑：\n1. 从请求头或 URL 参数中提取 Token（支持 Bearer 前缀）\n2. 验证 Token 是否在白名单中\n3. 从 Token 中解析用户 ID\n4. 校验数据类型名称参数（非空、是否为预设值）\n5. 校验数据内容参数（非空、长度限制）\n6. **根据数据类型进行单独的正则格式验证**\n7. **如果是 Bilibili 账号，调用 Python API 检测账号是否存在**\n8. **检查该用户是否已存在同类型数据，若已存在则直接返回**\n9. 调用服务层新增用户拓展数据\n10. 返回添加结果\n\n## 注意事项：\n- 需要携带有效的 Token 才能添加拓展数据\n- Token 必须在白名单中（未过期、未登出）\n- **dataName 必须为预设的固定值**，不支持自定义数据类型名称\n- 数据内容长度限制：**不超过 96 个字符**\n- **不同数据类型有不同的格式要求**，系统会自动进行正则验证\n- **Bilibili 账号会调用 Python API 检测账号是否存在**，检测失败则无法添加\n- **每种数据类型每个用户只能有一条有效记录**，重复添加会直接返回并提示已存在\n",
         "operationId": "addUserData",
         "parameters": [
           {
             "name": "dataName",
             "in": "query",
-            "description": "数据类型名称（固定值：电话、邮箱、QQ、微信、Bilibili、钉钉等）",
+            "description": "数据类型名称（固定值：QQ、邮箱、Bilibili、电话、微信）",
             "required": true,
             "schema": {
-              "type": "string"
+              "type": "string",
+              "description": "数据类型名称（固定值：QQ、邮箱、Bilibili、电话、微信）",
+              "example": "QQ",
+              "enum": [
+                "QQ",
+                "邮箱",
+                "Bilibili",
+                "电话",
+                "微信"
+              ]
             },
             "example": "QQ"
           },
@@ -727,6 +793,28 @@
           }
         },
         "deprecated": true
+      }
+    },
+    "/api/mail/send-role-change-code": {
+      "post": {
+        "tags": [
+          "邮件服务接口"
+        ],
+        "summary": "发送权限变更验证码邮件",
+        "description": "# 发送权限变更验证码邮件（需要登录认证）\n\n## 特性\n- Token 认证（支持 Header 和 URL 参数两种方式）\n- 从 Token 自动获取用户信息\n- Redis 验证码存储\n- HTML 邮件模板渲染\n- 内置邮件主题\n- 需要登录（受保护接口）\n\n## 参数说明：\n- Authorization: Header 中的 Token，格式为 `Bearer <token>`，或通过 URL 参数 `?token=<token>` 传递\n\n## 返回说明：\n- **发送成功**：返回 **{\"data\": true}** 和\"邮件发送成功\"提示\n- **发送失败**：返回 **{\"data\": false}** 和\"邮件发送失败\"提示\n- **Token 不存在**：返回 **{\"data\": false}** 和\"Token 不存在\"提示\n- **Token 无效**：返回 **{\"data\": false}** 和\"Token 无效\"提示\n- **用户不存在**：返回 **{\"data\": false}** 和\"用户不存在\"提示\n- **验证码已存在**：返回 **{\"data\": {\"remainingSeconds\": 剩余秒数, \"message\": \"提示信息\"}}** 和\"验证码已存在，请检查邮箱或稍后重试\"提示\n\n## 业务逻辑：\n1. 从请求头或 URL 参数中提取 Token\n2. 从 Token 中解析用户 ID\n3. 根据用户 ID 查询用户信息，获取用户名和邮箱\n4. 验证用户是否存在\n5. 检查Redis中是否已有该邮箱的未过期验证码\n6. 生成6位随机验证码并存入Redis\n7. 使用HTML邮件模板渲染邮件内容\n8. 发送邮件并将验证码与邮箱绑定存储\n\n## 注意事项：\n- 验证码默认有效期由Redis配置决定（默认5分钟）\n- 用户信息从 Token 中自动获取，无需传入\n- 此接口用于**已登录用户申请权限变更**场景\n- 邮件主题已内置为\"PixVision 权限变更验证码\"\n- 需要携带有效的 Token 才能调用\n- 收到验证码后，调用 `/api/user/profile/role/apply` 接口完成权限变更\n- **如果邮箱已有未过期的验证码，将拒绝发送新的验证码**\n",
+        "operationId": "sendRoleChangeCode",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResponsePojoBoolean"
+                }
+              }
+            }
+          }
+        }
       }
     },
     "/api/mail/send-register-code": {
@@ -1051,7 +1139,7 @@
           "图像接口"
         ],
         "summary": "上传用户头像",
-        "description": "# 上传用户头像（需要登录认证）\n\n## 特性\n- Token 认证（通过拦截器自动验证）\n- 文件格式校验（JPG/JPEG/PNG）\n- 文件大小限制（最大5MB）\n- 正方形图片校验\n- 自动缩放至600x600 PNG格式\n- UUID 唯一文件名生成\n\n## 参数说明：\n- file: **头像文件**，MultipartFile 类型，必填\n\n## 返回说明：\n- **上传成功**：返回 200 状态码和成功消息\n- **未授权**：返回 401 状态码（Token 无效或不存在）\n- **文件格式不支持**：返回 400 状态码\n- **文件大小超限**：返回 400 状态码（最大 5MB）\n- **图像不是正方形**：返回 400 状态码\n- **服务器错误**：返回 500 状态码\n\n## 业务逻辑：\n1. 从 Token 中获取当前登录用户的 ID\n2. 验证文件格式（仅支持 jpg/jpeg/png）\n3. 验证文件大小（最大 5MB）\n4. 读取上传的图片数据\n5. 验证图像是否为正方形（宽高必须相等）\n6. 使用 ImageUtils.resizeImage() 将图片缩放为 600x600 的 PNG 格式\n7. 生成唯一的文件名（UUID.png）\n8. 保存文件到 ~/.pix_vision/data/avatar/ 目录\n9. 更新数据库中的用户头像路径\n\n## 注意事项：\n- 该接口**需要认证**，必须在请求头中携带有效的 Token\n- **仅支持 JPG、JPEG、PNG 格式**的图片上传\n- **头像必须是正方形图片**（宽高相等），如：800x800、1200x1200\n- 图片会被自动缩放为 **600x600** 像素的 PNG 格式\n- 文件名使用 UUID 生成，避免冲突\n- 旧头像文件不会被自动删除，建议定期清理\n- 文件大小限制为 **5MB**\n",
+        "description": "# 上传用户头像（需要登录认证）\n\n## 特性\n- Token 认证（通过拦截器自动验证）\n- 文件格式校验（JPG/JPEG/PNG）\n- 文件大小限制（最大5MB）\n- 正方形图片校验\n- 自动缩放至600x600 PNG格式\n- UUID 唯一文件名生成\n- 人工审核机制（提交后等待管理员审核）\n\n## 参数说明：\n- file: **头像文件**，MultipartFile 类型，必填\n\n## 返回说明：\n- **上传成功（待审核）**：返回 200 状态码和成功消息，头像路径在 data 中\n- **未授权**：返回 401 状态码（Token 无效或不存在）\n- **文件格式不支持**：返回 400 状态码\n- **文件大小超限**：返回 400 状态码（最大 5MB）\n- **图像不是正方形**：返回 400 状态码\n- **服务器错误**：返回 500 状态码\n\n## 业务逻辑：\n1. 从 Token 中获取当前登录用户的 ID\n2. 验证文件格式（仅支持 jpg/jpeg/png）\n3. 验证文件大小（最大 5MB）\n4. 读取上传的图片数据\n5. 验证图像是否为正方形（宽高必须相等）\n6. 使用 ImageUtils.resizeImage() 将图片缩放为 600x600 的 PNG 格式\n7. 生成唯一的文件名（UUID.png）\n8. 保存文件到 ~/.pix_vision/data/avatar/ 目录\n9. 将头像变更记录写入 tb_user_data_change_lock 表（审核状态=待审核）\n10. 等待管理员审核通过后，头像才会更新\n\n## 注意事项：\n- 该接口**需要认证**，必须在请求头中携带有效的 Token\n- **仅支持 JPG、JPEG、PNG 格式**的图片上传\n- **头像必须是正方形图片**（宽高相等），如：800x800、1200x1200\n- 图片会被自动缩放为 **600x600** 像素的 PNG 格式\n- 文件名使用 UUID 生成，避免冲突\n- 文件大小限制为 **5MB**\n- 头像修改需要**管理员人工审核**，审核通过后才会生效\n- 审核期间，用户仍使用旧头像\n",
         "operationId": "uploadAvatar",
         "requestBody": {
           "content": {
@@ -1117,11 +1205,11 @@
             "schema": {
               "type": "string",
               "description": "是否清空所有历史记录",
+              "default": "true",
               "enum": [
                 "true",
                 "false"
-              ],
-              "default": "true"
+              ]
             }
           }
         ],
@@ -1859,6 +1947,44 @@
         }
       }
     },
+    "/api/admin/user/init-avatar-nickname": {
+      "post": {
+        "tags": [
+          "系统管理员接口 - 用户管理"
+        ],
+        "summary": "批量初始化用户头像和昵称",
+        "description": "# 批量初始化用户头像和昵称（需要登录认证 + 角色权限[77]）\n\n## 特性\n- 仅系统管理员可调用\n- 为指定用户随机分配默认头像（default/1.png ~ default/21.png）\n- 为指定用户随机生成默认昵称（user_xxxxxxxxxx）\n- 模拟注册时的随机头像和随机昵称初始化逻辑\n- 管理员不能初始化自己的头像和昵称\n\n## 参数说明：\n- **userIds**: 目标用户 ID 列表（必填）\n\n## 返回说明：\n- **成功**：返回包含总数、成功数、失败 ID 列表的统计信息\n- **用户 ID 列表为空**：返回错误提示\n- **失败**：返回错误提示\n\n## 业务逻辑：\n1. 验证当前用户是否为系统管理员（由拦截器自动验证）\n2. 从 Token 中获取当前管理员 ID\n3. 遍历用户 ID 列表，为每个用户生成随机头像和随机昵称\n4. 调用 updateUserAvatar 和 updateUserNickname 更新数据库\n5. 返回包含总数、成功数和失败 ID 列表的结果\n\n## 注意事项：\n- 随机头像范围为 default/1.png 到 default/21.png\n- 随机昵称格式为 \"user_\" + 10位随机字母数字组合\n- 管理员自身的头像和昵称不会被修改\n- 初始化会直接覆盖用户当前的头像和昵称\n",
+        "operationId": "batchInitAvatarAndNickname",
+        "parameters": [
+          {
+            "name": "userIds",
+            "in": "query",
+            "description": "目标用户 ID 列表",
+            "required": true,
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "integer",
+                "format": "int32"
+              }
+            },
+            "example": "123,456"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResponsePojoAdminBatchUpdateUserResult"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/admin/user/delete": {
       "post": {
         "tags": [
@@ -2000,6 +2126,59 @@
               "*/*": {
                 "schema": {
                   "$ref": "#/components/schemas/ResponsePojoBoolean"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/admin/user-data-change/review": {
+      "post": {
+        "tags": [
+          "系统管理员接口 - 用户数据变更审核"
+        ],
+        "summary": "批量审核用户数据变更",
+        "description": "# 批量审核用户数据变更（需要登录认证 + 角色权限[55, 77]）\n\n## 特性\n- 支持批量通过或拒绝待审核的用户数据变更\n- 审核通过时自动更新用户昵称/角色/头像\n- 头像类型审核通过时自动重命名 .pend 文件为正常后缀\n- 头像类型审核拒绝时自动重命名 .pend 文件为 .fail\n- 权限变更审核通过时自动清除用户角色缓存\n\n## 参数说明：\n- **lockIds**: lock_id 列表（必填）\n- **approved**: 审核结果（必填）\n  - true: 审核通过，连带更新用户数据\n  - false: 审核拒绝，头像文件重命名为 .fail\n\n## 返回说明：\n- **成功**：返回包含总数、成功数、失败 ID 列表的统计信息\n- **失败**：返回错误提示\n\n## 业务逻辑：\n1. 校验 lockIds 非空，approved 非空\n2. 从 request 中获取当前管理员 ID\n3. 遍历 lockIds，逐个审核：\n   a. 验证记录存在且状态为 20（待审核）\n   b. 根据 type 执行连带操作\n   c. 更新审核状态为 10（通过）或 30（拒绝）\n4. 返回统计结果\n\n## 注意事项：\n- 只能审核当前状态为 20（待审核）的记录\n- 审核通过的头像文件将从 .pend 重命名为正常后缀\n- 审核拒绝的头像文件将从 .pend 重命名为 .fail\n- 权限变更通过后会清除用户角色缓存\n",
+        "operationId": "batchReview",
+        "parameters": [
+          {
+            "name": "lockIds",
+            "in": "query",
+            "description": "lock_id 列表",
+            "required": true,
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "integer",
+                "format": "int32"
+              }
+            },
+            "example": "1,2,3"
+          },
+          {
+            "name": "approved",
+            "in": "query",
+            "description": "true-通过, false-拒绝",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "description": "true-通过, false-拒绝",
+              "default": "true",
+              "enum": [
+                "true",
+                "false"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResponsePojoAdminBatchOperateWorkResult"
                 }
               }
             }
@@ -2507,7 +2686,7 @@
     "/api/user/profile/page/{current}/{size}": {
       "get": {
         "tags": [
-          "用户接口 - 基础资料"
+          "用户接口 - 用户基础资料"
         ],
         "summary": "分页查询用户信息",
         "description": "# 分页查询用户信息（无需登录认证）\n\n## 特性\n- Token 认证（通过拦截器自动验证）\n- MyBatis-Plus 分页支持\n- 关键词统一查询（同时搜索用户名/邮箱/昵称/UUID）\n- 模糊匹配与精确匹配\n- UUID 二进制转换\n\n## 参数说明：\n- current: 当前页码，**从 1 开始**，Long 类型，必填，默认为 1\n- size: 每页大小，Long 类型，必填，默认为 10，范围 1-500\n- keyword: **关键词**（可选），字符串类型\n  * 如果输入的是标准 UUID 格式，则进行**精确匹配**\n  * 否则同时对用户名、邮箱、昵称进行**模糊匹配**\n\n## 返回说明：\n- **查询成功**：返回 **{\"data\": {IPage<User>对象}}** ，包含用户列表和分页信息\n- **参数错误**：返回 **{\"data\": null}** 和\"页码或每页大小错误\"提示\n- **UUID 格式错误**：返回 **{\"data\": null}** 和\"UUID 格式错误\"提示\n\n## 业务逻辑：\n1. 校验页码和每页大小参数（current>=1, 1<=size<=100）\n2. 判断关键词类型：\n   - 如果是标准 UUID 格式，转换为 byte 数组进行精确查询\n   - 否则作为普通关键词，同时对用户名、邮箱、昵称进行模糊查询\n3. 构建 MyBatis-Plus 分页对象\n4. 根据条件查询用户信息\n5. 返回分页结果集\n\n## 注意事项：\n- **关键词为可选参数**，可不传\n- 如果关键词是标准 UUID 格式（如：550e8400-e29b-41d4-a716-446655440000），则进行**精确匹配**\n- 如果关键词不是 UUID 格式，则同时对用户名、邮箱、昵称进行**模糊匹配**\n- 默认返回 8 个核心字段（user_id, user_uuid, username, password, nickname, avatar_url, email, status）\n- 已自动过滤逻辑删除的用户（is_delete=0）\n- 每页大小限制：**1-500**\n",
@@ -2562,7 +2741,7 @@
     "/api/user/profile/page-by-role/{current}/{size}": {
       "get": {
         "tags": [
-          "用户接口 - 基础资料"
+          "用户接口 - 用户基础资料"
         ],
         "summary": "按角色分页查询用户信息",
         "description": "# 按角色分页查询用户信息（无需登录认证）\n\n## 特性\n- 公开接口（无需 Token 认证）\n- MyBatis-Plus 分页支持\n- 支持单个或多个角色筛选\n- 已自动过滤逻辑删除的用户\n\n## 参数说明：\n- current: 当前页码，**从 1 开始**，Long 类型，必填，默认为 1\n- size: 每页大小，Long 类型，必填，默认为 10，范围 1-500\n- userRoles: **用户角色列表**（可选），Integer 数组类型，支持传递多个角色\n  * 11-普通用户, 22-创作者, 55-审核员, 66-工单管理员, 77-系统管理员\n  * 可以传递单个角色或多个角色，如：?userRoles=11 或 ?userRoles=11&userRoles=22\n\n## 返回说明：\n- **查询成功**：返回 **{\"data\": {IPage<User>对象}}** ，包含用户列表和分页信息\n- **参数错误**：返回 **{\"data\": null}** 和\"页码或每页大小错误\"提示\n- **无符合条件的用户**：返回 **{\"data\": null}** 和\"查询失败，返回结果为空\"提示\n\n## 业务逻辑：\n1. 校验页码和每页大小参数（current>=1, 1<=size<=100）\n2. 如果提供了 userRoles 参数，则按角色筛选用户（支持多角色 OR 查询）\n3. 如果未提供 userRoles 参数，则查询所有用户\n4. 构建 MyBatis-Plus 分页对象\n5. 根据条件查询用户信息\n6. 将二进制 UUID 转换为字符串格式\n7. 返回分页结果集\n\n## 注意事项：\n- **userRoles 为可选参数**，可不传，不传则查询所有用户\n- 支持传递多个角色，多个角色之间是 OR 关系（满足任一角色即可）\n- 默认返回 8 个核心字段（user_id, user_uuid, username, password, nickname, avatar_url, email, status, user_role）\n- 已自动过滤逻辑删除的用户（is_delete=0）\n- 每页大小限制：**1-500**\n- 合法的角色代码：11-普通用户, 22-创作者, 55-审核员, 66-工单管理员, 77-系统管理员\n",
@@ -2622,7 +2801,7 @@
     "/api/user/profile/me": {
       "get": {
         "tags": [
-          "用户接口 - 基础资料"
+          "用户接口 - 用户基础资料"
         ],
         "summary": "查询当前用户个人信息",
         "description": "# 查询当前用户个人信息（需要登录认证）\n\n## 特性\n- Token 认证（支持 Header 和 URL 参数两种方式）\n- 自动从 Token 解析当前用户 ID\n- 隐藏敏感字段（密码、角色、状态等）\n- 适用于个人中心页面\n\n## 参数说明：\n- Authorization: Header 中的 Token，格式为 `Bearer <token>`，或通过 URL 参数 `?token=<token>` 传递\n\n## 返回说明：\n- **查询成功**：返回 **{\"data\": {User对象}}** ，包含当前用户的详细信息\n- **Token 不存在**：返回 **{\"data\": null}** 和\"Token 不存在\"提示\n- **Token 已失效**：返回 **{\"data\": null}** 和\"Token 已失效\"提示\n- **用户不存在**：返回 **{\"data\": null}** 和\"用户不存在\"提示\n\n## 业务逻辑：\n1. 从请求头或 URL 参数中提取 Token\n2. 验证 Token 是否在白名单中\n3. 从 Token 中解析用户 ID\n4. 根据用户 ID 查询用户信息\n5. 将二进制 UUID 转换为字符串格式\n6. 隐藏敏感字段（密码、UUID、角色、状态）\n7. 返回用户详细信息\n\n## 注意事项：\n- **必须携带有效的 Token**\n- Token 必须在白名单中（未过期、未登出）\n- 只返回**未删除**的用户（is_delete=0）\n- 返回的字段不包含敏感信息（password、user_uuid、user_role、status 均被隐藏）\n- 适合用于个人中心、用户资料编辑等场景\n",
@@ -2644,7 +2823,7 @@
     "/api/user/profile/info": {
       "get": {
         "tags": [
-          "用户接口 - 基础资料"
+          "用户接口 - 用户基础资料"
         ],
         "summary": "根据 UUID 或用户名查询用户信息",
         "description": "# 根据 UUID 或用户名查询用户信息（无需登录认证）\n\n## 特性\n- 公开接口（无需 Token 认证）\n- 支持通过 UUID 或用户名精确查询单个用户\n- 自动转换二进制 UUID 为字符串格式\n- uuid、username 至少提供一个\n\n## 参数说明：\n- uuid: **用户 UUID**，String 类型，可选，支持两种格式：\n  * 32位不带连字符：`6ddae8a5837d4721a1b783a7f98c67aa`\n  * 36位带连字符：`550e8400-e29b-41d4-a716-446655440000`\n  * 与 username 二选一\n- username: **用户名**，String 类型，可选，精确匹配，与 uuid 二选一\n\n## 返回说明：\n- **查询成功**：返回 **{\"data\": {User对象}}** ，包含用户详细信息\n- **参数缺失**：返回 **{\"data\": null}** 和\"请提供 UUID 或用户名\"提示\n- **UUID 格式错误**：返回 **{\"data\": null}** 和\"UUID 格式错误\"提示\n- **用户不存在**：返回 **{\"data\": null}** 和\"用户不存在\"提示\n\n## 业务逻辑：\n1. 校验参数：uuid、username 至少提供一个\n2. 如果提供 uuid，验证格式并转换为二进制\n3. 根据 uuid 或 username 查询用户信息\n4. 将二进制 UUID 转换为字符串格式\n5. 隐藏敏感字段后返回用户详细信息\n\n## 注意事项：\n- 这是一个**公开接口**，无需 Token 认证\n- **uuid、username 至少提供一个**\n- 只返回**未删除**的用户（is_delete=0）\n- 返回的字段不包含敏感信息（password、user_uuid 均被隐藏）\n- UUID 支持两种格式：32位不带连字符 或 36位带连字符\n- username 为精确匹配，不支持模糊查询\n",
@@ -3012,7 +3191,7 @@
           "图像接口"
         ],
         "summary": "获取作品图片",
-        "description": "# 获取作品图片（无需登录认证）\n\n## 特性\n- 公开接口（无需认证）\n- 路径安全校验（防目录遍历攻击）\n- 文件类型白名单（JPG/JPEG/PNG）\n- HTTP 缓存支持（1小时）\n- 多层子目录支持\n- **根据审核状态动态查找文件**\n\n## 参数说明：\n- filePath: **图像相对路径**，字符串类型，必填，支持子目录结构\n\n## 返回说明：\n- **获取成功**：直接返回图片二进制数据，Content-Type 为 image/png 或 image/jpeg\n- **文件不存在**：返回 **404 Not Found**\n- **非法路径**：返回 **400 Bad Request**（包含 .. 或 / 开头）\n- **不支持的格式**：返回 **400 Bad Request**（非 JPG/JPEG/PNG 格式）\n- **路径越权**：返回 **403 Forbidden**（超出允许目录范围）\n- **服务器错误**：返回 **500 Internal Server Error**\n\n## 业务逻辑：\n1. 校验文件路径安全性（禁止 .. 和绝对路径）\n2. 检查文件扩展名是否在白名单中（jpg/jpeg/png）\n3. **从文件名提取作品 ID，查询审核状态**\n4. **根据审核状态动态拼接文件后缀**：\n   - 待审核（20）：查找 `.pend` 后缀文件\n   - 未过审（30）：查找 `.fail` 后缀文件\n   - 正常（10）：查找正常格式文件\n5. 构建完整文件路径并验证文件存在性\n6. 确保文件在允许的目录下（~/.pix_vision/data/works/）\n7. 设置响应头 Content-Type 和 Cache-Control\n8. 返回图片二进制数据\n\n## 注意事项：\n- 该接口**无需认证**，任何人都可以访问\n- 图片会自动缓存 **1 小时**（Cache-Control: max-age=3600）\n- 支持子目录结构，建议按日期或用户分类，如：`2024/04/artwork.png`\n- **仅支持 JPG、JPEG、PNG 格式**的图片\n- 文件路径相对于 `~/.pix_vision/data/works/` 目录\n- 适用于展示用户上传的作品图片\n- **数据库存储的文件名始终为正常格式**，实际文件根据审核状态有不同的后缀\n",
+        "description": "# 获取作品图片（无需登录认证）\n\n## 特性\n- 公开接口（无需认证）\n- 路径安全校验（防目录遍历攻击）\n- 文件类型白名单（JPG/JPEG/PNG）\n- HTTP 缓存支持（1小时）\n- 多层子目录支持\n\n## 参数说明：\n- filePath: **图像相对路径**，字符串类型，必填，支持子目录结构\n\n## 返回说明：\n- **获取成功**：直接返回图片二进制数据，Content-Type 为 image/png 或 image/jpeg\n- **文件不存在**：返回 **404 Not Found**\n- **非法路径**：返回 **400 Bad Request**（包含 .. 或 / 开头）\n- **不支持的格式**：返回 **400 Bad Request**（非 JPG/JPEG/PNG 格式）\n- **路径越权**：返回 **403 Forbidden**（超出允许目录范围）\n- **服务器错误**：返回 **500 Internal Server Error**\n\n## 业务逻辑：\n1. 校验文件路径安全性（禁止 .. 和绝对路径）\n2. 检查文件扩展名是否在白名单中（jpg/jpeg/png）\n3. 构建完整文件路径并验证文件存在性\n4. 确保文件在允许的目录下（~/.pix_vision/data/works/）\n5. 设置响应头 Content-Type 和 Cache-Control\n6. 返回图片二进制数据\n\n## 注意事项：\n- 该接口**无需认证**，任何人都可以访问\n- 图片会自动缓存 **1 小时**（Cache-Control: max-age=3600）\n- 支持子目录结构，建议按日期或用户分类，如：`2024/04/artwork.png`\n- **仅支持 JPG、JPEG、PNG 格式**的图片\n- 文件路径相对于 `~/.pix_vision/data/works/` 目录\n- 适用于展示用户上传的作品图片\n- 仅返回审核通过的正常格式文件，待审核/违规文件不可通过本接口访问\n",
         "operationId": "getWorkImage",
         "parameters": [
           {
@@ -3117,7 +3296,7 @@
           "图像接口"
         ],
         "summary": "获取头像图片",
-        "description": "# 获取用户头像图片（无需登录认证）\n\n## 特性\n- 公开接口（无需认证）\n- 路径安全校验（防目录遍历攻击）\n- 文件类型白名单（JPG/JPEG/PNG）\n- HTTP 缓存支持（1小时）\n- 子目录结构支持\n\n## 参数说明：\n- filePath: **图像相对路径**，字符串类型，必填，支持子目录结构\n\n## 返回说明：\n- **获取成功**：直接返回图片二进制数据，Content-Type 为 image/png 或 image/jpeg\n- **文件不存在**：返回 **404 Not Found**\n- **非法路径**：返回 **400 Bad Request**（包含 .. 或 / 开头）\n- **不支持的格式**：返回 **400 Bad Request**（非 JPG/JPEG/PNG 格式）\n- **路径越权**：返回 **403 Forbidden**（超出允许目录范围）\n- **服务器错误**：返回 **500 Internal Server Error**\n\n## 业务逻辑：\n1. 校验文件路径安全性（禁止 .. 和绝对路径）\n2. 检查文件扩展名是否在白名单中（jpg/jpeg/png）\n3. 构建完整文件路径并验证文件存在性\n4. 确保文件在允许的目录下（~/.pix_vision/data/avatar/）\n5. 设置响应头 Content-Type 和 Cache-Control\n6. 返回图片二进制数据\n\n## 注意事项：\n- 该接口**无需认证**，任何人都可以访问\n- 图片会自动缓存 **1 小时**（Cache-Control: max-age=3600）\n- 支持子目录结构，如：`default/11.png`、`custom/user_avatar.jpg`\n- **仅支持 JPG、JPEG、PNG 格式**的图片\n- 文件路径相对于 `~/.pix_vision/data/avatar/` 目录\n",
+        "description": "# 获取用户头像图片（无需登录认证）\n\n## 特性\n- 公开接口（无需认证）\n- 路径安全校验（防目录遍历攻击）\n- 文件类型白名单（JPG/JPEG/PNG）\n- HTTP 缓存支持（1小时）\n- 子目录结构支持\n\n## 参数说明：\n- filePath: **图像相对路径**，字符串类型，必填，支持子目录结构\n\n## 返回说明：\n- **获取成功**：直接返回图片二进制数据，Content-Type 为 image/png 或 image/jpeg\n- **文件不存在**：返回 **404 Not Found**\n- **非法路径**：返回 **400 Bad Request**（包含 .. 或 / 开头）\n- **不支持的格式**：返回 **400 Bad Request**（非 JPG/JPEG/PNG 格式）\n- **路径越权**：返回 **403 Forbidden**（超出允许目录范围）\n- **服务器错误**：返回 **500 Internal Server Error**\n\n## 业务逻辑：\n1. 校验文件路径安全性（禁止 .. 和绝对路径）\n2. 检查文件扩展名是否在白名单中（jpg/jpeg/png）\n3. 构建完整文件路径并验证文件存在性\n4. 确保文件在允许的目录下（~/.pix_vision/data/avatar/）\n5. 设置响应头 Content-Type 和 Cache-Control\n6. 返回图片二进制数据\n\n## 注意事项：\n- 该接口**无需认证**，任何人都可以访问\n- 图片会自动缓存 **1 小时**（Cache-Control: max-age=3600）\n- 支持子目录结构，如：`default/11.png`、`custom/user_avatar.jpg`\n- **仅支持 JPG、JPEG、PNG 格式**的图片\n- 文件路径相对于 `~/.pix_vision/data/avatar/` 目录\n- 仅返回审核通过的正常格式文件，待审核/未过审文件不可通过本接口访问\n",
         "operationId": "getAvatar",
         "parameters": [
           {
@@ -3307,6 +3486,62 @@
               "*/*": {
                 "schema": {
                   "$ref": "#/components/schemas/ResponsePojoIPageWorks"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/admin/user-data-change/pending/{current}/{size}": {
+      "get": {
+        "tags": [
+          "系统管理员接口 - 用户数据变更审核"
+        ],
+        "summary": "分页查询待审核记录",
+        "description": "# 分页查询待审核的用户数据变更记录（需要登录认证 + 角色权限[55, 77]）\n\n## 特性\n- 仅返回待审核状态（approval_status=20）的记录\n- 支持按变更类型筛选\n- 按提交时间倒序排列（最新提交在前）\n- 关联查询用户名和当前昵称\n\n## 参数说明：\n- **current**: 当前页码，从 1 开始（路径参数，必填）\n- **size**: 每页大小（路径参数，必填）\n- **type**: 变更类型筛选（可选）\n  - 100: 昵称修改\n  - 200: 权限申请\n  - 300: 头像修改\n\n## 返回说明：\n- **成功**：返回分页结果，每条记录包含 lockId、userId、username、type、新数据、旧数据等\n- **结果为空**：返回空分页对象和成功状态\n\n## 注意事项：\n- 不返回审核状态字段，因为所有记录都是待审核状态\n- 查询结果为空时返回空分页对象和成功状态\n",
+        "operationId": "getPendingPage",
+        "parameters": [
+          {
+            "name": "current",
+            "in": "path",
+            "description": "当前页码，从 1 开始",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "example": 1
+          },
+          {
+            "name": "size",
+            "in": "path",
+            "description": "每页大小",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "example": 10
+          },
+          {
+            "name": "type",
+            "in": "query",
+            "description": "变更类型（可选，100-昵称, 200-权限, 300-头像）",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResponsePojoIPageUserDataChangeLockVO"
                 }
               }
             }
@@ -4871,99 +5106,82 @@
           "comment_id": {
             "type": "integer",
             "description": "评论 ID",
-            "format": "int32",
-            "refType": null
+            "format": "int32"
           },
           "user_id": {
             "type": "integer",
             "description": "用户 ID",
-            "format": "int32",
-            "refType": null
+            "format": "int32"
           },
           "work_id": {
             "type": "integer",
             "description": "作品 ID",
-            "format": "int32",
-            "refType": null
+            "format": "int32"
           },
           "parent_comment_id": {
             "type": "integer",
             "description": "父评论 ID",
-            "format": "int32",
-            "refType": null
+            "format": "int32"
           },
           "in_comment_id": {
             "type": "integer",
             "description": "所属一级评论 ID",
-            "format": "int32",
-            "refType": null
+            "format": "int32"
           },
           "comment_floor": {
             "type": "integer",
             "description": "评论层级",
-            "format": "int32",
-            "refType": null
+            "format": "int32"
           },
           "comment_text": {
             "type": "string",
-            "description": "评论内容，限制长度 125 字",
-            "refType": null
+            "description": "评论内容，限制长度 125 字"
           },
           "approval_status": {
             "type": "integer",
             "description": "审核状态：10 - 正常、20 - 待审核、30 - 未过审",
-            "format": "int32",
-            "refType": null
+            "format": "int32"
           },
           "is_delete": {
             "type": "boolean",
-            "description": "删除标签：0 - 未删除、1 - 已删除",
-            "refType": null
+            "description": "删除标签：0 - 未删除、1 - 已删除"
           },
           "time": {
             "type": "string",
             "description": "评论时间",
-            "format": "date-time",
-            "refType": null
+            "format": "date-time"
           },
           "nickname": {
             "type": "string",
-            "description": "用户昵称",
-            "refType": null
+            "description": "用户昵称"
           },
           "username": {
             "type": "string",
-            "description": "用户名",
-            "refType": null
+            "description": "用户名"
           },
           "user_avatar": {
             "type": "string",
-            "description": "用户头像路径",
-            "refType": null
+            "description": "用户头像路径"
           },
           "replied_nickname": {
             "type": "string",
-            "description": "被回复者的用户昵称",
-            "refType": null
+            "description": "被回复者的用户昵称"
           },
           "replied_username": {
             "type": "string",
-            "description": "被回复者的用户名",
-            "refType": null
+            "description": "被回复者的用户名"
           },
           "replied_user_id": {
             "type": "integer",
             "description": "被回复者的用户 ID",
-            "format": "int32",
-            "refType": null
+            "format": "int32"
           },
           "children": {
             "type": "array",
             "description": "二级评论列表",
             "items": {
               "$ref": "#/components/schemas/SecondaryComment"
-            },
-            "refType": "SecondaryComment"
+            }
           }
         },
         "description": "一级评论响应实体"
@@ -5004,94 +5222,172 @@
           "comment_id": {
             "type": "integer",
             "description": "评论 ID",
-            "format": "int32",
-            "refType": null
+            "format": "int32"
           },
           "user_id": {
             "type": "integer",
             "description": "用户 ID",
-            "format": "int32",
-            "refType": null
+            "format": "int32"
           },
           "work_id": {
             "type": "integer",
             "description": "作品 ID",
-            "format": "int32",
-            "refType": null
+            "format": "int32"
           },
           "parent_comment_id": {
             "type": "integer",
             "description": "父评论 ID",
-            "format": "int32",
-            "refType": null
+            "format": "int32"
           },
           "in_comment_id": {
             "type": "integer",
             "description": "所属一级评论 ID",
-            "format": "int32",
-            "refType": null
+            "format": "int32"
           },
           "comment_floor": {
             "type": "integer",
             "description": "评论层级",
-            "format": "int32",
-            "refType": null
+            "format": "int32"
           },
           "comment_text": {
             "type": "string",
-            "description": "评论内容，限制长度 125 字",
-            "refType": null
+            "description": "评论内容，限制长度 125 字"
           },
           "approval_status": {
             "type": "integer",
             "description": "审核状态：10 - 正常、20 - 待审核、30 - 未过审",
-            "format": "int32",
-            "refType": null
+            "format": "int32"
           },
           "is_delete": {
             "type": "boolean",
-            "description": "删除标签：0 - 未删除、1 - 已删除",
-            "refType": null
+            "description": "删除标签：0 - 未删除、1 - 已删除"
           },
           "time": {
             "type": "string",
             "description": "评论时间",
-            "format": "date-time",
-            "refType": null
+            "format": "date-time"
           },
           "nickname": {
             "type": "string",
-            "description": "用户昵称",
-            "refType": null
+            "description": "用户昵称"
           },
           "username": {
             "type": "string",
-            "description": "用户名",
-            "refType": null
+            "description": "用户名"
           },
           "user_avatar": {
             "type": "string",
-            "description": "用户头像路径",
-            "refType": null
+            "description": "用户头像路径"
           },
           "replied_nickname": {
             "type": "string",
-            "description": "被回复者的用户昵称",
-            "refType": null
+            "description": "被回复者的用户昵称"
           },
           "replied_username": {
             "type": "string",
-            "description": "被回复者的用户名",
-            "refType": null
+            "description": "被回复者的用户名"
           },
           "replied_user_id": {
             "type": "integer",
             "description": "被回复者的用户 ID",
-            "format": "int32",
-            "refType": null
+            "format": "int32"
           }
         },
         "description": "二级评论响应实体"
+      },
+      "IPageUserDataChangeLockVO": {
+        "type": "object",
+        "properties": {
+          "size": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "records": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/UserDataChangeLockVO"
+            }
+          },
+          "total": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "current": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "pages": {
+            "type": "integer",
+            "format": "int64"
+          }
+        },
+        "description": "响应数据"
+      },
+      "ResponsePojoIPageUserDataChangeLockVO": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/IPageUserDataChangeLockVO"
+          },
+          "message": {
+            "type": "string",
+            "description": "响应说明信息"
+          },
+          "recode": {
+            "type": "integer",
+            "description": "响应状态码（200-成功；500-失败）",
+            "format": "int32"
+          },
+          "status": {
+            "type": "string",
+            "description": "响应状态"
+          },
+          "time_str": {
+            "type": "string",
+            "description": "响应时间"
+          }
+        },
+        "description": "响应数据类型"
+      },
+      "UserDataChangeLockVO": {
+        "type": "object",
+        "properties": {
+          "lock_id": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "user_id": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "username": {
+            "type": "string"
+          },
+          "user_current_nickname": {
+            "type": "string"
+          },
+          "type": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "nickname": {
+            "type": "string"
+          },
+          "user_role": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "avatar_url": {
+            "type": "string"
+          },
+          "old_data": {
+            "type": "string"
+          },
+          "create_time": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
       },
       "Comments": {
         "type": "object",
