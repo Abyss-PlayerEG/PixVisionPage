@@ -33,6 +33,8 @@ const downloadPending = ref(false)
 // 作品导航状态
 const navLoading = ref(false)
 const lastWorkId = ref(0)
+const navPrefetched = ref(null) // 缓存导航预取的作品详情，避免双重请求
+const initialLoading = ref(true) // 首次加载状态，导航时不触发
 
 // 上一个/下一个作品导航
 const goToPrevWork = async () => {
@@ -42,8 +44,10 @@ const goToPrevWork = async () => {
   navLoading.value = true
   const found = await findValidWorkId(current, 'prev')
   navLoading.value = false
-  if (found !== null) {
-    router.push({ name: 'workDetail', params: { id: found } })
+  if (found) {
+    navPrefetched.value = found
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+    router.push({ name: 'workDetail', params: { id: found.id } })
   } else {
     showInfo('已经是第一个作品了')
   }
@@ -56,8 +60,10 @@ const goToNextWork = async () => {
   navLoading.value = true
   const found = await findValidWorkId(current, 'next')
   navLoading.value = false
-  if (found !== null) {
-    router.push({ name: 'workDetail', params: { id: found } })
+  if (found) {
+    navPrefetched.value = found
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+    router.push({ name: 'workDetail', params: { id: found.id } })
   } else {
     showInfo('已经是最后一个作品了')
   }
@@ -67,7 +73,7 @@ const goToNextWork = async () => {
  * 从起始 ID 开始，沿方向逐个探测有效作品（跳过已删除的）
  * @param {number} startId
  * @param {'prev'|'next'} direction
- * @returns {Promise<number|null>} 找到的有效作品 ID，或 null
+ * @returns {Promise<{id:number, detail:Object}|null>} 找到的有效作品信息及详情，或 null
  */
 const findValidWorkId = async (startId, direction) => {
   const maxAttempts = 50
@@ -76,7 +82,7 @@ const findValidWorkId = async (startId, direction) => {
     if (candidate <= 0) return null
     if (direction === 'next' && lastWorkId.value > 0 && candidate > lastWorkId.value) return null
     const result = await fetchWorkDetail(candidate)
-    if (result.success) return candidate
+    if (result.success) return { id: candidate, detail: result.data }
     candidate += direction === 'next' ? 1 : -1
   }
   return null
@@ -289,12 +295,20 @@ const formatTime = (timeStr) => {
 /** 加载作品核心数据（作品详情、评论、点赞/收藏状态、发布者信息） */
 const loadWorkData = async () => {
   const id = Number(workId.value)
-  if (!id) { loading.value = false; return }
-  loading.value = true
+  if (!id) { loading.value = false; initialLoading.value = false; return }
+  if (initialLoading.value) loading.value = true
   // 每次切换作品时重置回复状态
   replyingTo.value = null
   replyText.value = ''
-  const [detailResult, commentResult] = await Promise.all([fetchWorkDetail(id), fetchCommentList(id, 'newest')])
+  // 复用导航预取的作品详情，避免重复请求
+  let detailResult
+  if (navPrefetched.value && navPrefetched.value.id === id) {
+    detailResult = { success: true, data: navPrefetched.value.detail }
+    navPrefetched.value = null
+  } else {
+    detailResult = await fetchWorkDetail(id)
+  }
+  const [commentResult] = await Promise.all([fetchCommentList(id, 'newest')])
   if (detailResult.success) {
     workDetail.value = detailResult.data
     likeCount.value = detailResult.data.like_count || 0
@@ -325,6 +339,7 @@ const loadWorkData = async () => {
     publisher.value = { avatar: getAvatarUrl(''), displayName: '', username: '', bio: '', works: 0, totalViews: 0, totalLikes: 0, totalStars: 0, contactItems: [] }
   }
   loading.value = false
+  initialLoading.value = false
 }
 
 onMounted(async () => {
