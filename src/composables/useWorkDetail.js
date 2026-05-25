@@ -257,6 +257,13 @@ export const useWorkDetail = () => {
     } else {
       detailResult = await fetchWorkDetail(id)
     }
+    // 作品不存在时跳转到 404
+    if (!detailResult.success || !detailResult.data) {
+      loading.value = false
+      initialLoading.value = false
+      router.push({ name: 'notFound' })
+      return
+    }
     const [commentResult] = await Promise.all([fetchCommentList(id, 'newest')])
     if (detailResult.success) {
       workDetail.value = detailResult.data
