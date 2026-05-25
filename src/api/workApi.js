@@ -13,9 +13,14 @@ import { getUserDataList } from './userDataApi';
  */
 export const fetchWorkDetail = async (workId) => {
   try {
+    const token = localStorage.getItem('token');
+    const headers = { 'Content-Type': 'application/json' };
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
     const url = `${WORK_API.DETAIL}/${workId}`;
-    console.log('[API] 请求作品详情:', url);
-    const response = await fetch(url, { method: 'GET', headers: { 'Content-Type': 'application/json' } });
+    console.log('[API] 请求作品详情:', url, token ? '(已携带Token)' : '(未登录，游客访问)');
+    const response = await fetch(url, { method: 'GET', headers });
     const result = await response.json();
     console.log('[API] 作品详情响应:', JSON.stringify(result, null, 2));
     const statusCode = result.code || result.recode;
@@ -53,7 +58,7 @@ export const getLastWorkId = async () => {
 
 /**
  * 随机获取一个作品
- * @returns {Promise<Object>} { success, data: Works, message }
+ * @returns {Promise<Object>} { success, data: number (workId), message }
  */
 export const fetchRandomWork = async () => {
   try {
@@ -62,9 +67,9 @@ export const fetchRandomWork = async () => {
     const response = await fetch(url, { method: 'GET', headers: { 'Content-Type': 'application/json' } });
     const result = await response.json();
     console.log('[API] 随机作品响应:', JSON.stringify(result, null, 2));
-    const statusCode = result.code || result.recode;
-    if (statusCode === 200 && result.data) {
-      return { success: true, data: result.data };
+    const statusCode = result.recode || result.code;
+    if (statusCode === 200 && result.data !== null && result.data !== undefined) {
+      return { success: true, data: Number(result.data) };
     }
     return { success: false, message: result.message || '获取随机作品失败' };
   } catch (error) {

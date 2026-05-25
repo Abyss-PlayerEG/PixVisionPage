@@ -69,6 +69,22 @@ const {
           <div v-else class="wd-comments-empty">暂无作品图片</div>
         </div>
 
+        <!-- 作品导航 -->
+        <div class="wd-work-nav">
+          <button class="wd-nav-btn" @click="goToPrevWork" :disabled="navLoading">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
+            <span>上一个</span>
+          </button>
+          <button class="wd-nav-btn wd-nav-random" @click="goToRandomWork" :disabled="randomLoading">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="3" ry="3"/><circle cx="8" cy="8" r="1.5" fill="currentColor"/><circle cx="12" cy="12" r="1.5" fill="currentColor"/><circle cx="16" cy="16" r="1.5" fill="currentColor"/></svg>
+            <span>随机</span>
+          </button>
+          <button class="wd-nav-btn" @click="goToNextWork" :disabled="navLoading">
+            <span>下一个</span>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+          </button>
+        </div>
+
         <!-- 点赞收藏操作栏 -->
         <div class="wd-action-bar">
           <button class="wd-action-btn" :class="{ 'wd-action-btn--active': liked }" @click="handleToggleLike" :disabled="likePending">
@@ -221,24 +237,6 @@ const {
               <svg v-else class="publisher-contact-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
               <span>{{ item.content }}</span>
             </div>
-          </div>
-          <!-- 上一个/下一个作品导航 -->
-          <div class="publisher-nav">
-            <button class="publisher-nav-btn" @click="goToPrevWork" :disabled="navLoading">
-              <svg class="publisher-nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
-              <span>上一个作品</span>
-            </button>
-            <button class="publisher-nav-btn" @click="goToNextWork" :disabled="navLoading">
-              <span>下一个作品</span>
-              <svg class="publisher-nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
-            </button>
-          </div>
-          <!-- 随机作品 -->
-          <div class="publisher-random">
-            <button class="publisher-random-btn" @click="goToRandomWork" :disabled="randomLoading">
-              <svg class="publisher-random-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="3" ry="3"/><circle cx="8" cy="8" r="1.5" fill="currentColor"/><circle cx="12" cy="12" r="1.5" fill="currentColor"/><circle cx="16" cy="16" r="1.5" fill="currentColor"/></svg>
-              <span>随机</span>
-            </button>
           </div>
         </div>
       </aside>

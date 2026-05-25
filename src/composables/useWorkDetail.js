@@ -90,14 +90,21 @@ export const useWorkDetail = () => {
 const goToRandomWork = async () => {
   if (randomLoading.value) return
   randomLoading.value = true
-  const result = await fetchRandomWork()
+  const randomResult = await fetchRandomWork()
+  if (!randomResult.success || !randomResult.data) {
+    randomLoading.value = false
+    showError(randomResult.message || '获取随机作品失败')
+    return
+  }
+  // 预取作品详情，确保 loadWorkData 能直接使用缓存（与 goToNextWork/goToPrevWork 模式一致）
+  const detailResult = await fetchWorkDetail(randomResult.data)
   randomLoading.value = false
-  if (result.success && result.data) {
-    navPrefetched.value = null
+  if (detailResult.success && detailResult.data) {
+    navPrefetched.value = { id: randomResult.data, detail: detailResult.data }
     window.scrollTo({ top: 0, behavior: 'smooth' })
-    router.push({ name: 'workDetail', params: { id: result.data.work_id } })
+    router.push({ name: 'workDetail', params: { id: randomResult.data } })
   } else {
-    showError(result.message || '获取随机作品失败')
+    showError(detailResult.message || '获取作品详情失败')
   }
 }
 
