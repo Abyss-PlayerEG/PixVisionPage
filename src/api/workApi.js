@@ -52,6 +52,28 @@ export const getLastWorkId = async () => {
 };
 
 /**
+ * 随机获取一个作品
+ * @returns {Promise<Object>} { success, data: Works, message }
+ */
+export const fetchRandomWork = async () => {
+  try {
+    const url = WORK_API.RANDOM;
+    console.log('[API] 请求随机作品:', url);
+    const response = await fetch(url, { method: 'GET', headers: { 'Content-Type': 'application/json' } });
+    const result = await response.json();
+    console.log('[API] 随机作品响应:', JSON.stringify(result, null, 2));
+    const statusCode = result.code || result.recode;
+    if (statusCode === 200 && result.data) {
+      return { success: true, data: result.data };
+    }
+    return { success: false, message: result.message || '获取随机作品失败' };
+  } catch (error) {
+    console.error('[API] 随机作品请求失败:', error);
+    return { success: false, message: '网络错误，请稍后重试' };
+  }
+};
+
+/**
  * 获取作品评论列表
  * @param {number} workId - 作品 ID
  * @param {string} [orderBy='newest'] - 排序方式

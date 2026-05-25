@@ -56,6 +56,7 @@ export const WORK_API = {
   PAGE: `${API_BASE_URL}/api/work/page`,
   DETAIL: `${API_BASE_URL}/api/work/detail`,  // 查询单个作品（公开接口）
   LAST_ID: `${API_BASE_URL}/api/work/last-id`, // 获取最大作品 ID
+  RANDOM: `${API_BASE_URL}/api/work/random`,   // 随机获取一个作品
 };
 
 // 评论相关接口

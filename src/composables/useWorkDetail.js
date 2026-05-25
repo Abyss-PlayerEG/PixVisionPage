@@ -6,7 +6,7 @@
 import { ref, watch, onMounted, onUnmounted, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { getWorkImageUrl, getAvatarUrl } from '@/config/api'
-import { fetchWorkDetail, fetchCommentList, addComment, deleteComment, toggleLike, toggleStar, fetchLikeStatus, fetchStarStatus, fetchPublisherInfo, getLastWorkId } from '@/api/workApi'
+import { fetchWorkDetail, fetchCommentList, addComment, deleteComment, toggleLike, toggleStar, fetchLikeStatus, fetchStarStatus, fetchPublisherInfo, getLastWorkId, fetchRandomWork } from '@/api/workApi'
 import { getCurrentUser } from '@/api/profileApi'
 import { showSuccess, showError, showInfo } from '@/utils/notification'
 import { showConfirm } from '@/utils/confirmDialog'
@@ -39,6 +39,7 @@ export const useWorkDetail = () => {
 
   // ========== 作品导航状态 ==========
   const navLoading = ref(false)
+  const randomLoading = ref(false)
   const lastWorkId = ref(0)
   const navPrefetched = ref(null)
   const findValidWorkId = async (startId, direction) => {
@@ -85,6 +86,20 @@ export const useWorkDetail = () => {
       showInfo('已经是最后一个作品了')
     }
   }
+
+const goToRandomWork = async () => {
+  if (randomLoading.value) return
+  randomLoading.value = true
+  const result = await fetchRandomWork()
+  randomLoading.value = false
+  if (result.success && result.data) {
+    navPrefetched.value = null
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+    router.push({ name: 'workDetail', params: { id: result.data.work_id } })
+  } else {
+    showError(result.message || '获取随机作品失败')
+  }
+}
 
   // ========== 回复状态 ==========
   const replyingTo = ref(null)
@@ -385,6 +400,7 @@ export const useWorkDetail = () => {
     downloadPending,
     // 导航
     navLoading,
+    randomLoading,
     // 回复
     replyingTo,
     replyText,
@@ -411,5 +427,6 @@ export const useWorkDetail = () => {
     handleDownload,
     goToPrevWork,
     goToNextWork,
+    goToRandomWork,
   }
 }

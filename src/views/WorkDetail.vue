@@ -12,6 +12,7 @@ const {
   likePending, starPending, downloadPending,
   // 导航
   navLoading,
+  randomLoading,
   // 回复
   replyingTo, replyText, replySubmitting,
   // 计算属性
@@ -33,6 +34,7 @@ const {
   handleDownload,
   goToPrevWork,
   goToNextWork,
+  goToRandomWork,
 } = useWorkDetail()
 </script>
 
@@ -229,6 +231,13 @@ const {
             <button class="publisher-nav-btn" @click="goToNextWork" :disabled="navLoading">
               <span>下一个作品</span>
               <svg class="publisher-nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+            </button>
+          </div>
+          <!-- 随机作品 -->
+          <div class="publisher-random">
+            <button class="publisher-random-btn" @click="goToRandomWork" :disabled="randomLoading">
+              <svg class="publisher-random-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="3" ry="3"/><circle cx="8" cy="8" r="1.5" fill="currentColor"/><circle cx="12" cy="12" r="1.5" fill="currentColor"/><circle cx="16" cy="16" r="1.5" fill="currentColor"/></svg>
+              <span>随机</span>
             </button>
           </div>
         </div>
