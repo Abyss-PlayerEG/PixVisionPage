@@ -174,7 +174,8 @@ const onWheel = (e) => {
 }
 
 // ── 阶段切换 GSAP 过渡动画 ──
-// 通用：锁定弹窗高度 → 旧内容淡出 → 切换 stage → 新内容淡入 → 高度动画
+// 仅动画 opacity + scale + translateY（纯 GPU 合成，不触发 Layout 重排）
+// 高度变化通过 min-height 锁定：防止 DOM 切换时弹窗塌缩，切换后瞬间扩展（新内容淡入盖过）
 const animateStageSwitch = async (fromSelector, toSelector, beforeSwitch) => {
   if (isTransitioning.value) return
   isTransitioning.value = true
@@ -182,12 +183,12 @@ const animateStageSwitch = async (fromSelector, toSelector, beforeSwitch) => {
   const dialogEl = dialogRef.value
   if (!dialogEl) { isTransitioning.value = false; return }
 
-  // 1. 锁定当前高度，kill 可能残留的 height tween
-  gsap.killTweensOf(dialogEl, 'height')
-  const fromHeight = dialogEl.offsetHeight
-  gsap.set(dialogEl, { height: fromHeight, overflow: 'hidden' })
+  // 1. 锁定 min-height 防止弹窗塌缩，overflow 防溢出
+  const currentHeight = dialogEl.offsetHeight
+  dialogEl.style.minHeight = currentHeight + 'px'
+  dialogEl.style.overflow = 'hidden'
 
-  // 2. 旧内容淡出
+  // 2. 旧内容淡出（仅 GPU 属性：opacity + scale + translateY）
   const oldEl = dialogEl.querySelector(fromSelector)
   if (oldEl) {
     await new Promise((resolve) => {
@@ -199,41 +200,32 @@ const animateStageSwitch = async (fromSelector, toSelector, beforeSwitch) => {
     })
   }
 
-  // 3. 切换前的回调（修改 stage、重置数据等）
+  // 3. 切换 stage / 重置数据
   if (beforeSwitch) beforeSwitch()
-
   await nextTick()
 
-  // 4. 新内容预隐藏（防闪烁）
+  // 4. 释放 min-height，弹窗瞬间扩展到新内容高度（不可见：新内容 opacity 仍为 0）
+  dialogEl.style.minHeight = ''
+
+  // 5. 新内容预隐藏 + 淡入（仅 GPU 属性）
   const newEl = dialogEl.querySelector(toSelector)
   if (newEl) {
     gsap.set(newEl, { opacity: 0, scale: 0.95, y: 12 })
   }
 
-  // 5. 测量新高度
-  gsap.set(dialogEl, { height: 'auto' })
-  const toHeight = dialogEl.offsetHeight
-  gsap.set(dialogEl, { height: fromHeight })
-
-  // 6. 新内容淡入 + 高度过渡
   return new Promise((resolve) => {
     const tl = gsap.timeline({
       onComplete: () => {
-        gsap.set(dialogEl, { clearProps: 'height,overflow' })
+        dialogEl.style.overflow = ''
         isTransitioning.value = false
         resolve()
       },
     })
-    tl.to(dialogEl, {
-      height: toHeight,
-      duration: 0.35,
-      ease: 'power2.inOut',
-    }, 0)
     if (newEl) {
       tl.to(newEl, {
         opacity: 1, scale: 1, y: 0,
         duration: 0.4, ease: 'back.out(1.2)',
-      }, 0.05)
+      }, 0)
     }
   })
 }
