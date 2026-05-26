@@ -28,7 +28,7 @@ const openCropperJS = async () => {
 const openCropperCustomSize = async () => {
   const result = await showAvatarCropper({
     outputSize: 512,
-    previewSize: 260,
+    previewSize: 400,
   })
   if (!result.canceled && result.blob) {
     croppingResult.value = result.blob

@@ -87,6 +87,32 @@
     white-space: nowrap;
 }
 
+/* 编辑资料按钮 */
+.edit-profile-btn {
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    border: none;
+    background: rgba(255, 255, 255, 0.05);
+    color: rgba(255, 255, 255, 0.45);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    transition: all 0.2s ease;
+}
+
+.edit-profile-btn svg {
+    width: 16px;
+    height: 16px;
+}
+
+.edit-profile-btn:hover {
+    background: rgba(0, 169, 71, 0.12);
+    color: #00A947;
+}
+
 /* UUID 区域 */
 .uuid-wrapper {
     display: flex;

@@ -47,6 +47,12 @@ const dropzoneHint = computed(() => {
 })
 const cropSize = computed(() => props.previewSize)
 
+// 弹窗宽度动态适配：previewSize > 300 时自动加宽，小于 300 时保持 420 基础宽度
+const dialogStyle = computed(() => {
+  const delta = Math.max(0, props.previewSize - 300)
+  return { width: `${420 + delta}px` }
+})
+
 const imageStyle = computed(() => {
   if (!sourceImage.value) return {}
   const s = zoom.value
@@ -437,7 +443,7 @@ defineExpose({ showDialog, cancel })
 <template>
   <Teleport to="body">
     <div v-if="isVisible" ref="overlayRef" class="avc-overlay" @click="onOverlayClick">
-      <div ref="dialogRef" class="avc-dialog" @click.stop>
+      <div ref="dialogRef" class="avc-dialog" :style="dialogStyle" @click.stop>
         <!-- 标题栏 -->
         <div class="avc-header">
           <h3 class="avc-title">{{ dialogTitle }}</h3>
@@ -515,7 +521,7 @@ defineExpose({ showDialog, cancel })
             :disabled="isProcessing || isTransitioning"
             @click="confirm"
           >
-            {{ isProcessing ? '处理中...' : '确认裁剪' }}
+            {{ isProcessing ? '处理中...' : '确认' }}
           </button>
         </div>
       </div>
