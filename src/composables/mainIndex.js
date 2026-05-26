@@ -1108,6 +1108,7 @@ export const useNum7zAnimation = () => {
     gsap.set(h1Spans[0], { left: '5%', xPercent: 0, opacity: 0 })
     gsap.set(h1Spans[1], { left: '90%', xPercent: -100, opacity: 0 })
     gsap.set(iconDivs, { x: 200, opacity: 0 })
+    gsap.set(h2, { y: -50 })
 
     // === 标题区滚动时间轴 ===
     if (h1Spans.length && h2 && iconDivs.length) {
@@ -1130,9 +1131,9 @@ export const useNum7zAnimation = () => {
         0,
       )
 
-      // Phase 2 — h2 淡入 (t=0.35 ~ 0.6)
+      // Phase 2 — h2 从上方 20px 归位 + 淡入 (t=0.35 ~ 0.6)
       tl.to(h2,
-        { opacity: 1, duration: 0.25, ease: 'power2.out' },
+        { opacity: 1, y: 0, duration: 0.25, ease: 'power2.out' },
         '>+=0.05',
       )
 
@@ -1150,7 +1151,7 @@ export const useNum7zAnimation = () => {
       tlPills = gsap.timeline({
         scrollTrigger: {
           trigger: '#num7z',
-          start: 'top 20%',
+          start: 'top 30%',
           end: 'top -10%',
           scrub: 0.6,
         },
