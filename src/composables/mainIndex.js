@@ -414,76 +414,50 @@ export const useLinkCardAnimation = () => {
 }
 
 /* ===========================
- * Num3z 区域 ScrollTrigger 入场
- * 触发点 'top 40%' —— 区块顶部进入视口 40% 位置时触发，确保用户看到的是动画过程而非已完成的静态结果
- * 依次出场：h1(0s) → span 描述(0.2s 后, 逐条 0.15s) → Swiper 卡片(0.4s 后, 逐张 0.1s)
+ * Num3z 区域 ScrollTrigger 入场（阈值触发，可收回）
+ * 到达 'top 60%' 时播放入场，回滚时反向收回
+ * gsap.set 设定初始隐藏态 + .to() 驱动，不受滚动速度影响
  * =========================== */
 export const useNum3zAnimation = () => {
-  let scrollTriggers = []
+  let tl = null
 
   const initNum3zAnimation = () => {
     const h1 = document.querySelector('#num3z h1')
     const descSpans = document.querySelectorAll('#num3z > div > span')
     const swiperSlides = document.querySelectorAll('.swiper-slide')
 
-    if (!h1 || !descSpans || descSpans.length === 0 || !swiperSlides || swiperSlides.length === 0) {
-      return
-    }
+    if (!h1 || !descSpans.length || !swiperSlides.length) return
 
-    const h1Anim = gsap.fromTo(h1,
-      { opacity: 0, y: 50 },
-      {
-        opacity: 1, y: 0,
-        duration: 0.8, ease: 'power2.out',
-        scrollTrigger: {
-          trigger: '#num3z',
-          start: 'top 40%',
-          once: true,
-          toggleActions: 'play none none none'
-        }
-      }
+    gsap.set(h1, { opacity: 0, y: 50 })
+    gsap.set(descSpans, { opacity: 0, y: 20 })
+    gsap.set(swiperSlides, { opacity: 0, y: 60 })
+
+    tl = gsap.timeline({
+      scrollTrigger: {
+        trigger: '#num3z',
+        start: 'top 60%',
+        toggleActions: 'play none none reverse',
+      },
+    })
+
+    tl.to(h1,
+      { opacity: 1, y: 0, duration: 0.5, ease: 'power2.out' },
+      0,
     )
 
-    const descAnim = gsap.fromTo(descSpans,
-      { opacity: 0, y: 20 },
-      {
-        opacity: 1, y: 0,
-        duration: 0.8, stagger: 0.15, delay: 0.2, ease: 'power2.out',
-        scrollTrigger: {
-          trigger: '#num3z',
-          start: 'top 40%',
-          once: true,
-          toggleActions: 'play none none none'
-        }
-      }
+    tl.to(descSpans,
+      { opacity: 1, y: 0, duration: 0.4, stagger: 0.1, ease: 'power2.out' },
+      '>+=0.1',
     )
 
-    const slidesAnim = gsap.fromTo(swiperSlides,
-      { opacity: 0, y: 60 },
-      {
-        opacity: 1, y: 0,
-        duration: 0.8, stagger: 0.1, delay: 0.4, ease: 'power2.out',
-        scrollTrigger: {
-          trigger: '#num3z',
-          start: 'top 40%',
-          once: true,
-          toggleActions: 'play none none none'
-        }
-      }
+    tl.to(swiperSlides,
+      { opacity: 1, y: 0, duration: 0.6, stagger: 0.08, ease: 'power2.out' },
+      '<=0.2',
     )
-
-    if (h1Anim.scrollTrigger) scrollTriggers.push(h1Anim.scrollTrigger)
-    if (descAnim.scrollTrigger) scrollTriggers.push(descAnim.scrollTrigger)
-    if (slidesAnim.scrollTrigger) scrollTriggers.push(slidesAnim.scrollTrigger)
   }
 
   const cleanupNum3zAnimation = () => {
-    scrollTriggers.forEach(trigger => {
-      if (trigger) {
-        trigger.kill()
-      }
-    })
-    scrollTriggers = []
+    if (tl) { tl.kill(); tl = null }
   }
 
   return {
@@ -493,12 +467,11 @@ export const useNum3zAnimation = () => {
 }
 
 /* ===========================
- * Num4z 区域 ScrollTrigger 入场
- * 触发点 'top 60%' —— 比 num3z 更晚触发，网格区域作为整体出现
- * 依次出场：h1(0s) → n4_font span(0.2s 后) → GridLayout 整体(0.4s 后)
+ * Num4z 区域 ScrollTrigger 入场（阈值触发，可收回）
+ * 到达 'top 60%' 时播放入场，回滚时反向收回
  * =========================== */
 export const useNum4zAnimation = () => {
-  let scrollTriggers = []
+  let tl = null
 
   const initNum4zAnimation = () => {
     const h1 = document.querySelector('#num4z h1')
@@ -507,60 +480,36 @@ export const useNum4zAnimation = () => {
 
     if (!h1 || !fontSpan || !gridLayout) return
 
-    const h1Anim = gsap.fromTo(h1,
-      { opacity: 0, y: 50 },
-      {
-        opacity: 1, y: 0,
-        duration: 0.8, ease: 'power2.out',
-        scrollTrigger: {
-          trigger: '#num4z',
-          start: 'top 60%',
-          once: true,
-          toggleActions: 'play none none none'
-        }
-      }
+    gsap.set(h1, { opacity: 0, y: 50 })
+    gsap.set(fontSpan, { opacity: 0, y: 20 })
+    gsap.set(gridLayout, { opacity: 0, y: 60, scale: 0.95 })
+
+    tl = gsap.timeline({
+      scrollTrigger: {
+        trigger: '#num4z',
+        start: 'top 60%',
+        toggleActions: 'play none none reverse',
+      },
+    })
+
+    tl.to(h1,
+      { opacity: 1, y: 0, duration: 0.5, ease: 'power2.out' },
+      0,
     )
 
-    const fontAnim = gsap.fromTo(fontSpan,
-      { opacity: 0, y: 20 },
-      {
-        opacity: 1, y: 0,
-        duration: 0.8, delay: 0.2, ease: 'power2.out',
-        scrollTrigger: {
-          trigger: '#num4z',
-          start: 'top 60%',
-          once: true,
-          toggleActions: 'play none none none'
-        }
-      }
+    tl.to(fontSpan,
+      { opacity: 1, y: 0, duration: 0.4, ease: 'power2.out' },
+      '<=0.2',
     )
 
-    const gridAnim = gsap.fromTo(gridLayout,
-      { opacity: 0, y: 60 },
-      {
-        opacity: 1, y: 0,
-        duration: 0.8, delay: 0.4, ease: 'power2.out',
-        scrollTrigger: {
-          trigger: '#num4z',
-          start: 'top 60%',
-          once: true,
-          toggleActions: 'play none none none'
-        }
-      }
+    tl.to(gridLayout,
+      { opacity: 1, y: 0, scale: 1, duration: 0.6, ease: 'power2.out' },
+      '<=0.2',
     )
-
-    if (h1Anim.scrollTrigger) scrollTriggers.push(h1Anim.scrollTrigger)
-    if (fontAnim.scrollTrigger) scrollTriggers.push(fontAnim.scrollTrigger)
-    if (gridAnim.scrollTrigger) scrollTriggers.push(gridAnim.scrollTrigger)
   }
 
   const cleanupNum4zAnimation = () => {
-    scrollTriggers.forEach(trigger => {
-      if (trigger) {
-        trigger.kill()
-      }
-    })
-    scrollTriggers = []
+    if (tl) { tl.kill(); tl = null }
   }
 
   return {
