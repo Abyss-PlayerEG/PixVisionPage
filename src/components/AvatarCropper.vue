@@ -28,11 +28,15 @@ const sourceDataUrl = ref('')    // 预览用的 data URL
 const cropContainerRef = ref(null)
 const imageRef = ref(null)
 const dragging = ref(false)
+const pointerLocked = ref(false)
+const justDragged = ref(false)  // 防止拖拽结束后的残余 click 关闭弹窗
 const dragStart = reactive({ x: 0, y: 0 })
 const translate = reactive({ x: 0, y: 0 })
 const zoom = ref(1)
 const minZoom = ref(1)
 const maxZoom = ref(3)
+
+const cursorDot = reactive({ x: 0, y: 0, show: false })
 
 const previewUrl = ref('')
 const isProcessing = ref(false)
@@ -74,6 +78,30 @@ const initPosition = () => {
   translate.y = -(cssH - size) / 2
 }
 
+// ── 将指针坐标限制在裁剪圆形区域内 ──
+const clampToCircle = (cx, cy, radius, px, py) => {
+  const dx = px - cx
+  const dy = py - cy
+  const dist = Math.sqrt(dx * dx + dy * dy)
+  if (dist <= radius) return { x: px, y: py }
+  const angle = Math.atan2(dy, dx)
+  return {
+    x: cx + Math.cos(angle) * radius,
+    y: cy + Math.sin(angle) * radius,
+  }
+}
+
+const updateCursorDot = (clientX, clientY) => {
+  const rect = cropContainerRef.value?.getBoundingClientRect()
+  if (!rect) return
+  const cx = rect.left + rect.width / 2
+  const cy = rect.top + rect.height / 2
+  const radius = rect.width / 2
+  const clamped = clampToCircle(cx, cy, radius, clientX, clientY)
+  cursorDot.x = clamped.x - rect.left
+  cursorDot.y = clamped.y - rect.top
+}
+
 // ── 拖拽 ──
 const clampTranslate = () => {
   if (!sourceImage.value) return
@@ -89,13 +117,26 @@ const clampTranslate = () => {
 
 const onCropPointerDown = (e) => {
   if (stage.value !== 'crop') return
+  if (e.button !== 0) return  // 仅响应鼠标左键 / 触控板主按钮
+  e.preventDefault()
+
   dragging.value = true
+  pointerLocked.value = true
   dragStart.x = e.clientX - translate.x
   dragStart.y = e.clientY - translate.y
-  e.preventDefault()
+
+  cursorDot.show = true
+  updateCursorDot(e.clientX, e.clientY)
+
+  // 全局隐藏真实光标
+  document.body.classList.add('avc-cursor-hidden')
 }
 
 const onPointerMove = (e) => {
+  // 光标锁定：即使未在拖拽图片，也更新光标圆点位置
+  if (pointerLocked.value) {
+    updateCursorDot(e.clientX, e.clientY)
+  }
   if (!dragging.value) return
   translate.x = e.clientX - dragStart.x
   translate.y = e.clientY - dragStart.y
@@ -103,7 +144,12 @@ const onPointerMove = (e) => {
 }
 
 const onPointerUp = () => {
+  if (!dragging.value && !pointerLocked.value) return
+  justDragged.value = true  // 标记刚完成拖拽，阻止紧随的 click 事件关闭弹窗
   dragging.value = false
+  pointerLocked.value = false
+  cursorDot.show = false
+  document.body.classList.remove('avc-cursor-hidden')
 }
 
 // ── 滚轮缩放 ──
@@ -282,6 +328,11 @@ const resetState = () => {
   translate.x = 0
   translate.y = 0
   isProcessing.value = false
+  // 清理光标锁定状态（防止弹窗异常关闭时残留）
+  dragging.value = false
+  pointerLocked.value = false
+  cursorDot.show = false
+  document.body.classList.remove('avc-cursor-hidden')
 }
 
 // ── 监听 ──
@@ -291,6 +342,11 @@ watch(() => props.show, (v) => {
 })
 
 const onOverlayClick = (e) => {
+  // 忽略拖拽结束后的残余 click（触控板/鼠标拖拽到遮罩层上松开时触发）
+  if (justDragged.value) {
+    justDragged.value = false
+    return
+  }
   if (e.target === overlayRef.value) cancel()
 }
 
@@ -349,6 +405,7 @@ defineExpose({ showDialog, cancel })
           <div
             ref="cropContainerRef"
             class="avc-crop-container"
+            :class="{ 'pointer-locked': pointerLocked }"
             :style="{ width: cropSize + 'px', height: cropSize + 'px' }"
             @pointerdown="onCropPointerDown"
             @wheel.prevent="onWheel"
@@ -362,6 +419,8 @@ defineExpose({ showDialog, cancel })
             <div class="avc-crop-corner avc-corner-tr"></div>
             <div class="avc-crop-corner avc-corner-bl"></div>
             <div class="avc-crop-corner avc-corner-br"></div>
+            <!-- 锁定的光标圆点（模拟鼠标被限制在圆形内） -->
+            <div v-show="cursorDot.show" class="avc-cursor-dot" :style="{ left: cursorDot.x + 'px', top: cursorDot.y + 'px' }"></div>
           </div>
 
           <!-- 缩放滑块 -->
@@ -514,6 +573,9 @@ defineExpose({ showDialog, cancel })
 
 .avc-crop-container:active { cursor: grabbing; }
 
+/* 光标锁定：隐藏容器内真实光标（后备；实际由全局 .avc-cursor-hidden 控制） */
+.avc-crop-container.pointer-locked { cursor: none; }
+
 .avc-crop-image {
   position: absolute;
   top: 0;
@@ -587,6 +649,21 @@ defineExpose({ showDialog, cancel })
   box-shadow: 0 0 8px rgba(0, 169, 71, 0.4);
 }
 
+/* ── 光标锁定时模拟圆点 ── */
+.avc-cursor-dot {
+  position: absolute;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: rgba(0, 169, 71, 0.35);
+  border: 2px solid rgba(0, 169, 71, 0.75);
+  pointer-events: none;
+  transform: translate(-50%, -50%);
+  z-index: 20;
+  box-shadow: 0 0 12px rgba(0, 169, 71, 0.35);
+  transition: width 0.1s ease, height 0.1s ease, background 0.1s ease;
+}
+
 /* ── 按钮区 ── */
 .avc-actions {
   width: 100%;
@@ -629,5 +706,13 @@ defineExpose({ showDialog, cancel })
   .avc-dialog { padding: 20px 16px 16px; }
   .avc-dropzone { height: 180px; }
   .avc-actions { flex-direction: column-reverse; gap: 8px; }
+}
+</style>
+
+<!-- 全局光标隐藏（非 scoped，拖拽时隐藏页面所有光标） -->
+<style>
+.avc-cursor-hidden,
+.avc-cursor-hidden * {
+  cursor: none !important;
 }
 </style>
