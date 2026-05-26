@@ -897,11 +897,11 @@
 
 #num7z{
     width: 100%;
-    height: 500vh;
+    min-height: 100vh;
     position: relative;
     z-index: 8;
     background-color: #000;
-    padding: 100px 5% 0 5%;
+    padding: 100px 5% 60px 5%;
     display: flex;
     flex-direction: column;
     justify-content: space-between;
@@ -1061,7 +1061,7 @@
 
 .n7QA{
     width: 100%;
-    height: 360vh;
+    height: auto;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -1093,18 +1093,26 @@
         .n7q{
             align-self: flex-start;
             max-width: 80%;
-            height: auto;
-            padding: 15px;
-            border-radius: 20px;
+            height: 60px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 15px 20px;
+            border-radius: 30px;
             color: #FDF9F0;
             background-color: #1a1a1a;
             border: 1px solid #1a1a1a;
             margin-bottom: 20px;
         }
         
-        .n7a{
+        .n7a_row{
             align-self: flex-end;
+            display: flex;
+            align-items: flex-end;
             max-width: 80%;
+        }
+
+        .n7a{
             height: auto;
             padding: 15px;
             border-radius: 20px;
@@ -1114,8 +1122,6 @@
         }
 
         .n7a2{
-            align-self: flex-end;
-            max-width: 80%;
             height: auto;
             padding: 15px;
             border-radius: 20px;
@@ -1123,6 +1129,71 @@
             background-color: #FDF9F0;
             border: 1px solid #1a1a1a;
             margin-top: 5px;
+        }
+
+        .n7a_avatar{
+            width: 36px;
+            height: 36px;
+            min-width: 36px;
+            border-radius: 50%;
+            border:2px solid #1a1a1a;
+            background-color: #1a1a1a;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-left: 8px;
+            margin-bottom: 4px;
+        }
+    }
+
+    .n7QA_also{
+        width: 100%;
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        margin-top: 120px;
+
+        .QAcont{
+            width: 50%;
+            margin-bottom: 12px;
+        }
+
+        .n7q{
+            margin-bottom: 12px;
+        }
+    }
+
+    .n7Also_header{
+        width: 50%;
+        margin-bottom: 32px;
+
+        .n7Also_en{
+            display: block;
+            font-family: sul-gbk6;
+            font-size: 52px;
+            color: #1a1a1a;
+            line-height: 1.15;
+        }
+    }
+
+    .n7FAQ_a_wrap{
+        width: 100%;
+        overflow: hidden;
+        display: flex;
+        justify-content: flex-end;
+    }
+
+    /* 折叠对话 — 问题描边风格 */
+    .n7q_outline{
+        background-color: transparent !important;
+        color: #1a1a1a !important;
+        border: 1px solid #1a1a1a !important;
+        cursor: pointer;
+        transition: all 0.25s ease;
+
+        &:hover{
+            background-color: rgba(0,0,0,0.04) !important;
         }
     }
 }

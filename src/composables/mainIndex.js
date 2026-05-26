@@ -1095,10 +1095,12 @@ export const useNum6zAnimation = () => {
  *   3. n7_icon 两个 div 从右侧 200px 归位 + 淡入
  * 各阶段在时间轴上顺次排布，滚动驱动进度。
  */
-export const useNum7zAnimation = () => {
+export const useNum7zAnimation = (expandedFAQs) => {
   let tl = null
   let tlPills = null
   let stQA = null
+  let qaTls = []
+  let faqTls = []
 
   const initNum7zAnimation = () => {
     const h1Spans = document.querySelectorAll('#num7z .n7_showCopy h1 span')
@@ -1156,6 +1158,100 @@ export const useNum7zAnimation = () => {
       })
     }
 
+    // === QAcont 问答卡片入场动画（逐元素独立触发） ===
+    const qaConts = gsap.utils.toArray('#num7z .QAcont')
+    qaConts.forEach((cont) => {
+      const n7q = cont.querySelector('.n7q')
+      const n7qText = cont.querySelector('.n7q_text')
+      const n7aRow = cont.querySelector('.n7a_row')
+      const n7a = cont.querySelector('.n7a')
+      const n7aAvatar = cont.querySelector('.n7a_row .n7a_avatar')
+      const n7a2Row = cont.querySelectorAll('.n7a_row')[1]
+      const n7a2 = cont.querySelector('.n7a2')
+      const n7a2Avatar = n7a2Row ? n7a2Row.querySelector('.n7a_avatar') : null
+      if (!n7q || !n7a) return
+
+      // 捕获 n7q 自然宽度
+      const qNatW = n7q.offsetWidth
+
+      // 初始状态
+      gsap.set(n7q, { width: 100, overflow: 'hidden', whiteSpace: 'nowrap' })
+      gsap.set(n7qText, { x: -40, opacity: 0 })
+      gsap.set(n7a, { scale: 0.35, y: 15, opacity: 0.5, transformOrigin: '100% 100%' })
+      gsap.set(n7aAvatar, { scale: 0, opacity: 0, transformOrigin: '50% 50%' })
+      if (n7a2) {
+        gsap.set(n7a2, { scale: 0.35, y: 15, opacity: 0.5, transformOrigin: '100% 100%' })
+        if (n7a2Avatar) gsap.set(n7a2Avatar, { scale: 0, opacity: 0, transformOrigin: '50% 50%' })
+      }
+
+      // n7q — 独立触发：药丸展开 + 文字滑入
+      const tlQ = gsap.timeline({
+        scrollTrigger: {
+          trigger: n7q,
+          start: 'top bottom',
+          toggleActions: 'play none none reverse',
+        },
+      })
+      tlQ.to(n7q, { width: qNatW, duration: 0.5, ease: 'power3.out' }, 0)
+      tlQ.to(n7qText, { x: 0, opacity: 1, duration: 0.4, ease: 'power2.out' }, '>-0.35')
+      qaTls.push(tlQ)
+
+      // n7a — 独立触发：气泡展开 + 头像弹出
+      const tlA = gsap.timeline({
+        scrollTrigger: {
+          trigger: n7aRow,
+          start: 'top bottom',
+          toggleActions: 'play none none reverse',
+        },
+      })
+      tlA.to(n7a, { scale: 1, y: 0, opacity: 1, duration: 0.45, ease: 'power3.out' }, 0)
+      tlA.to(n7aAvatar, { scale: 1, opacity: 1, duration: 0.35, ease: 'back.out(1.7)' }, '-=0.25')
+      qaTls.push(tlA)
+
+      // n7a2 — 独立触发
+      if (n7a2) {
+        const tlA2 = gsap.timeline({
+          scrollTrigger: {
+            trigger: n7a2Row,
+            start: 'top bottom',
+            toggleActions: 'play none none reverse',
+          },
+        })
+        tlA2.to(n7a2, { scale: 1, y: 0, opacity: 1, duration: 0.45, ease: 'power3.out' }, 0)
+        if (n7a2Avatar) {
+          tlA2.to(n7a2Avatar, { scale: 1, opacity: 1, duration: 0.35, ease: 'back.out(1.7)' }, '-=0.25')
+        }
+        qaTls.push(tlA2)
+      }
+    })
+
+    // === FAQ n7q 入场动画（全部折叠时，每个问题进入视口播放药丸展开 + 文字滑入） ===
+    const faqPills = gsap.utils.toArray('#num7z .n7QA_also .n7q')
+    faqPills.forEach((pill) => {
+      const text = pill.querySelector('.n7q_text')
+      if (!text) return
+      const natW = pill.offsetWidth
+      gsap.set(pill, { width: 100, overflow: 'hidden', whiteSpace: 'nowrap' })
+      gsap.set(text, { x: -40, opacity: 0 })
+
+      const tlFaq = gsap.timeline({
+        paused: true,
+        scrollTrigger: {
+          trigger: pill,
+          start: 'top bottom',
+          onEnter: () => {
+            if (expandedFAQs && expandedFAQs.value && expandedFAQs.value.size === 0) tlFaq.play()
+          },
+          onLeaveBack: () => {
+            if (expandedFAQs && expandedFAQs.value && expandedFAQs.value.size === 0) tlFaq.reverse()
+          },
+        },
+      })
+      tlFaq.to(pill, { width: natW, duration: 0.5, ease: 'power3.out' }, 0)
+      tlFaq.to(text, { x: 0, opacity: 1, duration: 0.4, ease: 'power2.out' }, '>-0.35')
+      faqTls.push(tlFaq)
+    })
+
     // === 文字药丸气泡独立滚动时间轴 ===
     const n7Pills = gsap.utils.toArray('#num7z .n7_pill')
     const n7Words = gsap.utils.toArray('#num7z .n7_word')
@@ -1190,6 +1286,10 @@ export const useNum7zAnimation = () => {
     if (tl) { tl.kill(); tl = null }
     if (tlPills) { tlPills.kill(); tlPills = null }
     if (stQA) { stQA.kill(); stQA = null }
+    qaTls.forEach(tl => tl.kill())
+    qaTls = []
+    faqTls.forEach(tl => tl.kill())
+    faqTls = []
   }
 
   return { initNum7zAnimation, cleanupNum7zAnimation }

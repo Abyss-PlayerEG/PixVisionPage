@@ -1,6 +1,7 @@
 <script setup>
-import { onMounted, onUnmounted, watch, ref } from 'vue'
+import { onMounted, onUnmounted, watch, ref, nextTick } from 'vue'
 import { useRouter } from 'vue-router'
+import gsap from 'gsap'
 
 import NavBar from '@/components/NavBar.vue'
 import Waterfall from '@/components/Waterfall.vue'
@@ -39,7 +40,8 @@ const { initNum5zAnimation, cleanupNum5zAnimation } = useNum5zAnimation()
 const { initN5ShowzoneAnimation, cleanupN5ShowzoneAnimation } = useN5ShowzoneAnimation()
 const { initN5ProgAnimation, cleanupN5ProgAnimation } = useN5ProgAnimation()
 const { initNum6zAnimation, cleanupNum6zAnimation } = useNum6zAnimation()
-const { initNum7zAnimation, cleanupNum7zAnimation } = useNum7zAnimation()
+const expandedFAQs = ref(new Set())
+const { initNum7zAnimation, cleanupNum7zAnimation } = useNum7zAnimation(expandedFAQs)
 const { initSwiper, cleanupSwiper } = useSwiper(swiperContainer)
 const { waterfallImages, isLoading, error, loadWorks } = useWorkWaterfall()
 
@@ -158,6 +160,70 @@ const mockNum7zQA = [
     answer2: '像素视觉是由第三维度面向热爱拍摄、乐于分享的群体而打造的一个图像分享的公开平台热爱拍摄、乐于分享的群体而打造的一个图像分享的公开平台。',
   },
 ]
+
+const mockNum7zFAQ = [
+  {
+    id: 1,
+    question: '如何上传我的摄影作品?',
+    answer: '注册并登录您的像素视觉账号后，点击个人中心的上传按钮，选择您要分享的图片并添加描述标签，即可完成作品上传与发布。',
+  },
+  {
+    id: 2,
+    question: '支持哪些图片格式?',
+    answer: '目前平台支持 JPG、JPEG、PNG、WEBP、HEIC 等主流图片格式，单张图片大小限制为 50MB，推荐使用 16:9 或 4:3 比例以获得最佳展示效果。',
+  },
+  {
+    id: 3,
+    question: '如何删除已发布的作品?',
+    answer: '在作品详情页或个人作品管理列表中，点击作品右上角的菜单按钮，选择删除选项即可移除已发布的作品，删除后不可恢复。',
+  },
+]
+
+// FAQ 折叠状态（声明已移至上方 useNum7zAnimation 之前）
+const toggleFAQ = (id) => {
+  if (expandedFAQs.value.has(id)) {
+    // 收起：锁定当前高度 → 动画归零 → 移除 DOM
+    const wrap = document.querySelector(`[data-faq-a="${id}"]`)
+    if (!wrap) { expandedFAQs.value.delete(id); return }
+
+    const row = wrap.querySelector('.n7a_row')
+    const avatar = row?.querySelector('.n7a_avatar')
+    const curH = wrap.offsetHeight
+
+    gsap.set(wrap, { height: curH, overflow: 'hidden' })
+
+    const tl = gsap.timeline({
+      onComplete: () => expandedFAQs.value.delete(id),
+    })
+    if (avatar) tl.to(avatar, { scale: 0, opacity: 0, duration: 0.15, ease: 'power2.in' }, 0)
+    tl.to(row, { scale: 0.35, y: 15, opacity: 0, duration: 0.25, ease: 'power2.in' }, 0)
+    tl.to(wrap, { height: 0, duration: 0.3, ease: 'power2.in' }, '-=0.1')
+  } else {
+    // 展开：渲染 DOM → 测量自然高度 → 从 0 动画到目标高度
+    expandedFAQs.value.add(id)
+    nextTick(() => {
+      const wrap = document.querySelector(`[data-faq-a="${id}"]`)
+      if (!wrap) return
+      const row = wrap.querySelector('.n7a_row')
+      const avatar = row?.querySelector('.n7a_avatar')
+
+      // 测量自然高度
+      gsap.set(wrap, { height: 'auto', overflow: 'hidden' })
+      const targetH = wrap.offsetHeight
+      gsap.set(wrap, { height: 0 })
+      gsap.set(row, { scale: 0.35, y: 15, opacity: 0.5, transformOrigin: '100% 100%' })
+      if (avatar) gsap.set(avatar, { scale: 0, opacity: 0 })
+
+      const tl = gsap.timeline()
+      tl.to(wrap, { height: targetH, duration: 0.2, ease: 'power2.out' })
+      tl.to(row, { scale: 1, y: 0, opacity: 1, duration: 0.4, ease: 'power3.out' }, '0')
+      if (avatar) {
+        tl.to(avatar, { scale: 1, opacity: 1, duration: 0.35, ease: 'back.out(1.7)' }, '-=0.25')
+      }
+      tl.set(wrap, { height: 'auto', overflow: 'visible' })
+    })
+  }
+}
 </script>
 
 <template>
@@ -474,19 +540,53 @@ const mockNum7zQA = [
     </div>
 
     <div class="n7QA">
+      <!-- QA宣告 -->
       <div class="QAshowCopy">
         <h1>You ask, we answer.</h1>
         <h2>由你提问,我们知无不尽</h2>
       </div>
 
+      <!-- QA正常对话区域 -->
       <div class="QAcont" v-for="qa in mockNum7zQA" :key="qa.id">
-        <div class="n7q">{{ qa.question }}</div>
-        <div class="n7a">{{ qa.answer }}</div>
-        <div class="n7a2" v-if="qa.answer2">{{ qa.answer2 }}</div>
+        <div class="n7q"><span class="n7q_text">{{ qa.question }}</span></div>
+        <div class="n7a_row">
+          <div class="n7a">{{ qa.answer }}</div>
+          <div class="n7a_avatar">
+            <svg t="1779783912162" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" p-id="1130" width="32" height="32"><path d="M788.68 797.63c-26.58 0-53.16-10.12-73.4-30.35l-16.21-16.21c-26.05-26.05-68.43-26.05-94.47 0l-16.21 16.21c-40.47 40.47-106.33 40.47-146.8 0l-16.21-16.21c-26.05-26.05-68.43-26.05-94.47 0l-16.21 16.21c-40.47 40.47-106.33 40.47-146.8 0-7.22-7.22-7.22-18.94 0-26.16s18.94-7.22 26.16 0c12.62 12.62 29.39 19.57 47.24 19.57s34.62-6.95 47.24-19.57l16.21-16.21c40.47-40.47 106.33-40.47 146.8 0l16.21 16.21c26.05 26.05 68.43 26.05 94.47 0l16.21-16.21c40.47-40.47 106.32-40.47 146.8 0l16.21 16.21c12.62 12.62 29.39 19.57 47.24 19.57s34.62-6.95 47.24-19.57c7.22-7.22 18.94-7.22 26.16 0s7.22 18.94 0 26.16c-20.24 20.24-46.82 30.35-73.4 30.35z" p-id="1131" fill="#FDF9F0"></path><path d="M303.19 691.76c-3.14 0-6.32-0.8-9.23-2.48-8.85-5.11-11.88-16.42-6.78-25.27l150.84-261.4c14-24.25 34.51-43.8 59.31-56.54 24.13-12.4 51.15-17.82 78.14-15.66 3.44 0.27 6.59-1.33 8.24-4.19l33.96-58.81c-13.06-10.06-16.99-28.53-8.53-43.18l16.76-29.02c4.57-7.92 11.95-13.58 20.78-15.95 8.83-2.37 18.06-1.15 25.97 3.42l90.17 52.06c7.92 4.57 13.58 11.95 15.95 20.78s1.15 18.06-3.42 25.97l-16.75 29.02c-8.46 14.66-26.43 20.48-41.66 14.2l-33.96 58.81c-1.65 2.85-1.46 6.39 0.5 9.23a145.478 145.478 0 0 1 25.5 75.5c1.37 27.85-5.31 55.38-19.31 79.63L622.55 664.7c-5.09 8.86-16.4 11.92-25.26 6.82-8.86-5.09-11.91-16.4-6.82-25.26l67.14-116.85c10.45-18.11 15.43-38.62 14.42-59.35a108.62 108.62 0 0 0-19.02-56.33c-9.98-14.49-10.79-33.61-2.07-48.71L694 290.44a18.48 18.48 0 0 1 11.23-8.62c4.74-1.27 9.79-0.6 14.04 1.85l9.08 5.24 13.58-23.53-85.37-49.29-13.58 23.53 9.07 5.24a18.48 18.48 0 0 1 8.62 11.23c1.27 4.74 0.61 9.79-1.85 14.04l-43.06 74.58c-8.72 15.11-25.69 23.97-43.22 22.57-20.13-1.6-40.28 2.44-58.29 11.69-18.46 9.49-33.74 24.05-44.17 42.12L319.24 682.48c-3.43 5.94-9.65 9.26-16.04 9.26z" p-id="1132" fill="#FDF9F0"></path></svg>
+          </div>
+        </div>
+        <div class="n7a_row" v-if="qa.answer2">
+          <div class="n7a2">{{ qa.answer2 }}</div>
+          <div class="n7a_avatar">
+            <svg t="1779783912162" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" p-id="1130" width="32" height="32"><path d="M788.68 797.63c-26.58 0-53.16-10.12-73.4-30.35l-16.21-16.21c-26.05-26.05-68.43-26.05-94.47 0l-16.21 16.21c-40.47 40.47-106.33 40.47-146.8 0l-16.21-16.21c-26.05-26.05-68.43-26.05-94.47 0l-16.21 16.21c-40.47 40.47-106.33 40.47-146.8 0-7.22-7.22-7.22-18.94 0-26.16s18.94-7.22 26.16 0c12.62 12.62 29.39 19.57 47.24 19.57s34.62-6.95 47.24-19.57l16.21-16.21c40.47-40.47 106.33-40.47 146.8 0l16.21 16.21c26.05 26.05 68.43 26.05 94.47 0l16.21-16.21c40.47-40.47 106.32-40.47 146.8 0l16.21 16.21c12.62 12.62 29.39 19.57 47.24 19.57s34.62-6.95 47.24-19.57c7.22-7.22 18.94-7.22 26.16 0s7.22 18.94 0 26.16c-20.24 20.24-46.82 30.35-73.4 30.35z" p-id="1131" fill="#FDF9F0"></path><path d="M303.19 691.76c-3.14 0-6.32-0.8-9.23-2.48-8.85-5.11-11.88-16.42-6.78-25.27l150.84-261.4c14-24.25 34.51-43.8 59.31-56.54 24.13-12.4 51.15-17.82 78.14-15.66 3.44 0.27 6.59-1.33 8.24-4.19l33.96-58.81c-13.06-10.06-16.99-28.53-8.53-43.18l16.76-29.02c4.57-7.92 11.95-13.58 20.78-15.95 8.83-2.37 18.06-1.15 25.97 3.42l90.17 52.06c7.92 4.57 13.58 11.95 15.95 20.78s1.15 18.06-3.42 25.97l-16.75 29.02c-8.46 14.66-26.43 20.48-41.66 14.2l-33.96 58.81c-1.65 2.85-1.46 6.39 0.5 9.23a145.478 145.478 0 0 1 25.5 75.5c1.37 27.85-5.31 55.38-19.31 79.63L622.55 664.7c-5.09 8.86-16.4 11.92-25.26 6.82-8.86-5.09-11.91-16.4-6.82-25.26l67.14-116.85c10.45-18.11 15.43-38.62 14.42-59.35a108.62 108.62 0 0 0-19.02-56.33c-9.98-14.49-10.79-33.61-2.07-48.71L694 290.44a18.48 18.48 0 0 1 11.23-8.62c4.74-1.27 9.79-0.6 14.04 1.85l9.08 5.24 13.58-23.53-85.37-49.29-13.58 23.53 9.07 5.24a18.48 18.48 0 0 1 8.62 11.23c1.27 4.74 0.61 9.79-1.85 14.04l-43.06 74.58c-8.72 15.11-25.69 23.97-43.22 22.57-20.13-1.6-40.28 2.44-58.29 11.69-18.46 9.49-33.74 24.05-44.17 42.12L319.24 682.48c-3.43 5.94-9.65 9.26-16.04 9.26z" p-id="1132" fill="#FDF9F0"></path></svg>
+          </div>
+        </div>
       </div>
 
+      <!-- AlsoAsked折叠对话区域 -->
+      <div class="n7QA_also">
+        <div class="n7Also_header">
+          <span class="n7Also_en">Also asked</span>
+        </div>
+        <div class="QAcont" v-for="faq in mockNum7zFAQ" :key="'faq'+faq.id">
+          <div class="n7q" :class="{ n7q_outline: !expandedFAQs.has(faq.id) }" @click="toggleFAQ(faq.id)">
+            <span class="n7q_text">{{ faq.question }}</span>
+          </div>
+          <template v-if="expandedFAQs.has(faq.id)">
+            <div class="n7FAQ_a_wrap" :data-faq-a="faq.id">
+              <div class="n7a_row">
+                <div class="n7a">{{ faq.answer }}</div>
+                <div class="n7a_avatar">
+                  <svg t="1779783912162" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" p-id="1130" width="32" height="32"><path d="M788.68 797.63c-26.58 0-53.16-10.12-73.4-30.35l-16.21-16.21c-26.05-26.05-68.43-26.05-94.47 0l-16.21 16.21c-40.47 40.47-106.33 40.47-146.8 0l-16.21-16.21c-26.05-26.05-68.43-26.05-94.47 0l-16.21 16.21c-40.47 40.47-106.33 40.47-146.8 0-7.22-7.22-7.22-18.94 0-26.16s18.94-7.22 26.16 0c12.62 12.62 29.39 19.57 47.24 19.57s34.62-6.95 47.24-19.57l16.21-16.21c40.47-40.47 106.33-40.47 146.8 0l16.21 16.21c26.05 26.05 68.43 26.05 94.47 0l16.21-16.21c40.47-40.47 106.32-40.47 146.8 0l16.21 16.21c12.62 12.62 29.39 19.57 47.24 19.57s34.62-6.95 47.24-19.57c7.22-7.22 18.94-7.22 26.16 0s7.22 18.94 0 26.16c-20.24 20.24-46.82 30.35-73.4 30.35z" p-id="1131" fill="#FDF9F0"></path><path d="M303.19 691.76c-3.14 0-6.32-0.8-9.23-2.48-8.85-5.11-11.88-16.42-6.78-25.27l150.84-261.4c14-24.25 34.51-43.8 59.31-56.54 24.13-12.4 51.15-17.82 78.14-15.66 3.44 0.27 6.59-1.33 8.24-4.19l33.96-58.81c-13.06-10.06-16.99-28.53-8.53-43.18l16.76-29.02c4.57-7.92 11.95-13.58 20.78-15.95 8.83-2.37 18.06-1.15 25.97 3.42l90.17 52.06c7.92 4.57 13.58 11.95 15.95 20.78s1.15 18.06-3.42 25.97l-16.75 29.02c-8.46 14.66-26.43 20.48-41.66 14.2l-33.96 58.81c-1.65 2.85-1.46 6.39 0.5 9.23a145.478 145.478 0 0 1 25.5 75.5c1.37 27.85-5.31 55.38-19.31 79.63L622.55 664.7c-5.09 8.86-16.4 11.92-25.26 6.82-8.86-5.09-11.91-16.4-6.82-25.26l67.14-116.85c10.45-18.11 15.43-38.62 14.42-59.35a108.62 108.62 0 0 0-19.02-56.33c-9.98-14.49-10.79-33.61-2.07-48.71L694 290.44a18.48 18.48 0 0 1 11.23-8.62c4.74-1.27 9.79-0.6 14.04 1.85l9.08 5.24 13.58-23.53-85.37-49.29-13.58 23.53 9.07 5.24a18.48 18.48 0 0 1 8.62 11.23c1.27 4.74 0.61 9.79-1.85 14.04l-43.06 74.58c-8.72 15.11-25.69 23.97-43.22 22.57-20.13-1.6-40.28 2.44-58.29 11.69-18.46 9.49-33.74 24.05-44.17 42.12L319.24 682.48c-3.43 5.94-9.65 9.26-16.04 9.26z" p-id="1132" fill="#FDF9F0"></path></svg>
+                </div>
+              </div>
+            </div>
+          </template>
+        </div>
+      </div>
     </div>
   </section>
+  
 </template>
 
 <style>
