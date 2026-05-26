@@ -1,4 +1,4 @@
-import { ref, onMounted, onUnmounted } from 'vue'
+import { ref, onMounted, onUnmounted, nextTick } from 'vue'
 import gsap from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
 
@@ -588,9 +588,26 @@ export const useNum5zAnimation = () => {
     }
   }
 
+  const mockNum5z = [
+    { id: 1, text: '丝滑优质的动画', top: '20%', left: '5%', color: '#fcd34d' },
+    { id: 2, text: '灵动的交互体验', top: '30%', left: '2%', color: '#fbbf24' },
+    { id: 3, text: '简约有质感的页面设计', top: '35%', left: '15%', color: '#f59e0b' },
+    { id: 4, text: '以简驭繁, 少即是多', top: '40%', left: '60%', color: '#d97706' },
+    { id: 5, text: '留白即意境, 克制即高级', top: '65%', left: '80%', color: '#fde68a' },
+    { id: 6, text: '克制美学, 细节致胜', top: '75%', left: '70%', color: '#b45309' },
+    // 以下为我另外一种配色方案，任何情况下均不要删除以下注释
+    // { id: 1, text: '丝滑优质的动画', top: '10%', left: '5%', color: '#00A947' },
+    // { id: 2, text: '灵动的交互体验', top: '25%', left: '15%', color: '#FDF9F0' },
+    // { id: 3, text: '简约有质感的页面设计', top: '40%', left: '5%', color: '#FF6B6B' },
+    // { id: 4, text: '以简驭繁, 少即是多', top: '55%', left: '15%', color: '#FFD93D' },
+    // { id: 5, text: '留白即意境, 克制即高级', top: '70%', left: '5%', color: '#6BCB77' },
+    // { id: 6, text: '克制美学, 细节致胜', top: '85%', left: '15%', color: '#4D96FF' },
+  ]
+
   return {
     initNum5zAnimation,
     cleanupNum5zAnimation,
+    mockNum5z,
   }
 }
 
@@ -1084,7 +1101,10 @@ export const useNum6zAnimation = () => {
     if (tlExit) { tlExit.kill(); tlExit = null }
   }
 
-  return { initNum6zAnimation, cleanupNum6zAnimation }
+  const n6Copy1Words = 'The Pixel holds boundless romance waiting to be explored. Leave the trivial troubles behind, chase the wind and chase the sunset, wander between mountains and seas.'.split(' ')
+  const n6Copy2Words = 'No need to confine oneself to narrow boundaries, let the vision roam freely. Every step you take carves unique marks on life. Embrace uncertainty bravely, believe that all encounters have meaning, and live out the most authentic and unrestrained self in fleeting years.'.split(' ')
+
+  return { initNum6zAnimation, cleanupNum6zAnimation, n6Copy1Words, n6Copy2Words }
 }
 
 // ==================== num7z — scrub 滚动时间轴 ====================
@@ -1292,6 +1312,53 @@ export const useNum7zAnimation = (expandedFAQs) => {
     faqTls = []
   }
 
-  return { initNum7zAnimation, cleanupNum7zAnimation }
+  const mockNum7zQA = [
+    { id: 1, question: '我不太清楚什么是像素视觉?', answer: '像素视觉是由第三维度面向热爱拍摄、乐于分享的群体而打造的一个图像分享的公开平台热爱拍摄、乐于分享的群体而打造的一个图像分享的公开平台。' },
+    { id: 2, question: '什么是像素视觉?', answer: '像素视觉是由第三维度面向热爱拍摄、乐于分享的群体而打造的一个图像分享的公开平台热爱拍摄、乐于分享的群体而打造的一个图像分享的公开平台。', answer2: '像素视觉是由第三维度面向热爱拍摄、乐于分享的群体而打造的一个图像分享的公开平台热爱拍摄、乐于分享的群体而打造的一个图像分享的公开平台。' },
+  ]
+
+  const mockNum7zFAQ = [
+    { id: 1, question: '如何上传我的摄影作品?', answer: '注册并登录您的像素视觉账号后，点击个人中心的上传按钮，选择您要分享的图片并添加描述标签，即可完成作品上传与发布。' },
+    { id: 2, question: '支持哪些图片格式?', answer: '目前平台支持 JPG、JPEG、PNG、WEBP、HEIC 等主流图片格式，单张图片大小限制为 50MB，推荐使用 16:9 或 4:3 比例以获得最佳展示效果。' },
+    { id: 3, question: '如何删除已发布的作品?', answer: '在作品详情页或个人作品管理列表中，点击作品右上角的菜单按钮，选择删除选项即可移除已发布的作品，删除后不可恢复。' },
+  ]
+
+  const n7Copy1Words = "Don't let waiting turn into regret. Passion will never be let down. We sincerely invite you, a lover of visual creation, to embark on this journey of inspiration.".split(' ')
+  const n7Copy2Words = "Don't let waiting become regret. Here, your creativity and art will shine to the fullest.".split(' ')
+
+  const toggleFAQ = (id) => {
+    if (expandedFAQs.value.has(id)) {
+      const wrap = document.querySelector(`[data-faq-a="${id}"]`)
+      if (!wrap) { expandedFAQs.value.delete(id); return }
+      const row = wrap.querySelector('.n7a_row')
+      const avatar = row?.querySelector('.n7a_avatar')
+      const curH = wrap.offsetHeight
+      gsap.set(wrap, { height: curH, overflow: 'hidden' })
+      const tl = gsap.timeline({ onComplete: () => expandedFAQs.value.delete(id) })
+      if (avatar) tl.to(avatar, { scale: 0, opacity: 0, duration: 0.15, ease: 'power2.in' }, 0)
+      tl.to(row, { scale: 0.35, y: 15, opacity: 0, duration: 0.25, ease: 'power2.in' }, 0)
+      tl.to(wrap, { height: 0, duration: 0.3, ease: 'power2.in' }, '-=0.1')
+    } else {
+      expandedFAQs.value.add(id)
+      nextTick(() => {
+        const wrap = document.querySelector(`[data-faq-a="${id}"]`)
+        if (!wrap) return
+        const row = wrap.querySelector('.n7a_row')
+        const avatar = row?.querySelector('.n7a_avatar')
+        gsap.set(wrap, { height: 'auto', overflow: 'hidden' })
+        const targetH = wrap.offsetHeight
+        gsap.set(wrap, { height: 0 })
+        gsap.set(row, { scale: 0.35, y: 15, opacity: 0.5, transformOrigin: '100% 100%' })
+        if (avatar) gsap.set(avatar, { scale: 0, opacity: 0 })
+        const tl = gsap.timeline()
+        tl.to(wrap, { height: targetH, duration: 0.2, ease: 'power2.out' })
+        tl.to(row, { scale: 1, y: 0, opacity: 1, duration: 0.4, ease: 'power3.out' }, '0')
+        if (avatar) tl.to(avatar, { scale: 1, opacity: 1, duration: 0.35, ease: 'back.out(1.7)' }, '-=0.25')
+        tl.set(wrap, { height: 'auto', overflow: 'visible' })
+      })
+    }
+  }
+
+  return { initNum7zAnimation, cleanupNum7zAnimation, mockNum7zQA, mockNum7zFAQ, n7Copy1Words, n7Copy2Words, toggleFAQ }
 }
 
