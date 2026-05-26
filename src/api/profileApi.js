@@ -5,7 +5,7 @@
  * @module profileApi
  */
 
-import { USER_API, AUTH_API } from '../config/api';
+import { USER_API, AUTH_API, AVATAR_UPLOAD_API } from '../config/api';
 
 /**
  * ============================================
@@ -125,6 +125,57 @@ export const getUserInfoByUsernameOrUuid = async (params = {}) => {
     }
   } catch (error) {
     console.error('网络请求失败:', error);
+    return { success: false, message: '网络错误，请稍后重试' };
+  }
+};
+
+/**
+ * ============================================
+ * 工具函数
+ * ============================================
+ */
+
+/**
+ * 上传头像
+ * @param {Blob} blob - 裁剪后的图片 Blob（PNG 格式）
+ * @returns {Promise<Object>} 上传结果 { success, data: { avatar_url }, message }
+ */
+export const uploadAvatar = async (blob) => {
+  try {
+    const token = localStorage.getItem('token');
+
+    if (!token) {
+      console.error('❌ 未找到 Token，用户未登录');
+      return { success: false, message: '用户未登录' };
+    }
+
+    console.log('📤 上传头像，大小:', (blob.size / 1024).toFixed(1), 'KB');
+
+    const formData = new FormData();
+    formData.append('file', blob, 'avatar.png');
+
+    const response = await fetch(AVATAR_UPLOAD_API, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+      },
+      body: formData,
+    });
+
+    const result = await response.json();
+    console.log('头像上传接口响应:', JSON.stringify(result, null, 2));
+
+    const statusCode = result.code || result.recode;
+
+    if (statusCode === 200) {
+      console.log('✅ 头像上传成功');
+      return { success: true, data: result.data, message: result.message || '头像更新成功' };
+    } else {
+      console.error('❌ 头像上传失败:', result.message);
+      return { success: false, message: result.message || '头像上传失败' };
+    }
+  } catch (error) {
+    console.error('头像上传网络请求失败:', error);
     return { success: false, message: '网络错误，请稍后重试' };
   }
 };

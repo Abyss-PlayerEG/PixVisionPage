@@ -8,7 +8,10 @@ export const API_BASE_URL = 'http://124.221.107.68:1899/';
 // export const API_BASE_URL = 'http://127.0.0.1:9090/';
 
 // 头像获取接口
-export const AVATAR_API = `${API_BASE_URL}/api/image/avatar/get`;
+export const AVATAR_API = `${API_BASE_URL}api/image/avatar/get`;
+
+// 头像上传接口
+export const AVATAR_UPLOAD_API = `${API_BASE_URL}api/image/avatar/upload`;
 
 // 用户认证相关接口
 export const AUTH_API = {

@@ -6,7 +6,8 @@
 import { ref, reactive } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { showSuccess, showError, showWarning } from '@/utils/notification.js'
-import { getUserProfile, getUserInfoByUsernameOrUuid, logoutApi } from '@/api/profileApi.js'
+import { showAvatarCropper } from '@/utils/avatarCropper.js'
+import { getUserProfile, getUserInfoByUsernameOrUuid, logoutApi, uploadAvatar } from '@/api/profileApi.js'
 import { getUserDataList } from '@/api/userDataApi.js'
 import { getAvatarUrl } from '@/config/api.js'
 
@@ -284,6 +285,40 @@ export const useProfile = () => {
     showLogoutDialog.value = false
   }
 
+  // ── 头像上传 ──
+  const isUploadingAvatar = ref(false)
+
+  /**
+   * 更换头像：打开裁剪弹窗 → 裁剪确认 → 上传后端
+   */
+  const handleChangeAvatar = async () => {
+    if (isUploadingAvatar.value) return
+
+    // 1. 打开裁剪弹窗
+    const result = await showAvatarCropper({
+      outputSize: 1000,
+      previewSize: 450,
+    })
+
+    if (result.canceled || !result.blob) return
+
+    // 2. 上传
+    isUploadingAvatar.value = true
+    const uploadResult = await uploadAvatar(result.blob)
+    isUploadingAvatar.value = false
+
+    if (uploadResult.success) {
+      // 3. 本地更新头像（加时间戳防浏览器缓存）
+      const newAvatarUrl = uploadResult.data?.avatar_url
+      if (newAvatarUrl) {
+        userInfo.value.avatar = getAvatarUrl(newAvatarUrl) + '?t=' + Date.now()
+      }
+      showSuccess(uploadResult.message || '头像更新成功')
+    } else {
+      showError(uploadResult.message || '头像上传失败')
+    }
+  }
+
   return {
     // 状态
     userInfo,
@@ -300,6 +335,8 @@ export const useProfile = () => {
     handleLogout,
     showLogoutDialog,
     confirmLogout,
-    cancelLogout
+    cancelLogout,
+    isUploadingAvatar,
+    handleChangeAvatar
   }
 }
