@@ -16,6 +16,7 @@ import {
   useN5ShowzoneAnimation,
   useN5ProgAnimation,
   useNum6zAnimation,
+  useNum7zAnimation,
   useSwiper,
 } from '@/composables/mainIndex.js'
 import { useWorkWaterfall } from '@/composables/useWorkWaterfall.js'
@@ -38,6 +39,7 @@ const { initNum5zAnimation, cleanupNum5zAnimation } = useNum5zAnimation()
 const { initN5ShowzoneAnimation, cleanupN5ShowzoneAnimation } = useN5ShowzoneAnimation()
 const { initN5ProgAnimation, cleanupN5ProgAnimation } = useN5ProgAnimation()
 const { initNum6zAnimation, cleanupNum6zAnimation } = useNum6zAnimation()
+const { initNum7zAnimation, cleanupNum7zAnimation } = useNum7zAnimation()
 const { initSwiper, cleanupSwiper } = useSwiper(swiperContainer)
 const { waterfallImages, isLoading, error, loadWorks } = useWorkWaterfall()
 
@@ -101,6 +103,9 @@ onMounted(() => {
   setTimeout(() => {
     initNum6zAnimation()
   }, 800)
+  setTimeout(() => {
+    initNum7zAnimation()
+  }, 900)
 })
 
 onUnmounted(() => {
@@ -114,6 +119,7 @@ onUnmounted(() => {
   cleanupN5ShowzoneAnimation()
   cleanupN5ProgAnimation()
   cleanupNum6zAnimation()
+  cleanupNum7zAnimation()
   cleanupSwiper()
 })
 

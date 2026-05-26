@@ -915,19 +915,29 @@
     overflow: hiddens;
 
     h1{
+        position: relative;
         font-size: 70px;
+        min-height: 1.2em;
+    }
+
+    h1 span {
+        position: absolute;
+        top: 0;
+        opacity: 0;
+        white-space: nowrap;
     }
 
     h2{
         font-size: 120px;
         -webkit-text-stroke: 2px #000;
+        opacity: 0;
     }
 
     .n7_icon{
         display: flex;
         margin-top: 20px;
-        
-        div{
+
+        > div{
             display: flex;
             align-items: center;
             width: 220px;
@@ -937,10 +947,11 @@
             font-size: 40px;
             padding-left: 20px;
             border:1px solid #000;
-    
+            opacity: 0;
+
             svg{
                 margin-right: 10px;
-            } 
+            }
 
             &:nth-child(2){
                 margin-left: 10px;

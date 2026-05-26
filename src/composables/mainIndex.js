@@ -1138,3 +1138,65 @@ export const useNum6zAnimation = () => {
   return { initNum6zAnimation, cleanupNum6zAnimation }
 }
 
+// ==================== num7z — scrub 滚动时间轴 ====================
+/**
+ * num7z 全段 scrub 动画，顺序呈现：
+ *   1. h1 两个 span 从 20%/90% 外扩至 0%/97% 位置 + 淡入
+ *   2. h2 淡入
+ *   3. n7_icon 两个 div 从右侧 200px 归位 + 淡入
+ * 各阶段在时间轴上顺次排布，滚动驱动进度。
+ */
+export const useNum7zAnimation = () => {
+  let tl = null
+
+  const initNum7zAnimation = () => {
+    const h1Spans = document.querySelectorAll('#num7z .n7_showCopy h1 span')
+    const h2 = document.querySelector('#num7z .n7_showCopy h2')
+    const iconDivs = document.querySelectorAll('#num7z .n7_showCopy .n7_icon > div')
+
+    if (!h1Spans.length || !h2 || !iconDivs.length) return
+
+    // 显式设置初始状态（避免 CSS transform 解析偏差）
+    gsap.set(h1Spans[0], { left: '20%', xPercent: 0, opacity: 0 })
+    gsap.set(h1Spans[1], { left: '90%', xPercent: -100, opacity: 0 })
+    gsap.set(iconDivs, { x: 200, opacity: 0 })
+
+    tl = gsap.timeline({
+      scrollTrigger: {
+        trigger: '#num7z',
+        start: 'top 50%',
+        end: 'top 5%',
+        scrub: 0.6,
+      },
+    })
+
+    // Phase 1 — h1 分裂 (t=0 ~ 0.3)
+    tl.to(h1Spans[0],
+      { left: '0%', xPercent: 0, opacity: 1, duration: 0.3, ease: 'power2.out' },
+      0,
+    )
+    tl.to(h1Spans[1],
+      { left: '97%', xPercent: -100, opacity: 1, duration: 0.3, ease: 'power2.out' },
+      0,
+    )
+
+    // Phase 2 — h2 淡入 (t=0.35 ~ 0.6)
+    tl.to(h2,
+      { opacity: 1, duration: 0.25, ease: 'power2.out' },
+      '>+=0.05',
+    )
+
+    // Phase 3 — n7_icon divs 归位 (t=0.65 ~ 1.0)
+    tl.to(iconDivs,
+      { x: 0, opacity: 1, duration: 0.3, stagger: 0.1, ease: 'power2.out' },
+      '>+=0.05',
+    )
+  }
+
+  const cleanupNum7zAnimation = () => {
+    if (tl) { tl.kill(); tl = null }
+  }
+
+  return { initNum7zAnimation, cleanupNum7zAnimation }
+}
+
