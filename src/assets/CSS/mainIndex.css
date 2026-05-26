@@ -912,7 +912,7 @@
     background-color: #FDF9F0;
     color: #1a1a1a;
     font-family: sul-gbk6;
-    overflow: hiddens;
+    overflow: hidden;
 
     h1{
         position: relative;
@@ -966,14 +966,15 @@
         height: 360px;
         display: flex;
         justify-content: space-between;
-        align-items: center;
+        align-items: end;
 
         .n7_showContBtnZone{
             width: 400px;
             display: flex;
+            position: relative;
 
             .n7item_btn{
-                width: 300px;
+                width: 400px;
                 height: 50px;
                 border-radius: 50px;
                 background-color: #1a1a1a;
@@ -982,10 +983,13 @@
                 justify-content: center;
                 align-items: center;
                 cursor: pointer;
-                margin-right: 20px;
+                flex-shrink: 0;
+                transition: all 0.35s ease;
             }
-    
+
             .n7item_self{
+                position: absolute;
+                right: 0;
                 width: 50px;
                 height: 50px;
                 border-radius: 25px;
@@ -993,6 +997,20 @@
                 display: flex;
                 justify-content: center;
                 align-items: center;
+                opacity: 0;
+                transform: translateX(50px);
+                transition: opacity 0.35s ease, transform 0.35s ease;
+            }
+
+            &:hover{
+                .n7item_btn{
+                    width: 340px;
+                    border-radius: 10px 25px 25px 10px;
+                }
+                .n7item_self{
+                    opacity: 1;
+                    transform: translateX(0);
+                }
             }
         }
 
@@ -1003,6 +1021,36 @@
             display: flex;
             flex-direction: column;
             justify-content: space-between;
+
+            p{
+                line-height: 1.6;
+                margin-top: 20px;
+            }
+        }
+
+        .n7_word-wrapper{
+            position: relative;
+            display: inline-block;
+            margin-right: 0.3em;
+            vertical-align: baseline;
+        }
+
+        .n7_pill{
+            position: absolute;
+            top: 0.1em;
+            left: -0.06em;
+            right: -0.06em;
+            bottom: 0.1em;
+            background: #eee;
+            border-radius: 999px;
+            opacity: 0;
+            z-index: 0;
+        }
+
+        .n7_word{
+            position: relative;
+            opacity: 0;
+            z-index: 1;
         }
     }
 }

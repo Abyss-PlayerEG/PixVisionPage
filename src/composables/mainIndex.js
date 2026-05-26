@@ -1148,53 +1148,85 @@ export const useNum6zAnimation = () => {
  */
 export const useNum7zAnimation = () => {
   let tl = null
+  let tlPills = null
 
   const initNum7zAnimation = () => {
     const h1Spans = document.querySelectorAll('#num7z .n7_showCopy h1 span')
     const h2 = document.querySelector('#num7z .n7_showCopy h2')
     const iconDivs = document.querySelectorAll('#num7z .n7_showCopy .n7_icon > div')
 
-    if (!h1Spans.length || !h2 || !iconDivs.length) return
-
     // 显式设置初始状态（避免 CSS transform 解析偏差）
-    gsap.set(h1Spans[0], { left: '20%', xPercent: 0, opacity: 0 })
+    gsap.set(h1Spans[0], { left: '5%', xPercent: 0, opacity: 0 })
     gsap.set(h1Spans[1], { left: '90%', xPercent: -100, opacity: 0 })
     gsap.set(iconDivs, { x: 200, opacity: 0 })
 
-    tl = gsap.timeline({
-      scrollTrigger: {
-        trigger: '#num7z',
-        start: 'top 50%',
-        end: 'top 5%',
-        scrub: 0.6,
-      },
-    })
+    // === 标题区滚动时间轴 ===
+    if (h1Spans.length && h2 && iconDivs.length) {
+      tl = gsap.timeline({
+        scrollTrigger: {
+          trigger: '#num7z',
+          start: 'top 50%',
+          end: 'top 5%',
+          scrub: 0.6,
+        },
+      })
 
-    // Phase 1 — h1 分裂 (t=0 ~ 0.3)
-    tl.to(h1Spans[0],
-      { left: '0%', xPercent: 0, opacity: 1, duration: 0.3, ease: 'power2.out' },
-      0,
-    )
-    tl.to(h1Spans[1],
-      { left: '97%', xPercent: -100, opacity: 1, duration: 0.3, ease: 'power2.out' },
-      0,
-    )
+      // Phase 1 — h1 分裂 (t=0 ~ 0.3)
+      tl.to(h1Spans[0],
+        { left: '0%', xPercent: 0, opacity: 1, duration: 0.3, ease: 'power2.out' },
+        0,
+      )
+      tl.to(h1Spans[1],
+        { left: '97%', xPercent: -100, opacity: 1, duration: 0.3, ease: 'power2.out' },
+        0,
+      )
 
-    // Phase 2 — h2 淡入 (t=0.35 ~ 0.6)
-    tl.to(h2,
-      { opacity: 1, duration: 0.25, ease: 'power2.out' },
-      '>+=0.05',
-    )
+      // Phase 2 — h2 淡入 (t=0.35 ~ 0.6)
+      tl.to(h2,
+        { opacity: 1, duration: 0.25, ease: 'power2.out' },
+        '>+=0.05',
+      )
 
-    // Phase 3 — n7_icon divs 归位 (t=0.65 ~ 1.0)
-    tl.to(iconDivs,
-      { x: 0, opacity: 1, duration: 0.3, stagger: 0.1, ease: 'power2.out' },
-      '>+=0.05',
-    )
+      // Phase 3 — n7_icon divs 归位 (t=0.65 ~ 1.0)
+      tl.to(iconDivs,
+        { x: 0, opacity: 1, duration: 0.3, stagger: 0.1, ease: 'power2.out' },
+        '>+=0.05',
+      )
+    }
+
+    // === 文字药丸气泡独立滚动时间轴 ===
+    const n7Pills = gsap.utils.toArray('#num7z .n7_pill')
+    const n7Words = gsap.utils.toArray('#num7z .n7_word')
+    if (n7Pills.length && n7Words.length) {
+      tlPills = gsap.timeline({
+        scrollTrigger: {
+          trigger: '#num7z',
+          start: 'top 20%',
+          end: 'top -10%',
+          scrub: 0.6,
+        },
+      })
+
+      // Phase 4a — 药丸骨架逐个出现
+      tlPills.to(n7Pills,
+        { opacity: 1, stagger: { each: 0.04, from: 'start' }, duration: 0.3, ease: 'power2.out' },
+        0,
+      )
+      // Phase 4b — 药丸消失 + 文字显现
+      tlPills.to(n7Pills,
+        { opacity: 0, stagger: { each: 0.04, from: 'start' }, duration: 0.3, ease: 'power2.out' },
+        '<+=0.3',
+      )
+      tlPills.to(n7Words,
+        { opacity: 1, stagger: { each: 0.04, from: 'start' }, duration: 0.3, ease: 'power2.out' },
+        '<',
+      )
+    }
   }
 
   const cleanupNum7zAnimation = () => {
     if (tl) { tl.kill(); tl = null }
+    if (tlPills) { tlPills.kill(); tlPills = null }
   }
 
   return { initNum7zAnimation, cleanupNum7zAnimation }

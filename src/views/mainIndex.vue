@@ -47,6 +47,11 @@ const { waterfallImages, isLoading, error, loadWorks } = useWorkWaterfall()
 const n6Copy1Words = 'The Pixel holds boundless romance waiting to be explored. Leave the trivial troubles behind, chase the wind and chase the sunset, wander between mountains and seas.'.split(' ')
 const n6Copy2Words = 'No need to confine oneself to narrow boundaries, let the vision roam freely. Every step you take carves unique marks on life. Embrace uncertainty bravely, believe that all encounters have meaning, and live out the most authentic and unrestrained self in fleeting years.'.split(' ')
 
+// num7z 药丸文字效果
+const n7Copy1Words = "Don't let waiting turn into regret. Passion will never be let down. We sincerely invite you, a lover of visual creation, to embark on this journey of inspiration.".split(' ')
+const n7Copy2Words = "Don't let waiting become regret. Here, your creativity and art will shine to the fullest.".split(' ')
+
+
 // --- Watchers ---
 // API 异常 → 弹出通知提示
 watch(error, (newError) => {
@@ -439,19 +444,20 @@ const mockNum5z = [
 
         <div class="n7item_cont">
           <p>
-            Don't let waiting turn into regret. Passion will never be let down. We sincerely invite you, a lover of visual creation, to embark on this journey of inspiration.
+            <span v-for="(word, i) in n7Copy1Words" :key="'c'+i" class="n7_word-wrapper">
+              <span class="n7_pill"></span>
+              <span class="n7_word">{{ word }}</span>
+            </span>
           </p>
-
           <p>
-            Don't let waiting become regret. Here, your creativity and art will shine to the fullest.
+            <span v-for="(word, i) in n7Copy2Words" :key="'d'+i" class="n7_word-wrapper">
+              <span class="n7_pill"></span>
+              <span class="n7_word">{{ word }}</span>
+            </span>
           </p>
         </div>
       </div>
-  
-      <!-- 图片出现区域 -->
-      <div class="n7_showImg"></div>
     </div>
-
   </section>
 </template>
 
