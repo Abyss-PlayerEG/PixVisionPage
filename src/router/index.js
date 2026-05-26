@@ -58,6 +58,11 @@ const router = createRouter({
                 name: 'confirmDialogDemo',
                 component: () => import('../views/demo/ConfirmDialogDemo.vue'),
             },
+            {
+                path: '/demo/avatar-cropper',
+                name: 'avatarCropperDemo',
+                component: () => import('../views/demo/AvatarCropperDemo.vue'),
+            },
         ] : []),
     ],
 })
