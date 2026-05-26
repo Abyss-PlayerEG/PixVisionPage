@@ -10,7 +10,7 @@ const lastFileInfo = ref(null)
 const lastDataUrl = ref('')
 
 const openCropperJS = async () => {
-  const result = await showAvatarCropper({ title: '裁剪头像' })
+  const result = await showAvatarCropper({})
   if (result.canceled) {
     showInfo('已取消裁剪')
     return
@@ -27,8 +27,7 @@ const openCropperJS = async () => {
 
 const openCropperCustomSize = async () => {
   const result = await showAvatarCropper({
-    title: '裁剪创作者头像',
-    outputSize: 1024,
+    outputSize: 512,
     previewSize: 260,
   })
   if (!result.canceled && result.blob) {
@@ -39,7 +38,7 @@ const openCropperCustomSize = async () => {
       type: result.blob.type,
     }
     lastDataUrl.value = result.dataUrl || ''
-    showSuccess('1024px 头像裁剪完成！')
+    showSuccess('512px 头像裁剪完成！')
   }
 }
 
@@ -95,13 +94,13 @@ const openInNewTab = () => {
       <h2>使用 JS 工具函数（推荐）</h2>
       <p class="demo-desc">直接 await 调用，返回裁剪结果 Blob，方便对接后端上传接口。</p>
       <div class="button-group">
-        <button @click="openCropperJS" class="btn btn-primary">打开裁剪（512px 输出）</button>
-        <button @click="openCropperCustomSize" class="btn btn-primary">打开裁剪（1024px 输出）</button>
+        <button @click="openCropperJS" class="btn btn-primary">打开裁剪（默认 1024px 输出）</button>
+        <button @click="openCropperCustomSize" class="btn btn-primary">打开裁剪（512px 输出）</button>
       </div>
       <div class="code-block">
         <pre><code>import { showAvatarCropper } from '@/utils/avatarCropper'
 
-const result = await showAvatarCropper({ title: '裁剪头像' })
+      const result = await showAvatarCropper()
 
 if (!result.canceled) {
   // result.blob   → 裁剪后的图片 Blob（可直接上传）
@@ -129,8 +128,7 @@ if (!result.canceled) {
       <div class="code-block" style="margin-top: 16px;">
         <pre><code>&lt;AvatarCropper
   v-model:show="showDialog"
-  title="裁剪头像"
-  :output-size="512"
+  :output-size="1024"
   :preview-size="300"
   @confirm="onConfirm"
   @cancel="onCancel"
@@ -163,8 +161,7 @@ if (!result.canceled) {
           <tr><th>参数</th><th>类型</th><th>默认值</th><th>说明</th></tr>
         </thead>
         <tbody>
-          <tr><td>title</td><td>String</td><td>'裁剪头像'</td><td>弹窗标题</td></tr>
-          <tr><td>outputSize</td><td>Number</td><td>512</td><td>输出图片尺寸（px），1:1 正方形</td></tr>
+          <tr><td>outputSize</td><td>Number</td><td>1024</td><td>输出图片尺寸（px），1:1 正方形</td></tr>
           <tr><td>previewSize</td><td>Number</td><td>300</td><td>裁剪区预览尺寸（px）</td></tr>
           <tr><td>show</td><td>Boolean</td><td>false</td><td>v-model 控制显示</td></tr>
         </tbody>
@@ -200,8 +197,7 @@ if (!result.canceled) {
     <AvatarCropper
       v-if="componentShow"
       :show="componentShow"
-      title="裁剪头像"
-      :output-size="512"
+      :output-size="1024"
       :preview-size="300"
       @update:show="componentShow = $event"
       @confirm="onComponentConfirm"

@@ -2,17 +2,15 @@ import { createApp, h } from 'vue'
 import AvatarCropper from '../components/AvatarCropper.vue'
 
 /**
- * 显示头像裁剪弹窗
+ * 显示头像裁剪弹窗（标题自动切换：上传阶段「上传你的头像」→ 裁剪阶段「修改头像大小」）
  * @param {Object} [options]
- * @param {string} [options.title='裁剪头像'] - 弹窗标题
- * @param {number} [options.outputSize=512] - 输出图片尺寸（像素）
+ * @param {number} [options.outputSize=1024] - 输出图片尺寸（像素）
  * @param {number} [options.previewSize=300] - 裁剪区预览尺寸（像素）
  * @returns {Promise<{ blob: Blob|null, file: File|null, dataUrl: string|null, canceled: boolean }>}
  *
  * @example
- * const result = await showAvatarCropper({ title: '修改头像' })
+ * const result = await showAvatarCropper()
  * if (!result.canceled && result.blob) {
- *   // 使用 result.blob 上传到后端
  *   const formData = new FormData()
  *   formData.append('file', result.blob, 'avatar.png')
  *   await fetch('/api/user/avatar/upload', { method: 'POST', body: formData })
@@ -20,8 +18,7 @@ import AvatarCropper from '../components/AvatarCropper.vue'
  */
 export const showAvatarCropper = (options = {}) => {
   const {
-    title = '裁剪头像',
-    outputSize = 512,
+    outputSize = 1024,
     previewSize = 300,
   } = options
 
@@ -47,7 +44,6 @@ export const showAvatarCropper = (options = {}) => {
       },
       render() {
         return h(AvatarCropper, {
-          title,
           outputSize,
           previewSize,
           show: this.show,

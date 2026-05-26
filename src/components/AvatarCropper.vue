@@ -4,9 +4,13 @@ import gsap from 'gsap'
 
 const props = defineProps({
   show: { type: Boolean, default: false },
-  title: { type: String, default: '裁剪头像' },
-  outputSize: { type: Number, default: 512 },
+  outputSize: { type: Number, default: 1024 },
   previewSize: { type: Number, default: 300 },
+})
+
+// 标题根据阶段自动切换
+const dialogTitle = computed(() => {
+  return stage.value === 'pick' ? '上传你的头像' : '修改头像大小'
 })
 
 const emit = defineEmits(['update:show', 'confirm', 'cancel', 'close'])
@@ -33,7 +37,9 @@ const maxZoom = ref(3)
 const previewUrl = ref('')
 const isProcessing = ref(false)
 
-// ── 计算属性 ──
+const dropzoneHint = computed(() => {
+  return `支持 JPG / JPEG / PNG，建议尺寸 ≥ ${props.outputSize}×${props.outputSize}`
+})
 const cropSize = computed(() => props.previewSize)
 
 const imageStyle = computed(() => {
@@ -312,7 +318,7 @@ defineExpose({ showDialog, cancel })
       <div ref="dialogRef" class="avc-dialog" @click.stop>
         <!-- 标题栏 -->
         <div class="avc-header">
-          <h3 class="avc-title">{{ title }}</h3>
+          <h3 class="avc-title">{{ dialogTitle }}</h3>
         </div>
 
         <!-- 阶段：选择图片 -->
@@ -332,7 +338,7 @@ defineExpose({ showDialog, cancel })
               <path d="m21 15-5-5L5 21"/>
             </svg>
             <p class="avc-dropzone-hint">点击选择图片或拖放至此</p>
-            <p class="avc-dropzone-sub">支持 JPG / JPEG / PNG，建议尺寸 ≥ 512×512</p>
+            <p class="avc-dropzone-sub">{{ dropzoneHint }}</p>
           </div>
           <input ref="fileInput" type="file" accept=".jpg,.jpeg,.png" class="avc-file-input" @change="onFileInput" />
         </div>
