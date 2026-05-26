@@ -144,6 +144,20 @@ const mockNum5z = [
   // { id: 5, text: '留白即意境, 克制即高级', top: '70%', left: '5%', color: '#6BCB77' },
   // { id: 6, text: '克制美学, 细节致胜', top: '85%', left: '15%', color: '#4D96FF' },
 ]
+
+const mockNum7zQA = [
+  {
+    id: 1,
+    question: '我不太清楚什么是像素视觉?',
+    answer: '像素视觉是由第三维度面向热爱拍摄、乐于分享的群体而打造的一个图像分享的公开平台热爱拍摄、乐于分享的群体而打造的一个图像分享的公开平台。',
+  },
+  {
+    id: 2,
+    question: '什么是像素视觉?',
+    answer: '像素视觉是由第三维度面向热爱拍摄、乐于分享的群体而打造的一个图像分享的公开平台热爱拍摄、乐于分享的群体而打造的一个图像分享的公开平台。',
+    answer2: '像素视觉是由第三维度面向热爱拍摄、乐于分享的群体而打造的一个图像分享的公开平台热爱拍摄、乐于分享的群体而打造的一个图像分享的公开平台。',
+  },
+]
 </script>
 
 <template>
@@ -457,6 +471,20 @@ const mockNum5z = [
           </p>
         </div>
       </div>
+    </div>
+
+    <div class="n7QA">
+      <div class="QAshowCopy">
+        <h1>You ask, we answer.</h1>
+        <h2>由你提问,我们知无不尽</h2>
+      </div>
+
+      <div class="QAcont" v-for="qa in mockNum7zQA" :key="qa.id">
+        <div class="n7q">{{ qa.question }}</div>
+        <div class="n7a">{{ qa.answer }}</div>
+        <div class="n7a2" v-if="qa.answer2">{{ qa.answer2 }}</div>
+      </div>
+
     </div>
   </section>
 </template>

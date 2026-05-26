@@ -1098,6 +1098,7 @@ export const useNum6zAnimation = () => {
 export const useNum7zAnimation = () => {
   let tl = null
   let tlPills = null
+  let stQA = null
 
   const initNum7zAnimation = () => {
     const h1Spans = document.querySelectorAll('#num7z .n7_showCopy h1 span')
@@ -1144,6 +1145,17 @@ export const useNum7zAnimation = () => {
       )
     }
 
+    // === QAshowCopy 背景色阈值触发 ===
+    const qaShowCopy = document.querySelector('#num7z .QAshowCopy')
+    if (qaShowCopy) {
+      stQA = ScrollTrigger.create({
+        trigger: '.QAshowCopy',
+        start: 'top 70%',
+        onEnter: () => gsap.to('#num7z', { backgroundColor: '#00a947', duration: 0.4 }),
+        onLeaveBack: () => gsap.to('#num7z', { backgroundColor: '#000', duration: 0.4 }),
+      })
+    }
+
     // === 文字药丸气泡独立滚动时间轴 ===
     const n7Pills = gsap.utils.toArray('#num7z .n7_pill')
     const n7Words = gsap.utils.toArray('#num7z .n7_word')
@@ -1177,6 +1189,7 @@ export const useNum7zAnimation = () => {
   const cleanupNum7zAnimation = () => {
     if (tl) { tl.kill(); tl = null }
     if (tlPills) { tlPills.kill(); tlPills = null }
+    if (stQA) { stQA.kill(); stQA = null }
   }
 
   return { initNum7zAnimation, cleanupNum7zAnimation }
