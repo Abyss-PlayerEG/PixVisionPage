@@ -30,6 +30,7 @@ const imageRef = ref(null)
 const dragging = ref(false)
 const pointerLocked = ref(false)
 const justDragged = ref(false)  // 防止拖拽结束后的残余 click 关闭弹窗
+const isTransitioning = ref(false)  // 阶段切换动画进行中，阻止交互
 const dragStart = reactive({ x: 0, y: 0 })
 const translate = reactive({ x: 0, y: 0 })
 const zoom = ref(1)
@@ -172,7 +173,78 @@ const onWheel = (e) => {
   clampTranslate()
 }
 
-// ── 处理文件选择 ──
+// ── 阶段切换 GSAP 过渡动画 ──
+// 通用：锁定弹窗高度 → 旧内容淡出 → 切换 stage → 新内容淡入 → 高度动画
+const animateStageSwitch = async (fromSelector, toSelector, beforeSwitch) => {
+  if (isTransitioning.value) return
+  isTransitioning.value = true
+
+  const dialogEl = dialogRef.value
+  if (!dialogEl) { isTransitioning.value = false; return }
+
+  // 1. 锁定当前高度，kill 可能残留的 height tween
+  gsap.killTweensOf(dialogEl, 'height')
+  const fromHeight = dialogEl.offsetHeight
+  gsap.set(dialogEl, { height: fromHeight, overflow: 'hidden' })
+
+  // 2. 旧内容淡出
+  const oldEl = dialogEl.querySelector(fromSelector)
+  if (oldEl) {
+    await new Promise((resolve) => {
+      gsap.to(oldEl, {
+        opacity: 0, scale: 0.95, y: -12,
+        duration: 0.2, ease: 'power2.in',
+        onComplete: resolve,
+      })
+    })
+  }
+
+  // 3. 切换前的回调（修改 stage、重置数据等）
+  if (beforeSwitch) beforeSwitch()
+
+  await nextTick()
+
+  // 4. 新内容预隐藏（防闪烁）
+  const newEl = dialogEl.querySelector(toSelector)
+  if (newEl) {
+    gsap.set(newEl, { opacity: 0, scale: 0.95, y: 12 })
+  }
+
+  // 5. 测量新高度
+  gsap.set(dialogEl, { height: 'auto' })
+  const toHeight = dialogEl.offsetHeight
+  gsap.set(dialogEl, { height: fromHeight })
+
+  // 6. 新内容淡入 + 高度过渡
+  return new Promise((resolve) => {
+    const tl = gsap.timeline({
+      onComplete: () => {
+        gsap.set(dialogEl, { clearProps: 'height,overflow' })
+        isTransitioning.value = false
+        resolve()
+      },
+    })
+    tl.to(dialogEl, {
+      height: toHeight,
+      duration: 0.35,
+      ease: 'power2.inOut',
+    }, 0)
+    if (newEl) {
+      tl.to(newEl, {
+        opacity: 1, scale: 1, y: 0,
+        duration: 0.4, ease: 'back.out(1.2)',
+      }, 0.05)
+    }
+  })
+}
+
+// Pick → Crop（initPosition 在 beforeSwitch 内立即执行，确保渲染时 translate/zoom 已正确）
+const transitionToCrop = async () => {
+  await animateStageSwitch('.avc-pick', '.avc-crop-stage', () => {
+    stage.value = 'crop'
+    initPosition()
+  })
+}
 const handleFile = (file) => {
   if (!file) return
   const allowed = ['image/jpeg', 'image/png']
@@ -187,8 +259,7 @@ const handleFile = (file) => {
     img.onload = () => {
       sourceImage.value = img
       sourceDataUrl.value = ev.target.result
-      stage.value = 'crop'
-      nextTick(() => initPosition())
+      transitionToCrop()
     }
     img.src = ev.target.result
   }
@@ -277,15 +348,17 @@ const cancel = () => {
   closeDialog()
 }
 
-// 裁剪阶段返回选择图片
-const goBack = () => {
-  stage.value = 'pick'
-  sourceImage.value = null
-  sourceFile.value = null
-  sourceDataUrl.value = ''
-  zoom.value = 1
-  translate.x = 0
-  translate.y = 0
+// 裁剪阶段返回选择图片（带动画过渡）
+const goBack = async () => {
+  await animateStageSwitch('.avc-crop-stage', '.avc-pick', () => {
+    sourceImage.value = null
+    sourceFile.value = null
+    sourceDataUrl.value = ''
+    zoom.value = 1
+    translate.x = 0
+    translate.y = 0
+    stage.value = 'pick'
+  })
 }
 
 // ── GSAP 动画 ──
@@ -328,6 +401,7 @@ const resetState = () => {
   translate.x = 0
   translate.y = 0
   isProcessing.value = false
+  isTransitioning.value = false
   // 清理光标锁定状态（防止弹窗异常关闭时残留）
   dragging.value = false
   pointerLocked.value = false
@@ -440,13 +514,13 @@ defineExpose({ showDialog, cancel })
 
         <!-- 底部按钮 -->
         <div class="avc-actions">
-          <button class="avc-btn avc-btn--no" @click="stage === 'pick' ? cancel() : goBack()">
+          <button class="avc-btn avc-btn--no" :disabled="isTransitioning" @click="stage === 'pick' ? cancel() : goBack()">
             {{ stage === 'pick' ? '取消' : '返回' }}
           </button>
           <button
             v-if="stage === 'crop'"
             class="avc-btn avc-btn--yes"
-            :disabled="isProcessing"
+            :disabled="isProcessing || isTransitioning"
             @click="confirm"
           >
             {{ isProcessing ? '处理中...' : '确认裁剪' }}
