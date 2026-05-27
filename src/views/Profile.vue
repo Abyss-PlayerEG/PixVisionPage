@@ -1,10 +1,11 @@
 <script setup>
-import { onMounted, computed, ref } from 'vue'
+import { onMounted, computed, ref, nextTick } from 'vue'
 import { useProfile } from '@/composables/useProfile.js'
 import { showSuccess, showError } from '@/utils/notification.js'
 import { updateNickname } from '@/api/profileApi.js'
 import ConfirmDialog from '@/components/ConfirmDialog.vue'
 import ContactEditor from '@/components/ContactEditor.vue'
+import gsap from 'gsap'
 
 // 使用 Composable 获取 Profile 页面的状态和方法
 const {
@@ -43,11 +44,25 @@ const editNickname = ref('')
 
 const toggleEdit = async () => {
   if (!isEditing.value) {
-    // 进入编辑模式，初始化编辑值
+    // 进入编辑模式
     editNickname.value = userInfo.value.nickname
     isEditing.value = true
+
+    await nextTick()
+    // GSAP 入场动效
+    const overlay = document.querySelector('#itemCeb .avatar-overlay')
+    const wrapper = document.querySelector('#itemCeb .avatar-wrapper')
+    if (overlay) {
+      gsap.fromTo(overlay,
+        { autoAlpha: 0 },
+        { autoAlpha: 1, duration: 0.3, ease: 'power2.out' }
+      )
+    }
+    if (wrapper) {
+      gsap.to(wrapper, { borderColor: 'rgba(0,169,71,0.5)', duration: 0.3, ease: 'power2.out' })
+    }
   } else {
-    // 保存：锁定 UI，调用后端接口
+    // 保存
     if (isSaving.value) return
 
     const newNickname = editNickname.value.trim()
@@ -56,9 +71,8 @@ const toggleEdit = async () => {
       return
     }
 
-    // 昵称无变化则跳过请求，直接退出编辑
     if (newNickname === userInfo.value.nickname) {
-      isEditing.value = false
+      exitEditMode()
       return
     }
 
@@ -69,11 +83,30 @@ const toggleEdit = async () => {
     if (result.success) {
       userInfo.value.nickname = newNickname
       showSuccess(result.message || '昵称修改成功')
-      isEditing.value = false
+      exitEditMode()
     } else {
       showError(result.message || '昵称修改失败')
     }
   }
+}
+
+const exitEditMode = async () => {
+  const overlay = document.querySelector('#itemCeb .avatar-overlay')
+  const wrapper = document.querySelector('#itemCeb .avatar-wrapper')
+
+  if (overlay) {
+    gsap.to(overlay, { autoAlpha: 0, duration: 0.25, ease: 'power2.in' })
+  }
+  if (wrapper) {
+    gsap.to(wrapper, { borderColor: 'rgba(255,255,255,0.2)', duration: 0.3, ease: 'power2.out' })
+  }
+
+  await new Promise(r => setTimeout(r, 260))
+  isEditing.value = false
+}
+
+const resetNickname = () => {
+  editNickname.value = userInfo.value.nickname
 }
 
 // 联系方式编辑器
@@ -121,8 +154,8 @@ const handleContactClick = (item) => {
       <div class="card-header">
         <div class="avatar-wrapper" :class="{ 'is-editing': isEditing }">
           <img :src="userInfo.avatar" :alt="userInfo.nickname" class="avatar" />
-          <!-- 更换头像遮罩：仅编辑模式 hover 时显示 -->
-          <div v-if="isMyProfile && isEditing" class="avatar-overlay" @click="handleChangeAvatar">
+          <!-- 更换头像遮罩：编辑模式入场时由 GSAP 控制显隐 -->
+          <div v-show="isMyProfile && isEditing" class="avatar-overlay" @click="handleChangeAvatar">
             <svg class="avatar-camera-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
               <circle cx="12" cy="13" r="4"></circle>
@@ -132,15 +165,28 @@ const handleContactClick = (item) => {
         
         <div class="user-info">
           <h3 v-if="!isEditing" class="nickname">{{ userInfo.nickname }}</h3>
-          <input
-            v-else
-            v-model="editNickname"
-            class="nickname-input"
-            type="text"
-            :placeholder="userInfo.nickname"
-            maxlength="20"
-            :disabled="isSaving"
-          />
+          <div v-else class="nickname-input-wrapper">
+            <input
+              v-model="editNickname"
+              class="nickname-input"
+              type="text"
+              :placeholder="userInfo.nickname"
+              maxlength="20"
+              :disabled="isSaving"
+            />
+            <button
+              v-if="editNickname !== userInfo.nickname"
+              class="nickname-reset-btn"
+              title="恢复原始昵称"
+              @click="resetNickname"
+              :disabled="isSaving"
+            >
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="1 4 1 10 7 10"></polyline>
+                <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"></path>
+              </svg>
+            </button>
+          </div>
           <p class="username">{{ userInfo.username }}</p>
         </div>
 

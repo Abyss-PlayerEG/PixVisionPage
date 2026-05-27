@@ -55,6 +55,7 @@
     flex-shrink: 0;
     position: relative;
     cursor: default;
+    transition: border-color 0.3s ease;
 }
 
 /* 个人界面：头像可点击更换 */
@@ -69,23 +70,28 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    opacity: 0;
-    transition: opacity 0.25s ease;
+    transition: background 0.25s ease;
 }
 
-.avatar-wrapper:hover .avatar-overlay {
+/* 非编辑模式：hover 显示遮罩 */
+.avatar-wrapper:not(.is-editing):hover .avatar-overlay {
     opacity: 1;
 }
 
-/* 编辑模式下遮罩始终可见 */
-.avatar-wrapper.is-editing .avatar-overlay {
-    opacity: 1;
+/* 编辑模式下 hover：遮罩加深 + 图标放大 */
+.avatar-wrapper.is-editing:hover .avatar-overlay {
+    background: rgba(0, 0, 0, 0.65);
+}
+
+.avatar-wrapper.is-editing:hover .avatar-camera-icon {
+    transform: scale(1.15);
 }
 
 .avatar-camera-icon {
     width: 24px;
     height: 24px;
     color: rgba(255, 255, 255, 0.9);
+    transition: transform 0.25s ease;
 }
 
 .avatar {
@@ -110,6 +116,16 @@
     line-height: 1.3;
 }
 
+.nickname-input-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.nickname-input-wrapper .nickname-input {
+    padding-right: 32px; /* 为重置图标留空间 */
+}
+
 .nickname-input {
     color: #ffffff;
     font-size: 16px;
@@ -122,6 +138,47 @@
     box-sizing: border-box;
     outline: none;
     transition: border-color 0.2s ease;
+}
+
+.nickname-reset-btn {
+    position: absolute;
+    right: 6px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 22px;
+    height: 22px;
+    border: none;
+    background: transparent;
+    color: rgba(255, 255, 255, 0.4);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    border-radius: 3px;
+    transition: color 0.2s ease, background 0.2s ease;
+}
+
+.nickname-reset-btn svg {
+    width: 14px;
+    height: 14px;
+}
+
+.nickname-reset-btn:hover {
+    color: #00A947;
+}
+
+.nickname-reset-btn:hover svg {
+    animation: reset-spin 0.5s ease;
+}
+
+@keyframes reset-spin {
+    to { transform: rotate(-360deg); }
+}
+
+.nickname-reset-btn:disabled {
+    cursor: default;
+    opacity: 0.3;
 }
 
 .nickname-input:focus {
