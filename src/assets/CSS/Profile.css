@@ -77,6 +77,11 @@
     opacity: 1;
 }
 
+/* 编辑模式下遮罩始终可见 */
+.avatar-wrapper.is-editing .avatar-overlay {
+    opacity: 1;
+}
+
 .avatar-camera-icon {
     width: 24px;
     height: 24px;
@@ -103,6 +108,25 @@
     font-weight: 600;
     margin: 0;
     line-height: 1.3;
+}
+
+.nickname-input {
+    color: #ffffff;
+    font-size: 16px;
+    font-weight: 600;
+    margin: 0;
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 3px;
+    width: 100%;
+    box-sizing: border-box;
+    outline: none;
+    transition: border-color 0.2s ease;
+}
+
+.nickname-input:focus {
+    border-color: #00A947;
+    background: rgba(0, 169, 71, 0.06);
 }
 
 .username {
@@ -241,7 +265,6 @@
 .contact-section {
     display: flex;
     flex-direction: row;
-    flex-wrap: wrap;
     gap: 8px;
     margin-top: 0px;
     padding-top: 12px;
@@ -268,6 +291,28 @@
 
 .contact-item:active {
     transform: scale(0.95);
+}
+
+/* 联系方式编辑按钮 */
+.contact-edit-btn {
+    width: 100%;
+    margin-top: 8px;
+    padding: 7px 0;
+    border-radius: 8px;
+    border: 1px dashed rgba(255, 255, 255, 0.12);
+    background: transparent;
+    color: rgba(255, 255, 255, 0.35);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+}
+
+.contact-edit-btn:hover {
+    border-color: rgba(0, 169, 71, 0.4);
+    color: #00A947;
+    background: rgba(0, 169, 71, 0.06);
 }
 
 .contact-icon {

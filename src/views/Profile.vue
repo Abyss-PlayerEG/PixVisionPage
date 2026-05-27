@@ -1,5 +1,5 @@
 <script setup>
-import { onMounted, computed } from 'vue'
+import { onMounted, computed, ref } from 'vue'
 import { useProfile } from '@/composables/useProfile.js'
 import { showSuccess, showError } from '@/utils/notification.js'
 import ConfirmDialog from '@/components/ConfirmDialog.vue'
@@ -32,6 +32,19 @@ const canShowWorks = computed(() => {
   const role = userInfo.value.userRole
   return role === 22 || role === 77
 })
+
+// 编辑模式切换
+const isEditing = ref(false)
+const editNickname = ref('')
+
+const toggleEdit = () => {
+  if (!isEditing.value) {
+    // 进入编辑模式，初始化编辑值
+    editNickname.value = userInfo.value.nickname
+  }
+  isEditing.value = !isEditing.value
+}
+
 const handleContactClick = (item) => {
   if (item.user_data_name === 'Bilibili') {
     // Bilibili：跳转到 B 站主页
@@ -62,10 +75,10 @@ const handleContactClick = (item) => {
     <div v-else class="user-card">
       <!-- 上半部分 -->
       <div class="card-header">
-        <div class="avatar-wrapper">
+        <div class="avatar-wrapper" :class="{ 'is-editing': isEditing }">
           <img :src="userInfo.avatar" :alt="userInfo.nickname" class="avatar" />
-          <!-- 更换头像遮罩：仅 /profile/me hover 时显示 -->
-          <div v-if="isMyProfile" class="avatar-overlay" @click="handleChangeAvatar">
+          <!-- 更换头像遮罩：仅编辑模式 hover 时显示 -->
+          <div v-if="isMyProfile && isEditing" class="avatar-overlay" @click="handleChangeAvatar">
             <svg class="avatar-camera-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
               <circle cx="12" cy="13" r="4"></circle>
@@ -74,15 +87,30 @@ const handleContactClick = (item) => {
         </div>
         
         <div class="user-info">
-          <h3 class="nickname">{{ userInfo.nickname }}</h3>
+          <h3 v-if="!isEditing" class="nickname">{{ userInfo.nickname }}</h3>
+          <input
+            v-else
+            v-model="editNickname"
+            class="nickname-input"
+            type="text"
+            :placeholder="userInfo.nickname"
+            maxlength="20"
+          />
           <p class="username">{{ userInfo.username }}</p>
         </div>
 
         <!-- 编辑入口：仅 /profile/me 可见 -->
-        <button v-if="isMyProfile" class="edit-profile-btn" title="编辑资料">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <button v-if="isMyProfile" class="edit-profile-btn" title="编辑资料" @click="toggleEdit">
+          <!-- 编辑图标 -->
+          <svg v-if="!isEditing" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
             <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+          </svg>
+          <!-- 存档图标 -->
+          <svg v-else viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
+            <polyline points="17 21 17 13 7 13 7 21"></polyline>
+            <polyline points="7 3 7 8 15 8"></polyline>
           </svg>
         </button>
       </div>
@@ -159,6 +187,19 @@ const handleContactClick = (item) => {
             <line x1="8" y1="12" x2="16" y2="12"></line>
           </svg>
           
+        </div>
+
+        <!-- 编辑模式下：联系方式编辑按钮 -->
+        <div
+          v-if="isMyProfile && isEditing"
+          class="contact-item"
+          @click.stop
+          title="编辑联系方式"
+        >
+          <svg class="contact-icon" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+          </svg>
         </div>
       </div>
     </div>
