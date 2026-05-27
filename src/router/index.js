@@ -68,6 +68,11 @@ const router = createRouter({
                 name: 'verticalWaterfallDemo',
                 component: () => import('../views/demo/VerticalWaterfallDemo.vue'),
             },
+            {
+                path: '/demo/series-grid',
+                name: 'seriesGridDemo',
+                component: () => import('../views/demo/SeriesGridDemo.vue'),
+            },
         ] : []),
     ],
 })

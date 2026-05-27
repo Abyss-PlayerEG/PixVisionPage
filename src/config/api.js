@@ -93,6 +93,11 @@ export const STAR_API = {
   USER_STARRED: `${API_BASE_URL}/api/star/user-starred`, // GET，路径后拼 /userId/current/size
 };
 
+// 作品系列相关接口
+export const SERIES_API = {
+  PAGE: `${API_BASE_URL}/api/work/series/page`, // GET，路径后拼 /userId/current/size
+};
+
 // 获取作品图片完整 URL
 export const getWorkImageUrl = (filePath) => {
   if (!filePath) {

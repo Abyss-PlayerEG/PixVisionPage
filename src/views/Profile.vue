@@ -1,5 +1,6 @@
 <script setup>
 import { onMounted, computed, ref, nextTick, watch, reactive } from 'vue'
+import { useRouter } from 'vue-router'
 import { useProfile } from '@/composables/useProfile.js'
 import { useProfileContent } from '@/composables/useProfileContent.js'
 import { showSuccess, showError } from '@/utils/notification.js'
@@ -8,6 +9,7 @@ import { fetchWorkPage, fetchUserLikedWorks, fetchUserStarredWorks } from '@/api
 import ConfirmDialog from '@/components/ConfirmDialog.vue'
 import ContactEditor from '@/components/ContactEditor.vue'
 import VerticalWaterfall from '@/components/VerticalWaterfall.vue'
+import SeriesGrid from '@/components/SeriesGrid.vue'
 import gsap from 'gsap'
 
 // 使用 Composable 获取 Profile 页面的状态和方法
@@ -52,6 +54,8 @@ watch(() => userInfo.value.userRole, (role) => {
     activeMenu.value = 'favorites'
   }
 })
+
+const router = useRouter()
 
 // 编辑模式切换
 const isEditing = ref(false)
@@ -184,6 +188,26 @@ const starsContent = useProfileContent((params) =>
 const workSearchTitle = ref('')
 const workIsOriginal = ref(null) // null=全部, true=原创, false=转载
 
+// 收藏筛选
+const favOrderBy = ref('newest') // newest / oldest
+const toggleFavOrder = () => {
+  favOrderBy.value = favOrderBy.value === 'newest' ? 'oldest' : 'newest'
+  applyFavFilter()
+}
+// 点赞筛选
+const likeOrderBy = ref('newest')
+const toggleLikeOrder = () => {
+  likeOrderBy.value = likeOrderBy.value === 'newest' ? 'oldest' : 'newest'
+  applyLikeFilter()
+}
+
+// 合集筛选
+const seriesKeyword = ref('')
+const seriesOrderBy = ref('newest')
+const toggleSeriesOrder = () => {
+  seriesOrderBy.value = seriesOrderBy.value === 'newest' ? 'oldest' : 'newest'
+}
+
 const DIAL_OPTIONS = [
   { value: null, label: '全部' },
   { value: false, label: '转载' },
@@ -283,6 +307,14 @@ const applyWorkFilter = () => {
   worksContent.refresh(extra, 20)
 }
 
+const applyFavFilter = () => {
+  starsContent.refresh({ userId: userInfo.value.userId, orderBy: favOrderBy.value }, 20)
+}
+
+const applyLikeFilter = () => {
+  likesContent.refresh({ userId: userInfo.value.userId, orderBy: likeOrderBy.value }, 20)
+}
+
 // ── 筛选栏智能显隐 ──
 const filterBarHidden = ref(false)
 const hideTimer = ref(null)
@@ -325,9 +357,12 @@ const onPanelMouseLeave = () => {
 // 作品点击 → 跳转详情
 const handleWorkClick = (img) => {
   if (!img.workId) return
-  // 使用 window.open 在新标签页打开，避免 Profile 页面状态丢失
-  const detailUrl = `/work/${img.workId}?img=${encodeURIComponent(img.imgUrl || img.src)}&title=${encodeURIComponent(img.workTitle || '')}`
-  window.open(detailUrl, '_blank')
+  router.push(`/work/${img.workId}?img=${encodeURIComponent(img.imgUrl || img.src)}&title=${encodeURIComponent(img.workTitle || '')}`)
+}
+
+// 合集点击 → todo
+const handleSeriesClick = (series) => {
+  console.log('[Profile] 合集点击:', series)
 }
 
 // 监听 userId + activeMenu，首次激活时自动加载
@@ -732,13 +767,59 @@ watch(
       />
     </div>
 
-    <!-- 作品合集（暂未实现） -->
-    <div v-else-if="activeMenu === 'collections'" class="content-placeholder">
-      <p>合集区域</p>
+    <!-- 作品合集 -->
+    <div v-else-if="activeMenu === 'collections'" class="profile-content-panel" @scroll="onPanelScroll" @mousemove="onPanelMouseMove" @mouseleave="onPanelMouseLeave">
+      <div class="profile-filter-bar" :class="{ 'filter-hidden': filterBarHidden }">
+        <div class="profile-filter-input-wrapper">
+          <input
+            v-model="seriesKeyword"
+            class="profile-filter-input"
+            type="text"
+            placeholder="搜索合集…"
+          />
+          <button class="profile-filter-search-btn" title="搜索">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="11" cy="11" r="8"></circle>
+              <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+            </svg>
+          </button>
+        </div>
+        <div class="profile-sort-toggle">
+          <button
+            class="profile-sort-btn"
+            :class="{ active: seriesOrderBy === 'newest' }"
+            @click="seriesOrderBy !== 'newest' && toggleSeriesOrder()"
+          >最新</button>
+          <button
+            class="profile-sort-btn"
+            :class="{ active: seriesOrderBy === 'oldest' }"
+            @click="seriesOrderBy !== 'oldest' && toggleSeriesOrder()"
+          >最早</button>
+        </div>
+      </div>
+      <SeriesGrid
+        :key="userInfo.userId"
+        :user-id="userInfo.userId"
+        :keyword="seriesKeyword"
+        :order-by="seriesOrderBy"
+        @series-click="handleSeriesClick"
+      />
     </div>
 
     <!-- 个人收藏 -->
-    <div v-else-if="activeMenu === 'favorites'" class="profile-content-panel">
+    <div v-else-if="activeMenu === 'favorites'" class="profile-content-panel" @scroll="onPanelScroll" @mousemove="onPanelMouseMove" @mouseleave="onPanelMouseLeave">
+      <div class="profile-sort-bar" :class="{ 'filter-hidden': filterBarHidden }">
+        <button
+          class="sort-option"
+          :class="{ active: favOrderBy === 'newest' }"
+          @click="favOrderBy !== 'newest' && toggleFavOrder()"
+        >最新</button>
+        <button
+          class="sort-option"
+          :class="{ active: favOrderBy === 'oldest' }"
+          @click="favOrderBy !== 'oldest' && toggleFavOrder()"
+        >最早</button>
+      </div>
       <div
         v-if="!starsContent.isLoading.value && starsContent.images.value.length === 0 && !starsContent.hasMore.value"
         class="content-empty"
@@ -757,7 +838,19 @@ watch(
     </div>
 
     <!-- 个人点赞 -->
-    <div v-else-if="activeMenu === 'likes'" class="profile-content-panel">
+    <div v-else-if="activeMenu === 'likes'" class="profile-content-panel" @scroll="onPanelScroll" @mousemove="onPanelMouseMove" @mouseleave="onPanelMouseLeave">
+      <div class="profile-sort-bar" :class="{ 'filter-hidden': filterBarHidden }">
+        <button
+          class="sort-option"
+          :class="{ active: likeOrderBy === 'newest' }"
+          @click="likeOrderBy !== 'newest' && toggleLikeOrder()"
+        >最新</button>
+        <button
+          class="sort-option"
+          :class="{ active: likeOrderBy === 'oldest' }"
+          @click="likeOrderBy !== 'oldest' && toggleLikeOrder()"
+        >最早</button>
+      </div>
       <div
         v-if="!likesContent.isLoading.value && likesContent.images.value.length === 0 && !likesContent.hasMore.value"
         class="content-empty"

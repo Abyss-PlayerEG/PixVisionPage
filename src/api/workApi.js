@@ -2,7 +2,7 @@
  * 作品相关 API 调用
  */
 
-import { WORK_API, COMMENT_API, LIKE_API, STAR_API, getWorkImageUrl, getAvatarUrl } from '../config/api';
+import { WORK_API, COMMENT_API, LIKE_API, STAR_API, SERIES_API, getWorkImageUrl, getAvatarUrl } from '../config/api';
 import { getUserInfoByUsernameOrUuid } from './profileApi';
 import { getUserDataList } from './userDataApi';
 
@@ -338,12 +338,16 @@ export const fetchWorkPage = async ({ current = 1, size = 10, workTitle, userId,
  * @param {Object} params
  * @param {number} params.userId - 用户 ID，必填
  * @param {number} [params.current=1] - 当前页码
- * @param {number} [params.size=20] - 每页大小
+ * @param {number} [params.size=20] - 每页大小，范围 1-500
+ * @param {string} [params.orderBy='newest'] - 排序方式，newest/oldest
  * @returns {Promise<Object>} { success, data: { records, total, ... }, message }
  */
-export const fetchUserLikedWorks = async ({ userId, current = 1, size = 20 }) => {
+export const fetchUserLikedWorks = async ({ userId, current = 1, size = 20, orderBy } = {}) => {
   try {
-    const url = `${LIKE_API.USER_LIKED}/${userId}/${current}/${size}`;
+    const queryParams = new URLSearchParams()
+    if (orderBy) queryParams.append('orderBy', orderBy)
+    const qs = queryParams.toString()
+    const url = `${LIKE_API.USER_LIKED}/${userId}/${current}/${size}${qs ? '?' + qs : ''}`;
     console.log('[API] 请求用户点赞作品:', url);
     const response = await fetch(url, {
       method: 'GET',
@@ -367,12 +371,16 @@ export const fetchUserLikedWorks = async ({ userId, current = 1, size = 20 }) =>
  * @param {Object} params
  * @param {number} params.userId - 用户 ID，必填
  * @param {number} [params.current=1] - 当前页码
- * @param {number} [params.size=20] - 每页大小
+ * @param {number} [params.size=20] - 每页大小，范围 1-500
+ * @param {string} [params.orderBy='newest'] - 排序方式，newest/oldest
  * @returns {Promise<Object>} { success, data: { records, total, ... }, message }
  */
-export const fetchUserStarredWorks = async ({ userId, current = 1, size = 20 }) => {
+export const fetchUserStarredWorks = async ({ userId, current = 1, size = 20, orderBy } = {}) => {
   try {
-    const url = `${STAR_API.USER_STARRED}/${userId}/${current}/${size}`;
+    const queryParams = new URLSearchParams()
+    if (orderBy) queryParams.append('orderBy', orderBy)
+    const qs = queryParams.toString()
+    const url = `${STAR_API.USER_STARRED}/${userId}/${current}/${size}${qs ? '?' + qs : ''}`;
     console.log('[API] 请求用户收藏作品:', url);
     const response = await fetch(url, {
       method: 'GET',
@@ -390,6 +398,70 @@ export const fetchUserStarredWorks = async ({ userId, current = 1, size = 20 }) 
     return { success: false, message: '网络错误，请稍后重试' };
   }
 };
+
+/**
+ * 获取用户作品系列分页列表（公开接口）
+ * @param {Object} params
+ * @param {number} params.userId - 用户 ID，必填
+ * @param {number} [params.current=1] - 当前页码
+ * @param {number} [params.size=10] - 每页大小，范围 1-500
+ * @param {string} [params.keyword] - 搜索关键词，可选
+ * @returns {Promise<Object>} { success, data: { records, total, ... }, message }
+ */
+export const fetchUserSeries = async ({ userId, current = 1, size = 10, keyword } = {}) => {
+  try {
+    const queryParams = new URLSearchParams()
+    if (keyword) queryParams.append('keyword', keyword)
+    const qs = queryParams.toString()
+    const url = `${SERIES_API.PAGE}/${userId}/${current}/${size}${qs ? '?' + qs : ''}`
+    console.log('[API] 请求用户系列列表:', url)
+    const response = await fetch(url, {
+      method: 'GET',
+      headers: { 'Content-Type': 'application/json' },
+    })
+    const result = await response.json()
+    console.log('[API] 用户系列列表响应:', result)
+    const statusCode = result.code || result.recode
+    if (statusCode === 200 && result.data) {
+      if (result.data.records) {
+        result.data.records = result.data.records.map(series => ({
+          ...series,
+          coverUrl: series.thumb_url ? getWorkImageUrl(series.thumb_url) : null,
+        }))
+      }
+      return { success: true, data: result.data, message: result.message }
+    }
+    return { success: false, message: result.message || '获取系列列表失败' }
+  } catch (error) {
+    console.error('[API] 获取系列列表失败:', error)
+    return { success: false, message: '网络错误，请稍后重试' }
+  }
+}
+
+/**
+ * 将 Series 数据转换为 SeriesGrid 组件所需格式
+ * @param {Array} records - API 返回的 series 列表
+ * @returns {Array}
+ */
+export const transformSeriesToGridFormat = (records) => {
+  if (!records || !Array.isArray(records)) return []
+  const pool = [3, 4, 5, 6, 3, 5, 4, 6, 3, 4, 5, 3, 6, 4, 5, 6]
+  let poolIdx = 0
+  return records.map((series) => {
+    const colSpan = pool[poolIdx % pool.length]
+    poolIdx++
+    const rowSpan = colSpan >= 5 ? 2 : colSpan === 4 ? 3 : 2
+    return {
+      seriesId: series.series_id,
+      userId: series.user_id,
+      title: series.series_title || '',
+      description: series.about_text || '',
+      coverUrl: series.coverUrl || null,
+      colSpan,
+      rowSpan,
+    }
+  })
+}
 
 /**
  * 将作品数据转换为瀑布流组件所需格式

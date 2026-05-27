@@ -296,6 +296,59 @@
         }
       }
     },
+    "/api/work/series/batch-add-works": {
+      "post": {
+        "tags": [
+          "用户接口 - 作品合集"
+        ],
+        "summary": "批量添加作品到合集接口",
+        "description": "# 批量添加作品到合集（需要登录认证 + 角色权限[22,77]）\n\n## 特性\n- Token 认证（支持 Header 和 URL 参数两种方式）\n- 支持批量将多个作品添加到指定合集\n- SQL 层面双重权限验证（合集归属 + 作品归属）\n- 仅更新有效作品（未删除且属于当前用户）\n- 不重置审核状态（仅修改 series_id）\n\n## 参数说明：\n- Authorization: Header 中的 Token，格式为 `Bearer <token>`，或通过 URL 参数 `?token=<token>` 传递\n- workIds: **作品 ID 列表**，整形数组类型，必填，单次最多 100 个\n- seriesId: **合集 ID**，Integer 类型，必填\n\n## 返回说明：\n- **添加成功**：返回 `{\"data\": true}` 和 \"作品批量添加成功\" 提示\n- **Token 不存在**：返回 `{\"data\": null}` 和 \"Token 不存在\" 提示\n- **Token 已失效**：返回 `{\"data\": null}` 和 \"Token 已失效\" 提示\n- **作品 ID 列表为空**：返回 `{\"data\": false}` 和 \"作品 ID 列表不能为空\" 提示\n- **合集 ID 无效**：返回 `{\"data\": false}` 和 \"合集 ID 无效\" 提示\n- **合集不存在**：返回 `{\"data\": false}` 和 \"合集不存在或已删除\" 提示\n- **无权操作合集**：返回 `{\"data\": false}` 和 \"无权操作该合集\" 提示\n- **无可操作作品**：返回 `{\"data\": false}` 和 \"没有可操作的作品\" 提示\n- **添加失败**：返回 `{\"data\": false}` 和 \"作品批量添加失败\" 提示\n\n## 业务逻辑：\n1. 从请求中提取并验证 Token\n2. 从 Token 中解析用户 ID\n3. 校验作品 ID 列表和合集 ID 参数有效性\n4. 验证合集是否存在且未删除\n5. 验证合集归属权（只能操作自己的合集）\n6. 查询所有作品并过滤有效作品（未删除且属于当前用户）\n7. 批量更新作品的 series_id 为指定合集 ID（SQL 层面再次验证 user_id，确保只能更新自己的作品）\n8. 返回添加结果\n\n## 注意事项：\n- **需要携带有效的 Token 才能操作**\n- Token 必须在白名单中（未过期、未登出）\n- **用户只能操作自己的合集和作品**\n- 不属于当前用户的作品会被自动过滤（不影响有效作品的处理）\n- 已删除的作品会被自动过滤\n- 建议单次批量添加不超过 100 个作品\n- 添加操作不会改变作品的审核状态\n- 作品原已属于其他合集时，将被移动到新合集\n- 空作品列表会报错，请确保至少有一个有效作品\n",
+        "operationId": "batchAddWorksToSeries",
+        "parameters": [
+          {
+            "name": "workIds",
+            "in": "query",
+            "description": "作品 ID 列表",
+            "required": true,
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "integer",
+                "format": "int32"
+              }
+            },
+            "example": [
+              1,
+              2,
+              3
+            ]
+          },
+          {
+            "name": "seriesId",
+            "in": "query",
+            "description": "合集 ID",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            },
+            "example": 1
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResponsePojoBoolean"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/work/series/add": {
       "post": {
         "tags": [
@@ -2548,7 +2601,7 @@
           "用户接口 - 作品合集"
         ],
         "summary": "分页查询用户作品系列接口",
-        "description": "# 分页查询用户作品系列（无需登录认证）\n\n## 特性\n- 公开接口（无需 Token 认证）\n- 支持分页查询\n- 自动过滤逻辑删除数据\n- **只返回审核通过的系列**（approval_status = 10）\n- 按创建时间倒序排列\n\n## 参数说明：\n- **userId**: 用户 ID，Integer 类型，必填\n- **current**: 当前页码，Integer 类型，必填，从 1 开始\n- **size**: 每页数量，Integer 类型，必填，范围 1-500\n\n## 返回说明：\n- **查询成功**：返回 **{\"data\": IPage<Series>}** ，包含分页信息和系列列表\n- **用户 ID 无效**：返回 **{\"data\": null}** 和“用户 ID 无效”提示\n\n## 业务逻辑：\n1. 校验用户 ID、页码和每页数量参数有效性\n2. 调用 Service 层进行分页查询\n3. 自动排除逻辑删除的数据（is_delete=0）\n4. **只返回审核通过的系列**（approval_status=10）\n5. 待审核（approval_status=20）和未过审（approval_status=30）的系列不会返回\n6. 按创建时间倒序返回结果\n\n## 注意事项：\n- **此接口为公开接口，无需登录即可访问**\n- 如果用户没有作品系列，返回空列表 []\n- **只能查看审核通过的系列**，待审核和未过审的系列不可见\n- 建议合理设置每页数量（size），避免一次性加载过多数据\n",
+        "description": "# 分页查询用户作品系列（无需登录认证）\n\n## 特性\n- 公开接口（无需 Token 认证）\n- 支持分页查询\n- **支持关键词搜索**（可选，同时匹配系列标题和描述）\n- 自动过滤逻辑删除数据\n- **只返回审核通过的系列**（approval_status = 10）\n- **关键词匹配时，标题匹配优先排序**，其次按创建时间倒序\n- 返回封面缩略图（取自系列内最新发布的审核通过作品）\n\n## 参数说明：\n- **userId**: 用户 ID，Integer 类型，必填\n- **current**: 当前页码，Integer 类型，必填，从 1 开始\n- **size**: 每页数量，Integer 类型，必填，范围 1-500\n- **keyword**: 搜索关键词，String 类型，可选，同时搜索系列标题和描述\n\n## 返回说明：\n- **查询成功**：返回 `{\"data\": {IPage<Series>对象}}`，包含分页信息和系列列表，每个系列含封面缩略图（thumb_url），系列内无作品时 thumb_url 为 null\n- **用户 ID 无效**：返回 `{\"data\": null}` 和 \"用户 ID 无效\" 提示\n- **无匹配结果**：返回空列表 `[]`，状态码 200\n\n## 业务逻辑：\n1. 校验用户 ID、页码和每页数量参数有效性\n2. 如果提供了关键词，对系列标题和描述进行模糊匹配（LIKE %keyword%）\n3. 调用 Service 层进行分页查询\n4. 自动排除逻辑删除的数据（is_delete=0）\n5. **只返回审核通过的系列**（approval_status=10）\n6. 待审核（approval_status=20）和未过审（approval_status=30）的系列不会返回\n7. **通过子查询获取系列内最新发布作品（is_delete=0, approval_status=10）的封面缩略图**\n8. **排序规则**：有关键词时，标题匹配的系列优先（CASE WHEN 排序）；再按创建时间倒序\n\n## 注意事项：\n- **此接口为公开接口，无需登录即可访问**\n- 如果用户没有作品系列，返回空列表 []\n- **只能查看审核通过的系列**，待审核和未过审的系列不可见\n- keyword 为空或不传时，返回所有系列（按创建时间倒序）\n- 关键词同时搜索系列标题和描述，标题匹配的结果排在最前面\n- 封面取自系列内最新发布且审核通过的作品，无作品时 thumb_url 为 null\n- 封面缩略图访问路径：`/api/image/works?filePath={thumb_url}`\n- 建议合理设置每页数量（size），避免一次性加载过多数据\n",
         "operationId": "getSeriesList",
         "parameters": [
           {
@@ -2583,6 +2636,16 @@
               "format": "int32"
             },
             "example": 10
+          },
+          {
+            "name": "keyword",
+            "in": "query",
+            "description": "搜索关键词（可选），同时匹配系列标题和描述",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "example": "风景"
           }
         ],
         "responses": {
@@ -3063,7 +3126,7 @@
           "用户接口 - 收藏"
         ],
         "summary": "分页查询用户收藏作品",
-        "description": "# 分页查询用户收藏作品（无需登录认证）\n\n## 特性\n- 公开接口（无需 Token 认证）\n- MyBatis-Plus 分页支持\n- 只返回审核通过的作品（approval_status = 10）\n- 按收藏时间倒序排列（最新收藏优先）\n\n## 参数说明：\n- **userId**: 用户 ID，Integer 类型，必填\n- **current**: 当前页码，Long 类型，必填，从 1 开始\n- **size**: 每页大小，Long 类型，必填，范围 1-500\n\n## 返回说明：\n- **查询成功**：返回 **{\"data\": IPage<Works>}** ，包含分页信息和作品列表\n- **用户 ID 无效**：返回 **{\"data\": null}** 和“用户 ID 无效”提示\n\n## 业务逻辑：\n1. 校验用户 ID、页码和每页数量参数有效性\n2. 调用 Service 层进行分页查询\n3. 关联查询 tb_star 和 tb_works 表\n4. 过滤条件：用户收藏且未删除（s.is_delete=0）、作品未删除（w.is_delete=0）、审核通过（w.approval_status=10）\n5. 按收藏时间倒序返回结果\n\n## 注意事项：\n- **此接口为公开接口，无需登录即可访问**\n- 如果用户没有收藏过任何作品，返回空列表 []\n- **只返回审核通过的作品**，待审核和未过审的作品不可见\n- 建议合理设置每页数量（size），避免一次性加载过多数据\n- 图片 URL 为文件名，完整访问路径为：`/api/image/works?filePath={img_url}`\n- 使用 **RESTful 风格**路径参数，格式：`/user-starred/{userId}/{current}/{size}`\n",
+        "description": "# 分页查询用户收藏作品（无需登录认证）\n\n## 特性\n- 公开接口（无需 Token 认证）\n- MyBatis-Plus 分页支持\n- 只返回审核通过的作品（approval_status = 10）\n- 支持按收藏时间正序或倒序排列\n- 返回作品封面缩略图（thumb_url）\n\n## 参数说明：\n- userId: **用户 ID**，Integer 类型，路径变量，必填\n- current: **当前页码**，Long 类型，路径变量，必填，从 1 开始\n- size: **每页大小**，Long 类型，路径变量，必填，范围 1-500\n- orderBy: **排序方式**，String 类型，查询参数，可选，默认 \"newest\"（最新收藏优先），传 \"oldest\" 按最早收藏优先\n\n## 返回说明：\n- **查询成功**：返回 `{\"data\": {IPage<Works>对象}}`，包含分页信息和作品列表，每个作品含封面缩略图（thumb_url）\n- **用户 ID 无效**：返回 `{\"data\": null}` 和 \"用户 ID 无效\" 提示\n- **分页参数错误**：返回 `{\"data\": null}` 和 \"页码或每页大小错误\" 提示\n\n## 业务逻辑：\n1. 校验用户 ID 有效性（非空且大于 0）\n2. 校验页码和每页大小参数（current >= 1，1 <= size <= 500）\n3. 构建 MyBatis-Plus 分页对象\n4. 关联查询 tb_star 和 tb_works 表\n5. 过滤条件：用户收藏且未删除（s.is_delete = 0）、作品未删除（w.is_delete = 0）、审核通过（w.approval_status = 10）\n6. 根据 orderBy 参数排序：默认按收藏时间倒序（s.time DESC），传 \"oldest\" 按收藏时间正序（s.time ASC）\n7. 返回分页结果集，每个作品包含原图（img_url）和封面缩略图（thumb_url）\n\n## 注意事项：\n- **此接口为公开接口，无需登录即可访问**\n- 如果用户没有收藏过任何作品，返回空的 IPage 对象（total = 0，records = []）\n- **只返回审核通过的作品**，待审核和未过审的作品不可见\n- 建议合理设置每页数量（size），避免一次性加载过多数据\n- 作品原图访问路径：`/api/image/works?filePath={img_url}`\n- 封面缩略图访问路径：`/api/image/works?filePath={thumb_url}`\n- 使用 **RESTful 风格**路径参数，格式：`/user-starred/{userId}/{current}/{size}`\n",
         "operationId": "getUserStarredWorks",
         "parameters": [
           {
@@ -3206,7 +3269,7 @@
           "用户接口 - 点赞"
         ],
         "summary": "分页查询用户点赞作品",
-        "description": "# 分页查询用户点赞作品（无需登录认证）\n\n## 特性\n- 公开接口（无需 Token 认证）\n- MyBatis-Plus 分页支持\n- 只返回审核通过的作品（approval_status = 10）\n- 按点赞时间倒序排列（最新点赞优先）\n\n## 参数说明：\n- **userId**: 用户 ID，Integer 类型，必填\n- **current**: 当前页码，Long 类型，必填，从 1 开始\n- **size**: 每页大小，Long 类型，必填，范围 1-500\n\n## 返回说明：\n- **查询成功**：返回 **{\"data\": IPage<Works>}** ，包含分页信息和作品列表\n- **用户 ID 无效**：返回 **{\"data\": null}** 和“用户 ID 无效”提示\n\n## 业务逻辑：\n1. 校验用户 ID、页码和每页数量参数有效性\n2. 调用 Service 层进行分页查询\n3. 关联查询 tb_like 和 tb_works 表\n4. 过滤条件：用户点赞且未删除（l.is_delete=0）、作品未删除（w.is_delete=0）、审核通过（w.approval_status=10）\n5. 按点赞时间倒序返回结果\n\n## 注意事项：\n- **此接口为公开接口，无需登录即可访问**\n- 如果用户没有点赞过任何作品，返回空列表 []\n- **只返回审核通过的作品**，待审核和未过审的作品不可见\n- 建议合理设置每页数量（size），避免一次性加载过多数据\n- 图片 URL 为文件名，完整访问路径为：`/api/image/works?filePath={img_url}`\n- 使用 **RESTful 风格**路径参数，格式：`/user-liked/{userId}/{current}/{size}`\n",
+        "description": "# 分页查询用户点赞作品（无需登录认证）\n\n## 特性\n- 公开接口（无需 Token 认证）\n- MyBatis-Plus 分页支持\n- 只返回审核通过的作品（approval_status = 10）\n- 支持按点赞时间正序或倒序排列\n- 返回作品封面缩略图（thumb_url）\n\n## 参数说明：\n- userId: **用户 ID**，Integer 类型，路径变量，必填\n- current: **当前页码**，Long 类型，路径变量，必填，从 1 开始\n- size: **每页大小**，Long 类型，路径变量，必填，范围 1-500\n- orderBy: **排序方式**，String 类型，查询参数，可选，默认 \"newest\"（最新点赞优先），传 \"oldest\" 按最早点赞优先\n\n## 返回说明：\n- **查询成功**：返回 `{\"data\": {IPage<Works>对象}}`，包含分页信息和作品列表，每个作品含封面缩略图（thumb_url）\n- **用户 ID 无效**：返回 `{\"data\": null}` 和 \"用户 ID 无效\" 提示\n- **分页参数错误**：返回 `{\"data\": null}` 和 \"页码或每页大小错误\" 提示\n\n## 业务逻辑：\n1. 校验用户 ID 有效性（非空且大于 0）\n2. 校验页码和每页大小参数（current >= 1，1 <= size <= 500）\n3. 构建 MyBatis-Plus 分页对象\n4. 关联查询 tb_like 和 tb_works 表\n5. 过滤条件：用户点赞且未删除（l.is_delete = 0）、作品未删除（w.is_delete = 0）、审核通过（w.approval_status = 10）\n6. 根据 orderBy 参数排序：默认按点赞时间倒序（l.time DESC），传 \"oldest\" 按点赞时间正序（l.time ASC）\n7. 返回分页结果集，每个作品包含原图（img_url）和封面缩略图（thumb_url）\n\n## 注意事项：\n- **此接口为公开接口，无需登录即可访问**\n- 如果用户没有点赞过任何作品，返回空的 IPage 对象（total = 0，records = []）\n- **只返回审核通过的作品**，待审核和未过审的作品不可见\n- 建议合理设置每页数量（size），避免一次性加载过多数据\n- 作品原图访问路径：`/api/image/works?filePath={img_url}`\n- 封面缩略图访问路径：`/api/image/works?filePath={thumb_url}`\n- 使用 **RESTful 风格**路径参数，格式：`/user-liked/{userId}/{current}/{size}`\n",
         "operationId": "getUserLikedWorks",
         "parameters": [
           {
@@ -4087,8 +4150,7 @@
             "type": "integer",
             "description": "用户 ID",
             "format": "int32",
-            "example": 1,
-            "refType": null
+            "example": 1
           },
           "user_uuid": {
             "type": "array",
@@ -4099,120 +4161,102 @@
               "description": "用户 UUID",
               "format": "byte",
               "example": "MTblrZfoioLkuozov5vliLZ1dWlk"
-            },
-            "refType": "string"
+            }
           },
           "username": {
             "type": "string",
             "description": "用户名",
-            "example": "li_hua",
-            "refType": null
+            "example": "li_hua"
           },
           "password": {
             "type": "string",
             "description": "用户密码",
-            "example": "哈希256加密密码",
-            "refType": null
+            "example": "哈希256加密密码"
           },
           "nickname": {
             "type": "string",
             "description": "用户昵称",
-            "example": "李华",
-            "refType": null
+            "example": "李华"
           },
           "user_role": {
             "type": "integer",
             "description": "用户角色",
             "format": "int32",
-            "example": 11,
-            "refType": null
+            "example": 11
           },
           "avatar_url": {
             "type": "string",
             "description": "用户头像路径",
-            "example": "/avatar/uuid.png",
-            "refType": null
+            "example": "/avatar/uuid.png"
           },
           "email": {
             "type": "string",
             "description": "绑定邮箱",
-            "example": "lihua@example.com",
-            "refType": null
+            "example": "lihua@example.com"
           },
           "is_delete": {
             "type": "boolean",
             "description": "删除标签",
-            "example": false,
-            "refType": null
+            "example": false
           },
           "status": {
             "type": "integer",
             "description": "账户状态",
             "format": "int32",
-            "example": 10,
-            "refType": null
+            "example": 10
           },
           "update_time": {
             "type": "string",
             "description": "更新时间",
             "format": "date-time",
-            "example": "2026-03-29T12:00:00.003Z",
-            "refType": null
+            "example": "2026-03-29T12:00:00.003Z"
           },
           "update_user": {
             "type": "integer",
             "description": "更新人员 ID",
             "format": "int32",
-            "example": 0,
-            "refType": null
+            "example": 0
           },
           "create_time": {
             "type": "string",
             "description": "创建时间",
             "format": "date-time",
-            "example": "2026-03-29T12:00:00.003Z",
-            "refType": null
+            "example": "2026-03-29T12:00:00.003Z"
           },
           "create_user": {
             "type": "integer",
             "description": "创建人员 ID",
             "format": "int32",
-            "example": 0,
-            "refType": null
+            "example": 0
           },
           "string_user_uuid": {
             "type": "string",
             "description": "用户 UUID 字符串",
-            "example": "字符串类型uuid",
-            "refType": null
+            "example": "字符串类型uuid"
           },
           "work_count": {
             "type": "integer",
             "description": "作品发布数",
             "format": "int32",
-            "example": 10,
-            "refType": null
+            "example": 10
           },
           "total_likes": {
             "type": "integer",
             "description": "被点赞总数",
             "format": "int64",
-            "example": 100,
-            "refType": null
+            "example": 100
           },
           "total_stars": {
             "type": "integer",
             "description": "被收藏总数",
             "format": "int64",
-            "example": 50,
-            "refType": null
+            "example": 50
           },
           "total_views": {
             "type": "integer",
             "description": "被查看总数",
             "format": "int64",
-            "example": 1000,
-            "refType": null
+            "example": 1000
           }
         },
         "description": "用户实体"
@@ -4895,25 +4939,30 @@
         "properties": {
           "size": {
             "type": "integer",
-            "format": "int64"
+            "format": "int64",
+            "refType": null
           },
           "total": {
             "type": "integer",
-            "format": "int64"
+            "format": "int64",
+            "refType": null
           },
           "records": {
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/Series"
-            }
+            },
+            "refType": "Series"
           },
           "current": {
             "type": "integer",
-            "format": "int64"
+            "format": "int64",
+            "refType": null
           },
           "pages": {
             "type": "integer",
-            "format": "int64"
+            "format": "int64",
+            "refType": null
           }
         },
         "description": "响应数据"
@@ -4950,49 +4999,64 @@
           "series_id": {
             "type": "integer",
             "description": "系列 ID",
-            "format": "int32"
+            "format": "int32",
+            "refType": null
           },
           "user_id": {
             "type": "integer",
             "description": "用户 ID",
-            "format": "int32"
+            "format": "int32",
+            "refType": null
           },
           "series_title": {
             "type": "string",
-            "description": "系列标题，16 个中文长度"
+            "description": "系列标题，16 个中文长度",
+            "refType": null
           },
           "about_text": {
             "type": "string",
-            "description": "系列描述文本，24 个中文长度"
+            "description": "系列描述文本，24 个中文长度",
+            "refType": null
+          },
+          "thumb_url": {
+            "type": "string",
+            "description": "封面缩略图文件名（取自系列内最新发布的作品）",
+            "refType": null
           },
           "approval_status": {
             "type": "integer",
             "description": "审核状态：10 - 正常、20 - 待审核、30 - 未过审",
-            "format": "int32"
+            "format": "int32",
+            "refType": null
           },
           "is_delete": {
             "type": "boolean",
-            "description": "删除标签：0 - 未删除、1 - 已删除"
+            "description": "删除标签：0 - 未删除、1 - 已删除",
+            "refType": null
           },
           "update_time": {
             "type": "string",
             "description": "数据条目更新时间戳",
-            "format": "date-time"
+            "format": "date-time",
+            "refType": null
           },
           "update_user": {
             "type": "integer",
             "description": "修改者 id，系统修改为 0",
-            "format": "int32"
+            "format": "int32",
+            "refType": null
           },
           "create_time": {
             "type": "string",
             "description": "数据条目创建时间戳",
-            "format": "date-time"
+            "format": "date-time",
+            "refType": null
           },
           "create_user": {
             "type": "integer",
             "description": "存储创建者 id，系统创建为 0",
-            "format": "int32"
+            "format": "int32",
+            "refType": null
           }
         },
         "description": "作品系列实体"
@@ -5198,53 +5262,44 @@
           "data_id": {
             "type": "integer",
             "description": "数据 ID",
-            "format": "int32",
-            "refType": null
+            "format": "int32"
           },
           "user_id": {
             "type": "integer",
             "description": "用户 ID",
-            "format": "int32",
-            "refType": null
+            "format": "int32"
           },
           "user_data_name": {
             "type": "string",
-            "description": "数据项目名称（电话、邮箱、网站、微信等等）",
-            "refType": null
+            "description": "数据项目名称（电话、邮箱、网站、微信等等）"
           },
           "user_data": {
             "type": "string",
-            "description": "数据内容（具体的电话号码、邮箱地址、网站 url 等等）",
-            "refType": null
+            "description": "数据内容（具体的电话号码、邮箱地址、网站 url 等等）"
           },
           "is_delete": {
             "type": "boolean",
-            "description": "删除标签：0 - 未删除、1 - 已删除",
-            "refType": null
+            "description": "删除标签：0 - 未删除、1 - 已删除"
           },
           "update_time": {
             "type": "string",
             "description": "数据条目更新时间戳",
-            "format": "date-time",
-            "refType": null
+            "format": "date-time"
           },
           "update_user": {
             "type": "integer",
             "description": "修改者 id，系统修改为 0",
-            "format": "int32",
-            "refType": null
+            "format": "int32"
           },
           "create_time": {
             "type": "string",
             "description": "数据条目创建时间戳",
-            "format": "date-time",
-            "refType": null
+            "format": "date-time"
           },
           "create_user": {
             "type": "integer",
             "description": "存储创建者 id，系统创建为 0",
-            "format": "int32",
-            "refType": null
+            "format": "int32"
           }
         },
         "description": "用户数据实体"
