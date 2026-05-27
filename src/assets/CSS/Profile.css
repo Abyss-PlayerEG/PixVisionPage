@@ -811,11 +811,13 @@
     border-radius: 50%;
     transform: translate(-50%, -50%);
     opacity: 0;
-    background: conic-gradient(
-        rgba(255, 255, 255, 0.08) 0deg 120deg,
-        rgba(255, 255, 255, 0.04) 120deg 240deg,
-        rgba(0, 169, 71, 0.12) 240deg 360deg
-    );
+    background:
+        conic-gradient(
+            rgba(255, 255, 255, 0.08) 0deg 120deg,
+            rgba(255, 255, 255, 0.08) 120deg 240deg,
+            rgba(255, 255, 255, 0.08) 240deg 360deg
+        ),
+        rgba(28, 28, 30, 0.96);
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.08);
     pointer-events: none;
 }
@@ -851,13 +853,18 @@
 
 .dial-segment-label {
     font-size: 13px;
-    color: rgba(255, 255, 255, 0.6);
+    color: rgba(255, 255, 255, 0.5);
     white-space: nowrap;
     transition: color 0.15s ease;
 }
 
 .dial-segment.hovered .dial-segment-label {
     color: #ffffff;
+}
+
+.dial-segment.active .dial-segment-label {
+    color: #00A947;
+    font-weight: 600;
 }
 
 /* 中心圆 */
@@ -869,7 +876,7 @@
     width: 52px;
     height: 52px;
     border-radius: 50%;
-    background: rgba(20, 20, 20, 0.95);
+    background: rgba(28, 28, 30, 0.96);
     border: 1px solid rgba(255, 255, 255, 0.12);
     display: flex;
     align-items: center;

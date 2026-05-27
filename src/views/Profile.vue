@@ -40,8 +40,18 @@ const canShowWorks = computed(() => {
   return role === 22 || role === 77
 })
 
-// 判断是否为管理员
-const isAdmin = computed(() => userInfo.value.userRole === 77)
+// 判断是否为管理员（审核员 55 / 系统管理员 77）
+const canManage = computed(() => {
+  const role = userInfo.value.userRole
+  return role === 55 || role === 77
+})
+
+// 11普通用户 / 55审核员：初始默认显示个人收藏
+watch(() => userInfo.value.userRole, (role) => {
+  if (role === 11 || role === 55) {
+    activeMenu.value = 'favorites'
+  }
+})
 
 // 编辑模式切换
 const isEditing = ref(false)
@@ -179,6 +189,12 @@ const DIAL_OPTIONS = [
   { value: false, label: '转载' },
   { value: true, label: '原创' },
 ]
+
+const dialActiveIndex = computed(() => {
+  if (workIsOriginal.value === null) return 0
+  if (workIsOriginal.value === false) return 1
+  return 2
+})
 
 const dialCenterVal = computed(() => {
   if (dialHovered.value >= 0) return DIAL_OPTIONS[dialHovered.value].value
@@ -567,7 +583,7 @@ watch(
         <span>创作中心</span>
       </button>
       <button
-        v-else
+        v-else-if="!canManage"
         class="creator-center-btn creator-apply-btn"
         @click="goApplyCreator"
       >
@@ -580,7 +596,7 @@ watch(
         <span>成为创作者</span>
       </button>
       <button
-        v-if="isAdmin"
+        v-if="canManage"
         class="creator-center-btn admin-panel-btn"
         @click="goAdminPanel"
       >
@@ -653,9 +669,6 @@ watch(
             <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path>
           </svg>
           <span class="dial-trigger-label">{{ dialLabel }}</span>
-          <svg class="dial-trigger-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <polyline points="6 9 12 15 18 9"></polyline>
-          </svg>
         </div>
       </div>
       <!-- 圆盘展开层 -->
@@ -671,7 +684,7 @@ watch(
               v-for="(opt, i) in DIAL_OPTIONS"
               :key="opt.label"
               class="dial-segment"
-              :class="{ hovered: dialHovered === i }"
+              :class="{ hovered: dialHovered === i, active: dialActiveIndex === i }"
               :style="{ transform: `rotate(${i * 120 + 60}deg)` }"
             >
               <span
