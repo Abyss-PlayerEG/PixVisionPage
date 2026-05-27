@@ -289,20 +289,44 @@ export const useProfile = () => {
   const isUploadingAvatar = ref(false)
 
   /**
-   * 更换头像：打开裁剪弹窗 → 裁剪确认 → 上传后端
+   * 更换头像：打开裁剪弹窗 → 裁剪确认 / 一键操作
    */
   const handleChangeAvatar = async () => {
     if (isUploadingAvatar.value) return
+
+    // 检查是否已绑定 Bilibili
+    const hasBilibili = contactList.value.some(item => item.user_data_name === 'Bilibili')
 
     // 1. 打开裁剪弹窗
     const result = await showAvatarCropper({
       outputSize: 1000,
       previewSize: 450,
+      hasBilibili,
     })
+
+    // 一键操作：初始化头像 / 同步B站头像
+    if (result.quickAction) {
+      const { type, data: actionData, error } = result.quickAction
+      if (error) {
+        showError(error)
+        return
+      }
+      // 成功：本地更新头像
+      if (actionData) {
+        const newPath = typeof actionData === 'string' ? actionData : actionData.avatar_url
+        if (newPath) {
+          await new Promise(r => setTimeout(r, 100))
+          userInfo.value.avatar = getAvatarUrl(newPath) + '&t=' + Date.now()
+        }
+      }
+      const msg = type === 'reset' ? '头像已恢复为默认' : 'B站头像同步成功'
+      showSuccess(msg)
+      return
+    }
 
     if (result.canceled || !result.blob) return
 
-    // 2. 上传
+    // 2. 上传裁剪结果
     isUploadingAvatar.value = true
     const uploadResult = await uploadAvatar(result.blob)
     isUploadingAvatar.value = false
@@ -311,7 +335,8 @@ export const useProfile = () => {
       // 3. 本地更新头像（加时间戳防浏览器缓存）
       const newAvatarUrl = uploadResult.data?.avatar_url
       if (newAvatarUrl) {
-        userInfo.value.avatar = getAvatarUrl(newAvatarUrl) + '?t=' + Date.now()
+        await new Promise(r => setTimeout(r, 100))
+        userInfo.value.avatar = getAvatarUrl(newAvatarUrl) + '&t=' + Date.now()
       }
       showSuccess(uploadResult.message || '头像更新成功')
     } else {

@@ -5,7 +5,7 @@
  * @module profileApi
  */
 
-import { USER_API, AUTH_API, AVATAR_UPLOAD_API } from '../config/api';
+import { USER_API, AUTH_API, AVATAR_UPLOAD_API, AVATAR_RESET_DEFAULT_API, AVATAR_SYNC_BILIBILI_API } from '../config/api';
 
 /**
  * ============================================
@@ -134,6 +134,74 @@ export const getUserInfoByUsernameOrUuid = async (params = {}) => {
  * 工具函数
  * ============================================
  */
+
+/**
+ * 恢复初始头像（随机分配 default/1.png ~ default/21.png）
+ * @returns {Promise<Object>} { success, data: { avatar_url }, message }
+ */
+export const resetDefaultAvatar = async () => {
+  try {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      return { success: false, message: '用户未登录' };
+    }
+
+    console.log('🔄 恢复初始头像...');
+
+    const response = await fetch(AVATAR_RESET_DEFAULT_API, {
+      method: 'POST',
+      headers: { 'Authorization': `Bearer ${token}` },
+    });
+
+    const result = await response.json();
+    console.log('初始头像恢复响应:', JSON.stringify(result, null, 2));
+
+    const statusCode = result.code || result.recode;
+    if (statusCode === 200) {
+      console.log('✅ 初始头像恢复成功');
+      return { success: true, data: result.data, message: result.message || '头像已恢复' };
+    }
+    console.error('❌ 初始头像恢复失败:', result.message);
+    return { success: false, message: result.message || '头像恢复失败' };
+  } catch (error) {
+    console.error('恢复初始头像网络错误:', error);
+    return { success: false, message: '网络错误，请稍后重试' };
+  }
+};
+
+/**
+ * 同步 Bilibili 头像
+ * @returns {Promise<Object>} { success, data: { avatar_url }, message }
+ */
+export const syncBilibiliAvatar = async () => {
+  try {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      return { success: false, message: '用户未登录' };
+    }
+
+    console.log('🔵 同步 Bilibili 头像...');
+
+    const response = await fetch(AVATAR_SYNC_BILIBILI_API, {
+      method: 'POST',
+      headers: { 'Authorization': `Bearer ${token}` },
+    });
+
+    const result = await response.json();
+    console.log('Bilibili 头像同步响应:', JSON.stringify(result, null, 2));
+
+    const statusCode = result.code || result.recode;
+    if (statusCode === 200) {
+      console.log('✅ Bilibili 头像同步成功');
+      return { success: true, data: result.data, message: result.message || 'B站头像同步成功' };
+    }
+    console.error('❌ Bilibili 头像同步失败:', result.message);
+    return { success: false, message: result.message || 'B站头像同步失败' };
+  } catch (error) {
+    console.error('同步Bilibili头像网络错误:', error);
+    return { success: false, message: '网络错误，请稍后重试' };
+  }
+};
 
 /**
  * 上传头像

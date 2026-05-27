@@ -4,14 +4,20 @@
  */
 
 // 后端 API 基础 URL
-export const API_BASE_URL = 'http://124.221.107.68:1899/';
-// export const API_BASE_URL = 'http://127.0.0.1:9090/';
+// export const API_BASE_URL = 'http://124.221.107.68:1899/';
+export const API_BASE_URL = 'http://127.0.0.1:9090/';
 
 // 头像获取接口
 export const AVATAR_API = `${API_BASE_URL}api/image/avatar/get`;
 
 // 头像上传接口
 export const AVATAR_UPLOAD_API = `${API_BASE_URL}api/image/avatar/upload`;
+
+// 头像恢复接口
+export const AVATAR_RESET_DEFAULT_API = `${API_BASE_URL}api/image/avatar/reset-default`;
+
+// 同步 Bilibili 头像接口
+export const AVATAR_SYNC_BILIBILI_API = `${API_BASE_URL}api/image/avatar/sync-bilibili`;
 
 // 用户认证相关接口
 export const AUTH_API = {

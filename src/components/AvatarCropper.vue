@@ -1,11 +1,13 @@
 <script setup>
 import { ref, reactive, computed, watch, nextTick, onMounted, onUnmounted } from 'vue'
 import gsap from 'gsap'
+import { resetDefaultAvatar, syncBilibiliAvatar } from '@/api/profileApi.js'
 
 const props = defineProps({
   show: { type: Boolean, default: false },
   outputSize: { type: Number, default: 1024 },
   previewSize: { type: Number, default: 300 },
+  hasBilibili: { type: Boolean, default: false },
 })
 
 // 标题根据阶段自动切换
@@ -13,7 +15,7 @@ const dialogTitle = computed(() => {
   return stage.value === 'pick' ? '上传你的头像' : '修改头像大小'
 })
 
-const emit = defineEmits(['update:show', 'confirm', 'cancel', 'close'])
+const emit = defineEmits(['update:show', 'confirm', 'cancel', 'close', 'avatar-updated'])
 
 // ── 状态 ──
 const isVisible = ref(false)
@@ -41,6 +43,36 @@ const cursorDot = reactive({ x: 0, y: 0, show: false })
 
 const previewUrl = ref('')
 const isProcessing = ref(false)
+const isQuickAction = ref(false)  // 一键操作进行中（初始化头像 / 同步B站头像）
+
+// ── 一键操作：初始化头像 ──
+const handleResetDefault = async () => {
+  if (isQuickAction.value) return
+  isQuickAction.value = true
+  const result = await resetDefaultAvatar()
+  isQuickAction.value = false
+  if (result.success) {
+    emit('avatar-updated', { type: 'reset', data: result.data })
+    closeDialog()
+  } else {
+    // 通知由外部处理（可在此 emit 或调用 composable 中的 notification）
+    emit('avatar-updated', { type: 'reset', error: result.message })
+  }
+}
+
+// ── 一键操作：同步 Bilibili 头像 ──
+const handleSyncBilibili = async () => {
+  if (isQuickAction.value || !props.hasBilibili) return
+  isQuickAction.value = true
+  const result = await syncBilibiliAvatar()
+  isQuickAction.value = false
+  if (result.success) {
+    emit('avatar-updated', { type: 'bilibili', data: result.data })
+    closeDialog()
+  } else {
+    emit('avatar-updated', { type: 'bilibili', error: result.message })
+  }
+}
 
 const dropzoneHint = computed(() => {
   return `支持 JPG / JPEG / PNG，建议尺寸 ≥ ${props.outputSize}×${props.outputSize}`
@@ -469,6 +501,32 @@ defineExpose({ showDialog, cancel })
             <p class="avc-dropzone-sub">{{ dropzoneHint }}</p>
           </div>
           <input ref="fileInput" type="file" accept=".jpg,.jpeg,.png" class="avc-file-input" @change="onFileInput" />
+
+          <!-- 一键操作按钮 -->
+          <div class="avc-quick-actions">
+            <button
+              class="avc-quick-btn avc-quick-btn--reset"
+              :disabled="isQuickAction"
+              @click="handleResetDefault"
+            >
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                <circle cx="12" cy="7" r="4"></circle>
+              </svg>
+              <span>{{ isQuickAction ? '处理中...' : '初始化头像' }}</span>
+            </button>
+            <button
+              class="avc-quick-btn avc-quick-btn--bilibili"
+              :class="{ 'avc-quick-btn--disabled': !hasBilibili }"
+              :disabled="isQuickAction || !hasBilibili"
+              @click="handleSyncBilibili"
+            >
+              <svg viewBox="0 0 1024 1024" width="16" height="16" fill="currentColor">
+                <path d="M777.514667 131.669333a53.333333 53.333333 0 0 1 0 75.434667L728.746667 255.829333h49.92A160 160 0 0 1 938.666667 415.872v320a160 160 0 0 1-160 160H245.333333A160 160 0 0 1 85.333333 735.872v-320a160 160 0 0 1 160-160h49.749334L246.4 207.146667a53.333333 53.333333 0 1 1 75.392-75.434667l113.152 113.152c3.370667 3.370667 6.186667 7.04 8.448 10.965333h137.088c2.261333-3.925333 5.12-7.68 8.490667-11.008l113.109333-113.152a53.333333 53.333333 0 0 1 75.434667 0z m1.152 231.253334H245.333333a53.333333 53.333333 0 0 0-53.205333 49.365333l-0.128 4.010667v320c0 28.117333 21.76 51.157333 49.365333 53.162666l3.968 0.170667h533.333334a53.333333 53.333333 0 0 0 53.205333-49.365333l0.128-3.968v-320c0-29.44-23.893333-53.333333-53.333333-53.333334z m-426.666667 106.666666c29.44 0 53.333333 23.893333 53.333333 53.333334v53.333333a53.333333 53.333333 0 1 1-106.666666 0v-53.333333c0-29.44 23.893333-53.333333 53.333333-53.333334z m320 0c29.44 0 53.333333 23.893333 53.333333 53.333334v53.333333a53.333333 53.333333 0 1 1-106.666666 0v-53.333333c0-29.44 23.893333-53.333333 53.333333-53.333334z"></path>
+              </svg>
+              <span>{{ isQuickAction ? '处理中...' : '同步B站头像' }}</span>
+            </button>
+          </div>
         </div>
 
         <!-- 阶段：裁剪 -->
@@ -623,6 +681,68 @@ defineExpose({ showDialog, cancel })
 }
 
 .avc-file-input { display: none; }
+
+/* ── 一键操作按钮 ── */
+.avc-quick-actions {
+  width: 100%;
+  display: flex;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.avc-quick-btn {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 9px 0;
+  border-radius: 10px;
+  border: none;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  color: #ffffff;
+  transition: all 0.2s ease;
+}
+
+.avc-quick-btn:active {
+  transform: scale(0.97);
+}
+
+.avc-quick-btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.avc-quick-btn:disabled:active {
+  transform: none;
+}
+
+/* 初始化头像：绿色 */
+.avc-quick-btn--reset {
+  background: #00A947;
+}
+
+.avc-quick-btn--reset:hover:not(:disabled) {
+  filter: brightness(0.9);
+}
+
+/* 同步B站头像：B站粉 */
+.avc-quick-btn--bilibili {
+  background: #FB7299;
+}
+
+.avc-quick-btn--bilibili:hover:not(:disabled) {
+  filter: brightness(0.9);
+}
+
+/* 未绑定B站时：灰色，不可交互 */
+.avc-quick-btn--disabled {
+  background: #444 !important;
+  color: #888 !important;
+  cursor: not-allowed !important;
+}
 
 /* ── 裁剪阶段 ── */
 .avc-crop-stage {

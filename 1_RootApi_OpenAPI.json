@@ -7,7 +7,7 @@
   },
   "servers": [
     {
-      "url": "http://localhost:9090",
+      "url": "http://127.0.0.1:9090",
       "description": "Generated server url"
     }
   ],
@@ -67,6 +67,10 @@
     {
       "name": "系统管理员接口 - 作品管理",
       "description": "提供作品管理的后台接口，包括批量更新审核状态、删除作品等操作"
+    },
+    {
+      "name": "系统管理员接口 - 日志管理",
+      "description": "提供给超级管理员，用于查看管理员的操作日志"
     },
     {
       "name": "系统管理员接口 - 用户数据变更审核",
@@ -1160,6 +1164,50 @@
             }
           }
         },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResponsePojoString"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/image/avatar/sync-bilibili": {
+      "post": {
+        "tags": [
+          "图像接口"
+        ],
+        "summary": "同步Bilibili头像",
+        "description": "# 同步Bilibili头像（需要登录认证）\n\n## 特性\n- Token 认证（通过拦截器自动验证）\n- 自动从数据库查询已绑定的 Bilibili UID\n- 调用 Python 辅助服务获取 Bilibili 用户头像 URL\n- 下载头像图片保存到本地（不做压缩，保持原始尺寸）\n- UUID 唯一文件名生成\n- 直接更新头像（无需人工审核）\n\n## 参数说明：\n- 无需传入参数，从 Token 中自动获取当前登录用户\n\n## 返回说明：\n- **同步成功**：返回 200 状态码和成功消息，头像路径在 data 中\n- **未授权**：返回 401 状态码（Token 无效或不存在）\n- **未绑定Bilibili账号**：返回 400 状态码和\"未绑定Bilibili账号\"提示\n- **获取头像信息失败**：返回 500 状态码和\"获取Bilibili用户信息失败\"提示\n- **头像下载失败**：返回 500 状态码和\"下载Bilibili头像失败\"提示\n- **服务器错误**：返回 500 状态码\n\n## 业务逻辑：\n1. 从 Token 中获取当前登录用户的 ID\n2. 查询用户拓展数据，获取已绑定的 Bilibili UID\n3. 如果未绑定 Bilibili 账号，返回错误提示\n4. 调用 Python 辅助服务获取 Bilibili 用户的头像 URL（face 字段）\n5. 通过 RestTemplate 下载头像图片字节流\n6. 生成唯一的文件名（UUID.png）\n7. 保存文件到 ~/.pix_vision/data/avatar/ 目录\n8. 直接调用 updateUserAvatar 更新用户头像（跳过审核）\n9. 返回同步后的头像路径\n\n## 注意事项：\n- 该接口**需要认证**，必须在请求头中携带有效的 Token\n- 头像图片**不做压缩处理**，保持原始尺寸和格式\n- 头像同步**直接生效**，无需等待人工审核\n- 与上传头像接口不同，同步的头像不会经过人工审核流程\n- 如果 Bilibili 头像 URL 无效或下载失败，会返回错误\n- 每次同步都会下载最新的 Bilibili 头像并覆盖本地文件\n",
+        "operationId": "syncBilibiliAvatar",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResponsePojoString"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/image/avatar/reset-default": {
+      "post": {
+        "tags": [
+          "图像接口"
+        ],
+        "summary": "恢复初始头像",
+        "description": "# 恢复初始头像（需要登录认证）\n\n## 特性\n- Token 认证（通过拦截器自动验证）\n- 随机分配默认头像（default/1.png ~ default/21.png）\n- 模拟注册时的随机头像分配逻辑\n- 直接更新头像（无需人工审核）\n\n## 参数说明：\n- 无需传入参数，从 Token 中自动获取当前登录用户\n\n## 返回说明：\n- **恢复成功**：返回 200 状态码和成功消息，头像路径在 data 中\n- **未授权**：返回 401 状态码（Token 无效或不存在）\n- **服务器错误**：返回 500 状态码\n\n## 业务逻辑：\n1. 从 Token 中获取当前登录用户的 ID\n2. 随机生成 1-21 的整数，拼接默认头像路径 default/{num}.png\n3. 直接调用 updateUserAvatar 更新用户头像（跳过审核）\n4. 返回恢复后的头像路径\n\n## 注意事项：\n- 该接口**需要认证**，必须在请求头中携带有效的 Token\n- 头像恢复**直接生效**，无需等待人工审核\n- 默认头像文件已预置于 ~/.pix_vision/data/avatar/default/ 目录\n- 每次调用随机分配一个默认头像\n- 与注册时的随机头像分配逻辑一致\n",
+        "operationId": "resetDefaultAvatar",
         "responses": {
           "200": {
             "description": "OK",
@@ -2357,6 +2405,61 @@
         }
       }
     },
+    "/api/admin/comments/update/approval-status": {
+      "post": {
+        "tags": [
+          "系统管理员接口 - 评论管理"
+        ],
+        "summary": "批量更新评论审核状态",
+        "description": "# 批量更新评论审核状态（需要登录认证 + 角色权限[55, 77]）\n\n## 特性\n- 需要审核员或系统管理员角色（role=55 或 77）才能访问\n- 支持批量更新多个评论的审核状态\n- 更新一级评论时自动级联更新其所有二级评论的审核状态\n- 支持三种审核状态：10-正常、20-待审核、30-未过审\n- 返回详细的操作结果统计信息\n\n## 参数说明：\n- **commentIds**: **评论 ID 列表**，List<Integer> 类型，请求参数，必填，不能为空\n- **approvalStatus**: **审核状态**，Integer 类型，请求参数，必填，可选值：\n  - 10: 正常（通过审核）\n  - 20: 待审核\n  - 30: 未过审（违规）\n\n## 返回说明：\n- **成功**：返回包含总数、成功数、失败 ID 列表的统计信息\n- **全部失败**：返回错误提示\n- **参数错误**：返回错误提示\n\n## 业务逻辑：\n1. 验证当前用户是否为审核员或系统管理员（由拦截器自动验证）\n2. 校验评论 ID 列表和审核状态参数的有效性\n3. 如果是一级评论则查询其所有二级评论，一起更新审核状态\n4. 逐个更新 tb_comments 表中对应评论的 approval_status 字段\n5. 只更新未删除的评论（is_delete = 0）\n6. 记录操作结果并返回统计信息\n\n## 注意事项：\n- 设置为 30（未过审）后，评论将在前端不可见\n- 设置为 10（正常）后，评论将在前端重新可见\n- 此操作会立即生效，无需重启服务\n- 更新一级评论时会自动级联更新所有二级评论\n- 已删除的评论不会被更新\n- 即使部分评论更新失败，其他评论仍会成功更新\n",
+        "operationId": "adminUpdateCommentsApprovalStatus",
+        "parameters": [
+          {
+            "name": "commentIds",
+            "in": "query",
+            "description": "目标评论 ID 列表",
+            "required": true,
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "integer",
+                "format": "int32"
+              }
+            },
+            "example": "1,2,3"
+          },
+          {
+            "name": "approvalStatus",
+            "in": "query",
+            "description": "审核状态：10-正常、20-待审核、30-未过审",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "description": "审核状态：10-正常、20-待审核、30-未过审",
+              "example": 30,
+              "enum": [
+                "10",
+                "20",
+                "30"
+              ]
+            },
+            "example": 30
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResponsePojoAdminBatchOperateCommentResult"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/admin/comments/delete": {
       "post": {
         "tags": [
@@ -2489,6 +2592,28 @@
               "*/*": {
                 "schema": {
                   "$ref": "#/components/schemas/ResponsePojoIPageSeries"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/work/random": {
+      "get": {
+        "tags": [
+          "用户接口 - 作品"
+        ],
+        "summary": "随机获取一个可见作品 ID",
+        "description": "# 随机获取一个可见作品 ID（无需登录认证）\n\n## 特性\n- 公开接口（无需认证）\n- 从所有未删除且审核通过的作品中完全随机选取\n- 仅返回作品 ID，不记录历史、不增加浏览量\n\n## 参数说明：\n- 无需参数\n\n## 返回说明：\n- **查询成功**：返回 **{\"data\": 作品ID}**\n- **无可见作品**：返回 **{\"data\": null}** 和\"暂无可用作品\"提示\n\n## 业务逻辑：\n1. 执行 SELECT work_id FROM tb_works ... ORDER BY RAND() LIMIT 1\n2. 返回随机作品 ID\n\n## 注意事项：\n- 这是一个**公开接口**，无需 Token 认证\n- 仅从审核通过且未删除的作品中随机选取\n- 前端拿到 ID 后可调用 /api/work/detail/{workId} 获取完整详情\n- 每次请求可能返回相同或不同的作品 ID\n",
+        "operationId": "getRandomWork",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResponsePojoInteger"
                 }
               }
             }
@@ -2641,6 +2766,28 @@
               "*/*": {
                 "schema": {
                   "$ref": "#/components/schemas/ResponsePojoIPageWorks"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/work/last-id": {
+      "get": {
+        "tags": [
+          "用户接口 - 作品"
+        ],
+        "summary": "获取最后一个公开作品的 work_id",
+        "description": "# 获取最后一个公开作品的 work_id（无需登录认证）\n\n## 特性\n- 公开接口（无需认证）\n- 仅统计未删除且审核通过的作品\n- 使用 MAX(work_id) 直接走主键索引，性能优异\n\n## 参数说明：\n- 无需参数\n\n## 返回说明：\n- **查询成功**：返回 **{\"data\": Integer}** ，最后一个作品的 work_id\n- **无作品**：返回 **{\"data\": 0}**\n\n## 业务逻辑：\n1. 调用 Service 查询 MAX(work_id)\n2. 仅过滤 is_delete=0 且 approval_status=10 的可见作品\n3. 如果没有任何符合条件的作品，返回 0\n\n## 注意事项：\n- 这是一个**公开接口**，无需 Token 认证\n- 仅统计审核通过且未删除的作品\n- 如果没有任何可见作品，返回 0\n- 前端可据此计算总页数或判断是否存在作品\n",
+        "operationId": "getLastWorkId",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResponsePojoInteger"
                 }
               }
             }
@@ -2825,29 +2972,40 @@
         "tags": [
           "用户接口 - 用户基础资料"
         ],
-        "summary": "根据 UUID 或用户名查询用户信息",
-        "description": "# 根据 UUID 或用户名查询用户信息（无需登录认证）\n\n## 特性\n- 公开接口（无需 Token 认证）\n- 支持通过 UUID 或用户名精确查询单个用户\n- 自动转换二进制 UUID 为字符串格式\n- uuid、username 至少提供一个\n\n## 参数说明：\n- uuid: **用户 UUID**，String 类型，可选，支持两种格式：\n  * 32位不带连字符：`6ddae8a5837d4721a1b783a7f98c67aa`\n  * 36位带连字符：`550e8400-e29b-41d4-a716-446655440000`\n  * 与 username 二选一\n- username: **用户名**，String 类型，可选，精确匹配，与 uuid 二选一\n\n## 返回说明：\n- **查询成功**：返回 **{\"data\": {User对象}}** ，包含用户详细信息\n- **参数缺失**：返回 **{\"data\": null}** 和\"请提供 UUID 或用户名\"提示\n- **UUID 格式错误**：返回 **{\"data\": null}** 和\"UUID 格式错误\"提示\n- **用户不存在**：返回 **{\"data\": null}** 和\"用户不存在\"提示\n\n## 业务逻辑：\n1. 校验参数：uuid、username 至少提供一个\n2. 如果提供 uuid，验证格式并转换为二进制\n3. 根据 uuid 或 username 查询用户信息\n4. 将二进制 UUID 转换为字符串格式\n5. 隐藏敏感字段后返回用户详细信息\n\n## 注意事项：\n- 这是一个**公开接口**，无需 Token 认证\n- **uuid、username 至少提供一个**\n- 只返回**未删除**的用户（is_delete=0）\n- 返回的字段不包含敏感信息（password、user_uuid 均被隐藏）\n- UUID 支持两种格式：32位不带连字符 或 36位带连字符\n- username 为精确匹配，不支持模糊查询\n",
+        "summary": "根据用户 ID、用户名或 UUID 查询用户信息",
+        "description": "# 根据用户 ID、用户名或 UUID 查询用户信息（无需登录认证）\n\n## 特性\n- 公开接口（无需 Token 认证）\n- 支持通过用户 ID、用户名或 UUID 精确查询单个用户\n- 自动转换二进制 UUID 为字符串格式\n- 查询优先级：userId > username > uuid\n- userId、username、uuid 至少提供一个\n\n## 参数说明：\n- userId: **用户 ID**，Integer 类型，可选，直接通过主键查询（优先级最高）\n- username: **用户名**，String 类型，可选，精确匹配\n- uuid: **用户 UUID**，String 类型，可选，支持两种格式：\n  * 32位不带连字符：`6ddae8a5837d4721a1b783a7f98c67aa`\n  * 36位带连字符：`550e8400-e29b-41d4-a716-446655440000`\n\n## 返回说明：\n- **查询成功**：返回 **{\"data\": {User对象}}** ，包含用户详细信息\n- **参数缺失**：返回 **{\"data\": null}** 和\"请提供用户 ID、用户名或 UUID\"提示\n- **UUID 格式错误**：返回 **{\"data\": null}** 和\"UUID 格式错误\"提示\n- **用户不存在**：返回 **{\"data\": null}** 和\"用户不存在\"提示\n\n## 业务逻辑：\n1. 校验参数：userId、username、uuid 至少提供一个\n2. 按优先级查询：userId > username > uuid\n3. 如果使用 uuid，验证格式并转换为二进制\n4. 将二进制 UUID 转换为字符串格式\n5. 隐藏敏感字段后返回用户详细信息\n\n## 注意事项：\n- 这是一个**公开接口**，无需 Token 认证\n- **userId、username、uuid 至少提供一个**\n- 查询优先级：userId（最快，主键查询）> username > uuid\n- 只返回**未删除**的用户（is_delete=0）\n- 返回的字段不包含敏感信息（password、user_uuid 均被隐藏）\n- UUID 支持两种格式：32位不带连字符 或 36位带连字符\n- username 为精确匹配，不支持模糊查询\n",
         "operationId": "getUserInfo",
         "parameters": [
           {
-            "name": "uuid",
+            "name": "userId",
             "in": "query",
-            "description": "用户 UUID（可选），标准格式，与 username 二选一",
+            "description": "用户 ID（可选），直接通过主键查询，优先级最高",
             "required": false,
             "schema": {
-              "type": "string"
+              "type": "integer",
+              "format": "int32"
             },
-            "example": "550e8400-e29b-41d4-a716-446655440000"
+            "example": 1
           },
           {
             "name": "username",
             "in": "query",
-            "description": "用户名（可选），精确匹配，与 uuid 二选一",
+            "description": "用户名（可选），精确匹配",
             "required": false,
             "schema": {
               "type": "string"
             },
             "example": "test_user"
+          },
+          {
+            "name": "uuid",
+            "in": "query",
+            "description": "用户 UUID（可选），标准格式",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "example": "550e8400-e29b-41d4-a716-446655440000"
           }
         ],
         "responses": {
@@ -3325,6 +3483,41 @@
         }
       }
     },
+    "/api/image/avatar/admin-view": {
+      "get": {
+        "tags": [
+          "图像接口"
+        ],
+        "summary": "管理员查看非公开头像图片",
+        "description": "# 管理员查看非公开头像图片（需要登录认证 + 角色权限[55, 77]）\n\n## 特性\n- Token 认证（通过拦截器自动验证）\n- 角色权限控制（仅审核员和系统管理员）\n- 路径安全校验（防目录遍历攻击）\n- 文件类型白名单（JPG/JPEG/PNG）\n- **按优先级查找非公开文件后缀**：.fail → .pend → .del → 正常\n- 适用于审核员查看违规头像、待审核头像、已删除头像\n\n## 权限要求\n- **角色代码 55**：审核员\n- **角色代码 77**：系统管理员\n- 其他角色访问将返回 **403 Forbidden**\n\n## 参数说明：\n- filePath: **数据库存储的头像图片文件名**，字符串类型，必填，为正常格式（如 uuid.png），不含 .fail/.pend/.del 后缀\n\n## 返回说明：\n- **获取成功**：直接返回图片二进制数据，Content-Type 为 image/png 或 image/jpeg\n- **未授权**：返回 401 状态码（Token 无效或不存在）\n- **权限不足**：返回 403 状态码（角色不符合要求）\n- **文件不存在**：返回 404 Not Found（所有后缀均未找到）\n- **非法路径**：返回 400 Bad Request（包含 .. 或 / 开头）\n- **不支持的格式**：返回 400 Bad Request（非 JPG/JPEG/PNG 格式）\n- **服务器错误**：返回 500 Internal Server Error\n\n## 业务逻辑：\n1. 校验文件路径安全性（禁止 .. 和绝对路径）\n2. 检查文件扩展名是否在白名单中（jpg/jpeg/png）\n3. 按优先级查找实际文件：\n   - `.fail` 后缀（违规未过审头像）\n   - `.pend` 后缀（待审核头像）\n   - `.del` 后缀（已删除头像）\n   - 正常格式（审核通过头像）\n4. 构建完整文件路径并返回图片\n\n## 注意事项：\n- 该接口**需要认证**，必须在请求头中携带有效的 Token\n- **仅角色代码 55（审核员）和 77（系统管理员）**可以访问\n- 传入的 filePath 为数据库存储的正常格式文件名（如 uuid.png），**不需要**手动添加 .fail/.pend/.del 后缀\n- 接口会自动按优先级查找实际存在的文件\n- 与公开接口 `/api/image/avatar/get` 的区别：公开接口仅查找正常文件，本接口优先查找非公开后缀文件\n- 用于审核员在管理后台查看待审核、违规或已删除的头像图片\n",
+        "operationId": "adminViewAvatarImage",
+        "parameters": [
+          {
+            "name": "filePath",
+            "in": "query",
+            "description": "数据库存储的头像图片文件名（正常格式，如：uuid.png）",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "a1b2c3d4.png"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/history/{current}/{size}": {
       "get": {
         "tags": [
@@ -3542,6 +3735,77 @@
               "*/*": {
                 "schema": {
                   "$ref": "#/components/schemas/ResponsePojoIPageUserDataChangeLockVO"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/admin/logs/page/{current}/{size}": {
+      "get": {
+        "tags": [
+          "系统管理员接口 - 日志管理"
+        ],
+        "summary": "分页查询操作日志",
+        "description": "# 分页查询操作日志（需要登录认证 + 角色权限[77]）\n\n## 特性\n- 需要系统管理员角色（role=77）才能访问\n- 支持分页查询所有操作日志\n- 用户名通过 Redis 缓存解析（缓存 1 小时）\n- 即使用户被删除，历史日志中的用户名仍可正常展示\n- 支持关键字模糊搜索（匹配操作事件 log_event）\n- 支持按时间排序（最新/最早）\n\n## 参数说明：\n- **current**: **当前页码**，Long 类型，必填，从 1 开始\n- **size**: **每页大小**，Long 类型，必填，范围 1-500\n- **keyword**: **关键字**，String 类型，可选，模糊搜索操作事件（log_event）\n- **orderBy**: **排序方式**，String 类型，可选\n  - 'oldest': 按最早操作排列\n  - 其他值或 null: 按最新操作排列（默认）\n\n## 返回说明：\n- **成功**：返回 IPage<OperateLogVO> 对象，包含日志列表和分页信息\n- **无数据**：返回空的分页结果（total=0, records=[]）\n- 每条记录包含 sys_log_id、user_id、username、log_datetime、log_event\n\n## 业务逻辑：\n1. 校验分页参数（current>=1, 1<=size<=500）\n2. 构建 MyBatis-Plus 分页对象查询 tb_sys_logs\n3. 收集所有 user_id，优先从 Redis 获取用户名缓存\n4. 缓存未命中时查询 tb_user 并将结果缓存 1 小时\n5. 即使用户已被删除，Redis 缓存仍保留历史用户名\n6. 返回分页结果集\n\n## 注意事项：\n- 用户名优先从 Redis 缓存读取，TTL 为 1 小时\n- 关键字搜索只匹配 log_event 字段，不匹配用户名\n- 日志按 log_datetime 排序，默认最新在前\n",
+        "operationId": "getOperateLogsPage",
+        "parameters": [
+          {
+            "name": "current",
+            "in": "path",
+            "description": "当前页码（从 1 开始）",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "example": 1
+          },
+          {
+            "name": "size",
+            "in": "path",
+            "description": "每页大小（范围 1-500）",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "example": 10
+          },
+          {
+            "name": "keyword",
+            "in": "query",
+            "description": "关键字（可选，模糊搜索操作事件）",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "orderBy",
+            "in": "query",
+            "description": "排序方式：'oldest' 按最早，其他值或 null 按最新（默认）",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "description": "排序方式：'oldest' 按最早，其他值或 null 按最新（默认）",
+              "example": "newest",
+              "enum": [
+                "newest",
+                "oldest"
+              ]
+            },
+            "example": "newest"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResponsePojoIPageOperateLogVO"
                 }
               }
             }
@@ -3823,7 +4087,8 @@
             "type": "integer",
             "description": "用户 ID",
             "format": "int32",
-            "example": 1
+            "example": 1,
+            "refType": null
           },
           "user_uuid": {
             "type": "array",
@@ -3834,102 +4099,120 @@
               "description": "用户 UUID",
               "format": "byte",
               "example": "MTblrZfoioLkuozov5vliLZ1dWlk"
-            }
+            },
+            "refType": "string"
           },
           "username": {
             "type": "string",
             "description": "用户名",
-            "example": "li_hua"
+            "example": "li_hua",
+            "refType": null
           },
           "password": {
             "type": "string",
             "description": "用户密码",
-            "example": "哈希256加密密码"
+            "example": "哈希256加密密码",
+            "refType": null
           },
           "nickname": {
             "type": "string",
             "description": "用户昵称",
-            "example": "李华"
+            "example": "李华",
+            "refType": null
           },
           "user_role": {
             "type": "integer",
             "description": "用户角色",
             "format": "int32",
-            "example": 11
+            "example": 11,
+            "refType": null
           },
           "avatar_url": {
             "type": "string",
             "description": "用户头像路径",
-            "example": "/avatar/uuid.png"
+            "example": "/avatar/uuid.png",
+            "refType": null
           },
           "email": {
             "type": "string",
             "description": "绑定邮箱",
-            "example": "lihua@example.com"
+            "example": "lihua@example.com",
+            "refType": null
           },
           "is_delete": {
             "type": "boolean",
             "description": "删除标签",
-            "example": false
+            "example": false,
+            "refType": null
           },
           "status": {
             "type": "integer",
             "description": "账户状态",
             "format": "int32",
-            "example": 10
+            "example": 10,
+            "refType": null
           },
           "update_time": {
             "type": "string",
             "description": "更新时间",
             "format": "date-time",
-            "example": "2026-03-29T12:00:00.003Z"
+            "example": "2026-03-29T12:00:00.003Z",
+            "refType": null
           },
           "update_user": {
             "type": "integer",
             "description": "更新人员 ID",
             "format": "int32",
-            "example": 0
+            "example": 0,
+            "refType": null
           },
           "create_time": {
             "type": "string",
             "description": "创建时间",
             "format": "date-time",
-            "example": "2026-03-29T12:00:00.003Z"
+            "example": "2026-03-29T12:00:00.003Z",
+            "refType": null
           },
           "create_user": {
             "type": "integer",
             "description": "创建人员 ID",
             "format": "int32",
-            "example": 0
+            "example": 0,
+            "refType": null
           },
           "string_user_uuid": {
             "type": "string",
             "description": "用户 UUID 字符串",
-            "example": "字符串类型uuid"
+            "example": "字符串类型uuid",
+            "refType": null
           },
           "work_count": {
             "type": "integer",
             "description": "作品发布数",
             "format": "int32",
-            "example": 10
+            "example": 10,
+            "refType": null
           },
           "total_likes": {
             "type": "integer",
             "description": "被点赞总数",
             "format": "int64",
-            "example": 100
+            "example": 100,
+            "refType": null
           },
           "total_stars": {
             "type": "integer",
             "description": "被收藏总数",
             "format": "int64",
-            "example": 50
+            "example": 50,
+            "refType": null
           },
           "total_views": {
             "type": "integer",
             "description": "被查看总数",
             "format": "int64",
-            "example": 1000
+            "example": 1000,
+            "refType": null
           }
         },
         "description": "用户实体"
@@ -4295,15 +4578,15 @@
             "type": "integer",
             "format": "int64"
           },
+          "total": {
+            "type": "integer",
+            "format": "int64"
+          },
           "records": {
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/User"
             }
-          },
-          "total": {
-            "type": "integer",
-            "format": "int64"
           },
           "current": {
             "type": "integer",
@@ -4614,15 +4897,15 @@
             "type": "integer",
             "format": "int64"
           },
+          "total": {
+            "type": "integer",
+            "format": "int64"
+          },
           "records": {
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/Series"
             }
-          },
-          "total": {
-            "type": "integer",
-            "format": "int64"
           },
           "current": {
             "type": "integer",
@@ -4721,15 +5004,15 @@
             "type": "integer",
             "format": "int64"
           },
+          "total": {
+            "type": "integer",
+            "format": "int64"
+          },
           "records": {
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/Works"
             }
-          },
-          "total": {
-            "type": "integer",
-            "format": "int64"
           },
           "current": {
             "type": "integer",
@@ -4915,44 +5198,53 @@
           "data_id": {
             "type": "integer",
             "description": "数据 ID",
-            "format": "int32"
+            "format": "int32",
+            "refType": null
           },
           "user_id": {
             "type": "integer",
             "description": "用户 ID",
-            "format": "int32"
+            "format": "int32",
+            "refType": null
           },
           "user_data_name": {
             "type": "string",
-            "description": "数据项目名称（电话、邮箱、网站、微信等等）"
+            "description": "数据项目名称（电话、邮箱、网站、微信等等）",
+            "refType": null
           },
           "user_data": {
             "type": "string",
-            "description": "数据内容（具体的电话号码、邮箱地址、网站 url 等等）"
+            "description": "数据内容（具体的电话号码、邮箱地址、网站 url 等等）",
+            "refType": null
           },
           "is_delete": {
             "type": "boolean",
-            "description": "删除标签：0 - 未删除、1 - 已删除"
+            "description": "删除标签：0 - 未删除、1 - 已删除",
+            "refType": null
           },
           "update_time": {
             "type": "string",
             "description": "数据条目更新时间戳",
-            "format": "date-time"
+            "format": "date-time",
+            "refType": null
           },
           "update_user": {
             "type": "integer",
             "description": "修改者 id，系统修改为 0",
-            "format": "int32"
+            "format": "int32",
+            "refType": null
           },
           "create_time": {
             "type": "string",
             "description": "数据条目创建时间戳",
-            "format": "date-time"
+            "format": "date-time",
+            "refType": null
           },
           "create_user": {
             "type": "integer",
             "description": "存储创建者 id，系统创建为 0",
-            "format": "int32"
+            "format": "int32",
+            "refType": null
           }
         },
         "description": "用户数据实体"
@@ -5053,15 +5345,15 @@
             "type": "integer",
             "format": "int64"
           },
+          "total": {
+            "type": "integer",
+            "format": "int64"
+          },
           "records": {
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/History"
             }
-          },
-          "total": {
-            "type": "integer",
-            "format": "int64"
           },
           "current": {
             "type": "integer",
@@ -5302,15 +5594,15 @@
             "type": "integer",
             "format": "int64"
           },
+          "total": {
+            "type": "integer",
+            "format": "int64"
+          },
           "records": {
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/UserDataChangeLockVO"
             }
-          },
-          "total": {
-            "type": "integer",
-            "format": "int64"
           },
           "current": {
             "type": "integer",
@@ -5389,6 +5681,86 @@
           }
         }
       },
+      "IPageOperateLogVO": {
+        "type": "object",
+        "properties": {
+          "size": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "total": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "records": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/OperateLogVO"
+            }
+          },
+          "current": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "pages": {
+            "type": "integer",
+            "format": "int64"
+          }
+        },
+        "description": "响应数据"
+      },
+      "OperateLogVO": {
+        "type": "object",
+        "properties": {
+          "sys_log_id": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "user_id": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "log_datetime": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "log_event": {
+            "type": "string"
+          },
+          "username": {
+            "type": "string",
+            "description": "操作者用户名",
+            "example": "li_hua"
+          }
+        },
+        "description": "操作日志视图对象（含用户名）"
+      },
+      "ResponsePojoIPageOperateLogVO": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/IPageOperateLogVO"
+          },
+          "message": {
+            "type": "string",
+            "description": "响应说明信息"
+          },
+          "recode": {
+            "type": "integer",
+            "description": "响应状态码（200-成功；500-失败）",
+            "format": "int32"
+          },
+          "status": {
+            "type": "string",
+            "description": "响应状态"
+          },
+          "time_str": {
+            "type": "string",
+            "description": "响应时间"
+          }
+        },
+        "description": "响应数据类型"
+      },
       "Comments": {
         "type": "object",
         "properties": {
@@ -5450,15 +5822,15 @@
             "type": "integer",
             "format": "int64"
           },
+          "total": {
+            "type": "integer",
+            "format": "int64"
+          },
           "records": {
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/Comments"
             }
-          },
-          "total": {
-            "type": "integer",
-            "format": "int64"
           },
           "current": {
             "type": "integer",
