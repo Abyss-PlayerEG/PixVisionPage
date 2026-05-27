@@ -379,11 +379,15 @@ defineExpose({ showDialog, cancel })
 .ce-dialog {
   width: 420px;
   max-width: calc(100vw - 48px);
+  max-height: 75vh;
   padding: 28px 24px 24px;
   border-radius: 16px;
   background: #1a1a1a;
   border: 1px solid #333;
   box-shadow: 0 12px 48px rgba(0, 0, 0, 0.55);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
 }
 
 /* ── 标题 ── */
@@ -408,6 +412,9 @@ defineExpose({ showDialog, cancel })
   flex-direction: column;
   gap: 12px;
   margin-bottom: 8px;
+  overflow-y: auto;
+  flex: 1 1 auto;
+  min-height: 0;
 }
 
 .ce-row {
