@@ -327,16 +327,38 @@ const handleContactClick = (item) => {
           <rect x="14" y="14" width="7" height="7"></rect>
           <rect x="3" y="14" width="7" height="7"></rect>
         </svg>
-        <span class="menu-text">个人作品</span>
+        <span class="menu-text">Works</span>
       </div>
       
-      <div 
-        class="menu-item" 
+      <div
+        v-if="canShowWorks"
+        class="menu-item"
+        :class="{ active: activeMenu === 'collections' }"
+        @click="switchMenu('collections')"
+      >
+        <svg class="menu-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
+        </svg>
+        <span class="menu-text">Collections</span>
+      </div>
+
+      <div
+        class="menu-item"
         :class="{ active: activeMenu === 'favorites' }"
         @click="switchMenu('favorites')"
       >
         <svg class="menu-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>
-        <span class="menu-text">个人收藏</span>
+        <span class="menu-text">Favorites</span>
+      </div>
+
+
+      <div 
+        class="menu-item" 
+        :class="{ active: activeMenu === 'likes' }"
+        @click="switchMenu('likes')"
+      >
+        <svg class="menu-icon" viewBox="0 0 1024 1024" fill="currentColor"><path d="M885.9 533.7c16.8-22.2 26.1-49.4 26.1-77.7 0-44.9-25.1-87.4-65.5-111.1a67.67 67.67 0 0 0-34.3-9.3H572.4l6-122.9c1.4-29.7-9.1-57.9-29.5-79.4-20.5-21.5-48.1-33.4-77.9-33.4-52 0-98 35-111.8 85.1l-85.9 311h-0.3v428h472.3c9.2 0 18.2-1.8 26.5-5.4 47.6-20.3 78.3-66.8 78.3-118.4 0-12.6-1.8-25-5.4-37 16.8-22.2 26.1-49.4 26.1-77.7-0.2-12.6-2-25.1-5.6-37.1zM112 528v364c0 17.7 14.3 32 32 32h65V496h-65c-17.7 0-32 14.3-32 32z"/></svg>
+        <span class="menu-text">Likes</span>
       </div>
     </div>
 
@@ -367,6 +389,12 @@ const handleContactClick = (item) => {
     </div>
     <div v-else-if="activeMenu === 'favorites'" class="content-placeholder">
       <p>个人收藏区域</p>
+    </div>
+    <div v-else-if="activeMenu === 'collections'" class="content-placeholder">
+      <p>合集区域</p>
+    </div>
+    <div v-else-if="activeMenu === 'likes'" class="content-placeholder">
+      <p>个人点赞区域</p>
     </div>
   </section>
 
