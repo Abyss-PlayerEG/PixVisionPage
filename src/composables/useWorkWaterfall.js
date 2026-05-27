@@ -104,17 +104,22 @@ export const useWorkWaterfall = () => {
 
   /**
    * 加载更多 (下一页)
+   * @param {Object} [options]
+   * @param {Object} [options.filters] - 筛选条件
+   * @param {number} [options.size] - 每页数量
    */
-  const loadMore = () => {
+  const loadMore = ({ filters = {}, size } = {}) => {
     if (!hasMore.value || isLoading.value) return
-    loadWorks({ reset: false })
+    loadWorks({ reset: false, filters, size })
   }
 
   /**
    * 刷新数据 (回到第一页)
+   * @param {Object} [filters] - 筛选条件
+   * @param {number} [size] - 每页数量
    */
-  const refresh = (filters = {}) => {
-    loadWorks({ reset: true, filters })
+  const refresh = (filters = {}, size) => {
+    loadWorks({ reset: true, filters, size })
   }
 
   return {

@@ -63,6 +63,11 @@ const router = createRouter({
                 name: 'avatarCropperDemo',
                 component: () => import('../views/demo/AvatarCropperDemo.vue'),
             },
+            {
+                path: '/demo/vertical-waterfall',
+                name: 'verticalWaterfallDemo',
+                component: () => import('../views/demo/VerticalWaterfallDemo.vue'),
+            },
         ] : []),
     ],
 })
