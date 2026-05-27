@@ -37,6 +37,9 @@ const canShowWorks = computed(() => {
   return role === 22 || role === 77
 })
 
+// 判断是否为管理员
+const isAdmin = computed(() => userInfo.value.userRole === 77)
+
 // 编辑模式切换
 const isEditing = ref(false)
 const isSaving = ref(false)
@@ -116,6 +119,10 @@ const goCreatorCenter = () => {
 
 const goApplyCreator = () => {
   // todo: 跳转创作者申请页
+}
+
+const goAdminPanel = () => {
+  // todo: 跳转管理员面板
 }
 
 // 联系方式编辑器
@@ -336,7 +343,7 @@ const handleContactClick = (item) => {
           <rect x="14" y="14" width="7" height="7"></rect>
           <rect x="3" y="14" width="7" height="7"></rect>
         </svg>
-        <span class="menu-text">个人作品</span>
+        <span class="menu-text">艺术作品</span>
       </div>
       
       <div
@@ -348,7 +355,7 @@ const handleContactClick = (item) => {
         <svg class="menu-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
         </svg>
-        <span class="menu-text">合集</span>
+        <span class="menu-text">作品合集</span>
       </div>
 
       <div
@@ -397,6 +404,16 @@ const handleContactClick = (item) => {
           <line x1="23" y1="11" x2="17" y2="11"/>
         </svg>
         <span>成为创作者</span>
+      </button>
+      <button
+        v-if="isAdmin"
+        class="creator-center-btn admin-panel-btn"
+        @click="goAdminPanel"
+      >
+        <svg class="creator-center-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+        </svg>
+        <span>管理员面板</span>
       </button>
     </div>
 
