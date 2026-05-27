@@ -155,7 +155,7 @@ onUnmounted(() => {
   position: fixed;
   bottom: 20px;
   right: -1px;
-  z-index: 9999;
+  z-index: 12000;
   max-width: 350px;
   min-width: 280px;
   background-color: #1a1a1a;

@@ -354,6 +354,7 @@ export const useProfile = () => {
     
     // 方法
     fetchUserProfile,
+    fetchContactList,
     copyUUID,
     switchMenu,
     goHome,

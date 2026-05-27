@@ -130,6 +130,51 @@ export const getUserInfoByUsernameOrUuid = async (params = {}) => {
 };
 
 /**
+ * 修改用户昵称
+ * @param {string} nickname - 新昵称，长度 1-20 个字符
+ * @returns {Promise<Object>} { success, message }
+ */
+export const updateNickname = async (nickname) => {
+  try {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      return { success: false, message: '用户未登录' };
+    }
+
+    if (!nickname || nickname.trim().length === 0) {
+      return { success: false, message: '昵称不能为空' };
+    }
+
+    if (nickname.trim().length > 20) {
+      return { success: false, message: '昵称长度不能超过20个字符' };
+    }
+
+    console.log('📝 修改昵称:', nickname);
+
+    const response = await fetch(`${USER_API.NICKNAME_CHANGE}?nickname=${encodeURIComponent(nickname.trim())}`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+      },
+    });
+
+    const result = await response.json();
+    console.log('昵称修改响应:', JSON.stringify(result, null, 2));
+
+    const statusCode = result.code || result.recode;
+    if (statusCode === 200) {
+      console.log('✅ 昵称修改成功');
+      return { success: true, message: result.message || '昵称修改成功' };
+    }
+    console.error('❌ 昵称修改失败:', result.message);
+    return { success: false, message: result.message || '昵称修改失败' };
+  } catch (error) {
+    console.error('昵称修改网络错误:', error);
+    return { success: false, message: '网络错误，请稍后重试' };
+  }
+};
+
+/**
  * ============================================
  * 工具函数
  * ============================================

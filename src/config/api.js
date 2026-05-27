@@ -4,8 +4,8 @@
  */
 
 // 后端 API 基础 URL
-export const API_BASE_URL = 'http://124.221.107.68:1899/';
-// export const API_BASE_URL = 'http://127.0.0.1:9090/';
+// export const API_BASE_URL = 'http://124.221.107.68:1899/';
+export const API_BASE_URL = 'http://127.0.0.1:9090/';
 
 // 头像获取接口
 export const AVATAR_API = `${API_BASE_URL}api/image/avatar/get`;
@@ -42,6 +42,7 @@ export const PASSWORD_API = {
 export const USER_API = {
   PROFILE_ME: `${API_BASE_URL}/api/user/profile/me`,
   PROFILE_INFO: `${API_BASE_URL}/api/user/profile/info`, // 根据 userId 或 uuid 查询用户信息（公开接口）
+  NICKNAME_CHANGE: `${API_BASE_URL}/api/user/profile/nickname/change`,
 };
 
 // 用户拓展数据相关接口
