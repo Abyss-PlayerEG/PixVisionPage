@@ -638,11 +638,12 @@
 /* 内容展示区域 */
 #contShow{
     width: calc(100% - 300px);
-    min-height: 100vh;
+    height: 100vh;
     position: absolute;
     right: 0;
     top: 0;
     background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
+    overflow: hidden;
 }
 
 .content-placeholder {
@@ -653,3 +654,232 @@
     color: rgba(255, 255, 255, 0.5);
     font-size: 18px;
 }
+
+/* 空状态提示 */
+.content-empty {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 60vh;
+    color: rgba(255, 255, 255, 0.35);
+    font-size: 15px;
+    user-select: none;
+}
+
+/* ── 瀑布流内容面板 ── */
+.profile-content-panel {
+    width: 100%;
+    height: 100vh;
+    padding: 24px 20px 80px;
+    box-sizing: border-box;
+    overflow-y: auto;
+}
+
+/* ── 艺术作品筛选栏 ── */
+.profile-filter-bar {
+    position: sticky;
+    top: 0;
+    z-index: 5;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 600px;
+    max-width: 100%;
+    margin: 0 auto -28px auto;
+    padding: 12px 16px;
+    background: rgba(0, 0, 0, 0.7);
+    backdrop-filter: blur(12px);
+    border-radius: 10px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    box-sizing: border-box;
+    transform: translateY(0);
+    transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.profile-filter-bar.filter-hidden {
+    transform: translateY(calc(-100% - 40px));
+}
+
+.profile-filter-input-wrapper {
+    position: relative;
+    flex: 1;
+    min-width: 0;
+}
+
+.profile-filter-input {
+    width: 100%;
+    height: 36px;
+    padding: 0 36px 0 16px;
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 18px;
+    color: #ffffff;
+    font-size: 13px;
+    outline: none;
+    box-sizing: border-box;
+    transition: border-color 0.2s ease;
+}
+
+.profile-filter-input:focus {
+    border-color: rgba(0, 169, 71, 0.5);
+}
+
+.profile-filter-input::placeholder {
+    color: rgba(255, 255, 255, 0.3);
+}
+
+.profile-filter-search-btn {
+    position: absolute;
+    right: 4px;
+    top: 50%;
+    transform: translateY(-50%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    border: none;
+    border-radius: 50%;
+    background: rgba(0, 169, 71, 0.75);
+    color: #ffffff;
+    cursor: pointer;
+    transition: background 0.2s ease;
+}
+
+.profile-filter-search-btn:hover {
+    background: #00A947;
+}
+
+.profile-filter-search-btn svg {
+    width: 14px;
+    height: 14px;
+}
+
+/* ── 圆盘选择器：折叠态 ── */
+.profile-filter-dial {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    height: 36px;
+    padding: 0 10px;
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 18px;
+    color: #ffffff;
+    font-size: 13px;
+    cursor: pointer;
+    user-select: none;
+    flex-shrink: 0;
+    transition: border-color 0.2s ease, background 0.2s ease;
+}
+
+.profile-filter-dial:hover {
+    border-color: rgba(0, 169, 71, 0.4);
+    background: rgba(255, 255, 255, 0.08);
+}
+
+.dial-trigger-label {
+    white-space: nowrap;
+}
+
+.dial-trigger-icon {
+    width: 16px;
+    height: 16px;
+    flex-shrink: 0;
+    opacity: 0.7;
+}
+
+.dial-trigger-arrow {
+    width: 12px;
+    height: 12px;
+    opacity: 0.5;
+    flex-shrink: 0;
+}
+
+/* ── 圆盘展开层 ── */
+.dial-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 1000;
+    cursor: default;
+}
+
+.dial-pie {
+    position: absolute;
+    width: 160px;
+    height: 160px;
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+    opacity: 0;
+    background: conic-gradient(
+        rgba(255, 255, 255, 0.08) 0deg 120deg,
+        rgba(255, 255, 255, 0.04) 120deg 240deg,
+        rgba(0, 169, 71, 0.12) 240deg 360deg
+    );
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.08);
+    pointer-events: none;
+}
+
+/* 扇形分割线 */
+.dial-pie::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    background:
+        conic-gradient(
+            transparent 119deg, rgba(255,255,255,0.1) 119deg 121deg,
+            transparent 121deg 239deg, rgba(255,255,255,0.1) 239deg 241deg,
+            transparent 241deg 359deg, rgba(255,255,255,0.1) 359deg 361deg
+        );
+    pointer-events: none;
+}
+
+.dial-segment {
+    position: absolute;
+    top: 0;
+    left: 50%;
+    width: 0;
+    height: 50%;
+    transform-origin: bottom center;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    padding-top: 12px;
+    pointer-events: auto;
+}
+
+.dial-segment-label {
+    font-size: 13px;
+    color: rgba(255, 255, 255, 0.6);
+    white-space: nowrap;
+    transition: color 0.15s ease;
+}
+
+.dial-segment.hovered .dial-segment-label {
+    color: #ffffff;
+}
+
+/* 中心圆 */
+.dial-center {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 52px;
+    height: 52px;
+    border-radius: 50%;
+    background: rgba(20, 20, 20, 0.95);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    pointer-events: none;
+}
+
+.dial-center-icon {
+    width: 22px;
+    height: 22px;
+    color: rgba(255, 255, 255, 0.7);
+}
+

@@ -1,10 +1,13 @@
 <script setup>
-import { onMounted, computed, ref, nextTick } from 'vue'
+import { onMounted, computed, ref, nextTick, watch, reactive } from 'vue'
 import { useProfile } from '@/composables/useProfile.js'
+import { useProfileContent } from '@/composables/useProfileContent.js'
 import { showSuccess, showError } from '@/utils/notification.js'
 import { updateNickname } from '@/api/profileApi.js'
+import { fetchWorkPage, fetchUserLikedWorks, fetchUserStarredWorks } from '@/api/workApi.js'
 import ConfirmDialog from '@/components/ConfirmDialog.vue'
 import ContactEditor from '@/components/ContactEditor.vue'
+import VerticalWaterfall from '@/components/VerticalWaterfall.vue'
 import gsap from 'gsap'
 
 // 使用 Composable 获取 Profile 页面的状态和方法
@@ -155,6 +158,177 @@ const handleContactClick = (item) => {
     })
   }
 }
+
+// ── 内容区：三组瀑布流数据源 ──
+const worksContent = useProfileContent((params) =>
+  fetchWorkPage({ ...params, userId: userInfo.value.userId })
+)
+const likesContent = useProfileContent((params) =>
+  fetchUserLikedWorks({ ...params, userId: userInfo.value.userId })
+)
+const starsContent = useProfileContent((params) =>
+  fetchUserStarredWorks({ ...params, userId: userInfo.value.userId })
+)
+
+// 艺术作品筛选条件
+const workSearchTitle = ref('')
+const workIsOriginal = ref(null) // null=全部, true=原创, false=转载
+
+const DIAL_OPTIONS = [
+  { value: null, label: '全部' },
+  { value: false, label: '转载' },
+  { value: true, label: '原创' },
+]
+
+const dialCenterVal = computed(() => {
+  if (dialHovered.value >= 0) return DIAL_OPTIONS[dialHovered.value].value
+  return workIsOriginal.value
+})
+
+const dialLabel = computed(() => {
+  if (workIsOriginal.value === true) return '原创'
+  if (workIsOriginal.value === false) return '转载'
+  return '全部'
+})
+
+// ── 圆盘选择器 ──
+const dialExpanded = ref(false)
+const dialHovered = ref(-1)
+const dialRef = ref(null)
+const dialOverlayStyle = ref({})
+
+const getDialAngle = (e) => {
+  const dx = e.clientX - dialOverlayStyle.value.cx
+  const dy = e.clientY - dialOverlayStyle.value.cy
+  // atan2 返回数学角（0°=右, CCW），+90 转为 CSS conic 角（0°=顶, CW）
+  return (Math.atan2(dy, dx) * 180 / Math.PI + 90 + 360) % 360
+}
+
+const onDialStart = (e) => {
+  const rect = dialRef.value.getBoundingClientRect()
+  dialOverlayStyle.value = {
+    left: `${rect.left + rect.width / 2}px`,
+    top: `${rect.top + rect.height / 2}px`,
+    cx: rect.left + rect.width / 2,
+    cy: rect.top + rect.height / 2,
+  }
+  dialExpanded.value = true
+  dialHovered.value = Math.min(2, getDialAngle(e) / 120 | 0)
+
+  nextTick(() => {
+    const pie = document.querySelector('.dial-pie')
+    if (pie) {
+      gsap.fromTo(pie,
+        { scale: 0, opacity: 0 },
+        { scale: 1, opacity: 1, duration: 0.4, ease: 'back.out(2)' }
+      )
+    }
+  })
+}
+
+const onDialMove = (e) => {
+  if (!dialExpanded.value) return
+  dialHovered.value = Math.min(2, Math.max(0, getDialAngle(e) / 120 | 0))
+}
+
+const onDialEnd = () => {
+  if (!dialExpanded.value) return
+  const idx = dialHovered.value
+  if (idx >= 0) {
+    workIsOriginal.value = DIAL_OPTIONS[idx].value
+    applyWorkFilter()
+  }
+  dialHovered.value = -1
+
+  const pie = document.querySelector('.dial-pie')
+  if (pie) {
+    gsap.to(pie, {
+      scale: 0,
+      opacity: 0,
+      duration: 0.2,
+      ease: 'back.in(2)',
+      onComplete: () => {
+        dialExpanded.value = false
+      }
+    })
+  } else {
+    dialExpanded.value = false
+  }
+}
+
+const applyWorkFilter = () => {
+  const extra = { userId: userInfo.value.userId }
+  if (workSearchTitle.value.trim()) {
+    extra.workTitle = workSearchTitle.value.trim()
+  }
+  if (workIsOriginal.value !== null) {
+    extra.isOriginal = workIsOriginal.value
+  }
+  worksContent.refresh(extra, 20)
+}
+
+// ── 筛选栏智能显隐 ──
+const filterBarHidden = ref(false)
+const hideTimer = ref(null)
+let lastPanelScrollTop = 0
+const HIDE_SCROLL_THRESHOLD = 60
+const HOT_ZONE_HEIGHT = 60
+
+const onPanelScroll = (e) => {
+  const st = e.target.scrollTop
+  if (st <= 5) {
+    // 滚回顶部：始终显示
+    filterBarHidden.value = false
+  } else if (st > lastPanelScrollTop && st > HIDE_SCROLL_THRESHOLD) {
+    // 向下滚动超过阈值：收起
+    filterBarHidden.value = true
+  }
+  lastPanelScrollTop = st
+}
+
+const onPanelMouseMove = (e) => {
+  const rect = e.currentTarget.getBoundingClientRect()
+  const mouseY = e.clientY - rect.top
+  if (mouseY <= HOT_ZONE_HEIGHT) {
+    // 鼠标进入热区：展开
+    filterBarHidden.value = false
+  }
+}
+
+const onPanelMouseLeave = () => {
+  // 鼠标离开面板后延迟检查——如果已滚离顶部，恢复隐藏
+  clearTimeout(hideTimer.value)
+  hideTimer.value = setTimeout(() => {
+    const panel = document.querySelector('.profile-content-panel')
+    if (panel && panel.scrollTop > HIDE_SCROLL_THRESHOLD) {
+      filterBarHidden.value = true
+    }
+  }, 800)
+}
+
+// 作品点击 → 跳转详情
+const handleWorkClick = (img) => {
+  if (!img.workId) return
+  // 使用 window.open 在新标签页打开，避免 Profile 页面状态丢失
+  const detailUrl = `/work/${img.workId}?img=${encodeURIComponent(img.imgUrl || img.src)}&title=${encodeURIComponent(img.workTitle || '')}`
+  window.open(detailUrl, '_blank')
+}
+
+// 监听 userId + activeMenu，首次激活时自动加载
+watch(
+  [() => userInfo.value.userId, activeMenu],
+  ([uid, menu]) => {
+    if (!uid) return
+    if (menu === 'works' && worksContent.images.value.length === 0) {
+      worksContent.loadFirst(20, { userId: uid })
+    } else if (menu === 'likes' && likesContent.images.value.length === 0) {
+      likesContent.loadFirst(20, { userId: uid })
+    } else if (menu === 'favorites' && starsContent.images.value.length === 0) {
+      starsContent.loadFirst(20, { userId: uid })
+    }
+  },
+  { immediate: true }
+)
 </script>
 
 <template>
@@ -438,18 +612,154 @@ const handleContactClick = (item) => {
   </section>
 
   <section id="contShow">
-    <!-- todo 内容展示区域（后续根据 activeMenu 动态渲染） -->
-    <div v-if="activeMenu === 'works'" class="content-placeholder">
-      <p>个人作品区域</p>
+    <!-- 艺术作品 -->
+    <div v-if="activeMenu === 'works'" class="profile-content-panel" @scroll="onPanelScroll" @mousemove="onPanelMouseMove" @mouseleave="onPanelMouseLeave">
+      <!-- 筛选栏 -->
+      <div class="profile-filter-bar" :class="{ 'filter-hidden': filterBarHidden }">
+        <div class="profile-filter-input-wrapper">
+          <input
+            v-model="workSearchTitle"
+            class="profile-filter-input"
+            type="text"
+            placeholder="搜索作品标题…"
+            @keyup.enter="applyWorkFilter"
+          />
+          <button class="profile-filter-search-btn" @click="applyWorkFilter" title="搜索">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="11" cy="11" r="8"></circle>
+              <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+            </svg>
+          </button>
+        </div>
+        <div class="profile-filter-dial" ref="dialRef" @mousedown.prevent="onDialStart" :title="dialLabel">
+          <!-- 全部：网格图标 -->
+          <svg v-if="workIsOriginal === null" class="dial-trigger-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="3" width="7" height="7"></rect>
+            <rect x="14" y="3" width="7" height="7"></rect>
+            <rect x="3" y="14" width="7" height="7"></rect>
+            <rect x="14" y="14" width="7" height="7"></rect>
+          </svg>
+          <!-- 转载：分享图标 -->
+          <svg v-else-if="workIsOriginal === false" class="dial-trigger-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="18" cy="5" r="3"></circle>
+            <circle cx="6" cy="12" r="3"></circle>
+            <circle cx="18" cy="19" r="3"></circle>
+            <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line>
+            <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line>
+          </svg>
+          <!-- 原创：笔图标 -->
+          <svg v-else class="dial-trigger-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 20h9"></path>
+            <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path>
+          </svg>
+          <span class="dial-trigger-label">{{ dialLabel }}</span>
+          <svg class="dial-trigger-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="6 9 12 15 18 9"></polyline>
+          </svg>
+        </div>
+      </div>
+      <!-- 圆盘展开层 -->
+      <teleport to="body">
+        <div
+          v-if="dialExpanded"
+          class="dial-overlay"
+          @mousemove="onDialMove"
+          @mouseup="onDialEnd"
+        >
+          <div class="dial-pie" :style="dialOverlayStyle">
+            <div
+              v-for="(opt, i) in DIAL_OPTIONS"
+              :key="opt.label"
+              class="dial-segment"
+              :class="{ hovered: dialHovered === i }"
+              :style="{ transform: `rotate(${i * 120 + 60}deg)` }"
+            >
+              <span
+                class="dial-segment-label"
+                :style="{ transform: `rotate(${-(i * 120 + 60)}deg)` }"
+              >{{ opt.label }}</span>
+            </div>
+            <!-- 中心圆 -->
+            <div class="dial-center">
+              <svg v-if="dialCenterVal === null" class="dial-center-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="3" y="3" width="7" height="7"></rect>
+                <rect x="14" y="3" width="7" height="7"></rect>
+                <rect x="3" y="14" width="7" height="7"></rect>
+                <rect x="14" y="14" width="7" height="7"></rect>
+              </svg>
+              <svg v-else-if="dialCenterVal === false" class="dial-center-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="18" cy="5" r="3"></circle>
+                <circle cx="6" cy="12" r="3"></circle>
+                <circle cx="18" cy="19" r="3"></circle>
+                <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line>
+                <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line>
+              </svg>
+              <svg v-else class="dial-center-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 20h9"></path>
+                <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path>
+              </svg>
+            </div>
+          </div>
+        </div>
+      </teleport>
+      <div
+        v-if="!worksContent.isLoading.value && worksContent.images.value.length === 0 && !worksContent.hasMore.value"
+        class="content-empty"
+      >
+        <p>暂无作品</p>
+      </div>
+      <VerticalWaterfall
+        v-else
+        :images="worksContent.images.value"
+        :has-more="worksContent.hasMore.value"
+        :is-loading="worksContent.isLoading.value"
+        :gap="8"
+        @load-more="worksContent.loadMore({ size: 20 })"
+        @image-click="handleWorkClick"
+      />
     </div>
-    <div v-else-if="activeMenu === 'favorites'" class="content-placeholder">
-      <p>个人收藏区域</p>
-    </div>
+
+    <!-- 作品合集（暂未实现） -->
     <div v-else-if="activeMenu === 'collections'" class="content-placeholder">
       <p>合集区域</p>
     </div>
-    <div v-else-if="activeMenu === 'likes'" class="content-placeholder">
-      <p>个人点赞区域</p>
+
+    <!-- 个人收藏 -->
+    <div v-else-if="activeMenu === 'favorites'" class="profile-content-panel">
+      <div
+        v-if="!starsContent.isLoading.value && starsContent.images.value.length === 0 && !starsContent.hasMore.value"
+        class="content-empty"
+      >
+        <p>暂无收藏</p>
+      </div>
+      <VerticalWaterfall
+        v-else
+        :images="starsContent.images.value"
+        :has-more="starsContent.hasMore.value"
+        :is-loading="starsContent.isLoading.value"
+        :gap="8"
+        @load-more="starsContent.loadMore({ size: 20 })"
+        @image-click="handleWorkClick"
+      />
+    </div>
+
+    <!-- 个人点赞 -->
+    <div v-else-if="activeMenu === 'likes'" class="profile-content-panel">
+      <div
+        v-if="!likesContent.isLoading.value && likesContent.images.value.length === 0 && !likesContent.hasMore.value"
+        class="content-empty"
+      >
+        <p>暂无点赞</p>
+      </div>
+      <VerticalWaterfall
+        v-else
+        :images="likesContent.images.value"
+        :has-more="likesContent.hasMore.value"
+        :is-loading="likesContent.isLoading.value"
+        :gap="8"
+        @load-more="likesContent.loadMore({ size: 20 })"
+        @image-click="handleWorkClick"
+      />
     </div>
   </section>
 

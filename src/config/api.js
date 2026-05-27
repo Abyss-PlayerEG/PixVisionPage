@@ -83,12 +83,14 @@ export const WORK_IMAGE_API = `${API_BASE_URL}/api/image/work/get`;
 export const LIKE_API = {
   TOGGLE: `${API_BASE_URL}/api/like/toggle`,   // POST，路径后拼 /workId
   STATUS: `${API_BASE_URL}/api/like/status`,   // GET，路径后拼 /workId
+  USER_LIKED: `${API_BASE_URL}/api/like/user-liked`, // GET，路径后拼 /userId/current/size
 };
 
 // 收藏相关接口
 export const STAR_API = {
   TOGGLE: `${API_BASE_URL}/api/star/toggle`,   // POST，路径后拼 /workId
   STATUS: `${API_BASE_URL}/api/star/status`,   // GET，路径后拼 /workId
+  USER_STARRED: `${API_BASE_URL}/api/star/user-starred`, // GET，路径后拼 /userId/current/size
 };
 
 // 获取作品图片完整 URL

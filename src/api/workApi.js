@@ -334,6 +334,64 @@ export const fetchWorkPage = async ({ current = 1, size = 10, workTitle, userId,
 };
 
 /**
+ * 获取用户点赞的作品列表（分页）
+ * @param {Object} params
+ * @param {number} params.userId - 用户 ID，必填
+ * @param {number} [params.current=1] - 当前页码
+ * @param {number} [params.size=20] - 每页大小
+ * @returns {Promise<Object>} { success, data: { records, total, ... }, message }
+ */
+export const fetchUserLikedWorks = async ({ userId, current = 1, size = 20 }) => {
+  try {
+    const url = `${LIKE_API.USER_LIKED}/${userId}/${current}/${size}`;
+    console.log('[API] 请求用户点赞作品:', url);
+    const response = await fetch(url, {
+      method: 'GET',
+      headers: { 'Content-Type': 'application/json' },
+    });
+    const result = await response.json();
+    console.log('[API] 用户点赞作品响应:', result);
+    const statusCode = result.code || result.recode;
+    if (statusCode === 200 && result.data) {
+      return { success: true, data: result.data, message: result.message };
+    }
+    return { success: false, message: result.message || '获取点赞作品失败' };
+  } catch (error) {
+    console.error('[API] 获取点赞作品失败:', error);
+    return { success: false, message: '网络错误，请稍后重试' };
+  }
+};
+
+/**
+ * 获取用户收藏的作品列表（分页）
+ * @param {Object} params
+ * @param {number} params.userId - 用户 ID，必填
+ * @param {number} [params.current=1] - 当前页码
+ * @param {number} [params.size=20] - 每页大小
+ * @returns {Promise<Object>} { success, data: { records, total, ... }, message }
+ */
+export const fetchUserStarredWorks = async ({ userId, current = 1, size = 20 }) => {
+  try {
+    const url = `${STAR_API.USER_STARRED}/${userId}/${current}/${size}`;
+    console.log('[API] 请求用户收藏作品:', url);
+    const response = await fetch(url, {
+      method: 'GET',
+      headers: { 'Content-Type': 'application/json' },
+    });
+    const result = await response.json();
+    console.log('[API] 用户收藏作品响应:', result);
+    const statusCode = result.code || result.recode;
+    if (statusCode === 200 && result.data) {
+      return { success: true, data: result.data, message: result.message };
+    }
+    return { success: false, message: result.message || '获取收藏作品失败' };
+  } catch (error) {
+    console.error('[API] 获取收藏作品失败:', error);
+    return { success: false, message: '网络错误，请稍后重试' };
+  }
+};
+
+/**
  * 将作品数据转换为瀑布流组件所需格式
  */
 export const transformWorksToWaterfallFormat = (records) => {
