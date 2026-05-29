@@ -482,6 +482,43 @@ onUnmounted(() => {
       </div>
     </div>
   </section>
+
+  <section id="num8z">
+    <div class="n8z1">
+      <div class="n8_copy">
+        <h1>Pixel - Vision「像素视觉」- Explore Visual Wonders</h1>
+      </div>
+      <div class="n8_cont">
+        <div class="n8_showImgs">
+          <div>
+            <img src="../assets/IMG/end1.jpg" alt="">
+          </div>
+          <div>
+            <img src="../assets/IMG/end2.jpg" alt="">
+          </div>
+        </div>
+
+        <div class="n8_showCont">
+          <div class="n8_fontBox">
+            <p>01</p>
+            <div>浏览各类图片</div>
+          </div>
+          <div class="n8_fontBox">
+            <p>02</p>
+            <div>定制浏览体验</div>
+          </div>
+          <div class="n8_fontBox">
+            <p>03</p>
+            <div>发现图片故事</div>
+          </div>
+
+          <div class="n8_btn">Find Out More</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="n8z2"></div>
+  </section>
   
 </template>
 
