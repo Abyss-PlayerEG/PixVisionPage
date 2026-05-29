@@ -98,6 +98,18 @@ export const SERIES_API = {
   PAGE: `${API_BASE_URL}/api/work/series/page`, // GET，路径后拼 /userId/current/size
 };
 
+// 管理员相关接口
+export const ADMIN_API = {
+  DASHBOARD: `${API_BASE_URL}/api/admin/dashboard`,
+  USER_LIST: `${API_BASE_URL}/api/admin/user/list`,
+  USER_BAN: `${API_BASE_URL}/api/admin/user/ban`,
+  USER_DELETE: (userId) => `${API_BASE_URL}/api/admin/user/delete/${userId}`,
+  WORK_LIST: `${API_BASE_URL}/api/admin/work/list`,
+  WORK_DELETE: (workId) => `${API_BASE_URL}/api/admin/work/delete/${workId}`,
+  COMMENT_LIST: `${API_BASE_URL}/api/admin/comment/list`,
+  COMMENT_DELETE: (commentId) => `${API_BASE_URL}/api/admin/comment/delete/${commentId}`,
+};
+
 // 获取作品图片完整 URL
 export const getWorkImageUrl = (filePath) => {
   if (!filePath) {

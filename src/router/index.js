@@ -35,6 +35,13 @@ const router = createRouter({
             name: 'profileVisitor',
             component: () => import('../views/Profile.vue'),
         },
+        // 管理员后台
+        {
+            path: '/admin',
+            name: 'admin',
+            component: () => import('../views/Admin.vue'),
+            meta: { requiresAuth: true },
+        },
         // 404页面 - 捕获所有未匹配的路径（必须放在最后）
         {
             path: '/:pathMatch(.*)*',
