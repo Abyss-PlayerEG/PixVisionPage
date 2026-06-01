@@ -101,13 +101,13 @@ export const SERIES_API = {
 // 管理员相关接口
 export const ADMIN_API = {
   DASHBOARD: `${API_BASE_URL}/api/admin/dashboard`,
-  USER_LIST: `${API_BASE_URL}/api/admin/user/list`,
-  USER_BAN: `${API_BASE_URL}/api/admin/user/ban`,
-  USER_DELETE: (userId) => `${API_BASE_URL}/api/admin/user/delete/${userId}`,
-  WORK_LIST: `${API_BASE_URL}/api/admin/work/list`,
-  WORK_DELETE: (workId) => `${API_BASE_URL}/api/admin/work/delete/${workId}`,
-  COMMENT_LIST: `${API_BASE_URL}/api/admin/comment/list`,
-  COMMENT_DELETE: (commentId) => `${API_BASE_URL}/api/admin/comment/delete/${commentId}`,
+  USER_LIST: `${API_BASE_URL}/api/admin/user/page-select`,                          // POST, query: page/size/nickname
+  USER_UPDATE: `${API_BASE_URL}/api/admin/user/update/user-role-status`,             // POST, query: userIds[]/newRole/newStatus
+  USER_DELETE: `${API_BASE_URL}/api/admin/user/delete`,                              // POST, query: userIds[]
+  WORK_LIST: (current, size) => `${API_BASE_URL}/api/admin/works/page/${current}/${size}`, // GET, query: keyword
+  WORK_DELETE: `${API_BASE_URL}/api/admin/works/delete`,                             // POST, query: workIds[]
+  COMMENT_LIST: (current, size) => `${API_BASE_URL}/api/admin/comments/page/${current}/${size}`, // GET, query: keyword
+  COMMENT_DELETE: `${API_BASE_URL}/api/admin/comments/delete`,                       // POST, query: commentIds[]
 };
 
 // 获取作品图片完整 URL

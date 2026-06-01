@@ -40,9 +40,9 @@ export const fetchDashboard = async () => {
 /**
  * 获取用户列表（分页）
  * @param {Object} params - 查询参数
- * @param {number} [params.current=1] - 当前页
+ * @param {number} [params.page=1] - 当前页
  * @param {number} [params.size=20] - 每页数量
- * @param {string} [params.keyword] - 搜索关键词
+ * @param {string} [params.nickname] - 昵称关键字模糊查询
  * @returns {Promise<Object>} { success, data: { records, total, current, size } }
  */
 export const fetchUserList = async (params = {}) => {
@@ -50,16 +50,16 @@ export const fetchUserList = async (params = {}) => {
     const token = localStorage.getItem('token')
     if (!token) return { success: false, message: '未登录' }
 
-    const { current = 1, size = 20, keyword = '' } = params
+    const { page = 1, size = 20, nickname = '' } = params
     const queryParams = new URLSearchParams()
-    queryParams.append('current', current)
+    queryParams.append('page', page)
     queryParams.append('size', size)
-    if (keyword) queryParams.append('keyword', keyword)
+    if (nickname) queryParams.append('nickname', nickname)
 
     const url = `${ADMIN_API.USER_LIST}?${queryParams.toString()}`
     console.log('📋 获取用户列表:', url)
     const response = await fetch(url, {
-      method: 'GET',
+      method: 'POST',
       headers: { 'Authorization': `Bearer ${token}` },
     })
     const result = await response.json()
@@ -79,37 +79,36 @@ export const fetchUserList = async (params = {}) => {
 }
 
 /**
- * 封禁/解封用户
+ * 更新用户状态（封禁/解封）
  * @param {number} userId - 用户 ID
- * @param {boolean} ban - true=封禁, false=解封
+ * @param {number} newStatus - 新状态码：10=正常, 20=冻结, 30=封禁
  * @returns {Promise<Object>} { success, message }
  */
-export const toggleUserBan = async (userId, ban) => {
+export const updateUserStatus = async (userId, newStatus) => {
   try {
     const token = localStorage.getItem('token')
     if (!token) return { success: false, message: '未登录' }
 
-    console.log(`${ban ? '🔒 封禁' : '🔓 解封'}用户:`, userId)
-    const formData = new URLSearchParams()
-    formData.append('userId', userId)
-    formData.append('ban', ban)
+    const action = newStatus === 30 ? '封禁' : newStatus === 20 ? '冻结' : '解封'
+    console.log(`🔒 ${action}用户:`, userId)
+    const queryParams = new URLSearchParams()
+    queryParams.append('userIds', userId)
+    queryParams.append('newStatus', String(newStatus))
 
-    const response = await fetch(ADMIN_API.USER_BAN, {
+    const url = `${ADMIN_API.USER_UPDATE}?${queryParams.toString()}`
+    const response = await fetch(url, {
       method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/x-www-form-urlencoded',
-      },
-      body: formData,
+      headers: { 'Authorization': `Bearer ${token}` },
     })
     const result = await response.json()
+    console.log('用户状态更新响应:', JSON.stringify(result, null, 2))
 
     const statusCode = result.code || result.recode
     if (statusCode === 200) {
-      console.log(`✅ 用户${ban ? '封禁' : '解封'}成功`)
-      return { success: true, message: result.message || '操作成功' }
+      console.log(`✅ 用户${action}成功`)
+      return { success: true, message: result.message || '操作成功', data: result.data }
     }
-    console.error(`❌ 用户${ban ? '封禁' : '解封'}失败:`, result.message)
+    console.error(`❌ 用户${action}失败:`, result.message)
     return { success: false, message: result.message || '操作失败' }
   } catch (error) {
     console.error('网络请求失败:', error)
@@ -118,7 +117,7 @@ export const toggleUserBan = async (userId, ban) => {
 }
 
 /**
- * 删除用户
+ * 删除用户（批量，兼容单个）
  * @param {number} userId - 用户 ID
  * @returns {Promise<Object>} { success, message }
  */
@@ -128,11 +127,16 @@ export const deleteUser = async (userId) => {
     if (!token) return { success: false, message: '未登录' }
 
     console.log('🗑️ 删除用户:', userId)
-    const response = await fetch(ADMIN_API.USER_DELETE(userId), {
-      method: 'DELETE',
+    const queryParams = new URLSearchParams()
+    queryParams.append('userIds', userId)
+
+    const url = `${ADMIN_API.USER_DELETE}?${queryParams.toString()}`
+    const response = await fetch(url, {
+      method: 'POST',
       headers: { 'Authorization': `Bearer ${token}` },
     })
     const result = await response.json()
+    console.log('用户删除响应:', JSON.stringify(result, null, 2))
 
     const statusCode = result.code || result.recode
     if (statusCode === 200) {
@@ -150,7 +154,10 @@ export const deleteUser = async (userId) => {
 /**
  * 获取作品列表（分页）
  * @param {Object} params - 查询参数
- * @returns {Promise<Object>}
+ * @param {number} [params.current=1] - 当前页
+ * @param {number} [params.size=20] - 每页数量
+ * @param {string} [params.keyword] - 搜索关键词
+ * @returns {Promise<Object>} { success, data: { records, total, current, size } }
  */
 export const fetchWorkList = async (params = {}) => {
   try {
@@ -158,18 +165,16 @@ export const fetchWorkList = async (params = {}) => {
     if (!token) return { success: false, message: '未登录' }
 
     const { current = 1, size = 20, keyword = '' } = params
-    const queryParams = new URLSearchParams()
-    queryParams.append('current', current)
-    queryParams.append('size', size)
-    if (keyword) queryParams.append('keyword', keyword)
+    let url = ADMIN_API.WORK_LIST(current, size)
+    if (keyword) url += `?keyword=${encodeURIComponent(keyword)}`
 
-    const url = `${ADMIN_API.WORK_LIST}?${queryParams.toString()}`
     console.log('📋 获取作品列表:', url)
     const response = await fetch(url, {
       method: 'GET',
       headers: { 'Authorization': `Bearer ${token}` },
     })
     const result = await response.json()
+    console.log('作品列表响应:', JSON.stringify(result, null, 2))
 
     const statusCode = result.code || result.recode
     if (statusCode === 200 && result.data) {
@@ -185,9 +190,9 @@ export const fetchWorkList = async (params = {}) => {
 }
 
 /**
- * 删除作品
+ * 删除作品（批量，兼容单个）
  * @param {number} workId - 作品 ID
- * @returns {Promise<Object>}
+ * @returns {Promise<Object>} { success, message }
  */
 export const deleteWork = async (workId) => {
   try {
@@ -195,11 +200,16 @@ export const deleteWork = async (workId) => {
     if (!token) return { success: false, message: '未登录' }
 
     console.log('🗑️ 删除作品:', workId)
-    const response = await fetch(ADMIN_API.WORK_DELETE(workId), {
-      method: 'DELETE',
+    const queryParams = new URLSearchParams()
+    queryParams.append('workIds', workId)
+
+    const url = `${ADMIN_API.WORK_DELETE}?${queryParams.toString()}`
+    const response = await fetch(url, {
+      method: 'POST',
       headers: { 'Authorization': `Bearer ${token}` },
     })
     const result = await response.json()
+    console.log('作品删除响应:', JSON.stringify(result, null, 2))
 
     const statusCode = result.code || result.recode
     if (statusCode === 200) {
@@ -217,7 +227,10 @@ export const deleteWork = async (workId) => {
 /**
  * 获取评论列表（分页）
  * @param {Object} params - 查询参数
- * @returns {Promise<Object>}
+ * @param {number} [params.current=1] - 当前页
+ * @param {number} [params.size=20] - 每页数量
+ * @param {string} [params.keyword] - 搜索关键词
+ * @returns {Promise<Object>} { success, data: { records, total, current, size } }
  */
 export const fetchCommentList = async (params = {}) => {
   try {
@@ -225,18 +238,16 @@ export const fetchCommentList = async (params = {}) => {
     if (!token) return { success: false, message: '未登录' }
 
     const { current = 1, size = 20, keyword = '' } = params
-    const queryParams = new URLSearchParams()
-    queryParams.append('current', current)
-    queryParams.append('size', size)
-    if (keyword) queryParams.append('keyword', keyword)
+    let url = ADMIN_API.COMMENT_LIST(current, size)
+    if (keyword) url += `?keyword=${encodeURIComponent(keyword)}`
 
-    const url = `${ADMIN_API.COMMENT_LIST}?${queryParams.toString()}`
     console.log('📋 获取评论列表:', url)
     const response = await fetch(url, {
       method: 'GET',
       headers: { 'Authorization': `Bearer ${token}` },
     })
     const result = await response.json()
+    console.log('评论列表响应:', JSON.stringify(result, null, 2))
 
     const statusCode = result.code || result.recode
     if (statusCode === 200 && result.data) {
@@ -252,9 +263,9 @@ export const fetchCommentList = async (params = {}) => {
 }
 
 /**
- * 删除评论
+ * 删除评论（批量，兼容单个）
  * @param {number} commentId - 评论 ID
- * @returns {Promise<Object>}
+ * @returns {Promise<Object>} { success, message }
  */
 export const deleteComment = async (commentId) => {
   try {
@@ -262,11 +273,16 @@ export const deleteComment = async (commentId) => {
     if (!token) return { success: false, message: '未登录' }
 
     console.log('🗑️ 删除评论:', commentId)
-    const response = await fetch(ADMIN_API.COMMENT_DELETE(commentId), {
-      method: 'DELETE',
+    const queryParams = new URLSearchParams()
+    queryParams.append('commentIds', commentId)
+
+    const url = `${ADMIN_API.COMMENT_DELETE}?${queryParams.toString()}`
+    const response = await fetch(url, {
+      method: 'POST',
       headers: { 'Authorization': `Bearer ${token}` },
     })
     const result = await response.json()
+    console.log('评论删除响应:', JSON.stringify(result, null, 2))
 
     const statusCode = result.code || result.recode
     if (statusCode === 200) {

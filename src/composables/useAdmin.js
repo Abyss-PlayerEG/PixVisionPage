@@ -7,7 +7,7 @@ import { ref, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import {
   fetchUserList,
-  toggleUserBan,
+  updateUserStatus,
   deleteUser,
   fetchWorkList,
   deleteWork,
@@ -68,7 +68,7 @@ export const useAdmin = () => {
     if (userLoading.value) return
     if (reset) { userCurrent.value = 1; userList.value = [] }
     userLoading.value = true
-    const result = await fetchUserList({ current: userCurrent.value, size: userPageSize, keyword: userKeyword.value })
+    const result = await fetchUserList({ page: userCurrent.value, size: userPageSize, nickname: userKeyword.value })
     if (result.success && result.data) {
       const { records, total } = result.data
       userList.value = reset ? (records || []) : [...userList.value, ...(records || [])]
@@ -81,14 +81,16 @@ export const useAdmin = () => {
   const handleSearchUsers = () => { loadUsers({ reset: true }) }
 
   const handleBanUser = async (user) => {
-    const isBan = !(user.banned || user.status === 0)
+    const currentStatus = user.status || 10
+    const isBan = currentStatus !== 30
+    const newStatus = isBan ? 30 : 10
     const action = isBan ? '封禁' : '解封'
     const ok = await showConfirm({ title: `${action}用户`, message: `确定要${action}用户「${user.nickname || user.username}」吗？`, yesText: action, noText: '取消', type: isBan ? 'danger' : 'info' })
     if (!ok) return
-    const result = await toggleUserBan(user.user_id, isBan)
+    const result = await updateUserStatus(user.user_id, newStatus)
     if (result.success) {
+      user.status = newStatus
       user.banned = isBan
-      user.status = isBan ? 0 : 1
       showSuccess(result.message || `${action}成功`)
     } else {
       showError(result.message || `${action}失败`)
