@@ -1,64 +1,71 @@
-#itemCeb{
-    width: 300px;
+/* ═══════════════════════════════════════════════════════════════════════════
+   Profile 个人中心 — 视觉规范 v2
+   设计标准：对齐 mainIndex，极简留白，去除冗余色块
+   间距遵循 8px 网格：8 / 16 / 24 / 32 / 48 / 64
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* ── 侧边栏容器 ── */
+#itemCeb {
+    width: 320px;
     height: 100vh;
-    background-color: rgba(0, 0, 0, 0.5);
-    backdrop-filter: blur(10px);
+    background: rgba(8, 8, 10, 0.88);
+    backdrop-filter: blur(24px) saturate(1.2);
+    -webkit-backdrop-filter: blur(24px) saturate(1.2);
+    border-right: 1px solid rgba(255, 255, 255, 0.06);
     position: fixed;
     left: 0;
     top: 0;
-    padding: 24px 16px;
+    padding: 32px 24px;
     display: flex;
     flex-direction: column;
     gap: 24px;
     z-index: 10;
+    box-sizing: border-box;
 }
 
-/* 加载状态 */
+/* ── 加载状态 ── */
 .loading-state {
     display: flex;
     align-items: center;
     justify-content: center;
-    height: 100%;
-    color: rgba(255, 255, 255, 0.6);
+    min-height: 120px;
+    color: rgba(255, 255, 255, 0.35);
     font-size: 14px;
+    letter-spacing: 0.5px;
 }
 
-/* 用户信息卡片 */
+/* ═══════════════════════════════════════════════════════════════════════════
+   用户信息卡片 — 去背景色块，纯留白 + 底部分割线
+   ═══════════════════════════════════════════════════════════════════════════ */
 .user-card {
-    background: rgba(255, 255, 255, 0.08);
-    border-radius: 12px;
-    padding: 16px;
     display: flex;
     flex-direction: column;
-    gap: 12px;
-    transition: all 0.3s ease;
+    gap: 16px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
 }
 
-.user-card:hover {
-    background: rgba(255, 255, 255, 0.12);
-}
-
-/* 卡片头部：头像（左）+ 用户信息（右） */
+/* ── 卡片头部：头像 + 用户信息 + 编辑按钮 ── */
 .card-header {
+    padding-left: 12px;
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: 14px;
 }
 
+/* 头像 */
 .avatar-wrapper {
-    width: 60px;
-    height: 60px;
-    border-radius: 12px;
+    width: 56px;
+    height: 56px;
+    border-radius: 14px;
     overflow: hidden;
-    border: 2px solid rgba(255, 255, 255, 0.2);
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+    border: 1.5px solid rgba(255, 255, 255, 0.12);
     flex-shrink: 0;
     position: relative;
     cursor: default;
     transition: border-color 0.3s ease;
 }
 
-/* 个人界面：头像可点击更换 */
 .avatar-wrapper:has(.avatar-overlay) {
     cursor: pointer;
 }
@@ -66,30 +73,28 @@
 .avatar-overlay {
     position: absolute;
     inset: 0;
-    background: rgba(0, 0, 0, 0.5);
+    background: rgba(0, 0, 0, 0.55);
     display: flex;
     align-items: center;
     justify-content: center;
     transition: background 0.25s ease;
 }
 
-/* 非编辑模式：hover 显示遮罩 */
 .avatar-wrapper:not(.is-editing):hover .avatar-overlay {
     opacity: 1;
 }
 
-/* 编辑模式下 hover：遮罩加深 + 图标放大 */
 .avatar-wrapper.is-editing:hover .avatar-overlay {
-    background: rgba(0, 0, 0, 0.65);
+    background: rgba(0, 0, 0, 0.7);
 }
 
 .avatar-wrapper.is-editing:hover .avatar-camera-icon {
-    transform: scale(1.15);
+    transform: scale(1.12);
 }
 
 .avatar-camera-icon {
-    width: 24px;
-    height: 24px;
+    width: 22px;
+    height: 22px;
     color: rgba(255, 255, 255, 0.9);
     transition: transform 0.25s ease;
 }
@@ -100,25 +105,28 @@
     object-fit: cover;
 }
 
+/* 用户信息（昵称 + 用户名） */
 .user-info {
     flex: 1;
     display: flex;
     flex-direction: column;
-    gap: 4px;
-    min-width: 0; /* 允许文本截断 */
+    gap: 2px;
+    min-width: 0;
 }
 
 .nickname {
     color: #ffffff;
-    font-size: 16px;
+    font-size: 17px;
     font-weight: 600;
     margin: 0;
-    line-height: 1.3;
+    line-height: 1.35;
+    letter-spacing: 0.3px;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
 }
 
+/* 昵称编辑输入框 */
 .nickname-input-wrapper {
     position: relative;
     display: flex;
@@ -126,40 +134,50 @@
 }
 
 .nickname-input-wrapper .nickname-input {
-    padding-right: 32px; /* 为重置图标留空间 */
+    padding-right: 32px;
 }
 
 .nickname-input {
     color: #ffffff;
-    font-size: 16px;
-    font-weight: 600;
+    font-size: 15px;
+    font-weight: 500;
     margin: 0;
-    background: rgba(255, 255, 255, 0.08);
-    border: 1px solid rgba(255, 255, 255, 0.15);
-    border-radius: 3px;
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 6px;
+    padding: 4px 10px;
     width: 100%;
     box-sizing: border-box;
     outline: none;
-    transition: border-color 0.2s ease;
+    transition: border-color 0.2s ease, background 0.2s ease;
+}
+
+.nickname-input:focus {
+    border-color: #00A947;
+    background: rgba(0, 169, 71, 0.06);
+}
+
+.nickname-input::placeholder {
+    color: rgba(255, 255, 255, 0.3);
 }
 
 .nickname-reset-btn {
     position: absolute;
-    right: 6px;
+    right: 4px;
     top: 50%;
     transform: translateY(-50%);
-    width: 22px;
-    height: 22px;
+    width: 24px;
+    height: 24px;
     border: none;
     background: transparent;
-    color: rgba(255, 255, 255, 0.4);
+    color: rgba(255, 255, 255, 0.35);
     cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
     padding: 0;
-    border-radius: 3px;
-    transition: color 0.2s ease, background 0.2s ease;
+    border-radius: 4px;
+    transition: color 0.2s ease;
 }
 
 .nickname-reset-btn svg {
@@ -181,19 +199,15 @@
 
 .nickname-reset-btn:disabled {
     cursor: default;
-    opacity: 0.3;
-}
-
-.nickname-input:focus {
-    border-color: #00A947;
-    background: rgba(0, 169, 71, 0.06);
+    opacity: 0.2;
 }
 
 .username {
-    color: rgba(255, 255, 255, 0.7);
+    color: rgba(255, 255, 255, 0.4);
     font-size: 12px;
     margin: 0;
     line-height: 1.3;
+    letter-spacing: 0.2px;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -201,12 +215,12 @@
 
 /* 编辑资料按钮 */
 .edit-profile-btn {
-    width: 36px;
-    height: 36px;
+    width: 34px;
+    height: 34px;
     border-radius: 8px;
-    border: none;
-    background: rgba(255, 255, 255, 0.05);
-    color: rgba(255, 255, 255, 0.45);
+    border: 1px solid transparent;
+    background: transparent;
+    color: rgba(255, 255, 255, 0.35);
     cursor: pointer;
     display: flex;
     align-items: center;
@@ -221,18 +235,17 @@
 }
 
 .edit-profile-btn:hover {
-    background: rgba(0, 169, 71, 0.12);
+    background: rgba(0, 169, 71, 0.1);
     color: #00A947;
 }
 
-/* 保存中的加载状态 */
 .edit-profile-btn:disabled {
     cursor: wait;
-    opacity: 0.6;
+    opacity: 0.5;
 }
 
 .edit-profile-btn.is-saving {
-    background: rgba(0, 169, 71, 0.15);
+    background: rgba(0, 169, 71, 0.12);
     color: #00A947;
 }
 
@@ -246,188 +259,163 @@
     to { transform: rotate(360deg); }
 }
 
-/* UUID 区域 */
+/* ── UUID 区域 — 去背景块，纯文本 + 微妙 hover ── */
 .uuid-wrapper {
     display: flex;
     align-items: center;
     gap: 8px;
-    padding: 10px 12px;
-    background: rgba(255, 255, 255, 0.05);
-    border-radius: 8px;
+    padding: 0;
     cursor: pointer;
-    transition: all 0.2s ease;
-    width: 100%; /* 占满父容器宽度 */
-    box-sizing: border-box; /* 包含 padding */
+    transition: opacity 0.2s ease;
+    width: 100%;
+    box-sizing: border-box;
 }
 
 .uuid-wrapper:hover {
-    background: rgba(255, 255, 255, 0.1);
-    transform: translateY(-1px);
-}
-
-.uuid-wrapper:active {
-    transform: translateY(0);
+    opacity: 0.8;
 }
 
 .uuid-label {
-    color: rgba(255, 255, 255, 0.5);
-    font-size: 11px;
+    color: rgba(255, 255, 255, 0.3);
+    font-size: 10px;
     font-weight: 500;
-    flex-shrink: 0; /* 标签不缩小 */
+    letter-spacing: 0.5px;
+    flex-shrink: 0;
+    text-transform: uppercase;
 }
 
 .uuid-text {
-    color: rgba(255, 255, 255, 0.6);
+    color: rgba(255, 255, 255, 0.35);
     font-size: 11px;
-    font-family: 'Courier New', monospace;
+    font-family: 'SF Mono', 'Cascadia Code', 'Courier New', monospace;
     overflow: hidden;
     text-overflow: ellipsis;
-    white-space: nowrap; /* 单行显示 */
-    flex: 1; /* 占满剩余空间 */
-    min-width: 0; /* 允许文本截断 */
+    white-space: nowrap;
+    flex: 1;
+    min-width: 0;
 }
 
 .copy-icon {
-    width: 14px;
-    height: 14px;
-    color: rgba(255, 255, 255, 0.5);
-    flex-shrink: 0; /* 图标不缩小 */
+    width: 13px;
+    height: 13px;
+    color: rgba(255, 255, 255, 0.25);
+    flex-shrink: 0;
+    transition: color 0.2s ease;
 }
 
-/* 统计数据网格（2×2 紧凑布局） */
+.uuid-wrapper:hover .copy-icon {
+    color: rgba(255, 255, 255, 0.5);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   统计数据 — 去色块，纯排版层级
+   ═══════════════════════════════════════════════════════════════════════════ */
 .stats-grid {
+    /* background-color : #1a1a1a; */
+    border-radius: 5px;
     display: grid;
-    grid-template-columns: repeat(2, 1fr); /* 2 列等宽 */
-    gap: 6px; /* 缩小间距 */
-    margin-top: 0px;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 0;
+    padding: 4px 0;
 }
 
 .stat-item {
-    background: rgba(255, 255, 255, 0.05);
-    border-radius: 8px;
-    padding: 10px 8px;
-    transition: all 0.2s ease;
     display: flex;
-    flex-direction: row;
+    /* flex-direction: column; */
     align-items: center;
-    justify-content: flex-start;
-    gap: 8px;
+    justify-content: center;
+    gap: 4px;
+    padding: 4px 0;
     cursor: default;
+    position: relative;
 }
 
-.stat-item:hover {
-    background: rgba(255, 255, 255, 0.1);
-    transform: translateY(-1px);
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+/* 列间分割线：除最后一列外，右侧加细分隔 */
+.stat-item:not(:last-child)::after {
+    content: '';
+    position: absolute;
+    right: 0;
+    top: 20%;
+    height: 60%;
+    width: 1px;
+    background: rgba(255, 255, 255, 0.06);
 }
 
 .stat-icon {
-    width: 16px;
-    height: 16px;
-    color: rgba(255, 255, 255, 0.7);
+    width: 15px;
+    height: 15px;
+    color: rgba(255, 255, 255, 0.4);
     flex-shrink: 0;
-    transition: all 0.2s ease;
+    transition: color 0.2s ease;
 }
 
 .stat-item:hover .stat-icon {
-    color: rgba(255, 255, 255, 0.95);
-    transform: scale(1.05);
+    color: rgba(255, 255, 255, 0.65);
 }
 
 .stat-value {
     color: #ffffff;
-    font-size: 16px;
-    font-weight: 700;
+    font-size: 15px;
+    font-weight: 600;
     line-height: 1;
-    letter-spacing: -0.3px;
+    letter-spacing: -0.2px;
+    font-variant-numeric: tabular-nums;
 }
 
-/* 联系方式区域 */
+/* ═══════════════════════════════════════════════════════════════════════════
+   联系方式 — 去色块，纯图标行
+   ═══════════════════════════════════════════════════════════════════════════ */
 .contact-section {
     display: flex;
     flex-direction: row;
-    gap: 8px;
-    margin-top: 0px;
-    padding-top: 12px;
-    border-top: 1px solid rgba(255, 255, 255, 0.08);
-    justify-content: center;
+    gap: 4px;
+    justify-content: flex-start;
 }
 
 .contact-item {
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 36px;
-    height: 36px;
-    background: rgba(255, 255, 255, 0.04);
-    border-radius: 8px;
+    width: 32px;
+    height: 32px;
+    border-radius: 6px;
     transition: all 0.2s ease;
     cursor: pointer;
+
+    &:nth-child(1){
+        margin-left: 12px;
+    }
 }
 
 .contact-item:hover {
-    background: rgba(255, 255, 255, 0.08);
-    transform: scale(1.08);
+    background: rgba(255, 255, 255, 0.06);
 }
 
 .contact-item:active {
-    transform: scale(0.95);
-}
-
-/* 联系方式编辑按钮 */
-.contact-edit-btn {
-    width: 100%;
-    margin-top: 8px;
-    padding: 7px 0;
-    border-radius: 8px;
-    border: 1px dashed rgba(255, 255, 255, 0.12);
-    background: transparent;
-    color: rgba(255, 255, 255, 0.35);
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: all 0.2s ease;
-}
-
-.contact-edit-btn:hover {
-    border-color: rgba(0, 169, 71, 0.4);
-    color: #00A947;
-    background: rgba(0, 169, 71, 0.06);
+    transform: scale(0.94);
 }
 
 .contact-icon {
+    width: 17px;
+    height: 17px;
+    color: rgba(255, 255, 255, 0.45);
+    flex-shrink: 0;
+    transition: color 0.2s ease, transform 0.2s ease;
+}
+
+/* 各平台图标尺寸微调 */
+.contact-icon.bilibili-icon,
+.contact-icon.qq-icon,
+.contact-icon.wechat-icon {
     width: 18px;
     height: 18px;
-    color: rgba(255, 255, 255, 0.65);
-    flex-shrink: 0;
-    transition: all 0.2s ease;
-}
-
-/* Bilibili 图标特殊样式 */
-.contact-icon.bilibili-icon {
-    width: 20px;
-    height: 20px;
-}
-
-/* QQ 图标特殊样式 */
-.contact-icon.qq-icon {
-    width: 20px;
-    height: 20px;
-}
-
-/* 微信图标特殊样式 */
-.contact-icon.wechat-icon {
-    width: 20px;
-    height: 20px;
 }
 
 .contact-item:hover .contact-icon {
-    color: rgba(255, 255, 255, 0.9);
-    transform: scale(1.05);
+    color: rgba(255, 255, 255, 0.8);
 }
 
-/* 编辑模式下 hover 切换到编辑图标 */
+/* 编辑模式：hover 切换为编辑图标 */
 .contact-section.is-editing .contact-item {
     position: relative;
 }
@@ -457,192 +445,212 @@
 /* 添加联系方式按钮 */
 .contact-add-btn:hover {
     background: rgba(0, 169, 71, 0.12) !important;
-    border-color: rgba(0, 169, 71, 0.4);
 }
 
 .contact-add-btn:hover .contact-icon {
     color: #00A947;
-    transform: scale(1.05);
 }
 
-/* 菜单列表 */
+/* ═══════════════════════════════════════════════════════════════════════════
+   菜单列表
+   ═══════════════════════════════════════════════════════════════════════════ */
 .menu-list {
     display: flex;
     flex-direction: column;
-    gap: 8px;
-    flex: 1; /* 占据剩余空间 */
+    gap: 2px;
+    flex: 1;
 }
 
 .menu-item {
     display: flex;
     align-items: center;
-    justify-content: center;
+    justify-content: flex-start;
     gap: 12px;
-    padding: 12px 16px;
+    padding: 10px 12px;
     border-radius: 8px;
     cursor: pointer;
     transition: all 0.2s ease;
-    color: rgba(255, 255, 255, 0.7);
+    color: rgba(255, 255, 255, 0.5);
 }
 
 .menu-item:hover {
-    background: rgba(255, 255, 255, 0.08);
-    color: rgba(255, 255, 255, 0.9);
+    background: rgba(255, 255, 255, 0.04);
+    color: rgba(255, 255, 255, 0.75);
 }
 
 .menu-item.active {
-    background: rgba(255, 255, 255, 0.12);
+    background: rgba(255, 255, 255, 0.06);
     color: #ffffff;
 }
 
 .menu-icon {
-    width: 20px;
-    height: 20px;
+    width: 18px;
+    height: 18px;
     flex-shrink: 0;
+    opacity: 0.7;
+    transition: opacity 0.2s ease;
+}
+
+.menu-item.active .menu-icon {
+    opacity: 1;
 }
 
 .menu-text {
-    font-size: 15px;
+    font-size: 14px;
     font-weight: 500;
+    letter-spacing: 0.3px;
 }
 
-/* 创作中心入口 */
+/* ═══════════════════════════════════════════════════════════════════════════
+   创作中心入口
+   ═══════════════════════════════════════════════════════════════════════════ */
 .creator-center-section {
     display: flex;
-    flex-direction: row;
-    padding-bottom: 8px;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
-    margin-bottom: 4px;
+    flex-direction: column;
+    gap: 2px;
+    padding-top: 16px;
+    border-top: 1px solid rgba(255, 255, 255, 0.06);
 }
 
 .creator-center-btn {
     width: 100%;
     display: flex;
-    flex-direction: column;
     align-items: center;
-    justify-content: center;
-    gap: 10px;
-    padding: 12px 16px;
+    justify-content: flex-start;
+    gap: 12px;
+    padding: 10px 12px;
     background: transparent;
     border: none;
     border-radius: 8px;
     cursor: pointer;
     transition: all 0.2s ease;
-    color: rgba(255, 255, 255, 0.7);
-    font-size: 15px;
+    color: rgba(255, 255, 255, 0.5);
+    font-size: 14px;
     font-weight: 500;
+    letter-spacing: 0.3px;
 }
 
 .creator-center-btn:hover {
-    background: rgba(0, 169, 71, 0.12);
+    background: rgba(0, 169, 71, 0.08);
     color: #00A947;
 }
 
 .creator-center-btn:active {
-    background: rgba(0, 169, 71, 0.18);
+    background: rgba(0, 169, 71, 0.12);
     transform: scale(0.98);
 }
 
 .creator-center-icon {
-    width: 20px;
-    height: 20px;
+    width: 18px;
+    height: 18px;
     flex-shrink: 0;
+    opacity: 0.7;
+    transition: opacity 0.2s ease;
 }
 
-/* 底部返回首页按钮 */
+.creator-center-btn:hover .creator-center-icon {
+    opacity: 1;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   底部操作区
+   ═══════════════════════════════════════════════════════════════════════════ */
 .sidebar-footer {
-    margin-top: auto; /* 推到底部 */
-    padding-top: 8px;
+    margin-top: auto;
     display: flex;
-    flex-direction: row;
-    gap: 8px;
+    flex-direction: column;
+    gap: 2px;
+    padding-top: 16px;
+    border-top: 1px solid rgba(255, 255, 255, 0.06);
 }
 
 .home-btn {
     width: 100%;
     display: flex;
     align-items: center;
-    justify-content: center;
-    gap: 10px;
-    padding: 12px 16px;
+    justify-content: flex-start;
+    gap: 12px;
+    padding: 10px 12px;
     background: transparent;
     border: none;
     border-radius: 8px;
     cursor: pointer;
     transition: all 0.2s ease;
-    color: rgba(255, 255, 255, 0.7);
-    font-size: 15px;
+    color: rgba(255, 255, 255, 0.5);
+    font-size: 14px;
     font-weight: 500;
+    letter-spacing: 0.3px;
 }
 
 .home-btn:hover {
-    background: rgba(255, 255, 255, 0.1);
-    color: rgba(255, 255, 255, 0.95);
+    background: rgba(255, 255, 255, 0.04);
+    color: rgba(255, 255, 255, 0.8);
 }
 
 .home-btn:active {
-    background: rgba(255, 255, 255, 0.15);
     transform: scale(0.98);
 }
 
 .home-icon {
-    width: 20px;
-    height: 20px;
+    width: 18px;
+    height: 18px;
     flex-shrink: 0;
+    opacity: 0.7;
 }
 
 .home-text {
-    font-size: 15px;
-    font-weight: 500;
+    font-size: 14px;
 }
 
-/* 退出登录按钮 */
+/* 退出登录 */
 .logout-btn {
     width: 100%;
     display: flex;
     align-items: center;
-    justify-content: center;
-    gap: 10px;
-    padding: 12px 16px;
+    justify-content: flex-start;
+    gap: 12px;
+    padding: 10px 12px;
     background: transparent;
     border: none;
     border-radius: 8px;
     cursor: pointer;
     transition: all 0.2s ease;
-    color: rgba(255, 100, 100, 0.7);
-    font-size: 15px;
+    color: rgba(255, 100, 100, 0.5);
+    font-size: 14px;
     font-weight: 500;
+    letter-spacing: 0.3px;
 }
 
 .logout-btn:hover {
-    background: rgba(255, 80, 80, 0.15);
-    color: rgba(255, 100, 100, 0.95);
+    background: rgba(255, 80, 80, 0.1);
+    color: rgba(255, 100, 100, 0.9);
 }
 
 .logout-btn:active {
-    background: rgba(255, 80, 80, 0.25);
     transform: scale(0.98);
 }
 
 .logout-icon {
-    width: 20px;
-    height: 20px;
+    width: 18px;
+    height: 18px;
     flex-shrink: 0;
+    opacity: 0.7;
 }
 
 .logout-text {
-    font-size: 15px;
-    font-weight: 500;
+    font-size: 14px;
 }
 
-/* 内容展示区域 */
-#contShow{
-    width: calc(100% - 300px);
+/* ═══════════════════════════════════════════════════════════════════════════
+   内容展示区域（右侧主区域）
+   ═══════════════════════════════════════════════════════════════════════════ */
+#contShow {
+    width: calc(100% - 320px);
     height: 100vh;
     position: absolute;
     right: 0;
     top: 0;
-    background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
+    background: #0a0a0a;
     overflow: hidden;
 }
 
@@ -651,46 +659,72 @@
     align-items: center;
     justify-content: center;
     height: 100vh;
-    color: rgba(255, 255, 255, 0.5);
-    font-size: 18px;
+    color: rgba(255, 255, 255, 0.3);
+    font-size: 16px;
+    letter-spacing: 0.5px;
 }
 
-/* 空状态提示 */
+/* 空状态 */
 .content-empty {
     display: flex;
     align-items: center;
     justify-content: center;
     height: 60vh;
-    color: rgba(255, 255, 255, 0.35);
-    font-size: 15px;
+    color: rgba(255, 255, 255, 0.18);
+    font-size: 14px;
+    letter-spacing: 0.5px;
     user-select: none;
 }
 
-/* ── 瀑布流内容面板 ── */
+/* ═══════════════════════════════════════════════════════════════════════════
+   瀑布流内容面板
+   ═══════════════════════════════════════════════════════════════════════════ */
 .profile-content-panel {
     width: 100%;
     height: 100vh;
-    padding: 24px 20px 80px;
+    padding: 24px 24px 80px;
     box-sizing: border-box;
     overflow-y: auto;
+    scroll-behavior: smooth;
 }
 
-/* ── 艺术作品筛选栏 ── */
+/* 滚动条美化 */
+.profile-content-panel::-webkit-scrollbar {
+    width: 4px;
+}
+
+.profile-content-panel::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.profile-content-panel::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.08);
+    border-radius: 2px;
+}
+
+.profile-content-panel::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.15);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   筛选栏 — 艺术作品
+   ═══════════════════════════════════════════════════════════════════════════ */
 .profile-filter-bar {
     position: sticky;
     top: 0;
     z-index: 5;
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 8px;
     width: 600px;
     max-width: 100%;
     margin: 0 auto -28px auto;
-    padding: 12px 16px;
-    background: rgba(0, 0, 0, 0.7);
-    backdrop-filter: blur(12px);
-    border-radius: 10px;
-    border: 1px solid rgba(255, 255, 255, 0.08);
+    padding: 10px 14px;
+    background: rgba(10, 10, 10, 0.85);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.06);
     box-sizing: border-box;
     transform: translateY(0);
     transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
@@ -700,7 +734,7 @@
     transform: translateY(calc(-100% - 40px));
 }
 
-/* 排序栏（收藏 & 点赞）—— 左对齐，悬浮于瀑布流上方 */
+/* 排序栏（收藏 & 点赞） */
 .profile-sort-bar {
     position: sticky;
     top: 0;
@@ -710,9 +744,10 @@
     margin-bottom: -28px;
     border-radius: 10px;
     overflow: hidden;
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    background: rgba(0, 0, 0, 0.7);
-    backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    background: rgba(10, 10, 10, 0.85);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
     transform: translateY(0);
     transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
 }
@@ -722,32 +757,34 @@
 }
 
 .sort-option {
-    height: 32px;
-    padding: 0 14px;
+    height: 34px;
+    padding: 0 16px;
     border: none;
     background: transparent;
-    color: rgba(255, 255, 255, 0.4);
+    color: rgba(255, 255, 255, 0.35);
     font-size: 13px;
+    font-weight: 500;
     cursor: pointer;
     transition: background 0.2s ease, color 0.2s ease;
     white-space: nowrap;
+    letter-spacing: 0.3px;
 }
 
 .sort-option + .sort-option {
-    border-left: 1px solid rgba(255, 255, 255, 0.1);
+    border-left: 1px solid rgba(255, 255, 255, 0.06);
 }
 
 .sort-option:hover {
-    background: rgba(255, 255, 255, 0.05);
-    color: rgba(255, 255, 255, 0.7);
+    background: rgba(255, 255, 255, 0.03);
+    color: rgba(255, 255, 255, 0.6);
 }
 
 .sort-option.active {
-    background: rgba(0, 169, 71, 0.18);
+    background: rgba(0, 169, 71, 0.12);
     color: #00A947;
-    font-weight: 500;
 }
 
+/* 搜索输入 */
 .profile-filter-input-wrapper {
     position: relative;
     flex: 1;
@@ -756,29 +793,30 @@
 
 .profile-filter-input {
     width: 100%;
-    height: 36px;
-    padding: 0 36px 0 16px;
-    background: rgba(255, 255, 255, 0.06);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    border-radius: 18px;
+    height: 34px;
+    padding: 0 34px 0 14px;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: 8px;
     color: #ffffff;
     font-size: 13px;
     outline: none;
     box-sizing: border-box;
-    transition: border-color 0.2s ease;
+    transition: border-color 0.2s ease, background 0.2s ease;
 }
 
 .profile-filter-input:focus {
-    border-color: rgba(0, 169, 71, 0.5);
+    border-color: rgba(0, 169, 71, 0.35);
+    background: rgba(255, 255, 255, 0.06);
 }
 
 .profile-filter-input::placeholder {
-    color: rgba(255, 255, 255, 0.3);
+    color: rgba(255, 255, 255, 0.2);
 }
 
 .profile-filter-search-btn {
     position: absolute;
-    right: 4px;
+    right: 3px;
     top: 50%;
     transform: translateY(-50%);
     display: flex;
@@ -787,8 +825,8 @@
     width: 28px;
     height: 28px;
     border: none;
-    border-radius: 50%;
-    background: rgba(0, 169, 71, 0.75);
+    border-radius: 6px;
+    background: rgba(0, 169, 71, 0.6);
     color: #ffffff;
     cursor: pointer;
     transition: background 0.2s ease;
@@ -803,53 +841,54 @@
     height: 14px;
 }
 
-/* ── 排序切换（合集 filter-bar 内） ── */
+/* 合集排序切换 */
 .profile-sort-toggle {
     display: flex;
     gap: 0;
     flex-shrink: 0;
-    border-radius: 18px;
+    border-radius: 8px;
     overflow: hidden;
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.06);
 }
 
 .profile-sort-btn {
-    height: 34px;
-    padding: 0 12px;
+    height: 32px;
+    padding: 0 14px;
     border: none;
-    background: rgba(255, 255, 255, 0.04);
-    color: rgba(255, 255, 255, 0.4);
+    background: transparent;
+    color: rgba(255, 255, 255, 0.35);
     font-size: 13px;
+    font-weight: 500;
     cursor: pointer;
     white-space: nowrap;
     transition: background 0.2s ease, color 0.2s ease;
+    letter-spacing: 0.3px;
 }
 
 .profile-sort-btn + .profile-sort-btn {
-    border-left: 1px solid rgba(255, 255, 255, 0.1);
+    border-left: 1px solid rgba(255, 255, 255, 0.06);
 }
 
 .profile-sort-btn:hover {
-    background: rgba(255, 255, 255, 0.06);
-    color: rgba(255, 255, 255, 0.7);
+    background: rgba(255, 255, 255, 0.03);
+    color: rgba(255, 255, 255, 0.6);
 }
 
 .profile-sort-btn.active {
-    background: rgba(0, 169, 71, 0.18);
+    background: rgba(0, 169, 71, 0.12);
     color: #00A947;
-    font-weight: 500;
 }
 
-/* ── 圆盘选择器：折叠态 ── */
+/* ── 圆盘选择器（折叠态） ── */
 .profile-filter-dial {
     display: flex;
     align-items: center;
     gap: 4px;
-    height: 36px;
-    padding: 0 10px;
-    background: rgba(255, 255, 255, 0.06);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    border-radius: 18px;
+    height: 34px;
+    padding: 0 12px;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: 8px;
     color: #ffffff;
     font-size: 13px;
     cursor: pointer;
@@ -859,25 +898,26 @@
 }
 
 .profile-filter-dial:hover {
-    border-color: rgba(0, 169, 71, 0.4);
-    background: rgba(255, 255, 255, 0.08);
+    border-color: rgba(0, 169, 71, 0.3);
+    background: rgba(255, 255, 255, 0.06);
 }
 
 .dial-trigger-label {
     white-space: nowrap;
+    color: rgba(255, 255, 255, 0.7);
 }
 
 .dial-trigger-icon {
-    width: 16px;
-    height: 16px;
+    width: 15px;
+    height: 15px;
     flex-shrink: 0;
-    opacity: 0.7;
+    opacity: 0.5;
 }
 
 .dial-trigger-arrow {
     width: 12px;
     height: 12px;
-    opacity: 0.5;
+    opacity: 0.35;
     flex-shrink: 0;
 }
 
@@ -898,16 +938,15 @@
     opacity: 0;
     background:
         conic-gradient(
-            rgba(255, 255, 255, 0.08) 0deg 120deg,
-            rgba(255, 255, 255, 0.08) 120deg 240deg,
-            rgba(255, 255, 255, 0.08) 240deg 360deg
+            rgba(255, 255, 255, 0.06) 0deg 120deg,
+            rgba(255, 255, 255, 0.06) 120deg 240deg,
+            rgba(255, 255, 255, 0.06) 240deg 360deg
         ),
-        rgba(28, 28, 30, 0.96);
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.08);
+        rgba(18, 18, 20, 0.97);
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(255, 255, 255, 0.06);
     pointer-events: none;
 }
 
-/* 扇形分割线 */
 .dial-pie::before {
     content: '';
     position: absolute;
@@ -915,9 +954,9 @@
     border-radius: 50%;
     background:
         conic-gradient(
-            transparent 119deg, rgba(255,255,255,0.1) 119deg 121deg,
-            transparent 121deg 239deg, rgba(255,255,255,0.1) 239deg 241deg,
-            transparent 241deg 359deg, rgba(255,255,255,0.1) 359deg 361deg
+            transparent 119deg, rgba(255,255,255,0.08) 119deg 121deg,
+            transparent 121deg 239deg, rgba(255,255,255,0.08) 239deg 241deg,
+            transparent 241deg 359deg, rgba(255,255,255,0.08) 359deg 361deg
         );
     pointer-events: none;
 }
@@ -938,7 +977,7 @@
 
 .dial-segment-label {
     font-size: 13px;
-    color: rgba(255, 255, 255, 0.5);
+    color: rgba(255, 255, 255, 0.4);
     white-space: nowrap;
     transition: color 0.15s ease;
 }
@@ -952,7 +991,6 @@
     font-weight: 600;
 }
 
-/* 中心圆 */
 .dial-center {
     position: absolute;
     top: 50%;
@@ -961,8 +999,8 @@
     width: 52px;
     height: 52px;
     border-radius: 50%;
-    background: rgba(28, 28, 30, 0.96);
-    border: 1px solid rgba(255, 255, 255, 0.12);
+    background: rgba(18, 18, 20, 0.97);
+    border: 1px solid rgba(255, 255, 255, 0.1);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -972,6 +1010,5 @@
 .dial-center-icon {
     width: 22px;
     height: 22px;
-    color: rgba(255, 255, 255, 0.7);
+    color: rgba(255, 255, 255, 0.6);
 }
-
