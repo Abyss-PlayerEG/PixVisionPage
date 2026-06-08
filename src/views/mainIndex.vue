@@ -20,6 +20,7 @@ import {
   useSwiper,
 } from '@/composables/mainIndex.js'
 import { useWorkWaterfall } from '@/composables/useWorkWaterfall.js'
+import { useSeriesData } from '@/composables/useSeriesData.js'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
 import { showError } from '@/utils/notification'
 
@@ -43,10 +44,18 @@ const expandedFAQs = ref(new Set())
 const { initNum7zAnimation, cleanupNum7zAnimation, mockNum7zQA, mockNum7zFAQ, n7Copy1Words, n7Copy2Words, toggleFAQ } = useNum7zAnimation(expandedFAQs)
 const { initSwiper, cleanupSwiper } = useSwiper(swiperContainer)
 const { waterfallImages, isLoading, error, loadWorks } = useWorkWaterfall()
+const { seriesList, isLoading: seriesLoading, error: seriesError, loadSeries } = useSeriesData()
 
 // --- Watchers ---
 // API 异常 → 弹出通知提示
 watch(error, (newError) => {
+  if (newError) {
+    showError(newError)
+  }
+})
+
+// 系列数据加载异常 → 弹出通知提示
+watch(seriesError, (newError) => {
   if (newError) {
     showError(newError)
   }
@@ -82,6 +91,10 @@ onMounted(() => {
   initSwiper()
   // 初始加载第一页作品数据
   loadWorks({ reset: true })
+  
+  // 加载系列数据（用于n3_showIMG合集部分）
+  // 这里使用一个示例用户ID，实际应该从用户状态或路由参数获取
+  loadSeries({ userId: 1, size: 9, reset: true })
 
   // 延迟 500ms 初始化 num3z 动画 —— Waterfall 的 ScrollTrigger 在 ~300ms 后创建，
   // 需要等它完成后再注册新的 ScrollTrigger，避免多个 trigger 同时计算导致位置争夺
@@ -281,12 +294,37 @@ onUnmounted(() => {
     <div class="n3_showIMG">
       <div class="swiper-container" ref="swiperContainer">
         <div class="swiper-wrapper">
-          <div v-for="index in 9" :key="index" class="swiper-slide">
+          <!-- 加载状态 -->
+          <div v-if="seriesLoading" class="swiper-slide">
             <div class="slide-card">
               <div class="placeholder-card"></div>
               <div class="slide-caption">
-                <h3 class="caption-title">精选合集 {{ index }}</h3>
-                <p class="caption-desc">探索摄影机的无限魅力，感受每一帧画面的生命力与艺术价值</p>
+                <h3 class="caption-title">加载中...</h3>
+                <p class="caption-desc">正在获取合集数据</p>
+              </div>
+            </div>
+          </div>
+          
+          <!-- 系列数据 -->
+          <div v-else-if="seriesList.length > 0" v-for="series in seriesList" :key="series.series_id" class="swiper-slide">
+            <div class="slide-card">
+              <div class="placeholder-card">
+                <img v-if="series.coverUrl" :src="series.coverUrl" :alt="series.series_title" />
+              </div>
+              <div class="slide-caption">
+                <h3 class="caption-title">{{ series.series_title }}</h3>
+                <p class="caption-desc">{{ series.about_text || '探索这个合集的精彩内容' }}</p>
+              </div>
+            </div>
+          </div>
+          
+          <!-- 无数据状态 -->
+          <div v-else class="swiper-slide">
+            <div class="slide-card">
+              <div class="placeholder-card"></div>
+              <div class="slide-caption">
+                <h3 class="caption-title">暂无合集</h3>
+                <p class="caption-desc">还没有创建任何合集</p>
               </div>
             </div>
           </div>

@@ -4,8 +4,8 @@
  */
 
 // 后端 API 基础 URL
-// export const API_BASE_URL = 'http://124.221.107.68:1899/';
-export const API_BASE_URL = 'http://127.0.0.1:9090/';
+export const API_BASE_URL = 'http://124.221.107.68:1899/';
+// export const API_BASE_URL = 'http://127.0.0.1:9090/';
 
 // 头像获取接口
 export const AVATAR_API = `${API_BASE_URL}api/image/avatar/get`;
@@ -96,6 +96,7 @@ export const STAR_API = {
 // 作品系列相关接口
 export const SERIES_API = {
   PAGE: `${API_BASE_URL}/api/work/series/page`, // GET，路径后拼 /userId/current/size
+  DETAIL: `${API_BASE_URL}/api/work/series/detail`, // GET，路径后拼 /seriesId
 };
 
 // 账号管理相关接口
