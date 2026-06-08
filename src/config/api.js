@@ -4,8 +4,8 @@
  */
 
 // 后端 API 基础 URL
-export const API_BASE_URL = 'http://124.221.107.68:1899/';
-// export const API_BASE_URL = 'http://127.0.0.1:9090/';
+// export const API_BASE_URL = 'http://124.221.107.68:1899/';
+export const API_BASE_URL = 'http://127.0.0.1:9090/';
 
 // 头像获取接口
 export const AVATAR_API = `${API_BASE_URL}api/image/avatar/get`;
@@ -96,6 +96,20 @@ export const STAR_API = {
 // 作品系列相关接口
 export const SERIES_API = {
   PAGE: `${API_BASE_URL}/api/work/series/page`, // GET，路径后拼 /userId/current/size
+};
+
+// 账号管理相关接口
+export const ACCOUNT_API = {
+  DELETE_ACCOUNT: `${API_BASE_URL}/api/auth/delete-account`,           // 删除账号
+  CHANGE_PASSWORD: `${API_BASE_URL}/api/user/password/change`,         // 修改密码
+  CHANGE_EMAIL: `${API_BASE_URL}/api/user/profile/email/change`,       // 修改邮箱
+};
+
+// 账号管理相关邮件验证码接口
+export const ACCOUNT_MAIL_API = {
+  SEND_DELETE_ACCOUNT_CODE: `${API_BASE_URL}/api/mail/send-delete-account-code`,     // 发送注销账号验证码
+  SEND_CHANGE_PASSWORD_CODE: `${API_BASE_URL}/api/mail/send-change-password-code`,   // 发送修改密码验证码
+  SEND_CHANGE_EMAIL_CODE: `${API_BASE_URL}/api/mail/send-change-email-code`,         // 发送修改邮箱验证码
 };
 
 // 获取作品图片完整 URL

@@ -1,8 +1,8 @@
 {
   "openapi": "3.0.1",
   "info": {
-    "title": "像素视觉",
-    "description": "像素视觉后端服务器",
+    "title": "像素视觉 - 主服务",
+    "description": "像素视觉SpringBoot后端服务器",
     "version": "DEV-2.0.0"
   },
   "servers": [
@@ -61,6 +61,10 @@
       "description": "提供用户密码修改、重置等密码管理功能"
     },
     {
+      "name": "系统管理员接口 - AI 审核记录",
+      "description": "提供 AI 审核记录的分页查询，支持按内容类型、审核状态、关键词筛选"
+    },
+    {
       "name": "系统管理员接口 - 作品合集管理",
       "description": "提供作品合集管理的后台接口，包括批量更新审核状态等操作"
     },
@@ -83,10 +87,6 @@
     {
       "name": "系统管理员接口 - 评论管理",
       "description": "提供评论管理的后台接口，包括批量删除等操作"
-    },
-    {
-      "name": "JWT 鉴权测试接口",
-      "description": "提供 JWT Token 生成和验证的测试功能"
     },
     {
       "name": "ServerRoot",
@@ -198,7 +198,7 @@
           "用户接口 - 作品合集"
         ],
         "summary": "更新系列信息接口",
-        "description": "# 更新系列信息（需要登录认证 + 角色权限[22,77]）\n\n## 特性\n- Token 认证（支持 Header 和 URL 参数两种方式）\n- 支持部分字段修改（所有参数可选）\n- SQL 层面权限验证（只能修改自己的系列）\n- 动态更新非空字段\n- 完整的参数校验\n- 标题唯一性检查（同一用户下不能重复）\n\n## 参数说明：\n- Authorization: Header 中的 Token，格式为 `Bearer <token>`，或通过 URL 参数 `?token=<token>` 传递\n- seriesId: **系列 ID**，Integer 类型，必填\n- seriesTitle: **系列标题**，String 类型，可选，最多 16 个中文字符\n- aboutText: **系列描述**，String 类型，可选，最多 24 个中文字符\n\n## 返回说明：\n- **修改成功**：返回 **{\"data\": true}** 和“系列信息更新成功”提示\n- **Token 不存在**：返回 **{\"data\": null}** 和“Token 不存在”提示\n- **Token 已失效**：返回 **{\"data\": null}** 和“Token 已失效”提示\n- **系列 ID 无效**：返回 **{\"data\": false}** 和“系列 ID 无效”提示\n- **无修改内容**：返回 **{\"data\": false}** 和“无修改内容”提示\n- **系列不存在**：返回 **{\"data\": false}** 和“系列不存在或已删除”提示\n- **无权修改**：返回 **{\"data\": false}** 和“无权修改该系列”提示\n- **标题过长**：返回 **{\"data\": false}** 和“系列标题长度不能超过 16 个字符”提示\n- **描述过长**：返回 **{\"data\": false}** 和“系列描述长度不能超过 24 个字符”提示\n- **标题重复**：返回 **{\"data\": false}** 和“系列标题已存在，请使用其他标题”提示\n\n## 业务逻辑：\n1. 从请求头或 URL 参数中提取 Token（支持 Bearer 前缀）\n2. 验证 Token 是否在白名单中\n3. 从 Token 中解析用户 ID\n4. 校验系列 ID 参数有效性\n5. 检查是否至少有一个参数不为空\n6. 查询系列信息并验证所有权（只能修改自己的系列）\n7. 如果提供了新标题，验证长度并检查是否与当前标题不同且未被其他系列使用\n8. 如果提供了新描述，验证长度并检查是否与当前描述不同\n9. 执行动态更新（只更新非空且发生变化的字段）\n10. 自动更新 update_time 和 update_user\n11. 返回修改结果\n\n## 注意事项：\n- **需要携带有效的 Token 才能修改系列**\n- Token 必须在白名单中（未过期、未登出）\n- **用户只能修改自己的系列**，无法修改他人的系列\n- 所有参数都是可选的，可以只修改部分字段\n- **如果所有参数都为空或与当前值相同，将返回“无修改内容”**\n- 系列标题限制：**最多 16 个字符**\n- 系列描述限制：**最多 24 个字符**\n- **同一用户下系列标题不能重复**（修改时也会检查）\n- 采用动态更新机制，只提供要修改的字段即可\n- 修改成功后，update_time 和 update_user 会自动更新\n",
+        "description": "# 更新系列信息（需要登录认证 + 角色权限[22,77]）\n\n## 特性\n- Token 认证（支持 Header 和 URL 参数两种方式）\n- 支持部分字段修改（所有参数可选）\n- SQL 层面权限验证（只能修改自己的系列）\n- 动态更新非空字段\n- 完整的参数校验\n- 标题唯一性检查（同一用户下不能重复）\n- AI 内容安全审核（修改标题或描述时触发）\n\n## 参数说明：\n- Authorization: Header 中的 Token，格式为 `Bearer <token>`，或通过 URL 参数 `?token=<token>` 传递\n- seriesId: **系列 ID**，Integer 类型，必填\n- seriesTitle: **系列标题**，String 类型，可选，最多 16 个中文字符\n- aboutText: **系列描述**，String 类型，可选，最多 24 个中文字符\n\n## 返回说明：\n- **审核通过**：返回 **{\"data\": true}** 和\"系列信息更新成功\"提示\n- **AI 审核不通过（违规）**：返回 **{\"data\": false}** 和\"违规内容：{原因}\"提示\n- **AI 审核存疑（待审核）**：返回 **{\"data\": true}** 和\"系列信息更新成功，等待人工审核\"提示\n- **Token 不存在**：返回 **{\"data\": null}** 和\"Token 不存在\"提示\n- **Token 已失效**：返回 **{\"data\": null}** 和\"Token 已失效\"提示\n- **系列 ID 无效**：返回 **{\"data\": false}** 和\"系列 ID 无效\"提示\n- **无修改内容**：返回 **{\"data\": false}** 和\"无修改内容\"提示\n- **系列不存在**：返回 **{\"data\": false}** 和\"系列不存在或已删除\"提示\n- **无权修改**：返回 **{\"data\": false}** 和\"无权修改该系列\"提示\n- **标题过长**：返回 **{\"data\": false}** 和\"系列标题长度不能超过 16 个字符\"提示\n- **描述过长**：返回 **{\"data\": false}** 和\"系列描述长度不能超过 24 个字符\"提示\n- **标题重复**：返回 **{\"data\": false}** 和\"系列标题已存在，请使用其他标题\"提示\n- **更新失败**：返回 **{\"data\": false}** 和\"系列信息更新失败\"提示\n\n## 业务逻辑：\n1. 从请求头或 URL 参数中提取 Token（支持 Bearer 前缀）\n2. 验证 Token 是否在白名单中\n3. 从 Token 中解析用户 ID\n4. 校验系列 ID 参数有效性\n5. 检查是否至少有一个参数不为空\n6. 查询系列信息并验证所有权（只能修改自己的系列）\n7. 如果提供了新标题，验证长度并检查是否与当前标题不同且未被其他系列使用\n8. 如果提供了新描述，验证长度并检查是否与当前描述不同\n9. 调用 AI 审核服务对更新后的系列内容进行安全审核\n10. 根据审核结果设置审核状态（通过-10/待审核-20/违规-30）\n11. 执行动态更新（只更新非空且发生变化的字段）\n12. 自动更新 update_time 和 update_user\n13. 根据审核状态返回差异化的响应消息\n\n## 注意事项：\n- **需要携带有效的 Token 才能修改系列**\n- Token 必须在白名单中（未过期、未登出）\n- **用户只能修改自己的系列**，无法修改他人的系列\n- 所有参数都是可选的，可以只修改部分字段\n- **如果所有参数都为空或与当前值相同，将返回\"无修改内容\"**\n- 系列标题限制：**最多 16 个字符**\n- 系列描述限制：**最多 24 个字符**\n- **同一用户下系列标题不能重复**（修改时也会检查）\n- 采用动态更新机制，只提供要修改的字段即可\n- 修改成功后，update_time 和 update_user 会自动更新\n- 系列更新后会自动调用 AI 审核服务进行内容安全审核\n- AI 审核不通过（违规）时直接拦截，data 返回 false\n- AI 审核存疑时标记为待审核，系列需要人工审核后才会公开显示\n- AI 审核服务不可用时自动降级为待审核状态\n",
         "operationId": "updateSeriesInfo",
         "parameters": [
           {
@@ -392,7 +392,7 @@
           "用户接口 - 作品合集"
         ],
         "summary": "新增作品系列接口",
-        "description": "# 新增作品系列（需要登录认证 + 角色权限[22,77]）\n\n## 特性\n- Token 认证（支持 Header 和 URL 参数两种方式）\n- 系列标题长度限制（≤16 个中文字符）\n- 系列描述长度限制（≤24 个中文字符）\n- 自动关联当前登录用户\n\n## 参数说明：\n- Authorization: Header 中的 Token，格式为 `Bearer <token>`，或通过 URL 参数 `?token=<token>` 传递\n- seriesTitle: 系列标题，字符串类型，必填，长度不超过 16 个中文字符\n- aboutText: 系列描述文本，字符串类型，可选，长度不超过 24 个中文字符\n\n## 返回说明：\n- **成功**：返回 **{\"data\": Series 对象}** 和提示信息\n- **Token 失效**：返回 **{\"data\": null}** 和 \"Token 已失效\" 提示\n- **标题为空**：返回 **{\"data\": false}** 和 \"系列标题不能为空\" 提示\n- **标题过长**：返回 **{\"data\": false}** 和 \"系列标题长度不能超过 16 个字符\" 提示\n- **描述过长**：返回 **{\"data\": false}** 和 \"系列描述长度不能超过 24 个字符\" 提示\n- **标题重复**：返回 **{\"data\": false}** 和 \"系列标题已存在，请使用其他标题\" 提示\n\n## 业务逻辑：\n1. 从请求中提取并验证 Token\n2. 检查 Token 是否在白名单中\n3. 从 Token 中解析用户 ID\n4. 校验系列标题和描述的长度\n5. **检查系列标题是否已存在（同一用户下不能重复）**\n6. 创建系列对象并设置用户 ID、时间戳等信息\n7. 插入数据库并返回结果\n\n## 注意事项：\n- 系列标题**必填**，长度不超过 16 个字符\n- 系列描述**可选**，长度不超过 24 个字符\n- **同一用户下系列标题不能重复**\n- 系统自动记录创建者 ID 和创建时间\n- 返回的 Series 对象包含自动生成的 series_id\n",
+        "description": "# 新增作品系列（需要登录认证 + 角色权限[22,77]）\n\n## 特性\n- Token 认证（支持 Header 和 URL 参数两种方式）\n- 系列标题长度限制（≤16 个中文字符）\n- 系列描述长度限制（≤24 个中文字符）\n- 自动关联当前登录用户\n- AI 内容安全审核（标题和描述）\n\n## 参数说明：\n- Authorization: Header 中的 Token，格式为 `Bearer <token>`，或通过 URL 参数 `?token=<token>` 传递\n- seriesTitle: 系列标题，字符串类型，必填，长度不超过 16 个中文字符\n- aboutText: 系列描述文本，字符串类型，可选，长度不超过 24 个中文字符\n\n## 返回说明：\n- **审核通过**：返回 **{\"data\": true}** 和\"系列新增成功\"提示\n- **AI 审核不通过（违规）**：返回 **{\"data\": false}** 和\"违规内容：{原因}\"提示\n- **AI 审核存疑（待审核）**：返回 **{\"data\": true}** 和\"系列新增成功，等待人工审核\"提示\n- **Token 失效**：返回 **{\"data\": null}** 和 \"Token 已失效\" 提示\n- **标题为空**：返回 **{\"data\": false}** 和 \"系列标题不能为空\" 提示\n- **标题过长**：返回 **{\"data\": false}** 和 \"系列标题长度不能超过 16 个字符\" 提示\n- **描述过长**：返回 **{\"data\": false}** 和 \"系列描述长度不能超过 24 个字符\" 提示\n- **标题重复**：返回 **{\"data\": false}** 和 \"系列标题已存在，请使用其他标题\" 提示\n- **新增失败**：返回 **{\"data\": false}** 和 \"系列新增失败\" 提示\n\n## 业务逻辑：\n1. 从请求中提取并验证 Token\n2. 检查 Token 是否在白名单中\n3. 从 Token 中解析用户 ID\n4. 校验系列标题和描述的长度\n5. **检查系列标题是否已存在（同一用户下不能重复）**\n6. 调用 AI 审核服务对系列标题和描述进行内容安全审核\n7. 根据审核结果设置审核状态（通过-10/待审核-20/违规-30）\n8. 创建系列对象并插入数据库\n9. 根据审核状态返回差异化的响应消息\n\n## 注意事项：\n- 系列标题**必填**，长度不超过 16 个字符\n- 系列描述**可选**，长度不超过 24 个字符\n- **同一用户下系列标题不能重复**\n- 系统自动记录创建者 ID 和创建时间\n- 系列新增后会自动调用 AI 审核服务进行内容安全审核（标题+描述）\n- AI 审核不通过（违规）时直接拦截，data 返回 false\n- AI 审核存疑时标记为待审核，系列需要人工审核后才会公开显示\n- AI 审核服务不可用时自动降级为待审核状态\n",
         "operationId": "addSeries",
         "parameters": [
           {
@@ -1478,7 +1478,7 @@
           "认证接口"
         ],
         "summary": "注册接口",
-        "description": "# 注册（无需登录验证）\n\n## 特性\n- 用户名/邮箱唯一性校验\n- 邮箱验证码验证（Redis 存储）\n- SHA-256 密码加密\n- 自动生成随机昵称（可选）\n- 密码二次确认\n\n## 参数说明：\n- username: 用户名，6-16 位，只允许字母、数字和下划线，字符串类型，必填\n- password: 登录密码，字符串类型，必填，建议使用强密码组合\n- confirmPassword: 确认密码，必须与 password 一致，字符串类型，必填\n- nickname: 用户昵称，字符串类型，**可为空**，为空时自动生成随机昵称，长度 **1-20 个字符**\n- email: 邮箱地址，字符串类型，必填，用于接收验证码和后续找回密码\n- vCode: 邮箱验证码，6 位大写字母或数字，字符串类型，必填\n\n## 返回说明：\n- **注册成功**：返回 **{\"data\": {User 对象}}** 和“注册成功”提示\n- **用户名格式错误**：返回 **{\"data\": null}** 和“用户名格式错误”提示\n- **邮箱格式错误**：返回 **{\"data\": null}** 和“邮箱格式错误”提示\n- **验证码格式错误**：返回 **{\"data\": null}** 和“验证码格式错误”提示\n- **两次密码不一致**：返回 **{\"data\": null}** 和“两次输入的密码不一致”提示\n- **验证码错误**：返回 **{\"data\": null}** 和“验证码错误”提示\n- **昵称长度错误**：返回 **{\"data\": null}** 和“昵称长度必须在 1-20 个字符之间”提示\n- **注册失败**：返回 **{\"data\": null}** 和“注册失败：该用户名或邮箱已注册”提示\n\n## 业务逻辑：\n1. 校验用户名格式是否符合规范（6-16 位字母、数字、下划线）\n2. 校验邮箱格式是否正确\n3. 校验验证码格式是否正确（6 位大写字母或数字）\n4. 验证两次输入的密码是否一致\n5. 验证邮箱验证码是否与 Redis 中存储的一致\n6. 如果昵称为空，生成随机默认昵称（格式：user+ 随机词）\n7. **如果昵称不为空，验证长度是否在 1-20 个字符之间**\n8. 对密码进行 SHA-256 哈希加密处理\n9. 创建用户并保存到数据库\n10. 返回用户信息和成功提示\n\n## 注意事项：\n- 昵称参数为**可选参数**，不传或为空时自动生成\n- 验证码有效期由 Redis 配置决定（默认 5 分钟）\n- 密码会使用 **SHA-256** 进行加密存储\n- **用户名**和**邮箱**不可重复注册\n- 建议使用强密码组合（大小写字母 + 数字 + 特殊字符）\n- 两次输入的密码必须完全一致\n",
+        "description": "# 注册（无需登录验证）\n\n## 特性\n- 用户名/邮箱唯一性校验\n- 邮箱验证码验证（Redis 存储）\n- SHA-256 密码加密\n- 自动生成随机昵称（可选）\n- 密码二次确认\n\n## 参数说明：\n- username: 用户名，6-16 位，只允许字母、数字和下划线，字符串类型，必填\n- password: 登录密码，字符串类型，必填，建议使用强密码组合\n- confirmPassword: 确认密码，必须与 password 一致，字符串类型，必填\n- nickname: 用户昵称，字符串类型，**可为空**，为空时自动生成随机昵称，长度 **1-20 个字符**\n- email: 邮箱地址，字符串类型，必填，用于接收验证码和后续找回密码\n- vCode: 邮箱验证码，6 位大写字母或数字，字符串类型，必填\n\n## 返回说明：\n- **注册成功**：返回 **{\"data\": {User 对象}}** 和\"注册成功\"提示（不包含密码字段）\n- **用户名格式错误**：返回 **{\"data\": null}** 和“用户名格式错误”提示\n- **邮箱格式错误**：返回 **{\"data\": null}** 和“邮箱格式错误”提示\n- **验证码格式错误**：返回 **{\"data\": null}** 和“验证码格式错误”提示\n- **两次密码不一致**：返回 **{\"data\": null}** 和“两次输入的密码不一致”提示\n- **验证码错误**：返回 **{\"data\": null}** 和“验证码错误”提示\n- **昵称长度错误**：返回 **{\"data\": null}** 和“昵称长度必须在 1-20 个字符之间”提示\n- **注册失败**：返回 **{\"data\": null}** 和“注册失败：该用户名或邮箱已注册”提示\n\n## 业务逻辑：\n1. 校验用户名格式是否符合规范（6-16 位字母、数字、下划线）\n2. 校验邮箱格式是否正确\n3. 校验验证码格式是否正确（6 位大写字母或数字）\n4. 验证两次输入的密码是否一致\n5. 验证邮箱验证码是否与 Redis 中存储的一致\n6. 如果昵称为空，生成随机默认昵称（格式：user+ 随机词）\n7. **如果昵称不为空，验证长度是否在 1-20 个字符之间**\n8. 对密码进行 SHA-256 哈希加密处理\n9. 创建用户并保存到数据库\n10. 返回用户信息和成功提示\n\n## 注意事项：\n- 昵称参数为**可选参数**，不传或为空时自动生成\n- 验证码有效期由 Redis 配置决定（默认 5 分钟）\n- 密码会使用 **SHA-256** 进行加密存储\n- **用户名**和**邮箱**不可重复注册\n- 建议使用强密码组合（大小写字母 + 数字 + 特殊字符）\n- 两次输入的密码必须完全一致\n",
         "operationId": "register",
         "parameters": [
           {
@@ -3721,7 +3721,7 @@
           "系统管理员接口 - 作品管理"
         ],
         "summary": "分页查询作品列表",
-        "description": "# 分页查询作品列表（需要登录认证 + 角色权限[55, 77]）\n\n## 特性\n- 需要审核员或系统管理员角色（role=55 或 77）才能访问\n- MyBatis-Plus 分页支持\n- 支持多条件筛选：关键字、是否转载、审核状态、是否删除\n- 支持多种排序：最新、最旧、最多点赞、最多收藏、最多查看\n- 自动填充最新的浏览量数据\n\n## 参数说明：\n- **current**: **当前页码**，Long 类型，必填，从 1 开始\n- **size**: **每页大小**，Long 类型，必填，范围 1-500\n- **keyword**: **关键字**，String 类型，可选，模糊搜索作品标题\n- **orderBy**: **排序方式**，String 类型，可选\n  - 'newest': 按最新发布排列（默认）\n  - 'oldest': 按最旧发布排列\n  - 'mostLikes': 按最多点赞排列（从高到低）\n  - 'mostStars': 按最多收藏排列（从高到低）\n  - 'mostViews': 按最多查看排列（从高到低）\n- **isOriginal**: **是否转载**，Boolean 类型，可选\n  - true: 仅查原创作品\n  - false: 仅查转载作品\n- **approvalStatus**: **审核状态**，Integer 类型，可选，可选值：\n  - 10: 正常\n  - 20: 待审核\n  - 30: 未过审\n- **isDelete**: **是否被删除**，Boolean 类型，可选\n  - true: 仅查已删除\n  - false: 仅查未删除\n  - 不传: 默认只查未删除\n\n## 返回说明：\n- **成功**：返回 IPage<Works> 对象，包含作品列表和分页信息\n- **无数据**：返回空的分页结果（total=0, records=[]）\n\n## 业务逻辑：\n1. 校验分页参数（current>=1, 1<=size<=500）\n2. 构建 MyBatis-Plus 分页对象\n3. 根据可选参数构建动态 SQL 查询\n4. 根据排序参数动态调整 ORDER BY 子句\n5. 为每个作品填充最新的浏览量数据\n6. 返回分页结果集\n\n## 注意事项：\n- 所有筛选条件均为可选，可以自由组合\n- 关键字搜索使用模糊匹配（LIKE '%keyword%'）\n- 不传 isDelete 时默认只查询未删除的作品\n- 返回完整的 Works 实体字段\n",
+        "description": "# 分页查询作品列表（需要登录认证 + 角色权限[55, 77]）\n\n## 特性\n- 需要审核员或系统管理员角色（role=55 或 77）才能访问\n- MyBatis-Plus 分页支持\n- 支持多条件筛选：关键字、是否转载、审核状态、是否删除\n- 支持多种排序：最新、最旧、最多点赞、最多收藏、最多查看\n- 自动填充最新的浏览量数据\n\n## 参数说明：\n- **current**: **当前页码**，Long 类型，必填，从 1 开始\n- **size**: **每页大小**，Long 类型，必填，范围 1-500\n- **keyword**: **关键字**，String 类型，可选，模糊搜索作品标题\n- **orderBy**: **排序方式**，String 类型，可选\n  - 'newest': 按最新发布排列（默认）\n  - 'oldest': 按最旧发布排列\n  - 'mostLikes': 按最多点赞排列（从高到低）\n  - 'mostStars': 按最多收藏排列（从高到低）\n  - 'mostViews': 按最多查看排列（从高到低）\n- **isOriginal**: **是否转载**，Boolean 类型，可选\n  - true: 仅查原创作品\n  - false: 仅查转载作品\n- **approvalStatus**: **审核状态**，Integer 类型，可选，可选值：\n  - 10: 正常\n  - 20: 待审核\n  - 30: 未过审\n- **isDelete**: **是否被删除**，Boolean 类型，可选\n  - true: 仅查已删除\n  - false: 仅查未删除\n  - 不传: 默认只查未删除\n\n## 返回说明：\n- **成功**：返回 IPage<AdminWorkVO> 对象，包含作品列表、分页信息及最新的 AI 审核记录（audit_reason、insult_words 字段）\n- **无数据**：返回空的分页结果（total=0, records=[]）\n\n## 业务逻辑：\n1. 校验分页参数（current>=1, 1<=size<=500）\n2. 构建 MyBatis-Plus 分页对象\n3. 根据可选参数构建动态 SQL 查询\n4. 根据排序参数动态调整 ORDER BY 子句\n5. 为每个作品填充最新的浏览量数据\n6. 返回分页结果集\n\n## 注意事项：\n- 所有筛选条件均为可选，可以自由组合\n- 关键字搜索使用模糊匹配（LIKE '%keyword%'）\n- 不传 isDelete 时默认只查询未删除的作品\n- 返回完整的 Works 实体字段\n",
         "operationId": "getAdminWorksPage",
         "parameters": [
           {
@@ -3826,7 +3826,7 @@
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/ResponsePojoIPageWorks"
+                  "$ref": "#/components/schemas/ResponsePojoIPageAdminWorkVO"
                 }
               }
             }
@@ -3840,7 +3840,7 @@
           "系统管理员接口 - 用户数据变更审核"
         ],
         "summary": "分页查询待审核记录",
-        "description": "# 分页查询待审核的用户数据变更记录（需要登录认证 + 角色权限[55, 77]）\n\n## 特性\n- 仅返回待审核状态（approval_status=20）的记录\n- 支持按变更类型筛选\n- 按提交时间倒序排列（最新提交在前）\n- 关联查询用户名和当前昵称\n\n## 参数说明：\n- **current**: 当前页码，从 1 开始（路径参数，必填）\n- **size**: 每页大小（路径参数，必填）\n- **type**: 变更类型筛选（可选）\n  - 100: 昵称修改\n  - 200: 权限申请\n  - 300: 头像修改\n\n## 返回说明：\n- **成功**：返回分页结果，每条记录包含 lockId、userId、username、type、新数据、旧数据等\n- **结果为空**：返回空分页对象和成功状态\n\n## 注意事项：\n- 不返回审核状态字段，因为所有记录都是待审核状态\n- 查询结果为空时返回空分页对象和成功状态\n",
+        "description": "# 分页查询待审核的用户数据变更记录（需要登录认证 + 角色权限[55, 77]）\n\n## 特性\n- 仅返回待审核状态（approval_status=20）的记录\n- 支持按变更类型筛选\n- 按提交时间倒序排列（最新提交在前）\n- 关联查询用户名和当前昵称\n\n## 参数说明：\n- **current**: 当前页码，从 1 开始（路径参数，必填）\n- **size**: 每页大小（路径参数，必填）\n- **type**: 变更类型筛选（可选）\n  - 100: 昵称修改\n  - 200: 权限申请\n  - 300: 头像修改\n\n## 返回说明：\n- **成功**：返回分页结果，每条记录包含 lockId、userId、username、type、新数据、旧数据、AI 审核记录（audit_reason、insult_words）等\n- **结果为空**：返回空分页对象和成功状态\n\n## 注意事项：\n- 不返回审核状态字段，因为所有记录都是待审核状态\n- 查询结果为空时返回空分页对象和成功状态\n",
         "operationId": "getPendingPage",
         "parameters": [
           {
@@ -3896,7 +3896,7 @@
           "系统管理员接口 - 作品合集管理"
         ],
         "summary": "分页查询作品合集",
-        "description": "# 分页查询作品合集（需要登录认证 + 角色权限[55, 77]）\n\n## 特性\n- 需要审核员或系统管理员角色（role=55 或 77）才能访问\n- 支持多条件筛选：关键词、审核状态、是否删除、用户 ID\n- 支持按最早创建或最新创建排序\n- 搜索关键词同时匹配标题和描述，标题匹配结果优先展示\n- 返回完整的 Series 实体字段，包含封面缩略图\n\n## 参数说明：\n- **current**: **当前页码**，Long 类型，路径参数，必填，从 1 开始，范围 1-500\n- **size**: **每页大小**，Long 类型，路径参数，必填，范围 1-500\n- **keyword**: **搜索关键词**，String 类型，查询参数，可选\n  - 同时匹配合集标题和描述\n  - 标题匹配的合集优先排序展示\n- **status**: **审核状态**，Integer 类型，查询参数，可选，可选值：\n  - 10: 正常\n  - 20: 待审核\n  - 30: 未过审\n- **isDelete**: **是否删除**，Boolean 类型，查询参数，可选\n  - true: 仅查已删除\n  - false: 仅查未删除\n  - 不传: 不过滤删除状态\n- **userId**: **用户 ID**，Integer 类型，查询参数，可选\n- **orderBy**: **排序方式**，String 类型，查询参数，可选\n  - 'oldest': 按最早创建排列\n  - 其他值或不传: 按最新创建排列（默认）\n\n## 返回说明：\n- **成功**：返回分页合集列表（含总条数、总页数等分页信息）\n- **结果为空**：返回空分页对象和成功状态\n- **参数错误**：返回错误提示\n\n## 业务逻辑：\n1. 校验分页参数（页码必须大于 0，每页大小范围 1-500）\n2. 构建 MyBatis-Plus 分页对象\n3. 根据可选参数构建动态 SQL 查询\n4. 根据排序参数动态调整 ORDER BY 子句\n5. 返回分页结果集\n\n## 注意事项：\n- 所有筛选条件均为可选，可以自由组合\n- 搜索关键词使用模糊匹配（LIKE '%keyword%'）\n- 查询结果包含完整的合集信息字段\n- 不过滤任何审核状态，返回所有状态的合集\n",
+        "description": "# 分页查询作品合集（需要登录认证 + 角色权限[55, 77]）\n\n## 特性\n- 需要审核员或系统管理员角色（role=55 或 77）才能访问\n- 支持多条件筛选：关键词、审核状态、是否删除、用户 ID\n- 支持按最早创建或最新创建排序\n- 搜索关键词同时匹配标题和描述，标题匹配结果优先展示\n- 返回完整的 Series 实体字段，包含封面缩略图\n\n## 参数说明：\n- **current**: **当前页码**，Long 类型，路径参数，必填，从 1 开始，范围 1-500\n- **size**: **每页大小**，Long 类型，路径参数，必填，范围 1-500\n- **keyword**: **搜索关键词**，String 类型，查询参数，可选\n  - 同时匹配合集标题和描述\n  - 标题匹配的合集优先排序展示\n- **status**: **审核状态**，Integer 类型，查询参数，可选，可选值：\n  - 10: 正常\n  - 20: 待审核\n  - 30: 未过审\n- **isDelete**: **是否删除**，Boolean 类型，查询参数，可选\n  - true: 仅查已删除\n  - false: 仅查未删除\n  - 不传: 不过滤删除状态\n- **userId**: **用户 ID**，Integer 类型，查询参数，可选\n- **orderBy**: **排序方式**，String 类型，查询参数，可选\n  - 'oldest': 按最早创建排列\n  - 其他值或不传: 按最新创建排列（默认）\n\n## 返回说明：\n- **成功**：返回分页合集列表（含总条数、总页数等分页信息），包含最新的 AI 审核记录（audit_reason、insult_words 字段）\n- **结果为空**：返回空分页对象和成功状态\n- **参数错误**：返回错误提示\n\n## 业务逻辑：\n1. 校验分页参数（页码必须大于 0，每页大小范围 1-500）\n2. 构建 MyBatis-Plus 分页对象\n3. 根据可选参数构建动态 SQL 查询\n4. 根据排序参数动态调整 ORDER BY 子句\n5. 返回分页结果集\n\n## 注意事项：\n- 所有筛选条件均为可选，可以自由组合\n- 搜索关键词使用模糊匹配（LIKE '%keyword%'）\n- 查询结果包含完整的合集信息字段\n- 不过滤任何审核状态，返回所有状态的合集\n",
         "operationId": "getAdminSeriesPage",
         "parameters": [
           {
@@ -3994,7 +3994,7 @@
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/ResponsePojoIPageSeries"
+                  "$ref": "#/components/schemas/ResponsePojoIPageAdminSeriesVO"
                 }
               }
             }
@@ -4079,7 +4079,7 @@
           "系统管理员接口 - 评论管理"
         ],
         "summary": "分页查询评论列表",
-        "description": "# 分页查询评论列表（需要登录认证 + 角色权限[55, 77]）\n\n## 特性\n- 需要审核员或系统管理员角色（role=55 或 77）才能访问\n- MyBatis-Plus 分页支持\n- 支持多条件过滤：作品、用户、评论层级、审核状态、关键字\n- 支持按时间排序（最新/最早）\n\n## 参数说明：\n- **current**: **当前页码**，Long 类型，必填，从 1 开始\n- **size**: **每页大小**，Long 类型，必填，范围 1-500\n- **workId**: **作品ID**，Integer 类型，可选，用于过滤特定作品的评论\n- **userId**: **用户ID**，Integer 类型，可选，用于过滤特定用户的评论\n- **commentFloor**: **评论层级**，Integer 类型，可选，1-一级评论、2-二级评论\n- **approvalStatus**: **审核状态**，Integer 类型，可选，10-正常、20-待审核、30-未过审\n- **keyword**: **评论关键字**，String 类型，可选，模糊搜索评论内容\n- **orderBy**: **排序方式**，String 类型，可选\n  - 'oldest': 按最早发布排列\n  - 其他值或 null: 按最新发布排列（默认）\n\n## 返回说明：\n- **成功**：返回 IPage<Comments> 对象，包含评论列表和分页信息\n- **无数据**：返回空的分页结果（total=0, records=[]）\n\n## 业务逻辑：\n1. 校验分页参数（current>=1, 1<=size<=100）\n2. 构建 MyBatis-Plus 分页对象\n3. 根据可选参数构建动态 SQL 查询\n4. 根据排序参数动态调整 ORDER BY 子句\n5. 返回分页结果集\n\n## 注意事项：\n- 所有过滤参数都是可选的，可以组合使用\n- 关键字搜索使用模糊匹配（LIKE '%keyword%'）\n- 只查询未删除的评论（is_delete = 0）\n- 返回完整的 Comments 实体字段\n",
+        "description": "# 分页查询评论列表（需要登录认证 + 角色权限[55, 77]）\n\n## 特性\n- 需要审核员或系统管理员角色（role=55 或 77）才能访问\n- MyBatis-Plus 分页支持\n- 支持多条件过滤：作品、用户、评论层级、审核状态、关键字\n- 支持按时间排序（最新/最早）\n\n## 参数说明：\n- **current**: **当前页码**，Long 类型，必填，从 1 开始\n- **size**: **每页大小**，Long 类型，必填，范围 1-500\n- **workId**: **作品ID**，Integer 类型，可选，用于过滤特定作品的评论\n- **userId**: **用户ID**，Integer 类型，可选，用于过滤特定用户的评论\n- **commentFloor**: **评论层级**，Integer 类型，可选，1-一级评论、2-二级评论\n- **approvalStatus**: **审核状态**，Integer 类型，可选，10-正常、20-待审核、30-未过审\n- **keyword**: **评论关键字**，String 类型，可选，模糊搜索评论内容\n- **orderBy**: **排序方式**，String 类型，可选\n  - 'oldest': 按最早发布排列\n  - 其他值或 null: 按最新发布排列（默认）\n\n## 返回说明：\n- **成功**：返回 IPage<AdminCommentVO> 对象，包含评论列表、分页信息及最新的 AI 审核记录（audit_reason、insult_words 字段）\n- **无数据**：返回空的分页结果（total=0, records=[]）\n\n## 业务逻辑：\n1. 校验分页参数（current>=1, 1<=size<=100）\n2. 构建 MyBatis-Plus 分页对象\n3. 根据可选参数构建动态 SQL 查询\n4. 根据排序参数动态调整 ORDER BY 子句\n5. 返回分页结果集\n\n## 注意事项：\n- 所有过滤参数都是可选的，可以组合使用\n- 关键字搜索使用模糊匹配（LIKE '%keyword%'）\n- 只查询未删除的评论（is_delete = 0）\n- 返回完整的 Comments 实体字段\n",
         "operationId": "getCommentsPage",
         "parameters": [
           {
@@ -4183,7 +4183,113 @@
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/ResponsePojoIPageComments"
+                  "$ref": "#/components/schemas/ResponsePojoIPageAdminCommentVO"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/admin/audit-records/page/{current}/{size}": {
+      "get": {
+        "tags": [
+          "系统管理员接口 - AI 审核记录"
+        ],
+        "summary": "分页查询 AI 审核记录",
+        "description": "# 分页查询 AI 审核记录（需要登录认证 + 角色权限[55, 77]）\n\n## 特性\n- 需要审核员或系统管理员角色（role=55 或 77）才能访问\n- MyBatis-Plus 分页支持\n- 支持多条件筛选：内容类型、审核状态、关键词\n- 支持按审核时间排序（最新/最早）\n- 返回完整的审核记录字段（审核原因、命中敏感词、原始内容等），original_content 直接从数据库读取\n\n## 参数说明：\n- **current**: **当前页码**，Long 类型，路径参数，必填，从 1 开始\n- **size**: **每页大小**，Long 类型，路径参数，必填，范围 1-500\n- **contentType**: **内容类型**，Integer 类型，查询参数，可选\n  - 100: 作品\n  - 200: 评论\n  - 300: 系列\n  - 400: 昵称\n- **approvalStatus**: **审核状态**，Integer 类型，查询参数，可选\n  - 10: 通过\n  - 20: 待审核\n  - 30: 违规\n- **keyword**: **关键词**，String 类型，查询参数，可选，模糊搜索审核原因\n- **orderBy**: **排序方式**，String 类型，查询参数，可选\n  - 'newest': 按审核时间倒序（默认）\n  - 'oldest': 按审核时间正序\n\n## 返回说明：\n- **成功**：返回 IPage<AdminAuditRecordVO> 对象，包含审核记录列表、分页信息及原始内容（original_content 字段）\n- **无数据**：返回空的分页结果（total=0, records=[]）\n\n## original_content 字段说明：\n- 该字段在 AI 审核时已写入数据库，直接返回，无需额外查询\n- 作品（100）：作品标题\n- 评论（200）：评论文本\n- 系列（300）：格式为「标题|描述」（无描述时仅返回标题）\n- 昵称（400）：昵称\n\n## 业务逻辑：\n1. 校验分页参数（current>=1, 1<=size<=500）\n2. 构建 MyBatis-Plus 分页对象\n3. 根据可选参数构建动态 SQL 查询\n4. 根据排序参数动态调整 ORDER BY 子句\n5. 返回分页结果集（original_content 直接从数据库读取）\n\n## 注意事项：\n- 所有筛选条件均为可选，可以自由组合\n- 关键词搜索使用模糊匹配（LIKE '%keyword%'）\n- 排序仅支持按审核时间，不支持其他字段排序\n- 返回所有审核记录（不区分内容类型），方便审核员统一查看\n",
+        "operationId": "getAuditRecordsPage",
+        "parameters": [
+          {
+            "name": "current",
+            "in": "path",
+            "description": "当前页码（从 1 开始）",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "example": 1
+          },
+          {
+            "name": "size",
+            "in": "path",
+            "description": "每页大小（范围 1-500）",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "example": 10
+          },
+          {
+            "name": "contentType",
+            "in": "query",
+            "description": "内容类型（可选，100-作品、200-评论、300-系列、400-昵称）",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "description": "内容类型（可选，100-作品、200-评论、300-系列、400-昵称）",
+              "example": 100,
+              "enum": [
+                "100",
+                "200",
+                "300",
+                "400"
+              ]
+            },
+            "example": 100
+          },
+          {
+            "name": "approvalStatus",
+            "in": "query",
+            "description": "审核状态（可选，10-通过、20-待审核、30-违规）",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "description": "审核状态（可选，10-通过、20-待审核、30-违规）",
+              "example": 30,
+              "enum": [
+                "10",
+                "20",
+                "30"
+              ]
+            },
+            "example": 30
+          },
+          {
+            "name": "keyword",
+            "in": "query",
+            "description": "关键词（可选，模糊搜索审核原因）",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "orderBy",
+            "in": "query",
+            "description": "排序方式：'newest' - 最新优先（默认）、'oldest' - 最早优先",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "description": "排序方式：'newest' - 最新优先（默认）、'oldest' - 最早优先",
+              "example": "newest",
+              "enum": [
+                "newest",
+                "oldest"
+              ]
+            },
+            "example": "newest"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResponsePojoIPageAdminAuditRecordVO"
                 }
               }
             }
@@ -4206,50 +4312,6 @@
               "*/*": {
                 "schema": {
                   "type": "string"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/7e212056/require-auth": {
-      "get": {
-        "tags": [
-          "JWT 鉴权测试接口"
-        ],
-        "summary": "需要登录的测试接口",
-        "description": "# 测试接口（需要登录认证）\n\n## 特性\n- Token 认证（支持 Header 和 URL 参数两种方式）\n- 拦截器自动验证\n- 用户信息提取（userId/username）\n\n## 接口说明：\n- 此接口**需要登录**才能访问\n- 用于测试 JWT 拦截器是否正常工作\n\n## Token 使用方式：\n- Header: `Authorization: Bearer <token>`\n- 或 URL 参数：`?token=<token>`\n\n## 返回说明：\n- **验证通过**：返回当前登录用户的信息\n- **未授权**：返回 401 错误和提示信息\n",
-        "operationId": "requireAuth",
-        "responses": {
-          "200": {
-            "description": "OK",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/ResponsePojoString"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/7e212056/no-auth": {
-      "get": {
-        "tags": [
-          "JWT 鉴权测试接口"
-        ],
-        "summary": "不需要登录的测试接口",
-        "description": "# 测试接口（无需登录认证）\n\n## 特性\n- 公开接口（无需认证）\n- 快速访问测试\n\n## 接口说明：\n- 此接口**不需要登录**即可访问\n- 用于对比测试 JWT 拦截器的效果\n\n## 返回说明：\n- 直接返回公开信息\n",
-        "operationId": "noAuth",
-        "responses": {
-          "200": {
-            "description": "OK",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/ResponsePojoString"
                 }
               }
             }
@@ -5136,30 +5198,25 @@
         "properties": {
           "size": {
             "type": "integer",
-            "format": "int64",
-            "refType": null
+            "format": "int64"
           },
           "records": {
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/Series"
-            },
-            "refType": "Series"
+            }
           },
           "total": {
             "type": "integer",
-            "format": "int64",
-            "refType": null
+            "format": "int64"
           },
           "current": {
             "type": "integer",
-            "format": "int64",
-            "refType": null
+            "format": "int64"
           },
           "pages": {
             "type": "integer",
-            "format": "int64",
-            "refType": null
+            "format": "int64"
           }
         },
         "description": "响应数据"
@@ -5196,64 +5253,53 @@
           "series_id": {
             "type": "integer",
             "description": "系列 ID",
-            "format": "int32",
-            "refType": null
+            "format": "int32"
           },
           "user_id": {
             "type": "integer",
             "description": "用户 ID",
-            "format": "int32",
-            "refType": null
+            "format": "int32"
           },
           "series_title": {
             "type": "string",
-            "description": "系列标题，16 个中文长度",
-            "refType": null
+            "description": "系列标题，16 个中文长度"
           },
           "about_text": {
             "type": "string",
-            "description": "系列描述文本，24 个中文长度",
-            "refType": null
+            "description": "系列描述文本，24 个中文长度"
           },
           "thumb_url": {
             "type": "string",
-            "description": "封面缩略图文件名（取自系列内最新发布的作品）",
-            "refType": null
+            "description": "封面缩略图文件名（取自系列内最新发布的作品）"
           },
           "approval_status": {
             "type": "integer",
             "description": "审核状态：10 - 正常、20 - 待审核、30 - 未过审",
-            "format": "int32",
-            "refType": null
+            "format": "int32"
           },
           "is_delete": {
             "type": "boolean",
-            "description": "删除标签：0 - 未删除、1 - 已删除",
-            "refType": null
+            "description": "删除标签：0 - 未删除、1 - 已删除"
           },
           "update_time": {
             "type": "string",
             "description": "数据条目更新时间戳",
-            "format": "date-time",
-            "refType": null
+            "format": "date-time"
           },
           "update_user": {
             "type": "integer",
             "description": "修改者 id，系统修改为 0",
-            "format": "int32",
-            "refType": null
+            "format": "int32"
           },
           "create_time": {
             "type": "string",
             "description": "数据条目创建时间戳",
-            "format": "date-time",
-            "refType": null
+            "format": "date-time"
           },
           "create_user": {
             "type": "integer",
             "description": "存储创建者 id，系统创建为 0",
-            "format": "int32",
-            "refType": null
+            "format": "int32"
           }
         },
         "description": "作品系列实体"
@@ -5263,30 +5309,25 @@
         "properties": {
           "size": {
             "type": "integer",
-            "format": "int64",
-            "refType": null
+            "format": "int64"
           },
           "records": {
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/Works"
-            },
-            "refType": "Works"
+            }
           },
           "total": {
             "type": "integer",
-            "format": "int64",
-            "refType": null
+            "format": "int64"
           },
           "current": {
             "type": "integer",
-            "format": "int64",
-            "refType": null
+            "format": "int64"
           },
           "pages": {
             "type": "integer",
-            "format": "int64",
-            "refType": null
+            "format": "int64"
           }
         },
         "description": "响应数据"
@@ -5323,98 +5364,81 @@
           "work_id": {
             "type": "integer",
             "description": "作品 ID",
-            "format": "int32",
-            "refType": null
+            "format": "int32"
           },
           "user_id": {
             "type": "integer",
             "description": "用户 ID",
-            "format": "int32",
-            "refType": null
+            "format": "int32"
           },
           "work_title": {
             "type": "string",
-            "description": "作品标题，16 个中文长度",
-            "refType": null
+            "description": "作品标题，16 个中文长度"
           },
           "img_url": {
             "type": "string",
-            "description": "图片 URL",
-            "refType": null
+            "description": "图片 URL"
           },
           "thumb_url": {
             "type": "string",
-            "description": "封面缩略图文件名",
-            "refType": null
+            "description": "封面缩略图文件名"
           },
           "series_id": {
             "type": "integer",
             "description": "系列 ID",
-            "format": "int32",
-            "refType": null
+            "format": "int32"
           },
           "like_count": {
             "type": "integer",
             "description": "点赞数",
-            "format": "int32",
-            "refType": null
+            "format": "int32"
           },
           "star_count": {
             "type": "integer",
             "description": "收藏数",
-            "format": "int32",
-            "refType": null
+            "format": "int32"
           },
           "view_count": {
             "type": "integer",
             "description": "查看数",
-            "format": "int32",
-            "refType": null
+            "format": "int32"
           },
           "is_original_work": {
             "type": "boolean",
-            "description": "是否原创：1 - 原创、0 - 转载",
-            "refType": null
+            "description": "是否原创：1 - 原创、0 - 转载"
           },
           "out_url": {
             "type": "string",
-            "description": "外部转载链接",
-            "refType": null
+            "description": "外部转载链接"
           },
           "approval_status": {
             "type": "integer",
             "description": "审核状态：10 - 正常、20 - 待审核、30 - 未过审",
-            "format": "int32",
-            "refType": null
+            "format": "int32"
           },
           "is_delete": {
             "type": "boolean",
-            "description": "删除标签：0 - 未删除、1 - 已删除",
-            "refType": null
+            "description": "删除标签：0 - 未删除、1 - 已删除"
           },
           "update_time": {
             "type": "string",
             "description": "数据条目更新时间戳",
-            "format": "date-time",
-            "refType": null
+            "format": "date-time"
           },
           "update_user": {
             "type": "integer",
             "description": "修改者 id，系统修改为 0",
-            "format": "int32",
-            "refType": null
+            "format": "int32"
           },
           "create_time": {
             "type": "string",
             "description": "数据条目创建时间戳",
-            "format": "date-time",
-            "refType": null
+            "format": "date-time"
           },
           "create_user": {
             "type": "integer",
             "description": "存储创建者 id，系统创建为 0",
-            "format": "int32",
-            "refType": null
+            "format": "int32"
           }
         },
         "description": "作品实体"
@@ -5861,6 +5885,153 @@
         },
         "description": "二级评论响应实体"
       },
+      "AdminWorkVO": {
+        "type": "object",
+        "properties": {
+          "work_id": {
+            "type": "integer",
+            "description": "作品 ID",
+            "format": "int32"
+          },
+          "user_id": {
+            "type": "integer",
+            "description": "用户 ID",
+            "format": "int32"
+          },
+          "work_title": {
+            "type": "string",
+            "description": "作品标题，16 个中文长度"
+          },
+          "img_url": {
+            "type": "string",
+            "description": "图片 URL"
+          },
+          "thumb_url": {
+            "type": "string",
+            "description": "封面缩略图文件名"
+          },
+          "series_id": {
+            "type": "integer",
+            "description": "系列 ID",
+            "format": "int32"
+          },
+          "like_count": {
+            "type": "integer",
+            "description": "点赞数",
+            "format": "int32"
+          },
+          "star_count": {
+            "type": "integer",
+            "description": "收藏数",
+            "format": "int32"
+          },
+          "view_count": {
+            "type": "integer",
+            "description": "查看数",
+            "format": "int32"
+          },
+          "is_original_work": {
+            "type": "boolean",
+            "description": "是否原创：1 - 原创、0 - 转载"
+          },
+          "out_url": {
+            "type": "string",
+            "description": "外部转载链接"
+          },
+          "approval_status": {
+            "type": "integer",
+            "description": "审核状态：10 - 正常、20 - 待审核、30 - 未过审",
+            "format": "int32"
+          },
+          "is_delete": {
+            "type": "boolean",
+            "description": "删除标签：0 - 未删除、1 - 已删除"
+          },
+          "update_time": {
+            "type": "string",
+            "description": "数据条目更新时间戳",
+            "format": "date-time"
+          },
+          "update_user": {
+            "type": "integer",
+            "description": "修改者 id，系统修改为 0",
+            "format": "int32"
+          },
+          "create_time": {
+            "type": "string",
+            "description": "数据条目创建时间戳",
+            "format": "date-time"
+          },
+          "create_user": {
+            "type": "integer",
+            "description": "存储创建者 id，系统创建为 0",
+            "format": "int32"
+          },
+          "audit_reason": {
+            "type": "string",
+            "description": "AI 审核判断依据"
+          },
+          "insult_words": {
+            "type": "string",
+            "description": "命中敏感词，JSON数组字符串"
+          }
+        },
+        "description": "管理员作品视图（含审核详情）"
+      },
+      "IPageAdminWorkVO": {
+        "type": "object",
+        "properties": {
+          "size": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "records": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AdminWorkVO"
+            }
+          },
+          "total": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "current": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "pages": {
+            "type": "integer",
+            "format": "int64"
+          }
+        },
+        "description": "响应数据"
+      },
+      "ResponsePojoIPageAdminWorkVO": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/IPageAdminWorkVO"
+          },
+          "message": {
+            "type": "string",
+            "description": "响应说明信息"
+          },
+          "recode": {
+            "type": "integer",
+            "description": "响应状态码（200-成功；500-失败）",
+            "format": "int32"
+          },
+          "status": {
+            "type": "string",
+            "description": "响应状态"
+          },
+          "time_str": {
+            "type": "string",
+            "description": "响应时间"
+          }
+        },
+        "description": "响应数据类型"
+      },
       "IPageUserDataChangeLockVO": {
         "type": "object",
         "properties": {
@@ -5952,8 +6123,133 @@
           "create_time": {
             "type": "string",
             "format": "date-time"
+          },
+          "audit_reason": {
+            "type": "string"
+          },
+          "insult_words": {
+            "type": "string"
           }
         }
+      },
+      "AdminSeriesVO": {
+        "type": "object",
+        "properties": {
+          "series_id": {
+            "type": "integer",
+            "description": "系列 ID",
+            "format": "int32"
+          },
+          "user_id": {
+            "type": "integer",
+            "description": "用户 ID",
+            "format": "int32"
+          },
+          "series_title": {
+            "type": "string",
+            "description": "系列标题，16 个中文长度"
+          },
+          "about_text": {
+            "type": "string",
+            "description": "系列描述文本，24 个中文长度"
+          },
+          "thumb_url": {
+            "type": "string",
+            "description": "封面缩略图文件名（取自系列内最新发布的作品）"
+          },
+          "approval_status": {
+            "type": "integer",
+            "description": "审核状态：10 - 正常、20 - 待审核、30 - 未过审",
+            "format": "int32"
+          },
+          "is_delete": {
+            "type": "boolean",
+            "description": "删除标签：0 - 未删除、1 - 已删除"
+          },
+          "update_time": {
+            "type": "string",
+            "description": "数据条目更新时间戳",
+            "format": "date-time"
+          },
+          "update_user": {
+            "type": "integer",
+            "description": "修改者 id，系统修改为 0",
+            "format": "int32"
+          },
+          "create_time": {
+            "type": "string",
+            "description": "数据条目创建时间戳",
+            "format": "date-time"
+          },
+          "create_user": {
+            "type": "integer",
+            "description": "存储创建者 id，系统创建为 0",
+            "format": "int32"
+          },
+          "audit_reason": {
+            "type": "string",
+            "description": "AI 审核判断依据"
+          },
+          "insult_words": {
+            "type": "string",
+            "description": "命中敏感词，JSON数组字符串"
+          }
+        },
+        "description": "管理员系列视图（含审核详情）"
+      },
+      "IPageAdminSeriesVO": {
+        "type": "object",
+        "properties": {
+          "size": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "records": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AdminSeriesVO"
+            }
+          },
+          "total": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "current": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "pages": {
+            "type": "integer",
+            "format": "int64"
+          }
+        },
+        "description": "响应数据"
+      },
+      "ResponsePojoIPageAdminSeriesVO": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/IPageAdminSeriesVO"
+          },
+          "message": {
+            "type": "string",
+            "description": "响应说明信息"
+          },
+          "recode": {
+            "type": "integer",
+            "description": "响应状态码（200-成功；500-失败）",
+            "format": "int32"
+          },
+          "status": {
+            "type": "string",
+            "description": "响应状态"
+          },
+          "time_str": {
+            "type": "string",
+            "description": "响应时间"
+          }
+        },
+        "description": "响应数据类型"
       },
       "IPageOperateLogVO": {
         "type": "object",
@@ -6035,108 +6331,198 @@
         },
         "description": "响应数据类型"
       },
-      "Comments": {
+      "AdminCommentVO": {
         "type": "object",
         "properties": {
           "comment_id": {
             "type": "integer",
             "description": "评论 ID",
-            "format": "int32",
-            "refType": null
+            "format": "int32"
           },
           "user_id": {
             "type": "integer",
             "description": "用户 ID",
-            "format": "int32",
-            "refType": null
+            "format": "int32"
           },
           "work_id": {
             "type": "integer",
             "description": "作品 ID",
-            "format": "int32",
-            "refType": null
+            "format": "int32"
           },
           "parent_comment_id": {
             "type": "integer",
             "description": "父评论 ID",
-            "format": "int32",
-            "refType": null
+            "format": "int32"
           },
           "in_comment_id": {
             "type": "integer",
             "description": "所属一级评论 ID",
-            "format": "int32",
-            "refType": null
+            "format": "int32"
           },
           "comment_floor": {
             "type": "integer",
             "description": "评论层级",
-            "format": "int32",
-            "refType": null
+            "format": "int32"
           },
           "comment_text": {
             "type": "string",
-            "description": "评论内容，限制长度 125 字",
-            "refType": null
+            "description": "评论内容，限制长度 125 字"
           },
           "approval_status": {
             "type": "integer",
             "description": "审核状态：10 - 正常、20 - 待审核、30 - 未过审",
-            "format": "int32",
-            "refType": null
+            "format": "int32"
           },
           "is_delete": {
             "type": "boolean",
-            "description": "删除标签：0 - 未删除、1 - 已删除",
-            "refType": null
+            "description": "删除标签：0 - 未删除、1 - 已删除"
           },
           "time": {
             "type": "string",
             "description": "评论时间",
-            "format": "date-time",
-            "refType": null
+            "format": "date-time"
+          },
+          "audit_reason": {
+            "type": "string",
+            "description": "AI 审核判断依据"
+          },
+          "insult_words": {
+            "type": "string",
+            "description": "命中敏感词，JSON数组字符串"
           }
         },
-        "description": "评论数据库实体"
+        "description": "管理员评论视图（含审核详情）"
       },
-      "IPageComments": {
+      "IPageAdminCommentVO": {
         "type": "object",
         "properties": {
           "size": {
             "type": "integer",
-            "format": "int64",
-            "refType": null
+            "format": "int64"
           },
           "records": {
             "type": "array",
             "items": {
-              "$ref": "#/components/schemas/Comments"
-            },
-            "refType": "Comments"
+              "$ref": "#/components/schemas/AdminCommentVO"
+            }
           },
           "total": {
             "type": "integer",
-            "format": "int64",
-            "refType": null
+            "format": "int64"
           },
           "current": {
             "type": "integer",
-            "format": "int64",
-            "refType": null
+            "format": "int64"
           },
           "pages": {
             "type": "integer",
-            "format": "int64",
-            "refType": null
+            "format": "int64"
           }
         },
         "description": "响应数据"
       },
-      "ResponsePojoIPageComments": {
+      "ResponsePojoIPageAdminCommentVO": {
         "type": "object",
         "properties": {
           "data": {
-            "$ref": "#/components/schemas/IPageComments"
+            "$ref": "#/components/schemas/IPageAdminCommentVO"
+          },
+          "message": {
+            "type": "string",
+            "description": "响应说明信息"
+          },
+          "recode": {
+            "type": "integer",
+            "description": "响应状态码（200-成功；500-失败）",
+            "format": "int32"
+          },
+          "status": {
+            "type": "string",
+            "description": "响应状态"
+          },
+          "time_str": {
+            "type": "string",
+            "description": "响应时间"
+          }
+        },
+        "description": "响应数据类型"
+      },
+      "AdminAuditRecordVO": {
+        "type": "object",
+        "properties": {
+          "record_id": {
+            "type": "integer",
+            "description": "审核记录 ID",
+            "format": "int32"
+          },
+          "content_type": {
+            "type": "integer",
+            "description": "内容类型：100-作品、200-评论、300-系列、400-昵称",
+            "format": "int32"
+          },
+          "content_id": {
+            "type": "integer",
+            "description": "对应内容 ID（work_id/comment_id/series_id/lock_id）",
+            "format": "int32"
+          },
+          "approval_status": {
+            "type": "integer",
+            "description": "审核结果：10-通过、20-待审核、30-违规",
+            "format": "int32"
+          },
+          "audit_reason": {
+            "type": "string",
+            "description": "AI 审核判断依据"
+          },
+          "insult_words": {
+            "type": "string",
+            "description": "命中敏感词，JSON数组字符串"
+          },
+          "original_content": {
+            "type": "string",
+            "description": "审核的原始内容"
+          },
+          "create_time": {
+            "type": "string",
+            "description": "审核时间",
+            "format": "date-time"
+          }
+        },
+        "description": "管理员审核记录视图"
+      },
+      "IPageAdminAuditRecordVO": {
+        "type": "object",
+        "properties": {
+          "size": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "records": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AdminAuditRecordVO"
+            }
+          },
+          "total": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "current": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "pages": {
+            "type": "integer",
+            "format": "int64"
+          }
+        },
+        "description": "响应数据"
+      },
+      "ResponsePojoIPageAdminAuditRecordVO": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/IPageAdminAuditRecordVO"
           },
           "message": {
             "type": "string",
