@@ -25,6 +25,8 @@ const isVisible = ref(false)
 const overlayRef = ref(null)
 const dialogRef = ref(null)
 const isSubmitting = ref(false)
+const isTransitioning = ref(false)  // 标签页切换动画进行中
+const contentRef = ref(null)        // 内容区域引用
 
 // 当前激活的标签页
 const activeTab = ref('password') // password | email | delete
@@ -359,9 +361,65 @@ const handleDeleteAccount = async () => {
   }
 }
 
-// ── 切换标签页 ──
-const switchTab = (tab) => {
+// ── 标签页切换 GSAP 过渡动画 ──
+// 弹窗高度平滑变化 + 内容淡入淡出
+const switchTab = async (tab) => {
+  if (tab === activeTab.value || isTransitioning.value) return
+  isTransitioning.value = true
+
+  const dialogEl = dialogRef.value
+  const contentEl = contentRef.value
+  if (!dialogEl || !contentEl) {
+    activeTab.value = tab
+    isTransitioning.value = false
+    return
+  }
+
+  // 1. 记录弹窗旧高度，锁定弹窗高度
+  const oldDialogHeight = dialogEl.offsetHeight
+  dialogEl.style.height = oldDialogHeight + 'px'
+  dialogEl.style.overflow = 'hidden'
+
+  // 2. 旧内容淡出（仅 GPU 属性：opacity + scale + translateY）
+  await new Promise((resolve) => {
+    gsap.to(contentEl, {
+      opacity: 0, scale: 0.95, y: -12,
+      duration: 0.2, ease: 'power2.in',
+      onComplete: resolve,
+    })
+  })
+
+  // 3. 切换标签页
   activeTab.value = tab
+  await nextTick()
+
+  // 4. 测量弹窗新高度（临时设置height: auto）
+  dialogEl.style.height = 'auto'
+  const newDialogHeight = dialogEl.offsetHeight
+  dialogEl.style.height = oldDialogHeight + 'px'
+
+  // 5. 同时动画：弹窗高度变化 + 新内容淡入
+  gsap.set(contentEl, { opacity: 0, scale: 0.95, y: 12 })
+
+  await new Promise((resolve) => {
+    gsap.to(dialogEl, {
+      height: newDialogHeight,
+      duration: 0.35,
+      ease: 'power2.inOut',
+    })
+    gsap.to(contentEl, {
+      opacity: 1, scale: 1, y: 0,
+      duration: 0.4,
+      ease: 'back.out(1.2)',
+      delay: 0.05,
+      onComplete: () => {
+        dialogEl.style.height = ''
+        dialogEl.style.overflow = ''
+        isTransitioning.value = false
+        resolve()
+      },
+    })
+  })
 }
 
 // ── GSAP 动画 ──
@@ -435,6 +493,7 @@ defineExpose({ showDialog, closeDialog })
           <button
             class="am-tab"
             :class="{ 'am-tab--active': activeTab === 'password' }"
+            :disabled="isTransitioning"
             @click="switchTab('password')"
           >
             <svg class="am-tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -446,6 +505,7 @@ defineExpose({ showDialog, closeDialog })
           <button
             class="am-tab"
             :class="{ 'am-tab--active': activeTab === 'email' }"
+            :disabled="isTransitioning"
             @click="switchTab('email')"
           >
             <svg class="am-tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -457,6 +517,7 @@ defineExpose({ showDialog, closeDialog })
           <button
             class="am-tab am-tab--danger"
             :class="{ 'am-tab--active': activeTab === 'delete' }"
+            :disabled="isTransitioning"
             @click="switchTab('delete')"
           >
             <svg class="am-tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -470,7 +531,7 @@ defineExpose({ showDialog, closeDialog })
         </div>
 
         <!-- 标签页内容 -->
-        <div class="am-content">
+        <div ref="contentRef" class="am-content">
           <!-- 密码修改 -->
           <div v-if="activeTab === 'password'" class="am-panel">
             <div class="am-form-group">
@@ -637,7 +698,7 @@ defineExpose({ showDialog, closeDialog })
               </svg>
               <div class="am-warning-content">
                 <p class="am-warning-title">警告：此操作不可逆</p>
-                <p class="am-warning-text">账号注销后，您的所有数据将被永久删除，且无法恢复。</p>
+                <p class="am-warning-text">账号注销后，您的账号信息将被清除，但已发布的作品仍可被其他用户查看。此操作不可撤销。</p>
               </div>
             </div>
 
@@ -649,6 +710,9 @@ defineExpose({ showDialog, closeDialog })
                 type="text"
                 placeholder="确认注销"
                 maxlength="4"
+                @copy.prevent
+                @paste.prevent
+                @cut.prevent
               />
             </div>
 
@@ -768,9 +832,14 @@ defineExpose({ showDialog, closeDialog })
   transition: all 0.2s ease;
 }
 
-.am-tab:hover {
+.am-tab:hover:not(:disabled) {
   color: rgba(255, 255, 255, 0.8);
   background: rgba(255, 255, 255, 0.04);
+}
+
+.am-tab:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 .am-tab--active {

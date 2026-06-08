@@ -212,8 +212,7 @@ const onWheel = (e) => {
 }
 
 // ── 阶段切换 GSAP 过渡动画 ──
-// 仅动画 opacity + scale + translateY（纯 GPU 合成，不触发 Layout 重排）
-// 高度变化通过 min-height 锁定：防止 DOM 切换时弹窗塌缩，切换后瞬间扩展（新内容淡入盖过）
+// 统一使用 scale + opacity + y 动画，与其他组件风格一致
 const animateStageSwitch = async (fromSelector, toSelector, beforeSwitch) => {
   if (isTransitioning.value) return
   isTransitioning.value = true
@@ -221,51 +220,92 @@ const animateStageSwitch = async (fromSelector, toSelector, beforeSwitch) => {
   const dialogEl = dialogRef.value
   if (!dialogEl) { isTransitioning.value = false; return }
 
-  // 1. 锁定 min-height 防止弹窗塌缩，overflow 防溢出
-  const currentHeight = dialogEl.offsetHeight
-  dialogEl.style.minHeight = currentHeight + 'px'
-  dialogEl.style.overflow = 'hidden'
-
-  // 2. 旧内容淡出（仅 GPU 属性：opacity + scale + translateY）
+  // 1. 旧内容淡出
   const oldEl = dialogEl.querySelector(fromSelector)
   if (oldEl) {
-    await new Promise((resolve) => {
-      gsap.to(oldEl, {
-        opacity: 0, scale: 0.95, y: -12,
-        duration: 0.2, ease: 'power2.in',
-        onComplete: resolve,
-      })
+    gsap.to(oldEl, {
+      opacity: 0, scale: 0.95, y: -12,
+      duration: 0.15, ease: 'power2.in',
     })
+    await new Promise(r => setTimeout(r, 160))
   }
 
-  // 3. 切换 stage / 重置数据
+  // 2. 切换 stage / 重置数据
   if (beforeSwitch) beforeSwitch()
   await nextTick()
 
-  // 4. 释放 min-height，弹窗瞬间扩展到新内容高度（不可见：新内容 opacity 仍为 0）
-  dialogEl.style.minHeight = ''
-
-  // 5. 新内容预隐藏 + 淡入（仅 GPU 属性）
+  // 3. 新内容入场动画
   const newEl = dialogEl.querySelector(toSelector)
-  if (newEl) {
-    gsap.set(newEl, { opacity: 0, scale: 0.95, y: 12 })
+  if (!newEl) {
+    isTransitioning.value = false
+    return
   }
 
-  return new Promise((resolve) => {
-    const tl = gsap.timeline({
+  // 获取所有需要动画的元素
+  const cropContainer = newEl.querySelector('.avc-crop-container')
+  const zoomBar = newEl.querySelector('.avc-zoom-bar')
+  const actions = dialogEl.querySelector('.avc-actions')
+  const backBtn = actions?.querySelector('.avc-btn--no')
+  const confirmBtn = actions?.querySelector('.avc-btn--yes')
+
+  // 主容器入场 - 使用 back.out(1.2) 弹性效果
+  gsap.set(newEl, { opacity: 0, scale: 0.95, y: 12 })
+  gsap.to(newEl, {
+    opacity: 1, scale: 1, y: 0,
+    duration: 0.3,
+    ease: 'back.out(1.2)',
+  })
+
+  // 裁剪框 - 使用相同的 back.out(1.2)
+  if (cropContainer) {
+    gsap.set(cropContainer, { opacity: 0, scale: 0.95, y: 12 })
+    gsap.to(cropContainer, {
+      opacity: 1, scale: 1, y: 0,
+      duration: 0.3,
+      ease: 'back.out(1.2)',
+      delay: 0.05,
+    })
+  }
+
+  // 缩放条
+  if (zoomBar) {
+    gsap.set(zoomBar, { opacity: 0, scale: 0.95, y: 12 })
+    gsap.to(zoomBar, {
+      opacity: 1, scale: 1, y: 0,
+      duration: 0.3,
+      ease: 'back.out(1.2)',
+      delay: 0.1,
+    })
+  }
+
+  // 返回按钮
+  if (backBtn) {
+    gsap.set(backBtn, { opacity: 0, scale: 0.95, y: 12 })
+    gsap.to(backBtn, {
+      opacity: 1, scale: 1, y: 0,
+      duration: 0.3,
+      ease: 'back.out(1.2)',
+      delay: 0.15,
+    })
+  }
+
+  // 确认按钮
+  if (confirmBtn) {
+    gsap.set(confirmBtn, { opacity: 0, scale: 0.95, y: 12 })
+    gsap.to(confirmBtn, {
+      opacity: 1, scale: 1, y: 0,
+      duration: 0.3,
+      ease: 'back.out(1.2)',
+      delay: 0.18,
       onComplete: () => {
-        dialogEl.style.overflow = ''
         isTransitioning.value = false
-        resolve()
       },
     })
-    if (newEl) {
-      tl.to(newEl, {
-        opacity: 1, scale: 1, y: 0,
-        duration: 0.4, ease: 'back.out(1.2)',
-      }, 0)
-    }
-  })
+  } else {
+    gsap.delayedCall(0.35, () => {
+      isTransitioning.value = false
+    })
+  }
 }
 
 // Pick → Crop（initPosition 在 beforeSwitch 内立即执行，确保渲染时 translate/zoom 已正确）
