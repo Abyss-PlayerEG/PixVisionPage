@@ -8,6 +8,7 @@ import { updateNickname } from '@/api/profileApi.js'
 import { fetchWorkPage, fetchUserLikedWorks, fetchUserStarredWorks } from '@/api/workApi.js'
 import ConfirmDialog from '@/components/ConfirmDialog.vue'
 import ContactEditor from '@/components/ContactEditor.vue'
+import AccountManager from '@/components/AccountManager.vue'
 import VerticalWaterfall from '@/components/VerticalWaterfall.vue'
 import SeriesGrid from '@/components/SeriesGrid.vue'
 import gsap from 'gsap'
@@ -140,6 +141,12 @@ const goApplyCreator = () => {
 
 const goAdminPanel = () => {
   // todo: 跳转管理员面板
+}
+
+const showAccountManager = ref(false)
+
+const goAccountManagement = () => {
+  showAccountManager.value = true
 }
 
 // 联系方式编辑器
@@ -552,6 +559,11 @@ watch(
         :contacts="contactList"
         @saved="onContactsSaved"
       />
+
+      <!-- 账号管理弹窗 -->
+      <AccountManager
+        v-model:show="showAccountManager"
+      />
     </div>
 
     <!-- 菜单选项 -->
@@ -639,6 +651,16 @@ watch(
           <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
         </svg>
         <span>管理员面板</span>
+      </button>
+      <button
+        class="creator-center-btn account-management-btn"
+        @click="goAccountManagement"
+      >
+        <svg class="creator-center-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="3"></circle>
+          <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+        </svg>
+        <span>账号管理</span>
       </button>
     </div>
 
