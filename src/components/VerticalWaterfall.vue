@@ -27,8 +27,9 @@
           v-for="(img, imgIndex) in column"
           :key="img.workId || img.src || imgIndex"
           class="vw-card"
+          :class="{ 'vw-card-editing': isEditing }"
           :style="{ height: img.height + 'px' }"
-          @click="emit('image-click', img)"
+          @click="isEditing ? emit('select', img) : emit('image-click', img)"
         >
           <!-- 图片骨架覆盖层 -->
           <div
@@ -50,6 +51,19 @@
             class="vw-card-overlay"
           >
             <span class="vw-card-title">{{ img.workTitle || img.alt }}</span>
+          </div>
+          <!-- 编辑模式选择框 -->
+          <div
+            v-if="isEditing"
+            class="vw-card-select"
+            :class="{ 'vw-card-selected': selectedSet.has(img.workId) }"
+          >
+            <svg v-if="selectedSet.has(img.workId)" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+            </svg>
+            <svg v-else viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10"></circle>
+            </svg>
           </div>
         </div>
       </div>
@@ -85,9 +99,16 @@ const props = defineProps({
   isLoading: { type: Boolean, default: false },
   /** 列间距，默认 8px */
   gap: { type: Number, default: 8 },
+  /** 是否为编辑模式 */
+  isEditing: { type: Boolean, default: false },
+  /** 选中的项目 ID 集合 */
+  selectedIds: { type: Array, default: () => [] },
 })
 
-const emit = defineEmits(['load-more', 'image-click'])
+const emit = defineEmits(['load-more', 'image-click', 'select'])
+
+// ── 选中状态 Set（O(1) 查找） ──
+const selectedSet = computed(() => new Set(props.selectedIds))
 
 // ── Refs ──
 const galleryRef = ref(null)
@@ -403,5 +424,45 @@ onUnmounted(() => {
   color: rgba(255, 255, 255, 0.2);
   font-size: 12px;
   user-select: none;
+}
+
+/* ── 编辑模式样式 ── */
+.vw-card-editing {
+  cursor: pointer;
+}
+
+.vw-card-editing:hover {
+  opacity: 0.85;
+}
+
+.vw-card-select {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 28px;
+  height: 28px;
+  z-index: 3;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  pointer-events: none;
+}
+
+.vw-card-select svg {
+  width: 20px;
+  height: 20px;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.vw-card-selected .vw-card-select {
+  background: rgba(0, 169, 71, 0.8);
+}
+
+.vw-card-selected .vw-card-select svg {
+  color: #ffffff;
 }
 </style>

@@ -44,30 +44,40 @@ export const fetchUserHistory = async ({ current = 1, size = 20 } = {}) => {
 };
 
 /**
- * 批量删除历史记录
- * @param {Array<number>} historyIds - 要删除的历史记录 ID 列表
+ * 删除历史记录
+ * @param {Object} params
+ * @param {Array<number>} [params.workIds] - 要删除的作品 ID 列表，当 clearAll 为 false 或 null 时必填
+ * @param {boolean} [params.clearAll] - 是否清空所有历史记录，为 true 时 workIds 可为空
  * @returns {Promise<Object>} { success, data, message }
  */
-export const deleteHistory = async (historyIds) => {
+export const deleteHistory = async ({ workIds, clearAll } = {}) => {
   try {
     const token = localStorage.getItem('token');
     if (!token) {
       return { success: false, message: '用户未登录' };
     }
 
-    if (!historyIds || historyIds.length === 0) {
-      return { success: false, message: '请选择要删除的历史记录' };
+    // 构建请求体
+    let body;
+    if (clearAll === true) {
+      body = 'clearAll=true';
+    } else {
+      if (!workIds || workIds.length === 0) {
+        return { success: false, message: '请选择要删除的历史记录' };
+      }
+      // 将数组转为逗号分隔的字符串
+      body = `workIds=${workIds.join(',')}`;
     }
 
-    console.log('[API] 删除历史记录:', historyIds);
+    console.log('[API] 删除历史记录, 请求体:', body);
 
     const response = await fetch(HISTORY_API.DELETE, {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json',
+        'Content-Type': 'application/x-www-form-urlencoded',
       },
-      body: JSON.stringify({ historyIds }),
+      body: body,
     });
 
     const result = await response.json();
@@ -99,10 +109,12 @@ export const transformHistoryToWaterfallFormat = (records) => {
   let currentColumnIndices = [];
   
   const result = records.map((history, index) => {
-    const work = history.works || history;
+    // 后端返回的是扁平结构，直接使用 history
+    const work = history;
     
     if (index === 0) {
       console.log('[API] 第一条历史记录原始数据:', history);
+      console.log('[API] work_id:', work.work_id);
     }
     
     let currentHeight;
@@ -132,8 +144,8 @@ export const transformHistoryToWaterfallFormat = (records) => {
       workTitle: work.work_title,
       userId: work.user_id,
       imgUrl: fullImageUrl,
-      historyId: history.history_id,
-      visitTime: history.time,
+      historyId: work.time, // 使用 time 作为唯一标识
+      visitTime: work.time,
     };
   });
   

@@ -6,7 +6,7 @@ import { useProfileContent } from '@/composables/useProfileContent.js'
 import { showSuccess, showError } from '@/utils/notification.js'
 import { updateNickname } from '@/api/profileApi.js'
 import { fetchWorkPage, fetchUserLikedWorks, fetchUserStarredWorks } from '@/api/workApi.js'
-import { fetchUserHistory, transformHistoryToWaterfallFormat } from '@/api/historyApi.js'
+import { fetchUserHistory, deleteHistory, transformHistoryToWaterfallFormat } from '@/api/historyApi.js'
 import ConfirmDialog from '@/components/ConfirmDialog.vue'
 import ContactEditor from '@/components/ContactEditor.vue'
 import AccountManager from '@/components/AccountManager.vue'
@@ -212,6 +212,97 @@ const historyContent = useProfileContent(
 
 // 艺术作品筛选条件
 const workSearchTitle = ref('')
+
+// 历史记录编辑模式
+const isHistoryEditing = ref(false)
+const selectedWorkIds = ref([])
+const showDeleteDialog = ref(false)
+const deleteCount = ref(0)
+const showClearDialog = ref(false)
+
+// 切换历史记录编辑模式
+const toggleHistoryEdit = () => {
+  isHistoryEditing.value = !isHistoryEditing.value
+  if (!isHistoryEditing.value) {
+    selectedWorkIds.value = []
+  }
+}
+
+// 选择/取消选择历史记录
+const toggleHistorySelection = (workId) => {
+  // 验证 workId 是否有效
+  if (workId == null || workId === undefined) {
+    console.warn('[选择历史记录] 无效的 workId:', workId)
+    return
+  }
+  
+  const index = selectedWorkIds.value.indexOf(workId)
+  if (index === -1) {
+    // 使用展开运算符创建新数组，确保 Vue 响应式更新
+    selectedWorkIds.value = [...selectedWorkIds.value, workId]
+  } else {
+    // 使用 filter 创建新数组，确保 Vue 响应式更新
+    selectedWorkIds.value = selectedWorkIds.value.filter(id => id !== workId)
+  }
+  console.log('[选择历史记录] 当前选中的 workIds:', selectedWorkIds.value)
+}
+
+// 删除选中的历史记录
+const deleteSelectedHistory = async () => {
+  if (selectedWorkIds.value.length === 0) {
+    showError('请先选择要删除的历史记录')
+    return
+  }
+  
+  // 过滤掉无效的 workId
+  const validWorkIds = selectedWorkIds.value.filter(id => id != null && id !== undefined)
+  console.log('[删除历史记录] 选中的 workIds:', validWorkIds)
+  
+  if (validWorkIds.length === 0) {
+    showError('未找到有效的作品ID')
+    return
+  }
+  
+  // 显示确认弹窗
+  deleteCount.value = validWorkIds.length
+  showDeleteDialog.value = true
+}
+
+// 确认删除历史记录
+const confirmDeleteHistory = async () => {
+  const validWorkIds = selectedWorkIds.value.filter(id => id != null && id !== undefined)
+  
+  const result = await deleteHistory({ workIds: validWorkIds })
+  if (result.success) {
+    showSuccess(result.message || '历史记录删除成功')
+    // 从列表中移除已删除的记录
+    historyContent.images.value = historyContent.images.value.filter(
+      img => !validWorkIds.includes(img.workId)
+    )
+    selectedWorkIds.value = []
+    isHistoryEditing.value = false
+  } else {
+    showError(result.message || '删除历史记录失败')
+  }
+}
+
+// 清空所有历史记录
+const clearAllHistory = async () => {
+  showClearDialog.value = true
+}
+
+// 确认清空所有历史记录
+const confirmClearAllHistory = async () => {
+  const result = await deleteHistory({ clearAll: true })
+  if (result.success) {
+    showSuccess(result.message || '历史记录已清空')
+    historyContent.images.value = []
+    selectedWorkIds.value = []
+    isHistoryEditing.value = false
+  } else {
+    showError(result.message || '清空历史记录失败')
+  }
+}
 const workIsOriginal = ref(null) // null=全部, true=原创, false=转载
 
 // 收藏筛选
@@ -926,21 +1017,65 @@ watch(
 
     <!-- 浏览历史 -->
     <div v-else-if="activeMenu === 'history'" class="profile-content-panel" @scroll="onPanelScroll" @mousemove="onPanelMouseMove" @mouseleave="onPanelMouseLeave">
+      <!-- 历史记录操作栏 -->
+      <div class="history-actions">
+        <button 
+          class="history-edit-btn"
+          :class="{ active: isHistoryEditing }"
+          @click="toggleHistoryEdit"
+        >
+          <svg class="history-edit-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+          </svg>
+          <span>{{ isHistoryEditing ? '完成' : '编辑' }}</span>
+        </button>
+        <button 
+          v-if="isHistoryEditing && selectedWorkIds.length > 0"
+          class="history-delete-btn"
+          @click="deleteSelectedHistory"
+        >
+          <svg class="history-delete-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="3 6 5 6 21 6"></polyline>
+            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+            <line x1="10" y1="11" x2="10" y2="17"></line>
+            <line x1="14" y1="11" x2="14" y2="17"></line>
+          </svg>
+          <span>删除</span>
+        </button>
+        <button 
+          v-else-if="isHistoryEditing"
+          class="history-clear-btn"
+          @click="clearAllHistory"
+        >
+          <svg class="history-clear-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="3 6 5 6 21 6"></polyline>
+            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+            <line x1="10" y1="11" x2="10" y2="17"></line>
+            <line x1="14" y1="11" x2="14" y2="17"></line>
+          </svg>
+          <span>清空</span>
+        </button>
+      </div>
       <div
         v-if="!historyContent.isLoading.value && historyContent.images.value.length === 0 && !historyContent.hasMore.value"
         class="content-empty"
       >
         <p>暂无浏览历史</p>
       </div>
-      <VerticalWaterfall
-        v-else
-        :images="historyContent.images.value"
-        :has-more="historyContent.hasMore.value"
-        :is-loading="historyContent.isLoading.value"
-        :gap="8"
-        @load-more="historyContent.loadMore({ size: 20 })"
-        @image-click="handleWorkClick"
-      />
+      <div v-else>
+        <VerticalWaterfall
+          :images="historyContent.images.value"
+          :has-more="historyContent.hasMore.value"
+          :is-loading="historyContent.isLoading.value"
+          :gap="8"
+          :is-editing="isHistoryEditing"
+          :selected-ids="selectedWorkIds"
+          @load-more="historyContent.loadMore({ size: 20 })"
+          @image-click="handleWorkClick"
+          @select="toggleHistorySelection($event.workId)"
+        />
+      </div>
     </div>
   </section>
 
@@ -954,6 +1089,30 @@ watch(
     no-text="取消"
     @confirm="confirmLogout"
     @cancel="cancelLogout"
+  />
+  
+  <!-- 删除历史记录确认弹窗 -->
+  <ConfirmDialog
+    v-model:show="showDeleteDialog"
+    title="删除历史记录"
+    :message="`确定要删除选中的 ${deleteCount} 条历史记录吗？`"
+    type="danger"
+    yes-text="删除"
+    no-text="取消"
+    @confirm="confirmDeleteHistory"
+    @cancel="showDeleteDialog = false"
+  />
+  
+  <!-- 清空历史记录确认弹窗 -->
+  <ConfirmDialog
+    v-model:show="showClearDialog"
+    title="清空历史记录"
+    message="确定要清空所有历史记录吗？此操作不可恢复。"
+    type="danger"
+    yes-text="清空"
+    no-text="取消"
+    @confirm="confirmClearAllHistory"
+    @cancel="showClearDialog = false"
   />
 </template>
 
