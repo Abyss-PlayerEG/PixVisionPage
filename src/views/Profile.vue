@@ -155,7 +155,7 @@ const goApplyCreator = () => {
 }
 
 const goAdminPanel = () => {
-  // todo: 跳转管理员面板
+  router.push('/admin')
 }
 
 const showAccountManager = ref(false)
@@ -789,7 +789,7 @@ watch(
       </button>
     </div>
 
-    <!-- 底部：返回首页 + 退出登录按钮 -->
+    <!-- 底部：返回个人中心 + 退出登录按钮 -->
     <div class="sidebar-footer">
       <button class="home-btn" @click="goHome">
         <svg class="home-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">

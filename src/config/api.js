@@ -119,6 +119,34 @@ export const HISTORY_API = {
   DELETE: `${API_BASE_URL}/api/history/delete`, // POST，批量删除历史记录
 };
 
+// 管理员相关接口
+export const ADMIN_API = {
+  DASHBOARD: `${API_BASE_URL}api/admin/dashboard`,
+  // 用户管理
+  USER_LIST: `${API_BASE_URL}api/admin/user/page-select`,                          // POST, body: page/size/nickname
+  USER_UPDATE: `${API_BASE_URL}api/admin/user/update/user-role-status`,             // POST, body: userIds[]/newRole/newStatus
+  USER_DELETE: `${API_BASE_URL}api/admin/user/delete`,                              // POST, body: userIds[]
+  USER_CREATE: `${API_BASE_URL}api/admin/user/create`,                              // POST, body: username/password/confirmPassword/nickname/email
+  USER_RESET_PWD: `${API_BASE_URL}api/admin/user/update/password`,                  // POST, body: userIds[]
+  USER_INIT_AVATAR: `${API_BASE_URL}api/admin/user/init-avatar-nickname`,           // POST, body: userIds[]
+  // 作品管理
+  WORK_LIST: (current, size) => `${API_BASE_URL}api/admin/works/page/${current}/${size}`, // GET, ?keyword=
+  WORK_DELETE: `${API_BASE_URL}api/admin/works/delete`,                             // POST, body: workIds[]
+  WORK_APPROVAL: `${API_BASE_URL}api/admin/works/update/approval-status`,           // POST, body: workIds[]/approvalStatus
+  WORK_TITLE: `${API_BASE_URL}api/admin/works/update/work-title`,                   // POST, body: workIds[]/workTitle
+  // 评论管理
+  COMMENT_LIST: (current, size) => `${API_BASE_URL}api/admin/comments/page/${current}/${size}`, // GET, ?keyword=
+  COMMENT_DELETE: `${API_BASE_URL}api/admin/comments/delete`,                       // POST, body: commentIds[]
+  COMMENT_APPROVAL: `${API_BASE_URL}api/admin/comments/update/approval-status`,     // POST, body: commentIds[]/approvalStatus
+  // 审核记录
+  AUDIT_RECORDS: (current, size) => `${API_BASE_URL}api/admin/audit-records/page/${current}/${size}`, // GET
+  // 用户数据变更审核
+  PENDING_CHANGES: (current, size) => `${API_BASE_URL}api/admin/user-data-change/pending/${current}/${size}`, // GET
+  REVIEW_CHANGES: `${API_BASE_URL}api/admin/user-data-change/review`,               // POST, body: lockIds[]/approved
+  // 操作日志
+  LOGS: (current, size) => `${API_BASE_URL}api/admin/logs/page/${current}/${size}`, // GET
+};
+
 // 获取作品图片完整 URL
 export const getWorkImageUrl = (filePath) => {
   if (!filePath) {
