@@ -11,8 +11,17 @@ import ConfirmDialog from '@/components/ConfirmDialog.vue'
 import ContactEditor from '@/components/ContactEditor.vue'
 import AccountManager from '@/components/AccountManager.vue'
 import VerticalWaterfall from '@/components/VerticalWaterfall.vue'
+import EmptyState from '@/components/EmptyState.vue'
 import SeriesGrid from '@/components/SeriesGrid.vue'
 import gsap from 'gsap'
+
+// 空状态图标
+const emptyIcons = {
+  works: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>',
+  favorites: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>',
+  likes: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>',
+  history: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>',
+}
 
 // 使用 Composable 获取 Profile 页面的状态和方法
 const {
@@ -692,7 +701,7 @@ watch(
           <rect x="14" y="14" width="7" height="7"></rect>
           <rect x="3" y="14" width="7" height="7"></rect>
         </svg>
-        <span class="menu-text">艺术作品</span>
+        <span class="menu-text">{{ isMyProfile ? '艺术作品' : 'TA的作品' }}</span>
       </div>
       
       <div
@@ -704,7 +713,7 @@ watch(
         <svg class="menu-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
         </svg>
-        <span class="menu-text">作品合集</span>
+        <span class="menu-text">{{ isMyProfile ? '作品合集' : 'TA的合集' }}</span>
       </div>
 
       <div
@@ -713,7 +722,7 @@ watch(
         @click="switchMenu('favorites')"
       >
         <svg class="menu-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>
-        <span class="menu-text">个人收藏</span>
+        <span class="menu-text">{{ isMyProfile ? '个人收藏' : 'TA的收藏' }}</span>
       </div>
 
 
@@ -723,7 +732,7 @@ watch(
         @click="switchMenu('likes')"
       >
         <svg class="menu-icon" viewBox="0 0 1024 1024" fill="currentColor"><path d="M885.9 533.7c16.8-22.2 26.1-49.4 26.1-77.7 0-44.9-25.1-87.4-65.5-111.1a67.67 67.67 0 0 0-34.3-9.3H572.4l6-122.9c1.4-29.7-9.1-57.9-29.5-79.4-20.5-21.5-48.1-33.4-77.9-33.4-52 0-98 35-111.8 85.1l-85.9 311h-0.3v428h472.3c9.2 0 18.2-1.8 26.5-5.4 47.6-20.3 78.3-66.8 78.3-118.4 0-12.6-1.8-25-5.4-37 16.8-22.2 26.1-49.4 26.1-77.7-0.2-12.6-2-25.1-5.6-37.1zM112 528v364c0 17.7 14.3 32 32 32h65V496h-65c-17.7 0-32 14.3-32 32z"/></svg>
-        <span class="menu-text">个人点赞</span>
+        <span class="menu-text">{{ isMyProfile ? '个人点赞' : 'TA的点赞' }}</span>
       </div>
 
       <div
@@ -897,12 +906,14 @@ watch(
           </div>
         </div>
       </teleport>
-      <div
+      <EmptyState
         v-if="!worksContent.isLoading.value && worksContent.images.value.length === 0 && !worksContent.hasMore.value"
-        class="content-empty"
-      >
-        <p>暂无作品</p>
-      </div>
+        :icon="emptyIcons.works"
+        :title="isMyProfile ? '还没有作品' : 'TA还没有作品'"
+        :description="isMyProfile ? '快去创作你的第一件作品吧' : '这里还是空的'"
+        :action-text="isMyProfile ? '去首页看看' : ''"
+        @action="router.push('/')"
+      />
       <VerticalWaterfall
         v-else
         :images="worksContent.images.value"
@@ -949,6 +960,7 @@ watch(
         :user-id="userInfo.userId"
         :keyword="seriesKeyword"
         :order-by="seriesOrderBy"
+        :is-my-profile="isMyProfile"
         @series-click="handleSeriesClick"
       />
     </div>
@@ -967,12 +979,14 @@ watch(
           @click="favOrderBy !== 'oldest' && toggleFavOrder()"
         >最早</button>
       </div>
-      <div
+      <EmptyState
         v-if="!starsContent.isLoading.value && starsContent.images.value.length === 0 && !starsContent.hasMore.value"
-        class="content-empty"
-      >
-        <p>暂无收藏</p>
-      </div>
+        :icon="emptyIcons.favorites"
+        :title="isMyProfile ? '收藏夹是空的' : 'TA的收藏夹是空的'"
+        :description="isMyProfile ? '发现喜欢的作品，点击星标收藏' : '这里还是空的'"
+        :action-text="isMyProfile ? '去首页看看' : ''"
+        @action="router.push('/')"
+      />
       <VerticalWaterfall
         v-else
         :images="starsContent.images.value"
@@ -998,12 +1012,14 @@ watch(
           @click="likeOrderBy !== 'oldest' && toggleLikeOrder()"
         >最早</button>
       </div>
-      <div
+      <EmptyState
         v-if="!likesContent.isLoading.value && likesContent.images.value.length === 0 && !likesContent.hasMore.value"
-        class="content-empty"
-      >
-        <p>暂无点赞</p>
-      </div>
+        :icon="emptyIcons.likes"
+        :title="isMyProfile ? '还没有点赞内容' : 'TA还没有点赞内容'"
+        :description="isMyProfile ? '给喜欢的作品点个赞吧' : '这里还是空的'"
+        :action-text="isMyProfile ? '去首页看看' : ''"
+        @action="router.push('/')"
+      />
       <VerticalWaterfall
         v-else
         :images="likesContent.images.value"
@@ -1057,12 +1073,14 @@ watch(
           <span>清空</span>
         </button>
       </div>
-      <div
+      <EmptyState
         v-if="!historyContent.isLoading.value && historyContent.images.value.length === 0 && !historyContent.hasMore.value"
-        class="content-empty"
-      >
-        <p>暂无浏览历史</p>
-      </div>
+        :icon="emptyIcons.history"
+        title="浏览历史是空的"
+        description="浏览作品后会自动记录在这里"
+        action-text="去首页看看"
+        @action="router.push('/')"
+      />
       <div v-else>
         <VerticalWaterfall
           :images="historyContent.images.value"

@@ -40,30 +40,36 @@ export const useProfile = () => {
   // 当前选中的菜单项
   const activeMenu = ref('works') // works: 个人作品, favorites: 个人收藏
 
-  // 判断是否是自己的主页（根据路由参数判断）
+  // 判断是否是自己的主页（根据路由名称判断）
   const isMyProfile = ref(true)
 
   // 用户拓展数据（联系方式）
   const contactList = ref([])
 
   /**
-   * 获取用户信息（根据路由参数自动判断是查看自己还是他人）
+   * 获取用户信息（根据路由名称自动判断是查看自己还是他人）
    */
   const fetchUserProfile = async () => {
     isLoading.value = true
     
     try {
-      const identifier = route.params.identifier
-      
-      if (!identifier) {
-        // 没有 identifier，查看自己的主页
+      // 根据路由名称判断视角
+      if (route.name === 'profileMe') {
+        // 本人视角：查看自己的主页
         isMyProfile.value = true
         await fetchMyProfile()
       } else {
-        // 有 identifier，判断是 username 还是 uuid
-        const isUuid = /^[0-9a-fA-F]{8}-?[0-9a-fA-F]{4}-?[0-9a-fA-F]{4}-?[0-9a-fA-F]{4}-?[0-9a-fA-F]{12}$/.test(identifier)
-        
+        // 访客视角：查看他人的主页
+        const identifier = route.params.identifier
         isMyProfile.value = false
+        
+        if (!identifier) {
+          showError('用户标识不能为空')
+          return
+        }
+        
+        // 判断是 username 还是 uuid
+        const isUuid = /^[0-9a-fA-F]{8}-?[0-9a-fA-F]{4}-?[0-9a-fA-F]{4}-?[0-9a-fA-F]{4}-?[0-9a-fA-F]{12}$/.test(identifier)
         
         if (isUuid) {
           // 通过 uuid 查询

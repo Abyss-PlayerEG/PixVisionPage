@@ -11,9 +11,14 @@
     </div>
 
     <!-- 空状态 -->
-    <div v-else-if="seriesList.length === 0 && initialLoadingDone" class="sg-empty">
-      <p>暂无合集</p>
-    </div>
+    <EmptyState
+      v-else-if="seriesList.length === 0 && initialLoadingDone"
+      :icon="emptyIcon"
+      :title="isMyProfile ? '还没有合集' : 'TA还没有合集'"
+      :description="isMyProfile ? '创建你的第一个作品合集吧' : '这里还是空的'"
+      :action-text="isMyProfile ? '去创建合集' : ''"
+      @action="emit('series-click', null)"
+    />
 
     <!-- 真实网格 -->
     <div v-else class="sg-grid">
@@ -69,14 +74,19 @@
 <script setup>
 import { ref, onMounted, onUnmounted, nextTick, watch } from 'vue'
 import { SERIES_API, getWorkImageUrl } from '@/config/api'
+import EmptyState from './EmptyState.vue'
 
 const props = defineProps({
   userId: { type: Number, required: true },
   keyword: { type: String, default: '' },
   orderBy: { type: String, default: 'newest' },
+  isMyProfile: { type: Boolean, default: true },
 })
 
 const emit = defineEmits(['series-click'])
+
+// ── 空状态图标 ──
+const emptyIcon = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>'
 
 // ── 状态 ──
 const seriesList = ref([])
