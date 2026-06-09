@@ -4,13 +4,14 @@
  *
  * @param {Function} fetchFn - 数据获取函数，签名为 ({ current, size, ...extra }) => Promise
  *                             返回格式：{ success, data: { records, total } }
+ * @param {Function} [transformFn] - 可选的数据转换函数，默认使用 transformWorksToWaterfallFormat
  * @returns {Object} { images, isLoading, hasMore, loadFirst, loadMore, refresh }
  */
 
 import { ref } from 'vue'
 import { transformWorksToWaterfallFormat } from '@/api/workApi'
 
-export const useProfileContent = (fetchFn) => {
+export const useProfileContent = (fetchFn, transformFn = transformWorksToWaterfallFormat) => {
   const images = ref([])
   const isLoading = ref(false)
   const hasMore = ref(true)
@@ -45,7 +46,7 @@ export const useProfileContent = (fetchFn) => {
       })
 
       if (result.success && result.data && result.data.records) {
-        const transformed = transformWorksToWaterfallFormat(result.data.records)
+        const transformed = transformFn(result.data.records)
 
         if (reset) {
           images.value = transformed

@@ -113,6 +113,12 @@ export const ACCOUNT_MAIL_API = {
   SEND_CHANGE_EMAIL_CODE: `${API_BASE_URL}/api/mail/send-change-email-code`,         // 发送修改邮箱验证码
 };
 
+// 历史记录相关接口
+export const HISTORY_API = {
+  PAGE: `${API_BASE_URL}/api/history`,         // GET，路径后拼 /current/size
+  DELETE: `${API_BASE_URL}/api/history/delete`, // POST，批量删除历史记录
+};
+
 // 获取作品图片完整 URL
 export const getWorkImageUrl = (filePath) => {
   if (!filePath) {
