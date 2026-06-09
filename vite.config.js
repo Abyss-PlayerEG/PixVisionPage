@@ -19,4 +19,9 @@ export default defineConfig({
     host: '0.0.0.0', // 允许外部 IP 访问
     port: 8080,       // 指定端口
   },
+  // ... 其他配置
+  preview: {
+    port: 3000,        // 指定预览服务器端口
+    strictPort: true,  // 如果端口被占用则直接报错，而不是尝试下一个端口
+  },
 })
