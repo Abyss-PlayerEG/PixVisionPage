@@ -131,6 +131,20 @@ const resetNickname = () => {
   editNickname.value = userInfo.value.nickname
 }
 
+// 数字格式化：超过1000显示x.xk，超过10000显示x.xw
+const formatStatNumber = (num) => {
+  if (num === null || num === undefined) return '0'
+  const n = Number(num)
+  if (isNaN(n)) return '0'
+  if (n >= 10000) {
+    return (n / 10000).toFixed(1).replace(/\.0$/, '') + 'w'
+  }
+  if (n >= 1000) {
+    return (n / 1000).toFixed(1).replace(/\.0$/, '') + 'k'
+  }
+  return String(n)
+}
+
 // 创作中心入口
 const goCreatorCenter = () => {
   // todo: 跳转创作中心
@@ -486,24 +500,24 @@ watch(
             <rect x="14" y="14" width="7" height="7"></rect>
             <rect x="3" y="14" width="7" height="7"></rect>
           </svg>
-          <div class="stat-value">{{ userInfo.workCount }}</div>
+          <div class="stat-value">{{ formatStatNumber(userInfo.workCount) }}</div>
         </div>
         <div class="stat-item" title="浏览">
           <svg class="stat-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
             <circle cx="12" cy="12" r="3"></circle>
           </svg>
-          <div class="stat-value">{{ userInfo.totalViews }}</div>
+          <div class="stat-value">{{ formatStatNumber(userInfo.totalViews) }}</div>
         </div>
         <div class="stat-item" title="点赞">
           <svg class="stat-icon" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" fill="currentColor"><path d="M98.72 511.552l-32-0.256 32 0.256zM96 868.128l32 0.256-32-0.256z m723.008 13.344l-31.008-7.936-0.128 0.48-0.096 0.512 31.232 6.944z m108.832-425.152l31.04 7.936 0.096-0.48 0.128-0.512-31.264-6.944z m-283.456-134.112l31.424 6.176-31.424-6.176z m30.688-155.264l-31.392-6.208 31.392 6.208z m-121.312-41.472l27.232 16.8 0.224-0.32 0.192-0.32-27.648-16.16zM130.72 511.808a27.424 27.424 0 0 1 27.424-27.232v-64a91.424 91.424 0 0 0-91.424 90.72l64 0.512zM128 868.352l2.72-356.544-64-0.512L64 867.872l64 0.48z m27.424 27.648A27.424 27.424 0 0 1 128 868.384l-64-0.512A91.424 91.424 0 0 0 155.424 960v-64zM352 896H155.424v64H352v-64zM158.144 484.576H352v-64H158.144v64zM761.024 896H352v64h408.992v-64z m26.752-21.472a27.424 27.424 0 0 1-26.784 21.472v64c42.88 0 79.968-29.76 89.28-71.584l-62.496-13.888z m109.088-426.144l-108.864 425.152 62.016 15.872 108.832-425.152-61.984-15.872zM869.856 416c17.536 0 30.56 16.256 26.752 33.376l62.496 13.888A91.424 91.424 0 0 0 869.824 352v64zM704 416h165.856v-64H704v64z m-90.976-100c-5.728 28.896 3.136 55.296 22.08 73.76 18.112 17.696 43.392 26.24 68.896 26.24v-64c-11.936 0-20.096-4-24.224-8-3.328-3.264-5.536-7.776-3.968-15.616l-62.784-12.384z m30.656-155.264l-30.656 155.264 62.784 12.384 30.656-155.232-62.784-12.416zM616.8 128c17.28 0 30.24 15.776 26.88 32.736l62.784 12.416A91.424 91.424 0 0 0 616.768 64v64z m-11.712 0h11.68V64h-11.68v64z m-23.68 13.6a27.456 27.456 0 0 1 23.68-13.6V64c-32.512 0-62.592 17.28-78.976 45.344l55.296 32.256zM379.2 469.376l201.76-327.104-54.464-33.6-201.76 327.104 54.464 33.6zM384 928V452.576h-64V928h64z" fill="currentColor"/></svg>
-          <div class="stat-value">{{ userInfo.totalLikes }}</div>
+          <div class="stat-value">{{ formatStatNumber(userInfo.totalLikes) }}</div>
         </div>
         <div class="stat-item" title="收藏">
           <svg class="stat-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
           </svg>
-          <div class="stat-value">{{ userInfo.totalStars }}</div>
+          <div class="stat-value">{{ formatStatNumber(userInfo.totalStars) }}</div>
         </div>
       </div>
       
