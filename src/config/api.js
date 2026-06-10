@@ -113,6 +113,12 @@ export const ACCOUNT_MAIL_API = {
   SEND_CHANGE_EMAIL_CODE: `${API_BASE_URL}/api/mail/send-change-email-code`,         // 发送修改邮箱验证码
 };
 
+// 权限变更相关接口
+export const ROLE_API = {
+  APPLY: `${API_BASE_URL}/api/user/profile/role/apply`,           // 申请权限变更
+  SEND_CODE: `${API_BASE_URL}/api/mail/send-role-change-code`,    // 发送权限变更验证码
+};
+
 // 历史记录相关接口
 export const HISTORY_API = {
   PAGE: `${API_BASE_URL}/api/history`,         // GET，路径后拼 /current/size

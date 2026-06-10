@@ -13,6 +13,7 @@ import AccountManager from '@/components/AccountManager.vue'
 import VerticalWaterfall from '@/components/VerticalWaterfall.vue'
 import EmptyState from '@/components/EmptyState.vue'
 import SeriesGrid from '@/components/SeriesGrid.vue'
+import CreatorApplyDialog from '@/components/CreatorApplyDialog.vue'
 import gsap from 'gsap'
 
 // 空状态图标
@@ -159,8 +160,15 @@ const goCreatorCenter = () => {
   // todo: 跳转创作中心
 }
 
+const showCreatorApplyDialog = ref(false)
+
 const goApplyCreator = () => {
-  // todo: 跳转创作者申请页
+  showCreatorApplyDialog.value = true
+}
+
+const onCreatorApplySuccess = (message) => {
+  showSuccess(message || '申请已提交，请等待管理员审核')
+  showCreatorApplyDialog.value = false
 }
 
 const goAdminPanel = () => {
@@ -1131,6 +1139,13 @@ watch(
     no-text="取消"
     @confirm="confirmClearAllHistory"
     @cancel="showClearDialog = false"
+  />
+  
+  <!-- 成为创作者申请弹窗 -->
+  <CreatorApplyDialog
+    v-model:show="showCreatorApplyDialog"
+    @success="onCreatorApplySuccess"
+    @cancel="showCreatorApplyDialog = false"
   />
 </template>
 

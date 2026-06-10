@@ -5,7 +5,7 @@
  * @module profileApi
  */
 
-import { USER_API, AUTH_API, AVATAR_UPLOAD_API, AVATAR_RESET_DEFAULT_API, AVATAR_SYNC_BILIBILI_API } from '../config/api';
+import { USER_API, AUTH_API, AVATAR_UPLOAD_API, AVATAR_RESET_DEFAULT_API, AVATAR_SYNC_BILIBILI_API, ROLE_API } from '../config/api';
 
 /**
  * ============================================
@@ -377,6 +377,89 @@ export const logout = () => {
  */
 export const isLoggedIn = () => {
   return !!localStorage.getItem('token');
+};
+
+/**
+ * ============================================
+ * 权限变更功能
+ * ============================================
+ */
+
+/**
+ * 申请成为创作者（发送验证码）
+ * @returns {Promise<Object>} { success, message }
+ */
+export const sendRoleChangeCode = async () => {
+  try {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      return { success: false, message: '用户未登录' };
+    }
+
+    console.log('发送权限变更验证码请求...');
+
+    const response = await fetch(ROLE_API.SEND_CODE, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+      },
+    });
+
+    const result = await response.json();
+    console.log('发送验证码响应:', JSON.stringify(result, null, 2));
+
+    const statusCode = result.code || result.recode;
+    if (statusCode === 200) {
+      console.log('验证码发送成功');
+      return { success: true, message: result.message || '验证码已发送到您的邮箱' };
+    }
+    console.error('验证码发送失败:', result.message);
+    return { success: false, message: result.message || '验证码发送失败' };
+  } catch (error) {
+    console.error('发送验证码网络错误:', error);
+    return { success: false, message: '网络错误，请稍后重试' };
+  }
+};
+
+/**
+ * 申请成为创作者（提交申请）
+ * @param {string} vCode - 邮箱验证码
+ * @returns {Promise<Object>} { success, message }
+ */
+export const applyCreatorRole = async (vCode) => {
+  try {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      return { success: false, message: '用户未登录' };
+    }
+
+    if (!vCode || vCode.trim().length === 0) {
+      return { success: false, message: '请输入验证码' };
+    }
+
+    console.log('申请成为创作者，验证码:', vCode);
+
+    const response = await fetch(`${ROLE_API.APPLY}?targetRole=22&vCode=${encodeURIComponent(vCode.trim())}`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+      },
+    });
+
+    const result = await response.json();
+    console.log('申请创作者响应:', JSON.stringify(result, null, 2));
+
+    const statusCode = result.code || result.recode;
+    if (statusCode === 200 && result.data) {
+      console.log('申请成功:', result.data);
+      return { success: true, message: result.data };
+    }
+    console.error('申请失败:', result.message);
+    return { success: false, message: result.message || '申请失败' };
+  } catch (error) {
+    console.error('申请创作者网络错误:', error);
+    return { success: false, message: '网络错误，请稍后重试' };
+  }
 };
 
 /**
