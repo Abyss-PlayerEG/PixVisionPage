@@ -88,11 +88,59 @@ export const showError = (message, title = '错误', duration = 3000) => {
   return showToast({ message, title, type: 'error', duration })
 }
 
+/**
+ * 快捷方法：显示加载提示
+ * @returns {Object} 包含 close 方法的对象，用于手动关闭
+ */
+export const showLoading = (message, title = '加载中', duration = 0) => {
+  // 创建容器元素
+  const container = document.createElement('div')
+  document.body.appendChild(container)
+  
+  let toastInstance = null
+
+  // 创建 Vue 应用实例
+  const app = createApp({
+    render() {
+      return h(NotificationToast, {
+        message,
+        title: title,
+        type: 'info',
+        duration: duration || 0,
+        show: true,
+        ref: (el) => { toastInstance = el },
+        onClose: () => {
+          // 清理 DOM
+          setTimeout(() => {
+            app.unmount()
+            if (container.parentNode) {
+              document.body.removeChild(container)
+            }
+          }, 100)
+        }
+      })
+    }
+  })
+
+  // 挂载应用
+  app.mount(container)
+  
+  // 返回关闭方法
+  return {
+    close: () => {
+      if (toastInstance && toastInstance.closeToast) {
+        toastInstance.closeToast()
+      }
+    }
+  }
+}
+
 // 导出默认对象，方便使用
 export default {
   showToast,
   showInfo,
   showSuccess,
   showWarning,
-  showError
+  showError,
+  showLoading
 }

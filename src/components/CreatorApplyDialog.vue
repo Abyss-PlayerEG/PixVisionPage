@@ -2,7 +2,7 @@
 import { ref, computed, watch, nextTick, onMounted, onUnmounted } from 'vue'
 import gsap from 'gsap'
 import { sendRoleChangeCode, applyCreatorRole } from '@/api/profileApi'
-import { showSuccess, showError } from '@/utils/notification.js'
+import { showSuccess, showError, showLoading } from '@/utils/notification.js'
 
 const props = defineProps({
   show: { type: Boolean, default: false },
@@ -109,12 +109,14 @@ const handleSendCode = async () => {
   if (isSending.value || countdown.value > 0) return
   
   isSending.value = true
+  const loadingToast = showLoading('验证码发送中...')
   const result = await sendRoleChangeCode()
+  loadingToast.close()
   isSending.value = false
 
   if (result.success) {
     // 发送成功
-    showSuccess('验证码已发送到您的邮箱，请查收')
+    showSuccess('验证码已发送到您的注册邮箱，请查收')
     startCountdown(60)
   } else if (result.message && result.message.includes('已存在')) {
     // 验证码已存在，从消息中提取剩余秒数
