@@ -115,7 +115,7 @@
 }
 
 .nickname {
-    color: #ffffff;
+    color: var(--text-primary);
     font-size: 17px;
     font-weight: 600;
     margin: 0;
@@ -138,7 +138,7 @@
 }
 
 .nickname-input {
-    color: #ffffff;
+    color: var(--text-primary);
     font-size: 15px;
     font-weight: 500;
     margin: 0;
@@ -153,7 +153,7 @@
 }
 
 .nickname-input:focus {
-    border-color: #00A947;
+    border-color: var(--color-primary);
     background: rgba(0, 169, 71, 0.06);
 }
 
@@ -186,7 +186,7 @@
 }
 
 .nickname-reset-btn:hover {
-    color: #00A947;
+    color: var(--color-primary);
 }
 
 .nickname-reset-btn:hover svg {
@@ -236,7 +236,7 @@
 
 .edit-profile-btn:hover {
     background: rgba(0, 169, 71, 0.1);
-    color: #00A947;
+    color: var(--color-primary);
 }
 
 .edit-profile-btn:disabled {
@@ -246,7 +246,7 @@
 
 .edit-profile-btn.is-saving {
     background: rgba(0, 169, 71, 0.12);
-    color: #00A947;
+    color: var(--color-primary);
 }
 
 .save-spinner {
@@ -354,7 +354,7 @@
 }
 
 .stat-value {
-    color: #ffffff;
+    color: var(--text-primary);
     font-size: 15px;
     font-weight: 600;
     line-height: 1;
@@ -448,7 +448,7 @@
 }
 
 .contact-add-btn:hover .contact-icon {
-    color: #00A947;
+    color: var(--color-primary);
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
@@ -480,7 +480,7 @@
 
 .menu-item.active {
     background: rgba(255, 255, 255, 0.06);
-    color: #ffffff;
+    color: var(--text-primary);
 }
 
 .menu-icon {
@@ -532,7 +532,7 @@
 
 .creator-center-btn:hover {
     background: rgba(0, 169, 71, 0.08);
-    color: #00A947;
+    color: var(--color-primary);
 }
 
 .creator-center-btn:active {
@@ -781,7 +781,7 @@
 
 .sort-option.active {
     background: rgba(0, 169, 71, 0.12);
-    color: #00A947;
+    color: var(--color-primary);
 }
 
 /* 搜索输入 */
@@ -798,7 +798,7 @@
     background: rgba(255, 255, 255, 0.04);
     border: 1px solid rgba(255, 255, 255, 0.06);
     border-radius: 8px;
-    color: #ffffff;
+    color: var(--text-primary);
     font-size: 13px;
     outline: none;
     box-sizing: border-box;
@@ -827,13 +827,13 @@
     border: none;
     border-radius: 6px;
     background: rgba(0, 169, 71, 0.6);
-    color: #ffffff;
+    color: var(--text-primary);
     cursor: pointer;
     transition: background 0.2s ease;
 }
 
 .profile-filter-search-btn:hover {
-    background: #00A947;
+    background: var(--color-primary);
 }
 
 .profile-filter-search-btn svg {
@@ -876,7 +876,7 @@
 
 .profile-sort-btn.active {
     background: rgba(0, 169, 71, 0.12);
-    color: #00A947;
+    color: var(--color-primary);
 }
 
 /* ── 圆盘选择器（折叠态） ── */
@@ -889,7 +889,7 @@
     background: rgba(255, 255, 255, 0.04);
     border: 1px solid rgba(255, 255, 255, 0.06);
     border-radius: 8px;
-    color: #ffffff;
+    color: var(--text-primary);
     font-size: 13px;
     cursor: pointer;
     user-select: none;
@@ -983,11 +983,11 @@
 }
 
 .dial-segment.hovered .dial-segment-label {
-    color: #ffffff;
+    color: var(--text-primary);
 }
 
 .dial-segment.active .dial-segment-label {
-    color: #00A947;
+    color: var(--color-primary);
     font-weight: 600;
 }
 
@@ -1056,13 +1056,13 @@
 .history-delete-btn:hover,
 .history-clear-btn:hover {
     background: rgba(255, 255, 255, 0.1);
-    color: #ffffff;
+    color: var(--text-primary);
 }
 
 .history-edit-btn.active {
     background: rgba(0, 169, 71, 0.2);
     border-color: rgba(0, 169, 71, 0.4);
-    color: #00A947;
+    color: var(--color-primary);
 }
 
 .history-delete-btn {
@@ -1084,7 +1084,7 @@
 
 .history-clear-btn:hover {
     background: rgba(0, 169, 71, 0.25);
-    color: #00A947;
+    color: var(--color-primary);
 }
 
 .history-edit-icon,

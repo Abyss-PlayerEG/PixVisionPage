@@ -5,6 +5,9 @@ import {banner} from "@/egg.js";
 import App from './App.vue'
 import router from './router'
 
+// 品牌色彩变量（全局 CSS 自定义属性）
+import '@/assets/CSS/variables.css'
+
 //字体引入
 import '@/assets/FONTS/font.css' // 引入字体声明文件
 
