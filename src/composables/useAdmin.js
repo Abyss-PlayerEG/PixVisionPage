@@ -8,10 +8,13 @@ import {
   fetchUserList, updateUserStatus, deleteUser, createUser, resetUserPassword,
   fetchWorkList, deleteWork, updateWorkApproval, updateWorkTitle,
   fetchCommentList, deleteComment, updateCommentApproval,
-  fetchAuditRecords, fetchPendingChanges, reviewDataChanges, fetchOperationLogs
+  fetchAuditRecords, fetchPendingChanges, reviewDataChanges, fetchOperationLogs,
+  fetchSeriesList, deleteSeries, updateSeriesApproval,
+  updateUserRole, refreshPermissionCache
 } from '@/api/adminApi'
 import { showSuccess, showError } from '@/utils/notification'
 import { showConfirm } from '@/utils/confirmDialog'
+import { formatTime } from '@/utils/adminHelpers'
 
 export const useAdmin = () => {
   const router = useRouter()
@@ -39,6 +42,10 @@ export const useAdmin = () => {
   const showCreateUserDialog = ref(false)
   const createUserForm = reactive({ username: '', password: '', confirmPassword: '', nickname: '', email: '' })
   const createUserErrors = reactive({})
+  const selectedUserIds = ref(new Set())  // 批量选择的用户 ID
+  const showChangeRoleDialog = ref(false)
+  const changeRoleForm = reactive({ userIds: [], newRole: 11 })
+  const isRefreshingCache = ref(false)
 
   // ── 作品管理 ──
   const workList = ref([])
@@ -51,6 +58,7 @@ export const useAdmin = () => {
   const workApprovalFilter = ref('')          // 审核状态筛选
   const showEditTitleDialog = ref(false)
   const editTitleForm = reactive({ workId: null, newTitle: '', oldTitle: '' })
+  const selectedWorkIds = ref(new Set())  // 批量选择的作品 ID
 
   // ── 评论管理 ──
   const commentList = ref([])
@@ -61,6 +69,7 @@ export const useAdmin = () => {
   const commentPageSize = 20
   const commentOrderBy = ref('newest')
   const commentApprovalFilter = ref('')
+  const selectedCommentIds = ref(new Set())  // 批量选择的评论 ID
 
   // ── AI 审核记录 ──
   const auditList = ref([])
@@ -90,6 +99,18 @@ export const useAdmin = () => {
   const logKeyword = ref('')
   const logOrderBy = ref('newest')
 
+  // ── 合集管理 ──
+  const seriesList = ref([])
+  const seriesLoading = ref(false)
+  const seriesCurrent = ref(1)
+  const seriesTotal = ref(0)
+  const seriesKeyword = ref('')
+  const seriesPageSize = 20
+  const seriesOrderBy = ref('newest')
+  const seriesStatusFilter = ref('')
+  const seriesUserIdFilter = ref('')
+  const selectedSeriesIds = ref(new Set())  // 批量选择的合集 ID
+
   // ── 通用分页 ──
   const hasMore = (type) => {
     const map = {
@@ -99,17 +120,9 @@ export const useAdmin = () => {
       audits: () => auditList.value.length < auditTotal.value,
       changes: () => changeList.value.length < changeTotal.value,
       logs: () => logList.value.length < logTotal.value,
+      series: () => seriesList.value.length < seriesTotal.value,
     }
     return map[type] ? map[type]() : false
-  }
-
-  const formatTime = (timeStr) => {
-    if (!timeStr) return '—'
-    try {
-      const date = new Date(timeStr)
-      const pad = (n) => String(n).padStart(2, '0')
-      return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())} ${pad(date.getHours())}:${pad(date.getMinutes())}`
-    } catch { return timeStr }
   }
 
   // ───────── 用户管理 ─────────
@@ -128,9 +141,13 @@ export const useAdmin = () => {
     })
     if (result.success && result.data) {
       const { records, total } = result.data
-      userList.value = reset ? (records || []) : [...userList.value, ...(records || [])]
+      const newRecords = records || []
+      userList.value = reset ? newRecords : [...userList.value, ...newRecords]
       userTotal.value = total || 0
-      if (userList.value.length < userTotal.value) userCurrent.value++
+      // 只有当返回了数据时才增加页码
+      if (newRecords.length > 0 && userList.value.length < userTotal.value) {
+        userCurrent.value++
+      }
     }
     userLoading.value = false
   }
@@ -179,6 +196,107 @@ export const useAdmin = () => {
       showSuccess(result.message || '删除成功')
     } else {
       showError(result.message || '删除失败')
+    }
+  }
+
+  // ── 用户批量选择 ──
+  const toggleUserSelect = (userId) => {
+    if (selectedUserIds.value.has(userId)) {
+      selectedUserIds.value.delete(userId)
+    } else {
+      selectedUserIds.value.add(userId)
+    }
+  }
+  const toggleAllUsers = () => {
+    if (selectedUserIds.value.size === userList.value.length) {
+      selectedUserIds.value.clear()
+    } else {
+      userList.value.forEach(u => selectedUserIds.value.add(u.user_id))
+    }
+  }
+  const clearUserSelection = () => selectedUserIds.value.clear()
+
+  // ── 用户批量操作 ──
+  const handleBatchDeleteUsers = async () => {
+    if (selectedUserIds.value.size === 0) return
+    const ids = [...selectedUserIds.value]
+    const ok = await showConfirm({ title: '批量删除用户', message: `确定要删除选中的 ${ids.length} 个用户吗？此操作不可撤销。`, yesText: '删除', noText: '取消', type: 'danger' })
+    if (!ok) return
+    const result = await deleteUser(ids)
+    if (result.success) {
+      userList.value = userList.value.filter(u => !selectedUserIds.value.has(u.user_id))
+      userTotal.value = Math.max(0, userTotal.value - ids.length)
+      selectedUserIds.value.clear()
+      showSuccess(result.message || '批量删除成功')
+    } else {
+      showError(result.message || '批量删除失败')
+    }
+  }
+  const handleBatchBanUsers = async () => {
+    if (selectedUserIds.value.size === 0) return
+    const ids = [...selectedUserIds.value]
+    const ok = await showConfirm({ title: '批量封禁用户', message: `确定要封禁选中的 ${ids.length} 个用户吗？`, yesText: '封禁', noText: '取消', type: 'danger' })
+    if (!ok) return
+    const result = await updateUserStatus(ids, 30)
+    if (result.success) {
+      ids.forEach(id => {
+        const user = userList.value.find(u => u.user_id === id)
+        if (user) user.status = 30
+      })
+      selectedUserIds.value.clear()
+      showSuccess(result.message || '批量封禁成功')
+    } else {
+      showError(result.message || '批量封禁失败')
+    }
+  }
+
+  // ── 权限更改 ──
+  const openChangeRoleDialog = (user) => {
+    changeRoleForm.userIds = [user.user_id]
+    changeRoleForm.newRole = user.user_role || 11
+    showChangeRoleDialog.value = true
+  }
+  const handleChangeRole = async () => {
+    if (changeRoleForm.userIds.length === 0) return
+    const roleNames = { 11: '普通用户', 22: '创作者', 55: '审核员', 66: '工单管理员', 77: '系统管理员' }
+    const ok = await showConfirm({
+      title: '更改用户权限',
+      message: `确定要将选中的 ${changeRoleForm.userIds.length} 个用户权限更改为「${roleNames[changeRoleForm.newRole]}」吗？更改后将在24小时内生效。`,
+      yesText: '确定更改',
+      noText: '取消',
+      type: 'info'
+    })
+    if (!ok) return
+    const result = await updateUserRole(changeRoleForm.userIds, changeRoleForm.newRole)
+    if (result.success) {
+      changeRoleForm.userIds.forEach(id => {
+        const user = userList.value.find(u => u.user_id === id)
+        if (user) user.user_role = changeRoleForm.newRole
+      })
+      showChangeRoleDialog.value = false
+      showSuccess(result.message || '权限更改成功，24小时内生效')
+    } else {
+      showError(result.message || '权限更改失败')
+    }
+  }
+
+  // ── 权限缓存刷新 ──
+  const handleRefreshPermissionCache = async () => {
+    const ok = await showConfirm({
+      title: '刷新权限缓存',
+      message: '确定要刷新所有用户的权限缓存吗？这将使所有用户在下次请求时重新加载权限信息。',
+      yesText: '确定刷新',
+      noText: '取消',
+      type: 'info'
+    })
+    if (!ok) return
+    isRefreshingCache.value = true
+    const result = await refreshPermissionCache()
+    isRefreshingCache.value = false
+    if (result.success) {
+      showSuccess(result.message || '权限缓存刷新成功')
+    } else {
+      showError(result.message || '权限缓存刷新失败')
     }
   }
 
@@ -242,9 +360,13 @@ export const useAdmin = () => {
     })
     if (result.success && result.data) {
       const { records, total } = result.data
-      workList.value = reset ? (records || []) : [...workList.value, ...(records || [])]
+      const newRecords = records || []
+      workList.value = reset ? newRecords : [...workList.value, ...newRecords]
       workTotal.value = total || 0
-      if (workList.value.length < workTotal.value) workCurrent.value++
+      // 只有当返回了数据时才增加页码
+      if (newRecords.length > 0 && workList.value.length < workTotal.value) {
+        workCurrent.value++
+      }
     }
     workLoading.value = false
   }
@@ -299,6 +421,57 @@ export const useAdmin = () => {
     }
   }
 
+  // ── 作品批量选择 ──
+  const toggleWorkSelect = (workId) => {
+    if (selectedWorkIds.value.has(workId)) {
+      selectedWorkIds.value.delete(workId)
+    } else {
+      selectedWorkIds.value.add(workId)
+    }
+  }
+  const toggleAllWorks = () => {
+    if (selectedWorkIds.value.size === workList.value.length) {
+      selectedWorkIds.value.clear()
+    } else {
+      workList.value.forEach(w => selectedWorkIds.value.add(w.work_id))
+    }
+  }
+
+  // ── 作品批量操作 ──
+  const handleBatchDeleteWorks = async () => {
+    if (selectedWorkIds.value.size === 0) return
+    const ids = [...selectedWorkIds.value]
+    const ok = await showConfirm({ title: '批量删除作品', message: `确定要删除选中的 ${ids.length} 个作品吗？此操作不可撤销。`, yesText: '删除', noText: '取消', type: 'danger' })
+    if (!ok) return
+    const result = await deleteWork(ids)
+    if (result.success) {
+      workList.value = workList.value.filter(w => !selectedWorkIds.value.has(w.work_id))
+      workTotal.value = Math.max(0, workTotal.value - ids.length)
+      selectedWorkIds.value.clear()
+      showSuccess(result.message || '批量删除成功')
+    } else {
+      showError(result.message || '批量删除失败')
+    }
+  }
+  const handleBatchApproveWorks = async (status) => {
+    if (selectedWorkIds.value.size === 0) return
+    const ids = [...selectedWorkIds.value]
+    const labels = { 10: '通过', 30: '不通过' }
+    const ok = await showConfirm({ title: `批量${labels[status]}`, message: `确定要将选中的 ${ids.length} 个作品标记为「${labels[status]}」吗？`, yesText: labels[status], noText: '取消', type: status === 30 ? 'danger' : 'info' })
+    if (!ok) return
+    const result = await updateWorkApproval(ids, status)
+    if (result.success) {
+      ids.forEach(id => {
+        const work = workList.value.find(w => w.work_id === id)
+        if (work) work.approval_status = status
+      })
+      selectedWorkIds.value.clear()
+      showSuccess(result.message || '批量审核成功')
+    } else {
+      showError(result.message || '批量审核失败')
+    }
+  }
+
   // ───────── 评论管理 ─────────
 
   const loadComments = async ({ reset = false } = {}) => {
@@ -314,9 +487,13 @@ export const useAdmin = () => {
     })
     if (result.success && result.data) {
       const { records, total } = result.data
-      commentList.value = reset ? (records || []) : [...commentList.value, ...(records || [])]
+      const newRecords = records || []
+      commentList.value = reset ? newRecords : [...commentList.value, ...newRecords]
       commentTotal.value = total || 0
-      if (commentList.value.length < commentTotal.value) commentCurrent.value++
+      // 只有当返回了数据时才增加页码
+      if (newRecords.length > 0 && commentList.value.length < commentTotal.value) {
+        commentCurrent.value++
+      }
     }
     commentLoading.value = false
   }
@@ -349,6 +526,57 @@ export const useAdmin = () => {
     }
   }
 
+  // ── 评论批量选择 ──
+  const toggleCommentSelect = (commentId) => {
+    if (selectedCommentIds.value.has(commentId)) {
+      selectedCommentIds.value.delete(commentId)
+    } else {
+      selectedCommentIds.value.add(commentId)
+    }
+  }
+  const toggleAllComments = () => {
+    if (selectedCommentIds.value.size === commentList.value.length) {
+      selectedCommentIds.value.clear()
+    } else {
+      commentList.value.forEach(c => selectedCommentIds.value.add(c.comment_id))
+    }
+  }
+
+  // ── 评论批量操作 ──
+  const handleBatchDeleteComments = async () => {
+    if (selectedCommentIds.value.size === 0) return
+    const ids = [...selectedCommentIds.value]
+    const ok = await showConfirm({ title: '批量删除评论', message: `确定要删除选中的 ${ids.length} 条评论吗？`, yesText: '删除', noText: '取消', type: 'danger' })
+    if (!ok) return
+    const result = await deleteComment(ids)
+    if (result.success) {
+      commentList.value = commentList.value.filter(c => !selectedCommentIds.value.has(c.comment_id))
+      commentTotal.value = Math.max(0, commentTotal.value - ids.length)
+      selectedCommentIds.value.clear()
+      showSuccess(result.message || '批量删除成功')
+    } else {
+      showError(result.message || '批量删除失败')
+    }
+  }
+  const handleBatchApproveComments = async (status) => {
+    if (selectedCommentIds.value.size === 0) return
+    const ids = [...selectedCommentIds.value]
+    const labels = { 10: '通过', 30: '不通过' }
+    const ok = await showConfirm({ title: `批量${labels[status]}`, message: `确定要将选中的 ${ids.length} 条评论标记为「${labels[status]}」吗？`, yesText: labels[status], noText: '取消', type: status === 30 ? 'danger' : 'info' })
+    if (!ok) return
+    const result = await updateCommentApproval(ids, status)
+    if (result.success) {
+      ids.forEach(id => {
+        const comment = commentList.value.find(c => c.comment_id === id)
+        if (comment) comment.approval_status = status
+      })
+      selectedCommentIds.value.clear()
+      showSuccess(result.message || '批量审核成功')
+    } else {
+      showError(result.message || '批量审核失败')
+    }
+  }
+
   // ───────── AI 审核记录 ─────────
 
   const loadAudits = async ({ reset = false } = {}) => {
@@ -365,9 +593,13 @@ export const useAdmin = () => {
     })
     if (result.success && result.data) {
       const { records, total } = result.data
-      auditList.value = reset ? (records || []) : [...auditList.value, ...(records || [])]
+      const newRecords = records || []
+      auditList.value = reset ? newRecords : [...auditList.value, ...newRecords]
       auditTotal.value = total || 0
-      if (auditList.value.length < auditTotal.value) auditCurrent.value++
+      // 只有当返回了数据时才增加页码
+      if (newRecords.length > 0 && auditList.value.length < auditTotal.value) {
+        auditCurrent.value++
+      }
     }
     auditLoading.value = false
   }
@@ -385,9 +617,13 @@ export const useAdmin = () => {
     })
     if (result.success && result.data) {
       const { records, total } = result.data
-      changeList.value = reset ? (records || []) : [...changeList.value, ...(records || [])]
+      const newRecords = records || []
+      changeList.value = reset ? newRecords : [...changeList.value, ...newRecords]
       changeTotal.value = total || 0
-      if (changeList.value.length < changeTotal.value) changeCurrent.value++
+      // 只有当返回了数据时才增加页码
+      if (newRecords.length > 0 && changeList.value.length < changeTotal.value) {
+        changeCurrent.value++
+      }
     }
     changeLoading.value = false
   }
@@ -420,11 +656,133 @@ export const useAdmin = () => {
     })
     if (result.success && result.data) {
       const { records, total } = result.data
-      logList.value = reset ? (records || []) : [...logList.value, ...(records || [])]
+      const newRecords = records || []
+      logList.value = reset ? newRecords : [...logList.value, ...newRecords]
       logTotal.value = total || 0
-      if (logList.value.length < logTotal.value) logCurrent.value++
+      // 只有当返回了数据时才增加页码
+      if (newRecords.length > 0 && logList.value.length < logTotal.value) {
+        logCurrent.value++
+      }
     }
     logLoading.value = false
+  }
+
+  // ───────── 合集管理 ─────────
+
+  const loadSeries = async ({ reset = false } = {}) => {
+    if (seriesLoading.value) return
+    if (reset) { seriesCurrent.value = 1; seriesList.value = [] }
+    seriesLoading.value = true
+    const result = await fetchSeriesList({
+      current: seriesCurrent.value,
+      size: seriesPageSize,
+      keyword: seriesKeyword.value,
+      orderBy: seriesOrderBy.value,
+      status: seriesStatusFilter.value !== '' ? Number(seriesStatusFilter.value) : undefined,
+      userId: seriesUserIdFilter.value !== '' ? Number(seriesUserIdFilter.value) : undefined,
+    })
+    if (result.success && result.data) {
+      const { records, total } = result.data
+      const newRecords = records || []
+      seriesList.value = reset ? newRecords : [...seriesList.value, ...newRecords]
+      seriesTotal.value = total || 0
+      // 只有当返回了数据时才增加页码
+      if (newRecords.length > 0 && seriesList.value.length < seriesTotal.value) {
+        seriesCurrent.value++
+      }
+    }
+    seriesLoading.value = false
+  }
+
+  const handleSearchSeries = () => loadSeries({ reset: true })
+
+  const handleDeleteSeries = async (series) => {
+    const ok = await showConfirm({
+      title: '删除合集',
+      message: `确定要删除合集「${series.series_title || '未命名'}」吗？此操作不可撤销。`,
+      yesText: '删除',
+      noText: '取消',
+      type: 'danger'
+    })
+    if (!ok) return
+    const result = await deleteSeries(series.series_id)
+    if (result.success) {
+      seriesList.value = seriesList.value.filter(s => s.series_id !== series.series_id)
+      seriesTotal.value = Math.max(0, seriesTotal.value - 1)
+      showSuccess(result.message || '删除成功')
+    } else {
+      showError(result.message || '删除失败')
+    }
+  }
+
+  const handleApproveSeries = async (series, approvalStatus) => {
+    const labels = { 10: '通过', 30: '不通过' }
+    const ok = await showConfirm({
+      title: '合集审核',
+      message: `确定将合集「${series.series_title || '未命名'}」标记为「${labels[approvalStatus]}」吗？`,
+      yesText: labels[approvalStatus],
+      noText: '取消',
+      type: approvalStatus === 30 ? 'danger' : 'info'
+    })
+    if (!ok) return
+    const result = await updateSeriesApproval(series.series_id, approvalStatus)
+    if (result.success) {
+      series.approval_status = approvalStatus
+      showSuccess('审核操作成功')
+    } else {
+      showError(result.message || '审核操作失败')
+    }
+  }
+
+  // ── 合集批量选择 ──
+  const toggleSeriesSelect = (seriesId) => {
+    if (selectedSeriesIds.value.has(seriesId)) {
+      selectedSeriesIds.value.delete(seriesId)
+    } else {
+      selectedSeriesIds.value.add(seriesId)
+    }
+  }
+  const toggleAllSeries = () => {
+    if (selectedSeriesIds.value.size === seriesList.value.length) {
+      selectedSeriesIds.value.clear()
+    } else {
+      seriesList.value.forEach(s => selectedSeriesIds.value.add(s.series_id))
+    }
+  }
+
+  // ── 合集批量操作 ──
+  const handleBatchDeleteSeries = async () => {
+    if (selectedSeriesIds.value.size === 0) return
+    const ids = [...selectedSeriesIds.value]
+    const ok = await showConfirm({ title: '批量删除合集', message: `确定要删除选中的 ${ids.length} 个合集吗？`, yesText: '删除', noText: '取消', type: 'danger' })
+    if (!ok) return
+    const result = await deleteSeries(ids)
+    if (result.success) {
+      seriesList.value = seriesList.value.filter(s => !selectedSeriesIds.value.has(s.series_id))
+      seriesTotal.value = Math.max(0, seriesTotal.value - ids.length)
+      selectedSeriesIds.value.clear()
+      showSuccess(result.message || '批量删除成功')
+    } else {
+      showError(result.message || '批量删除失败')
+    }
+  }
+  const handleBatchApproveSeries = async (status) => {
+    if (selectedSeriesIds.value.size === 0) return
+    const ids = [...selectedSeriesIds.value]
+    const labels = { 10: '通过', 30: '不通过' }
+    const ok = await showConfirm({ title: `批量${labels[status]}`, message: `确定要将选中的 ${ids.length} 个合集标记为「${labels[status]}」吗？`, yesText: labels[status], noText: '取消', type: status === 30 ? 'danger' : 'info' })
+    if (!ok) return
+    const result = await updateSeriesApproval(ids, status)
+    if (result.success) {
+      ids.forEach(id => {
+        const series = seriesList.value.find(s => s.series_id === id)
+        if (series) series.approval_status = status
+      })
+      selectedSeriesIds.value.clear()
+      showSuccess(result.message || '批量审核成功')
+    } else {
+      showError(result.message || '批量审核失败')
+    }
   }
 
   // ───────── Tab 切换 ─────────
@@ -438,6 +796,7 @@ export const useAdmin = () => {
       audits: () => auditList.value.length === 0 && loadAudits({ reset: true }),
       changes: () => changeList.value.length === 0 && loadChanges({ reset: true }),
       logs: () => logList.value.length === 0 && loadLogs({ reset: true }),
+      series: () => seriesList.value.length === 0 && loadSeries({ reset: true }),
     }
     loaders[tab]?.()
   }
@@ -455,18 +814,30 @@ export const useAdmin = () => {
   return {
     activeTab, adminRole, isSuperAdmin,
     userList, userLoading, userKeyword, userTotal, userRoleFilter, userStatusFilter, userOrderBy,
+    selectedUserIds, toggleUserSelect, toggleAllUsers, clearUserSelection,
+    handleBatchDeleteUsers, handleBatchBanUsers,
     workList, workLoading, workKeyword, workTotal, workOrderBy, workApprovalFilter,
+    selectedWorkIds, toggleWorkSelect, toggleAllWorks,
+    handleBatchDeleteWorks, handleBatchApproveWorks,
     commentList, commentLoading, commentKeyword, commentTotal, commentOrderBy, commentApprovalFilter,
+    selectedCommentIds, toggleCommentSelect, toggleAllComments,
+    handleBatchDeleteComments, handleBatchApproveComments,
     auditList, auditLoading, auditTotal, auditKeyword, auditContentTypeFilter, auditApprovalFilter, auditOrderBy,
     changeList, changeLoading, changeTotal, changeTypeFilter,
     logList, logLoading, logTotal, logKeyword, logOrderBy,
+    seriesList, seriesLoading, seriesKeyword, seriesTotal, seriesOrderBy, seriesStatusFilter, seriesUserIdFilter,
+    selectedSeriesIds, toggleSeriesSelect, toggleAllSeries,
+    handleBatchDeleteSeries, handleBatchApproveSeries,
     hasMore, formatTime,
     showCreateUserDialog, createUserForm, createUserErrors, openCreateUserDialog, handleCreateUser,
     showEditTitleDialog, editTitleForm, openEditTitleDialog, handleEditWorkTitle,
+    showChangeRoleDialog, changeRoleForm, openChangeRoleDialog, handleChangeRole,
+    isRefreshingCache, handleRefreshPermissionCache,
     loadUsers, handleSearchUsers, handleBanUser, handleFreezeUser, handleDeleteUser, handleResetPwd,
     loadWorks, handleSearchWorks, handleDeleteWork, handleApproveWork,
     loadComments, handleSearchComments, handleDeleteComment, handleApproveComment,
     loadAudits, loadChanges, handleApproveChange, loadLogs,
+    loadSeries, handleSearchSeries, handleDeleteSeries, handleApproveSeries,
     switchTab, handleLogout,
   }
 }

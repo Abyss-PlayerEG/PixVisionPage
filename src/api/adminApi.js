@@ -24,7 +24,7 @@ export const fetchDashboard = async () => {
     const result = await response.json()
     console.log('仪表盘响应:', JSON.stringify(result, null, 2))
 
-    const statusCode = result.code || result.recode
+    const statusCode = result.recode
     if (statusCode === 200 && result.data) {
       console.log('✅ 仪表盘数据获取成功')
       return { success: true, data: result.data }
@@ -45,6 +45,7 @@ export const fetchDashboard = async () => {
  * @param {string} [params.nickname] - 昵称关键字模糊查询
  * @param {number} [params.user_role] - 用户角色筛选
  * @param {number} [params.status] - 用户状态筛选
+ * @param {boolean} [params.is_delete] - 是否已删除
  * @param {string} [params.orderBy] - 排序：newest/oldest
  * @returns {Promise<Object>} { success, data: { records, total, current, size } }
  */
@@ -53,16 +54,17 @@ export const fetchUserList = async (params = {}) => {
     const token = localStorage.getItem('token')
     if (!token) return { success: false, message: '未登录' }
 
-    const { page = 1, size = 20, nickname = '', user_role, status, orderBy = 'newest' } = params
+    const { page = 1, size = 20, nickname = '', user_role, status, is_delete = false, orderBy = 'newest' } = params
     const formData = new URLSearchParams()
     formData.append('page', page)
     formData.append('size', size)
     if (nickname) formData.append('nickname', nickname)
     if (user_role) formData.append('user_role', user_role)
     if (status !== undefined && status !== '') formData.append('status', status)
+    if (is_delete !== undefined) formData.append('is_delete', is_delete)
     formData.append('orderBy', orderBy)
 
-    console.log('📋 获取用户列表:', ADMIN_API.USER_LIST, '参数:', { page, size, nickname: nickname || '(无)', user_role, status, orderBy })
+    console.log('📋 获取用户列表:', ADMIN_API.USER_LIST, '参数:', { page, size, nickname: nickname || '(无)', user_role, status, is_delete, orderBy })
     const response = await fetch(ADMIN_API.USER_LIST, {
       method: 'POST',
       headers: {
@@ -74,7 +76,7 @@ export const fetchUserList = async (params = {}) => {
     const result = await response.json()
     console.log('用户列表响应:', JSON.stringify(result, null, 2))
 
-    const statusCode = result.code || result.recode
+    const statusCode = result.recode
     if (statusCode === 200 && result.data) {
       console.log('✅ 用户列表获取成功')
       return { success: true, data: result.data }
@@ -89,19 +91,20 @@ export const fetchUserList = async (params = {}) => {
 
 /**
  * 更新用户状态（封禁/解封）
- * @param {number} userId - 用户 ID
+ * @param {number|number[]} userIds - 用户 ID 或用户 ID 数组
  * @param {number} newStatus - 新状态码：10=正常, 20=冻结, 30=封禁
  * @returns {Promise<Object>} { success, message }
  */
-export const updateUserStatus = async (userId, newStatus) => {
+export const updateUserStatus = async (userIds, newStatus) => {
   try {
     const token = localStorage.getItem('token')
     if (!token) return { success: false, message: '未登录' }
 
+    const ids = Array.isArray(userIds) ? userIds : [userIds]
     const action = newStatus === 30 ? '封禁' : newStatus === 20 ? '冻结' : '解封'
-    console.log(`🔒 ${action}用户:`, userId)
+    console.log(`🔒 ${action}用户:`, ids)
     const formData = new URLSearchParams()
-    formData.append('userIds', userId)
+    ids.forEach(id => formData.append('userIds', id))
     formData.append('newStatus', String(newStatus))
 
     const response = await fetch(ADMIN_API.USER_UPDATE, {
@@ -115,8 +118,7 @@ export const updateUserStatus = async (userId, newStatus) => {
     const result = await response.json()
     console.log('用户状态更新响应:', JSON.stringify(result, null, 2))
 
-    const statusCode = result.code || result.recode
-    if (statusCode === 200) {
+    if (result.recode === 200) {
       console.log(`✅ 用户${action}成功`)
       return { success: true, message: result.message || '操作成功', data: result.data }
     }
@@ -130,17 +132,18 @@ export const updateUserStatus = async (userId, newStatus) => {
 
 /**
  * 删除用户（批量，兼容单个）
- * @param {number} userId - 用户 ID
+ * @param {number|number[]} userIds - 用户 ID 或用户 ID 数组
  * @returns {Promise<Object>} { success, message }
  */
-export const deleteUser = async (userId) => {
+export const deleteUser = async (userIds) => {
   try {
     const token = localStorage.getItem('token')
     if (!token) return { success: false, message: '未登录' }
 
-    console.log('🗑️ 删除用户:', userId)
+    const ids = Array.isArray(userIds) ? userIds : [userIds]
+    console.log('🗑️ 删除用户:', ids)
     const formData = new URLSearchParams()
-    formData.append('userIds', userId)
+    ids.forEach(id => formData.append('userIds', id))
 
     const response = await fetch(ADMIN_API.USER_DELETE, {
       method: 'POST',
@@ -153,10 +156,9 @@ export const deleteUser = async (userId) => {
     const result = await response.json()
     console.log('用户删除响应:', JSON.stringify(result, null, 2))
 
-    const statusCode = result.code || result.recode
-    if (statusCode === 200) {
+    if (result.recode === 200) {
       console.log('✅ 用户删除成功')
-      return { success: true, message: result.message || '删除成功' }
+      return { success: true, message: result.message || '删除成功', data: result.data }
     }
     console.error('❌ 用户删除失败:', result.message)
     return { success: false, message: result.message || '删除失败' }
@@ -199,7 +201,7 @@ export const fetchWorkList = async (params = {}) => {
     const result = await response.json()
     console.log('作品列表响应:', JSON.stringify(result, null, 2))
 
-    const statusCode = result.code || result.recode
+    const statusCode = result.recode
     if (statusCode === 200 && result.data) {
       console.log('✅ 作品列表获取成功')
       return { success: true, data: result.data }
@@ -214,17 +216,18 @@ export const fetchWorkList = async (params = {}) => {
 
 /**
  * 删除作品（批量，兼容单个）
- * @param {number} workId - 作品 ID
+ * @param {number|number[]} workIds - 作品 ID 或作品 ID 数组
  * @returns {Promise<Object>} { success, message }
  */
-export const deleteWork = async (workId) => {
+export const deleteWork = async (workIds) => {
   try {
     const token = localStorage.getItem('token')
     if (!token) return { success: false, message: '未登录' }
 
-    console.log('🗑️ 删除作品:', workId)
+    const ids = Array.isArray(workIds) ? workIds : [workIds]
+    console.log('🗑️ 删除作品:', ids)
     const formData = new URLSearchParams()
-    formData.append('workIds', workId)
+    ids.forEach(id => formData.append('workIds', id))
 
     const response = await fetch(ADMIN_API.WORK_DELETE, {
       method: 'POST',
@@ -237,10 +240,9 @@ export const deleteWork = async (workId) => {
     const result = await response.json()
     console.log('作品删除响应:', JSON.stringify(result, null, 2))
 
-    const statusCode = result.code || result.recode
-    if (statusCode === 200) {
+    if (result.recode === 200) {
       console.log('✅ 作品删除成功')
-      return { success: true, message: result.message || '删除成功' }
+      return { success: true, message: result.message || '删除成功', data: result.data }
     }
     console.error('❌ 作品删除失败:', result.message)
     return { success: false, message: result.message || '删除失败' }
@@ -287,7 +289,7 @@ export const fetchCommentList = async (params = {}) => {
     const result = await response.json()
     console.log('评论列表响应:', JSON.stringify(result, null, 2))
 
-    const statusCode = result.code || result.recode
+    const statusCode = result.recode
     if (statusCode === 200 && result.data) {
       console.log('✅ 评论列表获取成功')
       return { success: true, data: result.data }
@@ -302,17 +304,18 @@ export const fetchCommentList = async (params = {}) => {
 
 /**
  * 删除评论（批量，兼容单个）
- * @param {number} commentId - 评论 ID
+ * @param {number|number[]} commentIds - 评论 ID 或评论 ID 数组
  * @returns {Promise<Object>} { success, message }
  */
-export const deleteComment = async (commentId) => {
+export const deleteComment = async (commentIds) => {
   try {
     const token = localStorage.getItem('token')
     if (!token) return { success: false, message: '未登录' }
 
-    console.log('🗑️ 删除评论:', commentId)
+    const ids = Array.isArray(commentIds) ? commentIds : [commentIds]
+    console.log('🗑️ 删除评论:', ids)
     const formData = new URLSearchParams()
-    formData.append('commentIds', commentId)
+    ids.forEach(id => formData.append('commentIds', id))
 
     const response = await fetch(ADMIN_API.COMMENT_DELETE, {
       method: 'POST',
@@ -325,10 +328,9 @@ export const deleteComment = async (commentId) => {
     const result = await response.json()
     console.log('评论删除响应:', JSON.stringify(result, null, 2))
 
-    const statusCode = result.code || result.recode
-    if (statusCode === 200) {
+    if (result.recode === 200) {
       console.log('✅ 评论删除成功')
-      return { success: true, message: result.message || '删除成功' }
+      return { success: true, message: result.message || '删除成功', data: result.data }
     }
     console.error('❌ 评论删除失败:', result.message)
     return { success: false, message: result.message || '删除失败' }
@@ -369,7 +371,7 @@ export const createUser = async (params = {}) => {
       body: formData,
     })
     const result = await response.json()
-    const statusCode = result.code || result.recode
+    const statusCode = result.recode
     if (statusCode === 200) {
       console.log('✅ 用户创建成功')
       return { success: true, message: result.message || '创建成功', data: result.data }
@@ -403,7 +405,7 @@ export const resetUserPassword = async (userId) => {
       body: formData,
     })
     const result = await response.json()
-    const statusCode = result.code || result.recode
+    const statusCode = result.recode
     if (statusCode === 200) {
       console.log('✅ 密码重置成功')
       return { success: true, message: result.message || '密码重置成功，新密码已发送至邮箱' }
@@ -441,7 +443,7 @@ export const updateWorkApproval = async (workId, approvalStatus) => {
       body: formData,
     })
     const result = await response.json()
-    const statusCode = result.code || result.recode
+    const statusCode = result.recode
     if (statusCode === 200) {
       console.log('✅ 作品审核更新成功')
       return { success: true, message: result.message || '操作成功' }
@@ -476,7 +478,7 @@ export const updateWorkTitle = async (workId, workTitle) => {
       body: formData,
     })
     const result = await response.json()
-    const statusCode = result.code || result.recode
+    const statusCode = result.recode
     if (statusCode === 200) {
       console.log('✅ 标题更新成功')
       return { success: true, message: result.message || '标题更新成功' }
@@ -514,7 +516,7 @@ export const updateCommentApproval = async (commentId, approvalStatus) => {
       body: formData,
     })
     const result = await response.json()
-    const statusCode = result.code || result.recode
+    const statusCode = result.recode
     if (statusCode === 200) {
       console.log('✅ 评论审核更新成功')
       return { success: true, message: result.message || '操作成功' }
@@ -556,7 +558,7 @@ export const fetchAuditRecords = async (params = {}) => {
       headers: { 'Authorization': `Bearer ${token}` },
     })
     const result = await response.json()
-    const statusCode = result.code || result.recode
+    const statusCode = result.recode
     if (statusCode === 200 && result.data) {
       return { success: true, data: result.data }
     }
@@ -591,7 +593,7 @@ export const fetchPendingChanges = async (params = {}) => {
       headers: { 'Authorization': `Bearer ${token}` },
     })
     const result = await response.json()
-    const statusCode = result.code || result.recode
+    const statusCode = result.recode
     if (statusCode === 200 && result.data) {
       return { success: true, data: result.data }
     }
@@ -620,7 +622,7 @@ export const reviewDataChanges = async (lockIds, approved) => {
       body: formData,
     })
     const result = await response.json()
-    const statusCode = result.code || result.recode
+    const statusCode = result.recode
     if (statusCode === 200) {
       return { success: true, message: result.message || `${action}成功` }
     }
@@ -657,11 +659,214 @@ export const fetchOperationLogs = async (params = {}) => {
       headers: { 'Authorization': `Bearer ${token}` },
     })
     const result = await response.json()
-    const statusCode = result.code || result.recode
+    const statusCode = result.recode
     if (statusCode === 200 && result.data) {
       return { success: true, data: result.data }
     }
     return { success: false, message: result.message || '获取操作日志失败' }
+  } catch (error) {
+    console.error('网络请求失败:', error)
+    return { success: false, message: '网络错误，请稍后重试' }
+  }
+}
+
+// ─── 合集管理 ───
+
+/**
+ * 获取合集列表（分页）
+ * @param {Object} params - 查询参数
+ * @param {number} [params.current=1] - 当前页
+ * @param {number} [params.size=20] - 每页数量
+ * @param {string} [params.keyword] - 模糊搜索合集标题
+ * @param {string} [params.orderBy] - 排序：newest/oldest
+ * @param {number} [params.status] - 审核状态筛选
+ * @param {number} [params.userId] - 用户ID筛选
+ * @returns {Promise<Object>} { success, data: { records, total, current, size } }
+ */
+export const fetchSeriesList = async (params = {}) => {
+  try {
+    const token = localStorage.getItem('token')
+    if (!token) return { success: false, message: '未登录' }
+
+    const { current = 1, size = 20, keyword = '', orderBy = 'newest', status, userId } = params
+    const queryParts = []
+    if (keyword) queryParts.push(`keyword=${encodeURIComponent(keyword)}`)
+    queryParts.push(`orderBy=${orderBy}`)
+    if (status !== undefined && status !== '') queryParts.push(`status=${status}`)
+    if (userId !== undefined && userId !== '') queryParts.push(`userId=${userId}`)
+    let url = ADMIN_API.SERIES_LIST(current, size)
+    if (queryParts.length > 0) url += '?' + queryParts.join('&')
+
+    console.log('📋 获取合集列表:', url, '参数:', { current, size, keyword: keyword || '(无)', orderBy, status, userId })
+    const response = await fetch(url, {
+      method: 'GET',
+      headers: { 'Authorization': `Bearer ${token}` },
+    })
+    const result = await response.json()
+    console.log('合集列表响应:', JSON.stringify(result, null, 2))
+
+    if (result.recode === 200 && result.data) {
+      console.log('✅ 合集列表获取成功')
+      return { success: true, data: result.data }
+    }
+    console.error('❌ 合集列表获取失败:', result.message)
+    return { success: false, message: result.message || '获取合集列表失败' }
+  } catch (error) {
+    console.error('网络请求失败:', error)
+    return { success: false, message: '网络错误，请稍后重试' }
+  }
+}
+
+/**
+ * 删除合集（批量，兼容单个）
+ * @param {number|number[]} seriesIds - 合集 ID 或合集 ID 数组
+ * @param {boolean} [deleteWorks=false] - 是否删除合集内的作品
+ * @returns {Promise<Object>} { success, message }
+ */
+export const deleteSeries = async (seriesIds, deleteWorks = false) => {
+  try {
+    const token = localStorage.getItem('token')
+    if (!token) return { success: false, message: '未登录' }
+
+    const ids = Array.isArray(seriesIds) ? seriesIds : [seriesIds]
+    console.log('🗑️ 删除合集:', ids, '删除作品:', deleteWorks)
+    const formData = new URLSearchParams()
+    ids.forEach(id => formData.append('seriesIds', id))
+    formData.append('deleteWorks', String(deleteWorks))
+
+    const response = await fetch(ADMIN_API.SERIES_DELETE, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+      body: formData,
+    })
+    const result = await response.json()
+    console.log('合集删除响应:', JSON.stringify(result, null, 2))
+
+    if (result.recode === 200) {
+      console.log('✅ 合集删除成功')
+      return { success: true, message: result.message || '删除成功', data: result.data }
+    }
+    console.error('❌ 合集删除失败:', result.message)
+    return { success: false, message: result.message || '删除失败' }
+  } catch (error) {
+    console.error('网络请求失败:', error)
+    return { success: false, message: '网络错误，请稍后重试' }
+  }
+}
+
+/**
+ * 更新合集审核状态
+ * @param {number|number[]} seriesIds - 合集 ID 或合集 ID 数组
+ * @param {number} approvalStatus - 审核状态：10=通过, 20=待审, 30=不通过
+ * @returns {Promise<Object>} { success, message }
+ */
+export const updateSeriesApproval = async (seriesIds, approvalStatus) => {
+  try {
+    const token = localStorage.getItem('token')
+    if (!token) return { success: false, message: '未登录' }
+
+    const ids = Array.isArray(seriesIds) ? seriesIds : [seriesIds]
+    const labels = { 10: '通过', 20: '待审', 30: '不通过' }
+    console.log(`📝 合集审核 ${labels[approvalStatus]}:`, ids)
+    const formData = new URLSearchParams()
+    ids.forEach(id => formData.append('seriesIds', id))
+    formData.append('approvalStatus', approvalStatus)
+
+    const response = await fetch(ADMIN_API.SERIES_APPROVAL, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+      body: formData,
+    })
+    const result = await response.json()
+    console.log('合集审核响应:', JSON.stringify(result, null, 2))
+
+    if (result.recode === 200) {
+      console.log('✅ 合集审核更新成功')
+      return { success: true, message: result.message || '操作成功', data: result.data }
+    }
+    console.error('❌ 合集审核更新失败:', result.message)
+    return { success: false, message: result.message || '操作失败' }
+  } catch (error) {
+    console.error('网络请求失败:', error)
+    return { success: false, message: '网络错误，请稍后重试' }
+  }
+}
+
+// ─── 权限管理 ───
+
+/**
+ * 批量更新用户角色
+ * @param {number|number[]} userIds - 用户 ID 或用户 ID 数组
+ * @param {number} newRole - 新角色代码：11=普通用户, 22=创作者, 55=审核员, 66=工单管理员, 77=系统管理员
+ * @returns {Promise<Object>} { success, message }
+ */
+export const updateUserRole = async (userIds, newRole) => {
+  try {
+    const token = localStorage.getItem('token')
+    if (!token) return { success: false, message: '未登录' }
+
+    const ids = Array.isArray(userIds) ? userIds : [userIds]
+    const roleNames = { 11: '普通用户', 22: '创作者', 55: '审核员', 66: '工单管理员', 77: '系统管理员' }
+    console.log(`🔑 更改用户角色为 ${roleNames[newRole]}:`, ids)
+    const formData = new URLSearchParams()
+    ids.forEach(id => formData.append('userIds', id))
+    formData.append('newRole', String(newRole))
+
+    const response = await fetch(ADMIN_API.USER_UPDATE, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+      body: formData,
+    })
+    const result = await response.json()
+    console.log('用户角色更新响应:', JSON.stringify(result, null, 2))
+
+    if (result.recode === 200) {
+      console.log('✅ 用户角色更新成功')
+      return { success: true, message: result.message || '角色更新成功，24小时内生效', data: result.data }
+    }
+    console.error('❌ 用户角色更新失败:', result.message)
+    return { success: false, message: result.message || '操作失败' }
+  } catch (error) {
+    console.error('网络请求失败:', error)
+    return { success: false, message: '网络错误，请稍后重试' }
+  }
+}
+
+/**
+ * 刷新所有用户权限缓存
+ * @returns {Promise<Object>} { success, message }
+ */
+export const refreshPermissionCache = async () => {
+  try {
+    const token = localStorage.getItem('token')
+    if (!token) return { success: false, message: '未登录' }
+
+    console.log('🔄 刷新权限缓存...')
+    const response = await fetch(ADMIN_API.USER_REFRESH_CACHE, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+    })
+    const result = await response.json()
+    console.log('权限缓存刷新响应:', JSON.stringify(result, null, 2))
+
+    if (result.recode === 200) {
+      console.log('✅ 权限缓存刷新成功')
+      return { success: true, message: result.message || '权限缓存刷新成功', data: result.data }
+    }
+    console.error('❌ 权限缓存刷新失败:', result.message)
+    return { success: false, message: result.message || '操作失败' }
   } catch (error) {
     console.error('网络请求失败:', error)
     return { success: false, message: '网络错误，请稍后重试' }

@@ -60,14 +60,18 @@
         <svg class="ad-spinner" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10" stroke-dasharray="32" stroke-dashoffset="32" stroke-linecap="round"><animate attributeName="stroke-dashoffset" values="32;0" dur="0.8s" repeatCount="indefinite"/></circle></svg>
         加载中...
       </div>
-      <button v-else-if="hasMore" class="ad-load-more-btn" @click="$emit('loadMore')">加载更多</button>
+      <div v-else-if="hasMore" ref="sentinelRef" class="ad-sentinel"></div>
       <span v-else-if="list.length > 0" class="ad-empty" style="padding:12px 0;">— 已加载全部 —</span>
     </div>
   </div>
 </template>
 
 <script setup>
-defineProps({
+import { computed } from 'vue'
+import { changeTypeLabel, changeTypeClass, roleMap } from '@/utils/adminHelpers'
+import { useInfiniteScroll } from '@/composables/useInfiniteScroll'
+
+const props = defineProps({
   list: { type: Array, required: true },
   loading: { type: Boolean, required: true },
   total: { type: Number, default: 0 },
@@ -77,15 +81,12 @@ defineProps({
 })
 defineEmits(['update:typeFilter', 'search', 'loadMore', 'approveChange'])
 
-const changeTypeMap = { 100: '昵称修改', 200: '权限申请', 300: '头像修改' }
-const changeTypeLabel = (t) => changeTypeMap[t] || `类型${t}`
-const changeTypeClass = (t) => {
-  if (t === 200) return 'ad-badge--pending'
-  if (t === 100 || t === 300) return 'ad-badge--role-staff'
-  return ''
-}
+const { sentinelRef } = useInfiniteScroll(
+  () => emit('loadMore'),
+  computed(() => props.hasMore),
+  computed(() => props.loading)
+)
 
-const roleMap = { 11: '普通用户', 22: '创作者', 55: '审核员', 66: '工单管理员', 77: '系统管理员' }
 const changeContent = (item) => {
   if (item.type === 100) return `「${item.nickname || '—'}」`
   if (item.type === 200) return `申请 ${roleMap[item.user_role] || '角色'}（代码${item.user_role}）`

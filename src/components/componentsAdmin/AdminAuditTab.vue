@@ -50,7 +50,7 @@
           <tr>
             <th>记录ID</th>
             <th>内容类型</th>
-            <th>内容ID</th>
+            <th>内容</th>
             <th>审核结果</th>
             <th>审核依据</th>
             <th>命中敏感词</th>
@@ -61,7 +61,7 @@
           <tr v-for="item in list" :key="item.record_id">
             <td class="ad-cell-id">#{{ item.record_id }}</td>
             <td>{{ contentTypeLabel(item.content_type) }}</td>
-            <td>{{ item.content_id }}</td>
+            <td class="ad-cell-content">{{ getDisplayContent(item) }}</td>
             <td>
               <span class="ad-badge" :class="approvalBadgeClass(item.approval_status)">
                 {{ approvalLabel(item.approval_status) }}
@@ -95,16 +95,18 @@
         <svg class="ad-spinner" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10" stroke-dasharray="32" stroke-dashoffset="32" stroke-linecap="round"><animate attributeName="stroke-dashoffset" values="32;0" dur="0.8s" repeatCount="indefinite"/></circle></svg>
         加载中...
       </div>
-      <button v-else-if="hasMore" class="ad-load-more-btn" @click="$emit('loadMore')">加载更多</button>
+      <div v-else-if="hasMore" ref="sentinelRef" class="ad-sentinel"></div>
       <span v-else-if="list.length > 0" class="ad-empty" style="padding:12px 0;">— 已加载全部 —</span>
     </div>
   </div>
 </template>
 
 <script setup>
-import { reactive } from 'vue'
+import { reactive, computed } from 'vue'
+import { approvalLabel, approvalBadgeClass, contentTypeLabel } from '@/utils/adminHelpers'
+import { useInfiniteScroll } from '@/composables/useInfiniteScroll'
 
-defineProps({
+const props = defineProps({
   list: { type: Array, required: true },
   loading: { type: Boolean, required: true },
   total: { type: Number, default: 0 },
@@ -116,6 +118,12 @@ defineProps({
   orderBy: { type: String, default: 'newest' },
 })
 defineEmits(['update:keyword', 'update:contentTypeFilter', 'update:approvalFilter', 'update:orderBy', 'search', 'loadMore'])
+
+const { sentinelRef } = useInfiniteScroll(
+  () => emit('loadMore'),
+  computed(() => props.hasMore),
+  computed(() => props.loading)
+)
 
 // 敏感词展开/折叠
 const expandedRows = reactive(new Set())
@@ -138,15 +146,14 @@ const parseInsultWords = (raw) => {
   }
 }
 
-const contentTypeMap = { 100: '作品', 200: '评论', 300: '合集', 400: '昵称' }
-const contentTypeLabel = (t) => contentTypeMap[t] || `类型${t}`
-
-const approvalMap = { 10: '正常', 20: '待审核', 30: '违规' }
-const approvalLabel = (s) => approvalMap[s] || '未知'
-const approvalBadgeClass = (s) => {
-  if (s === 10) return 'ad-badge--active'
-  if (s === 20) return 'ad-badge--pending'
-  if (s === 30) return 'ad-badge--banned'
-  return ''
+// 解析 original_content 显示完整内容
+const getDisplayContent = (item) => {
+  if (!item.original_content) return '—'
+  // 合集类型格式为「标题|描述」
+  if (item.content_type === 300) {
+    const parts = item.original_content.split('|')
+    return parts[1] ? `${parts[0]}（${parts[1]}）` : parts[0]
+  }
+  return item.original_content
 }
 </script>

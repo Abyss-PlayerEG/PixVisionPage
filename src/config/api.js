@@ -5,7 +5,6 @@
 
 // 后端 API 基础 URL
 export const API_BASE_URL = 'https://pix-version-api.playereg.top/';
-// export const API_BASE_URL = 'http://127.0.0.1:9090/';
 
 // 头像获取接口
 export const AVATAR_API = `${API_BASE_URL}api/image/avatar/get`;
@@ -79,6 +78,12 @@ export const COMMENT_API = {
 // 作品图片获取接口
 export const WORK_IMAGE_API = `${API_BASE_URL}/api/image/work/get`;
 
+// 管理员查看作品图片接口（可查看未通过审核的图片）
+export const WORK_IMAGE_ADMIN_API = `${API_BASE_URL}api/image/work/admin-view`;
+
+// 管理员查看头像接口（可查看未通过审核的头像）
+export const AVATAR_ADMIN_API = `${API_BASE_URL}api/image/avatar/admin-view`;
+
 // 点赞相关接口
 export const LIKE_API = {
   TOGGLE: `${API_BASE_URL}/api/like/toggle`,   // POST，路径后拼 /workId
@@ -129,12 +134,13 @@ export const HISTORY_API = {
 export const ADMIN_API = {
   DASHBOARD: `${API_BASE_URL}api/admin/dashboard`,
   // 用户管理
-  USER_LIST: `${API_BASE_URL}api/admin/user/page-select`,                          // POST, body: page/size/nickname
+  USER_LIST: `${API_BASE_URL}api/admin/user/page-select`,                          // GET, ?page/size/nickname
   USER_UPDATE: `${API_BASE_URL}api/admin/user/update/user-role-status`,             // POST, body: userIds[]/newRole/newStatus
   USER_DELETE: `${API_BASE_URL}api/admin/user/delete`,                              // POST, body: userIds[]
   USER_CREATE: `${API_BASE_URL}api/admin/user/create`,                              // POST, body: username/password/confirmPassword/nickname/email
   USER_RESET_PWD: `${API_BASE_URL}api/admin/user/update/password`,                  // POST, body: userIds[]
   USER_INIT_AVATAR: `${API_BASE_URL}api/admin/user/init-avatar-nickname`,           // POST, body: userIds[]
+  USER_REFRESH_CACHE: `${API_BASE_URL}api/admin/user/refresh-permission-cache`,    // POST, 刷新权限缓存
   // 作品管理
   WORK_LIST: (current, size) => `${API_BASE_URL}api/admin/works/page/${current}/${size}`, // GET, ?keyword=
   WORK_DELETE: `${API_BASE_URL}api/admin/works/delete`,                             // POST, body: workIds[]
@@ -144,6 +150,11 @@ export const ADMIN_API = {
   COMMENT_LIST: (current, size) => `${API_BASE_URL}api/admin/comments/page/${current}/${size}`, // GET, ?keyword=
   COMMENT_DELETE: `${API_BASE_URL}api/admin/comments/delete`,                       // POST, body: commentIds[]
   COMMENT_APPROVAL: `${API_BASE_URL}api/admin/comments/update/approval-status`,     // POST, body: commentIds[]/approvalStatus
+  // 合集管理
+  SERIES_LIST: (current, size) => `${API_BASE_URL}api/admin/series/page/${current}/${size}`, // GET, ?keyword=
+  SERIES_DELETE: `${API_BASE_URL}api/admin/series/delete`,                          // POST, body: seriesIds[]/deleteWorks
+  SERIES_APPROVAL: `${API_BASE_URL}api/admin/series/update/approval-status`,        // POST, body: seriesIds[]/approvalStatus
+  SERIES_UPDATE: `${API_BASE_URL}api/admin/series/update/series-info`,              // POST, body: seriesIds[]/seriesName/seriesDescription
   // 审核记录
   AUDIT_RECORDS: (current, size) => `${API_BASE_URL}api/admin/audit-records/page/${current}/${size}`, // GET
   // 用户数据变更审核
@@ -159,4 +170,20 @@ export const getWorkImageUrl = (filePath) => {
     return '';
   }
   return `${WORK_IMAGE_API}?filePath=${encodeURIComponent(filePath)}`;
+};
+
+// 管理员获取作品图片完整 URL（可查看未通过审核的图片）
+export const getAdminWorkImageUrl = (filePath) => {
+  if (!filePath) {
+    return '';
+  }
+  return `${WORK_IMAGE_ADMIN_API}?filePath=${encodeURIComponent(filePath)}`;
+};
+
+// 管理员获取头像完整 URL（可查看未通过审核的头像）
+export const getAdminAvatarUrl = (filePath) => {
+  if (!filePath) {
+    return `${AVATAR_ADMIN_API}?filePath=default/1.png`;
+  }
+  return `${AVATAR_ADMIN_API}?filePath=${encodeURIComponent(filePath)}`;
 };

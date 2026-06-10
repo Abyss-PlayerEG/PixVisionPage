@@ -18,6 +18,13 @@ export default defineConfig({
   server: {
     host: '0.0.0.0', // 允许外部 IP 访问
     port: 8080,       // 指定端口
+    proxy: {
+      '/api': {
+        target: 'https://pix-version-api.playereg.top',
+        changeOrigin: true,
+        secure: false,
+      }
+    }
   },
   // ... 其他配置
   preview: {

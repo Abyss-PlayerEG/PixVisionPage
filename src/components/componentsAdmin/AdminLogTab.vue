@@ -51,14 +51,17 @@
         <svg class="ad-spinner" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10" stroke-dasharray="32" stroke-dashoffset="32" stroke-linecap="round"><animate attributeName="stroke-dashoffset" values="32;0" dur="0.8s" repeatCount="indefinite"/></circle></svg>
         加载中...
       </div>
-      <button v-else-if="hasMore" class="ad-load-more-btn" @click="$emit('loadMore')">加载更多</button>
+      <div v-else-if="hasMore" ref="sentinelRef" class="ad-sentinel"></div>
       <span v-else-if="list.length > 0" class="ad-empty" style="padding:12px 0;">— 已加载全部 —</span>
     </div>
   </div>
 </template>
 
 <script setup>
-defineProps({
+import { computed } from 'vue'
+import { useInfiniteScroll } from '@/composables/useInfiniteScroll'
+
+const props = defineProps({
   list: { type: Array, required: true },
   loading: { type: Boolean, required: true },
   total: { type: Number, default: 0 },
@@ -68,4 +71,10 @@ defineProps({
   orderBy: { type: String, default: 'newest' },
 })
 defineEmits(['update:keyword', 'update:orderBy', 'search', 'loadMore'])
+
+const { sentinelRef } = useInfiniteScroll(
+  () => emit('loadMore'),
+  computed(() => props.hasMore),
+  computed(() => props.loading)
+)
 </script>

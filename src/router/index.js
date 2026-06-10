@@ -96,6 +96,18 @@ router.beforeEach((to) => {
             return { name: 'login' };
         }
     }
+
+    // 管理员路由 - 额外检查角色权限
+    if (to.name === 'admin') {
+        const userInfo = JSON.parse(localStorage.getItem('userInfo') || '{}');
+        const userRole = userInfo.user_role || 0;
+        
+        // 只有审核员(55)和系统管理员(77)可以访问管理后台
+        if (userRole !== 55 && userRole !== 77) {
+            return { name: 'home' };
+        }
+    }
+
     // 已登录或不需要认证，直接放行
 });
 

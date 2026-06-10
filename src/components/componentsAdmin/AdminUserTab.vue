@@ -4,6 +4,12 @@
     <div class="ad-table-header">
       <h3 class="ad-table-title">用户管理<span class="ad-table-count">（共 {{ userTotal }} 人）</span></h3>
       <div style="display:flex;align-items:center;gap:12px;">
+        <!-- 批量操作按钮 -->
+        <div v-if="selectedIds.size > 0" class="ad-batch-actions">
+          <span class="ad-batch-count">已选 {{ selectedIds.size }} 项</span>
+          <button class="ad-action-btn ad-action-btn--warn" @click="$emit('batchBan')">批量封禁</button>
+          <button class="ad-action-btn ad-action-btn--danger" @click="$emit('batchDelete')">批量删除</button>
+        </div>
         <div class="ad-search-box">
           <input
             :value="userKeyword"
@@ -60,10 +66,13 @@
       <table class="ad-table">
         <thead>
           <tr>
+            <th class="ad-col-checkbox">
+              <input type="checkbox" :checked="isAllSelected" @change="$emit('toggleAll')" />
+            </th>
             <th>ID</th>
+            <th>头像</th>
             <th>用户名</th>
             <th>昵称</th>
-            <th>邮箱</th>
             <th>角色</th>
             <th>状态</th>
             <th>注册时间</th>
@@ -71,11 +80,16 @@
           </tr>
         </thead>
         <tbody>
-          <tr v-for="user in userList" :key="user.user_id">
+          <tr v-for="user in userList" :key="user.user_id" :class="{ 'ad-row-selected': selectedIds.has(user.user_id) }">
+            <td class="ad-col-checkbox">
+              <input type="checkbox" :checked="selectedIds.has(user.user_id)" @change="$emit('toggleSelect', user.user_id)" />
+            </td>
             <td class="ad-cell-id">#{{ user.user_id }}</td>
+            <td>
+              <AuthImage :url="getAdminAvatarUrl(user.avatar_url)" :alt="user.nickname" class-name="ad-avatar-thumb" />
+            </td>
             <td class="ad-cell-title">{{ user.username }}</td>
             <td>{{ user.nickname || '—' }}</td>
-            <td class="ad-cell-text">{{ user.email || '—' }}</td>
             <td>
               <span class="ad-badge" :class="roleBadgeClass(user.user_role)">
                 {{ roleLabel(user.user_role) }}
@@ -103,7 +117,7 @@
                   {{ user.status === 30 ? '解封' : '封禁' }}
                 </button>
                 <button class="ad-action-btn" @click="$emit('resetPwd', user)">重置密码</button>
-                <button class="ad-action-btn ad-action-btn--danger" @click="$emit('deleteUser', user)">删除</button>
+                <button v-if="isSuperAdmin" class="ad-action-btn ad-action-btn--danger" @click="$emit('deleteUser', user)">删除</button>
               </div>
             </td>
           </tr>
@@ -116,14 +130,20 @@
         <svg class="ad-spinner" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10" stroke-dasharray="32" stroke-dashoffset="32" stroke-linecap="round"><animate attributeName="stroke-dashoffset" values="32;0" dur="0.8s" repeatCount="indefinite"/></circle></svg>
         加载中...
       </div>
-      <button v-else-if="hasMore" class="ad-load-more-btn" @click="$emit('loadMore')">加载更多</button>
+      <div v-else-if="hasMore" ref="sentinelRef" class="ad-sentinel"></div>
       <span v-else-if="userList.length > 0" class="ad-empty" style="padding:12px 0;">— 已加载全部 —</span>
     </div>
   </div>
 </template>
 
 <script setup>
-defineProps({
+import { computed } from 'vue'
+import { roleLabel, roleBadgeClass, statusLabel, statusBadgeClass } from '@/utils/adminHelpers'
+import { useInfiniteScroll } from '@/composables/useInfiniteScroll'
+import { getAdminAvatarUrl } from '@/config/api'
+import AuthImage from '@/components/AuthImage.vue'
+
+const props = defineProps({
   userList: { type: Array, required: true },
   userLoading: { type: Boolean, required: true },
   userKeyword: { type: String, default: '' },
@@ -133,25 +153,17 @@ defineProps({
   userRoleFilter: { type: String, default: '' },
   userStatusFilter: { type: String, default: '' },
   userOrderBy: { type: String, default: 'newest' },
+  selectedIds: { type: Set, default: () => new Set() },
+  adminRole: { type: Number, default: 0 },
 })
-defineEmits(['update:userKeyword', 'update:userRoleFilter', 'update:userStatusFilter', 'update:userOrderBy', 'search', 'loadMore', 'banUser', 'freezeUser', 'deleteUser', 'createUser', 'resetPwd'])
+const emit = defineEmits(['update:userKeyword', 'update:userRoleFilter', 'update:userStatusFilter', 'update:userOrderBy', 'search', 'loadMore', 'banUser', 'freezeUser', 'deleteUser', 'createUser', 'resetPwd', 'toggleSelect', 'toggleAll', 'batchDelete', 'batchBan'])
 
-// 角色映射
-const roleMap = { 11: '普通用户', 22: '创作者', 55: '审核员', 66: '工单管理员', 77: '系统管理员' }
-const roleLabel = (r) => roleMap[r] || `未知(${r})`
-const roleBadgeClass = (r) => {
-  if (r === 77) return 'ad-badge--role-super'
-  if (r === 55 || r === 66) return 'ad-badge--role-staff'
-  if (r === 22) return 'ad-badge--role-creator'
-  return 'ad-badge--role-user'
-}
+const isAllSelected = computed(() => props.userList.length > 0 && props.selectedIds.size === props.userList.length)
+const isSuperAdmin = computed(() => props.adminRole === 77)
 
-// 状态映射
-const statusMap = { 10: '正常', 20: '冻结', 30: '封禁' }
-const statusLabel = (s) => statusMap[s] || `未知(${s})`
-const statusBadgeClass = (s) => {
-  if (s === 30) return 'ad-badge--banned'
-  if (s === 20) return 'ad-badge--frozen'
-  return 'ad-badge--active'
-}
+const { sentinelRef } = useInfiniteScroll(
+  () => emit('loadMore'),
+  computed(() => props.hasMore),
+  computed(() => props.userLoading)
+)
 </script>
