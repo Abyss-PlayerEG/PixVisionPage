@@ -1,8 +1,8 @@
 /* ===== 管理员后台 ===== */
 .ad-container {
   min-height: 100vh;
-  background-color: #000;
-  color: #cecece;
+  background-color: var(--bg-primary);
+  color: var(--text-secondary);
 }
 
 /* ── 顶部栏 ── */
@@ -30,13 +30,13 @@
 .ad-logo-title {
   font-family: sul-gbk6;
   font-size: 18px;
-  color: #00A947;
+  color: var(--color-primary);
   margin: 0;
 }
 
 .ad-logo-sub {
   font-size: 12px;
-  color: #7e7e7e;
+  color: var(--text-tertiary);
 }
 
 .ad-topbar-actions {
@@ -60,13 +60,13 @@
 
 .ad-back-btn {
   background: transparent;
-  color: #cecece;
+  color: var(--text-secondary);
   border: 1px solid rgba(255, 255, 255, 0.12);
 }
 
 .ad-back-btn:hover {
   background: rgba(255, 255, 255, 0.08);
-  color: #ffffff;
+  color: var(--text-primary);
 }
 
 .ad-back-btn svg {
@@ -131,7 +131,7 @@
 
 .ad-nav-item.active {
   background: rgba(0, 169, 71, 0.12);
-  color: #00A947;
+  color: var(--color-primary);
 }
 
 /* ── 内容区 ── */
@@ -146,7 +146,7 @@
 .ad-dashboard-title {
   font-family: sul-gbk6;
   font-size: 28px;
-  color: #ffffff;
+  color: var(--text-primary);
   margin: 0 0 28px;
 }
 
@@ -189,7 +189,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #ffffff;
+  color: var(--text-primary);
 }
 
 .ad-stat-card-icon svg {
@@ -206,21 +206,21 @@
 
 .ad-stat-card-label {
   font-size: 13px;
-  color: #7e7e7e;
+  color: var(--text-tertiary);
   margin: 0;
 }
 
 .ad-stat-card-value {
   font-family: sul-gbk6;
   font-size: 32px;
-  color: #ffffff;
+  color: var(--text-primary);
   margin: 0;
   line-height: 1;
 }
 
 .ad-stat-card-sub {
   font-size: 12px;
-  color: #555;
+  color: var(--text-muted);
   margin-top: 8px;
 }
 
@@ -237,13 +237,13 @@
 .ad-table-title {
   font-size: 18px;
   font-weight: 600;
-  color: #ffffff;
+  color: var(--text-primary);
   margin: 0;
 }
 
 .ad-table-count {
   font-size: 13px;
-  color: #7e7e7e;
+  color: var(--text-tertiary);
   font-weight: 400;
   margin-left: 8px;
 }
@@ -261,7 +261,7 @@
   border-radius: 18px;
   border: 1px solid rgba(255, 255, 255, 0.1);
   background: rgba(255, 255, 255, 0.04);
-  color: #ffffff;
+  color: var(--text-primary);
   font-size: 13px;
   outline: none;
   transition: border-color 0.2s ease;
@@ -272,7 +272,7 @@
 }
 
 .ad-search-input::placeholder {
-  color: #555;
+  color: var(--text-muted);
 }
 
 .ad-search-btn {
@@ -281,7 +281,7 @@
   border-radius: 50%;
   border: none;
   background: rgba(0, 169, 71, 0.75);
-  color: #ffffff;
+  color: var(--text-primary);
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -291,7 +291,7 @@
 }
 
 .ad-search-btn:hover {
-  background: #00A947;
+  background: var(--color-primary);
 }
 
 .ad-search-btn svg {
@@ -319,7 +319,7 @@
   padding: 12px 16px;
   font-size: 12px;
   font-weight: 600;
-  color: #7e7e7e;
+  color: var(--text-tertiary);
   text-align: left;
   text-transform: uppercase;
   letter-spacing: 0.5px;
@@ -329,7 +329,7 @@
 .ad-table td {
   padding: 14px 16px;
   font-size: 13px;
-  color: #cecece;
+  color: var(--text-secondary);
   border-bottom: 1px solid rgba(255, 255, 255, 0.04);
 }
 
@@ -346,13 +346,13 @@
 }
 
 .ad-cell-id {
-  color: #555;
+  color: var(--text-muted);
   font-family: 'Courier New', monospace;
   font-size: 12px;
 }
 
 .ad-cell-title {
-  color: #ffffff;
+  color: var(--text-primary);
   font-weight: 500;
   max-width: 280px;
   overflow: hidden;
@@ -365,7 +365,7 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  color: #aaa;
+  color: var(--text-dim);
 }
 
 /* ── 状态徽章 ── */
@@ -380,7 +380,7 @@
 
 .ad-badge--active {
   background: rgba(0, 169, 71, 0.15);
-  color: #00A947;
+  color: var(--color-primary);
 }
 
 .ad-badge--banned {
@@ -390,7 +390,7 @@
 
 .ad-badge--frozen {
   background: rgba(251, 191, 36, 0.15);
-  color: #fbbf24;
+  color: var(--color-warning);
 }
 
 .ad-badge--pending {
@@ -430,7 +430,7 @@
   border-radius: 6px;
   border: 1px solid rgba(255, 255, 255, 0.1);
   background: transparent;
-  color: #cecece;
+  color: var(--text-secondary);
   font-size: 12px;
   cursor: pointer;
   transition: all 0.2s ease;
@@ -453,7 +453,7 @@
 }
 
 .ad-action-btn--warn {
-  color: #fbbf24;
+  color: var(--color-warning);
   border-color: rgba(251, 191, 36, 0.2);
 }
 
@@ -463,7 +463,7 @@
 }
 
 .ad-action-btn--freeze {
-  color: #60a5fa;
+  color: var(--color-info);
   border-color: rgba(96, 165, 250, 0.2);
 }
 
@@ -473,7 +473,7 @@
 }
 
 .ad-action-btn--approve {
-  color: #00A947;
+  color: var(--color-primary);
   border-color: rgba(0, 169, 71, 0.2);
 }
 
@@ -488,7 +488,7 @@
   border-radius: 8px;
   border: 1px solid rgba(0, 169, 71, 0.35);
   background: rgba(0, 169, 71, 0.12);
-  color: #00A947;
+  color: var(--color-primary);
   font-size: 13px;
   cursor: pointer;
   transition: all 0.25s ease;
@@ -513,7 +513,7 @@
   border-radius: 20px;
   border: 1px solid rgba(255, 255, 255, 0.12);
   background: transparent;
-  color: #7e7e7e;
+  color: var(--text-tertiary);
   font-size: 13px;
   cursor: pointer;
   transition: all 0.25s ease;
@@ -521,7 +521,7 @@
 
 .ad-load-more-btn:hover {
   border-color: rgba(255, 255, 255, 0.3);
-  color: #ffffff;
+  color: var(--text-primary);
   background: rgba(255, 255, 255, 0.04);
 }
 
@@ -571,7 +571,7 @@
 .ad-skeleton-card {
   height: 100px;
   border-radius: 14px;
-  background: linear-gradient(90deg, #1a1a1a 25%, #2a2a2a 50%, #1a1a1a 75%);
+  background: linear-gradient(90deg, var(--bg-secondary) 25%, var(--bg-tertiary) 50%, var(--bg-secondary) 75%);
   background-size: 200% 100%;
   animation: ad-shimmer 1.8s infinite ease-in-out;
 }
@@ -590,7 +590,7 @@
   height: 48px;
   margin-bottom: 8px;
   border-radius: 8px;
-  background: linear-gradient(90deg, #1a1a1a 25%, #2a2a2a 50%, #1a1a1a 75%);
+  background: linear-gradient(90deg, var(--bg-secondary) 25%, var(--bg-tertiary) 50%, var(--bg-secondary) 75%);
   background-size: 200% 100%;
   animation: ad-shimmer 1.8s infinite ease-in-out;
   opacity: 0.6;
@@ -641,7 +641,7 @@
 .ad-dialog-title {
   font-size: 18px;
   font-weight: 600;
-  color: #ffffff;
+  color: var(--text-primary);
   margin: 0 0 20px;
 }
 
@@ -656,7 +656,7 @@
 .ad-form-label {
   display: block;
   font-size: 13px;
-  color: #7e7e7e;
+  color: var(--text-tertiary);
   margin-bottom: 5px;
 }
 
@@ -667,7 +667,7 @@
   border-radius: 8px;
   border: 1px solid rgba(255, 255, 255, 0.1);
   background: rgba(255, 255, 255, 0.04);
-  color: #ffffff;
+  color: var(--text-primary);
   font-size: 13px;
   outline: none;
   transition: border-color 0.2s ease;
@@ -704,7 +704,7 @@
   border-radius: 8px;
   border: 1px solid rgba(255, 255, 255, 0.1);
   background: rgba(255, 255, 255, 0.04);
-  color: #ffffff;
+  color: var(--text-primary);
   font-size: 13px;
   outline: none;
   cursor: pointer;
@@ -726,7 +726,7 @@
   border-radius: 8px;
   border: 1px solid rgba(255, 255, 255, 0.1);
   background: transparent;
-  color: #cecece;
+  color: var(--text-secondary);
   font-size: 13px;
   cursor: pointer;
   transition: all 0.2s ease;
@@ -739,7 +739,7 @@
 .ad-dialog-btn--primary {
   border-color: rgba(0, 169, 71, 0.35);
   background: rgba(0, 169, 71, 0.15);
-  color: #00A947;
+  color: var(--color-primary);
 }
 
 .ad-dialog-btn--primary:hover {
@@ -756,7 +756,7 @@
   max-width: 240px;
   word-break: break-all;
   font-size: 12px;
-  color: #aaa;
+  color: var(--text-dim);
 }
 
 /* ── 筛选栏 ── */
@@ -776,7 +776,7 @@
 
 .ad-filter-label {
   font-size: 12px;
-  color: #7e7e7e;
+  color: var(--text-tertiary);
   white-space: nowrap;
 }
 
@@ -786,8 +786,8 @@
   height: 32px;
   font-size: 12px;
   padding: 0 8px;
-  background-color: #1a1a1a;
-  color: #e0e0e0;
+  background-color: var(--bg-secondary);
+  color: var(--text-light);
   border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 4px;
   cursor: pointer;
@@ -799,8 +799,8 @@
 }
 
 .ad-filter-select option {
-  background-color: #1a1a1a;
-  color: #e0e0e0;
+  background-color: var(--bg-secondary);
+  color: var(--text-light);
 }
 
 /* ── 敏感词展示 ── */
@@ -832,7 +832,7 @@
 
 .ad-insult-more {
   font-size: 11px;
-  color: #7e7e7e;
+  color: var(--text-tertiary);
   cursor: pointer;
 }
 
