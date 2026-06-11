@@ -4,6 +4,13 @@
       <h3 class="ad-table-title">用户数据变更审核<span class="ad-table-count">（共 {{ total }} 条待审核）</span></h3>
     </div>
 
+    <!-- 头像预览浮层 -->
+    <Teleport to="body">
+      <div v-if="previewUrl" class="ad-avatar-float-preview" :style="previewStyle">
+        <AuthImage :url="getAdminAvatarUrl(previewUrl)" :alt="'头像预览'" class-name="ad-avatar-preview-img" />
+      </div>
+    </Teleport>
+
     <!-- 筛选栏 -->
     <div class="ad-filter-bar">
       <div class="ad-filter-group">
@@ -42,7 +49,18 @@
                 {{ changeTypeLabel(item.type) }}
               </span>
             </td>
-            <td>{{ changeContent(item) }}</td>
+            <td>
+              <div v-if="item.type === 300" class="ad-change-avatar-cell">
+                <div
+                  class="ad-change-avatar-wrapper"
+                  @mouseenter="(e) => showPreview(e, item.avatar_url)"
+                  @mouseleave="hidePreview"
+                >
+                  <AuthImage :url="getAdminAvatarUrl(item.avatar_url)" :alt="'待审核头像'" class-name="ad-avatar-thumb" />
+                </div>
+              </div>
+              <span v-else>{{ changeContent(item) }}</span>
+            </td>
             <td>{{ formatTime(item.create_time) }}</td>
             <td>
               <div class="ad-actions">
@@ -67,9 +85,11 @@
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { ref, computed } from 'vue'
 import { changeTypeLabel, changeTypeClass, roleMap } from '@/utils/adminHelpers'
 import { useInfiniteScroll } from '@/composables/useInfiniteScroll'
+import { getAdminAvatarUrl } from '@/config/api'
+import AuthImage from '@/components/AuthImage.vue'
 
 const props = defineProps({
   list: { type: Array, required: true },
@@ -93,4 +113,54 @@ const changeContent = (item) => {
   if (item.type === 300) return item.avatar_url || '有头像待审'
   return '—'
 }
+
+// 头像预览
+const previewUrl = ref('')
+const previewStyle = ref({})
+
+const showPreview = (e, url) => {
+  const rect = e.currentTarget.getBoundingClientRect()
+  previewUrl.value = url
+  previewStyle.value = {
+    left: `${rect.left + rect.width / 2}px`,
+    top: `${rect.top - 8}px`,
+  }
+}
+
+const hidePreview = () => {
+  previewUrl.value = ''
+}
 </script>
+
+<style scoped>
+.ad-change-avatar-cell {
+  display: flex;
+  align-items: center;
+}
+
+.ad-change-avatar-wrapper {
+  cursor: pointer;
+}
+</style>
+
+<style>
+.ad-avatar-float-preview {
+  position: fixed;
+  transform: translate(-50%, -100%);
+  z-index: 9999;
+  padding: 4px;
+  background: rgba(30, 30, 40, 0.95);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 8px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+  pointer-events: none;
+}
+
+.ad-avatar-preview-img {
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  object-fit: cover;
+  display: block;
+}
+</style>

@@ -1,5 +1,12 @@
 <template>
   <div>
+    <!-- 头像预览浮层 -->
+    <Teleport to="body">
+      <div v-if="previewUrl" class="ad-avatar-float-preview" :style="previewStyle">
+        <AuthImage :url="getAdminAvatarUrl(previewUrl)" :alt="'头像预览'" class-name="ad-avatar-preview-img" />
+      </div>
+    </Teleport>
+
     <!-- 标题栏 + 创建用户按钮 -->
     <div class="ad-table-header">
       <h3 class="ad-table-title">用户管理<span class="ad-table-count">（共 {{ userTotal }} 人）</span></h3>
@@ -86,7 +93,13 @@
             </td>
             <td class="ad-cell-id">#{{ user.user_id }}</td>
             <td>
-              <AuthImage :url="getAdminAvatarUrl(user.avatar_url)" :alt="user.nickname" class-name="ad-avatar-thumb" />
+              <div
+                class="ad-avatar-hover-wrapper"
+                @mouseenter="(e) => showPreview(e, user.avatar_url)"
+                @mouseleave="hidePreview"
+              >
+                <AuthImage :url="getAdminAvatarUrl(user.avatar_url)" :alt="user.nickname" class-name="ad-avatar-thumb" />
+              </div>
             </td>
             <td class="ad-cell-title">{{ user.username }}</td>
             <td>{{ user.nickname || '—' }}</td>
@@ -137,7 +150,7 @@
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { ref, computed } from 'vue'
 import { roleLabel, roleBadgeClass, statusLabel, statusBadgeClass } from '@/utils/adminHelpers'
 import { useInfiniteScroll } from '@/composables/useInfiniteScroll'
 import { getAdminAvatarUrl } from '@/config/api'
@@ -166,4 +179,28 @@ const { sentinelRef } = useInfiniteScroll(
   computed(() => props.hasMore),
   computed(() => props.userLoading)
 )
+
+// 头像预览
+const previewUrl = ref('')
+const previewStyle = ref({})
+
+const showPreview = (e, url) => {
+  const rect = e.currentTarget.getBoundingClientRect()
+  previewUrl.value = url
+  previewStyle.value = {
+    left: `${rect.left + rect.width / 2}px`,
+    top: `${rect.top - 8}px`,
+  }
+}
+
+const hidePreview = () => {
+  previewUrl.value = ''
+}
 </script>
+
+<style>
+.ad-avatar-hover-wrapper {
+  cursor: pointer;
+  display: inline-block;
+}
+</style>
