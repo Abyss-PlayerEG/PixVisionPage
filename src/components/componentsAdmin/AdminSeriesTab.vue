@@ -74,7 +74,7 @@
             <td class="ad-cell-id">#{{ series.series_id }}</td>
             <td class="ad-cell-title">{{ series.series_title || '未命名合集' }}</td>
             <td class="ad-cell-text">{{ series.about_text || '—' }}</td>
-            <td>{{ series.username || '用户 #' + series.user_id }}</td>
+            <td>{{ series.username || '未知用户' }}（#{{ series.user_id }}）</td>
             <td>
               <span class="ad-badge" :class="approvalBadgeClass(series.approval_status)">
                 {{ approvalLabel(series.approval_status) }}
