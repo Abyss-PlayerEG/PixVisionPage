@@ -9,10 +9,46 @@
   display: flex;
   width: 100%;
   height: 100vh;
-  background: #000000;
+  background: #0a0a0a;
   color: #cecece;
   font-family: '微软雅黑', sans-serif;
   overflow: hidden;
+  position: relative;
+}
+
+/* 艺术背景效果 */
+.cp-container::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background:
+    radial-gradient(ellipse at 20% 50%, rgba(0, 169, 71, 0.06) 0%, transparent 50%),
+    radial-gradient(ellipse at 80% 20%, rgba(0, 100, 200, 0.04) 0%, transparent 50%),
+    radial-gradient(ellipse at 60% 80%, rgba(100, 0, 200, 0.03) 0%, transparent 50%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* 网格纹理 */
+.cp-container::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: 
+    linear-gradient(rgba(255, 255, 255, 0.02) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
+  background-size: 60px 60px;
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* 确保子元素在背景之上 */
+.cp-container > * {
+  position: relative;
+  z-index: 1;
 }
 
 /* ==================== 侧边栏 ==================== */
@@ -271,7 +307,9 @@
   position: sticky;
   top: 0;
   z-index: 10;
-  background: #000000;
+  background: rgba(10, 10, 10, 0.9);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
 }
 
 .cp-filter-tabs {
@@ -280,6 +318,18 @@
   background: rgba(255, 255, 255, 0.03);
   border-radius: 10px;
   padding: 4px;
+  position: relative;
+}
+
+/* 滑动指示器 */
+.cp-filter-indicator {
+  position: absolute;
+  top: 4px;
+  height: calc(100% - 8px);
+  background: rgba(0, 169, 71, 0.2);
+  border-radius: 8px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  z-index: 0;
 }
 
 .cp-filter-tab {
@@ -291,8 +341,10 @@
   font-size: 13px;
   font-family: '微软雅黑', sans-serif;
   cursor: pointer;
-  transition: all 0.25s ease;
+  transition: color 0.25s ease;
   white-space: nowrap;
+  position: relative;
+  z-index: 1;
 }
 
 .cp-filter-tab:hover {
@@ -300,7 +352,6 @@
 }
 
 .cp-filter-tab.active {
-  background: rgba(0, 169, 71, 0.2);
   color: #00A947;
 }
 
@@ -583,7 +634,7 @@
 /* ==================== 上传表单 ==================== */
 .cp-upload-area {
   max-width: 640px;
-  margin: 0 auto;
+  margin: 20px auto;
   display: flex;
   flex-direction: column;
   gap: 20px;
@@ -734,6 +785,44 @@
   color: #555;
 }
 
+/* 搜索框样式（带图标） */
+.cp-search-input {
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 20px;
+  padding: 8px 16px 8px 36px;
+  color: #ffffff;
+  font-size: 13px;
+  font-family: '微软雅黑', sans-serif;
+  transition: all 0.25s ease;
+  outline: none;
+  width: 100%;
+  box-sizing: border-box;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%237e7e7e' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='11' cy='11' r='8'%3E%3C/circle%3E%3Cline x1='21' y1='21' x2='16.65' y2='16.65'%3E%3C/line%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: 12px center;
+  background-size: 16px;
+}
+
+.cp-search-input:focus {
+  border-color: rgba(0, 169, 71, 0.5);
+  background-color: rgba(255, 255, 255, 0.08);
+}
+
+.cp-search-input::placeholder {
+  color: #555;
+}
+
+/* 搜索框容器 */
+.cp-search-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
 .cp-form-select {
   cursor: pointer;
   appearance: none;
@@ -768,34 +857,47 @@
 /* 单选按钮组 */
 .cp-radio-group {
   display: flex;
-  gap: 8px;
+  gap: 4px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+  padding: 4px;
+  position: relative;
+}
+
+/* 单选滑动指示器 */
+.cp-radio-indicator {
+  position: absolute;
+  top: 4px;
+  height: calc(100% - 8px);
+  background: rgba(0, 169, 71, 0.15);
+  border: 1px solid rgba(0, 169, 71, 0.3);
+  border-radius: 8px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  z-index: 0;
 }
 
 .cp-radio-btn {
   flex: 1;
   padding: 10px 16px;
-  border-radius: 10px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  background: rgba(255, 255, 255, 0.05);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
+  border-radius: 8px;
+  border: none;
+  background: transparent;
   color: #7e7e7e;
   font-size: 13px;
   font-family: '微软雅黑', sans-serif;
   cursor: pointer;
-  transition: all 0.25s ease;
+  transition: color 0.25s ease;
   text-align: center;
+  position: relative;
+  z-index: 1;
 }
 
 .cp-radio-btn:hover {
-  border-color: rgba(255, 255, 255, 0.2);
-  background: rgba(255, 255, 255, 0.08);
   color: #cecece;
 }
 
 .cp-radio-btn.active {
-  border-color: #00A947;
-  background: rgba(0, 169, 71, 0.1);
   color: #00A947;
 }
 

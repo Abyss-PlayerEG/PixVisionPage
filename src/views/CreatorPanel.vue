@@ -102,7 +102,8 @@
         <div class="cp-content">
           <!-- 筛选栏 -->
           <div class="cp-filter-bar">
-            <div class="cp-filter-tabs">
+            <div ref="filterTabsRef" class="cp-filter-tabs">
+              <div class="cp-filter-indicator" :style="filterIndicatorStyle"></div>
               <button class="cp-filter-tab" :class="{ active: worksApprovalFilter === '' }" @click="setWorksApprovalFilter('')">全部</button>
               <button class="cp-filter-tab" :class="{ active: worksApprovalFilter === '10' }" @click="setWorksApprovalFilter('10')">已通过</button>
               <button class="cp-filter-tab" :class="{ active: worksApprovalFilter === '20' }" @click="setWorksApprovalFilter('20')">待审核</button>
@@ -110,16 +111,14 @@
             </div>
             <div style="flex:1"></div>
             <!-- 搜索框 -->
-            <div style="display:flex;gap:8px;align-items:center;">
+            <div class="cp-search-wrapper" style="max-width:220px;">
               <input
                 v-model="worksSearchTitle"
-                class="cp-form-input"
+                class="cp-search-input"
                 type="text"
                 placeholder="搜索作品标题…"
-                style="max-width:200px;padding:6px 12px;font-size:13px;"
                 @keyup.enter="searchWorks"
               />
-              <button class="cp-btn cp-btn-sm" @click="searchWorks">搜索</button>
             </div>
             <button v-if="worksList.length > 0" class="cp-btn cp-btn-sm" @click="isAllSelected ? clearSelection() : toggleAllWorks()">
               {{ isAllSelected ? '取消全选' : '全选' }}
@@ -257,16 +256,14 @@
         <div class="cp-content">
           <!-- 搜索栏 -->
           <div class="cp-filter-bar">
-            <div style="display:flex;gap:8px;flex:1;">
+            <div class="cp-search-wrapper" style="max-width:320px;flex:1;">
               <input
                 v-model="seriesKeyword"
-                class="cp-form-input"
+                class="cp-search-input"
                 type="text"
                 placeholder="搜索合集名称…"
-                style="max-width:300px;padding:8px 14px;font-size:13px;"
                 @keyup.enter="searchSeries"
               />
-              <button class="cp-btn cp-btn-sm" @click="searchSeries">搜索</button>
             </div>
           </div>
 
@@ -380,7 +377,8 @@
             <!-- 原创/转载 -->
             <div class="cp-form-group">
               <label class="cp-form-label">作品类型 *</label>
-              <div class="cp-radio-group">
+              <div ref="uploadRadioGroupRef" class="cp-radio-group">
+                <div class="cp-radio-indicator" :style="uploadRadioIndicatorStyle"></div>
                 <button class="cp-radio-btn" :class="{ active: uploadForm.isOriginal === true }" @click="uploadForm.isOriginal = true">原创</button>
                 <button class="cp-radio-btn" :class="{ active: uploadForm.isOriginal === false }" @click="uploadForm.isOriginal = false">转载</button>
               </div>
@@ -498,7 +496,8 @@
               <!-- 原创/转载 -->
               <div class="cp-form-group">
                 <label class="cp-form-label">作品类型</label>
-                <div class="cp-radio-group">
+                <div ref="editRadioGroupRef" class="cp-radio-group">
+                  <div class="cp-radio-indicator" :style="editRadioIndicatorStyle"></div>
                   <button class="cp-radio-btn" :class="{ active: editWorkForm.isOriginal === true }" @click="toggleEditOriginal(true)">原创</button>
                   <button class="cp-radio-btn" :class="{ active: editWorkForm.isOriginal === false }" @click="toggleEditOriginal(false)">转载</button>
                 </div>
@@ -751,6 +750,63 @@ const goToWorkDetail = (workId) => {
   router.push(`/work/${workId}`)
 }
 
+// ==================== 滑动指示器工具函数 ====================
+const updateIndicator = (containerRef, activeSelector, styleRef) => {
+  nextTick(() => {
+    if (!containerRef) return
+    const activeBtn = containerRef.querySelector(activeSelector)
+    if (activeBtn) {
+      const containerRect = containerRef.getBoundingClientRect()
+      const btnRect = activeBtn.getBoundingClientRect()
+      styleRef.value = {
+        left: `${btnRect.left - containerRect.left}px`,
+        width: `${btnRect.width}px`
+      }
+    }
+  })
+}
+
+// ==================== 筛选标签滑动指示器 ====================
+const filterTabsRef = ref(null)
+const filterIndicatorStyle = ref({ left: '4px', width: '0px' })
+
+const updateFilterIndicator = () => {
+  updateIndicator(filterTabsRef.value, '.cp-filter-tab.active', filterIndicatorStyle)
+}
+
+// 监听筛选条件变化，更新指示器位置
+watch(() => worksApprovalFilter.value, updateFilterIndicator, { immediate: true })
+
+// ==================== 单选按钮滑动指示器 ====================
+const uploadRadioGroupRef = ref(null)
+const uploadRadioIndicatorStyle = ref({ left: '4px', width: '0px' })
+
+const editRadioGroupRef = ref(null)
+const editRadioIndicatorStyle = ref({ left: '4px', width: '0px' })
+
+const updateUploadRadioIndicator = () => {
+  updateIndicator(uploadRadioGroupRef.value, '.cp-radio-btn.active', uploadRadioIndicatorStyle)
+}
+
+const updateEditRadioIndicator = () => {
+  updateIndicator(editRadioGroupRef.value, '.cp-radio-btn.active', editRadioIndicatorStyle)
+}
+
+// 监听上传表单 isOriginal 变化
+watch(() => uploadForm.isOriginal, () => {
+  // 上传表单中的 radio group 可能不存在（tab 未切换到上传），需要检查
+  if (uploadRadioGroupRef.value) {
+    updateUploadRadioIndicator()
+  }
+})
+
+// 窗口大小变化时更新所有指示器
+const handleResize = () => {
+  updateFilterIndicator()
+  updateUploadRadioIndicator()
+  updateEditRadioIndicator()
+}
+
 // 头像 URL（兼容 Profile 处理过的完整 URL 和登录时的原始 avatar_url）
 const avatarUrl = computed(() => {
   const info = userInfo.value
@@ -814,8 +870,14 @@ const onUploadDrop = (e) => {
 
 // 自动加载合集列表（供上传时选择）
 watch(activeTab, (tab) => {
-  if (tab === 'upload' && seriesList.value.length === 0) {
-    loadSeries({ reset: true })
+  if (tab === 'upload') {
+    if (seriesList.value.length === 0) {
+      loadSeries({ reset: true })
+    }
+    // 切换到上传 tab 时更新 radio 指示器位置
+    nextTick(() => {
+      updateUploadRadioIndicator()
+    })
   }
 })
 
@@ -830,6 +892,14 @@ const editWorkForm = reactive({
   outUrl: '',
   file: null,
   imagePreview: '',
+})
+
+// 监听编辑表单 isOriginal 变化
+watch(() => editWorkForm.isOriginal, () => {
+  // 编辑弹窗中的 radio group 可能不存在，需要检查
+  if (editRadioGroupRef.value) {
+    updateEditRadioIndicator()
+  }
 })
 
 // GSAP 动画 refs
@@ -853,6 +923,8 @@ const openEditWorkDialog = (work) => {
   }
   // GSAP 入场动画
   nextTick(() => {
+    // 更新编辑弹窗中的 radio 指示器位置
+    updateEditRadioIndicator()
     if (editWorkOverlayRef.value && editWorkDialogRef.value) {
       gsap.set(editWorkOverlayRef.value, { autoAlpha: 0 })
       gsap.set(editWorkDialogRef.value, { scale: 0.9, autoAlpha: 0 })
@@ -1265,6 +1337,11 @@ onMounted(() => {
   if (activeTab.value === 'works') {
     initScrollObserver()
   }
+  // 初始化指示器位置
+  updateFilterIndicator()
+  updateUploadRadioIndicator()
+  // 监听窗口大小变化，更新指示器位置
+  window.addEventListener('resize', handleResize)
 })
 
 onUnmounted(() => {
@@ -1272,6 +1349,8 @@ onUnmounted(() => {
     scrollObserver.disconnect()
     scrollObserver = null
   }
+  // 移除窗口大小变化监听
+  window.removeEventListener('resize', handleResize)
   // 清理 GSAP 动画
   if (editWorkOverlayRef.value) gsap.killTweensOf(editWorkOverlayRef.value)
   if (editWorkDialogRef.value) gsap.killTweensOf(editWorkDialogRef.value)
