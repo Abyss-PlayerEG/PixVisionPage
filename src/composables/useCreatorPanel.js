@@ -15,11 +15,13 @@ import {
   addSeries,
   updateSeries,
   deleteSeries,
+  fetchSeriesDetail,
   batchAddWorksToSeries,
   batchRemoveWorksFromSeries,
 } from '../api/creatorApi'
 import { fetchUserSeries } from '../api/workApi'
 import { showSuccess, showError, showInfo } from '../utils/notification'
+import { API_BASE_URL } from '../config/api'
 
 export const useCreatorPanel = () => {
   const router = useRouter()
@@ -45,6 +47,41 @@ export const useCreatorPanel = () => {
       return JSON.parse(localStorage.getItem('userInfo') || '{}')
     } catch { return {} }
   })
+
+  // 用户统计数据
+  const userStats = ref({
+    workCount: 0,
+    totalLikes: 0,
+    totalStars: 0,
+    totalViews: 0
+  })
+
+  /** 加载用户统计数据 */
+  const loadUserStats = async () => {
+    try {
+      const token = localStorage.getItem('token')
+      if (!token) return
+      
+      const response = await fetch(`${API_BASE_URL}/api/user/profile/me`, {
+        method: 'GET',
+        headers: { 'Authorization': `Bearer ${token}` }
+      })
+      const result = await response.json()
+      const statusCode = result.code || result.recode
+      
+      if (statusCode === 200 && result.data) {
+        const data = result.data
+        userStats.value = {
+          workCount: data.work_count || 0,
+          totalLikes: data.total_likes || 0,
+          totalStars: data.total_stars || 0,
+          totalViews: data.total_views || 0
+        }
+      }
+    } catch (error) {
+      console.error('获取用户统计失败:', error)
+    }
+  }
 
   // ==================== 作品管理 ====================
   const worksList = ref([])
@@ -148,6 +185,22 @@ export const useCreatorPanel = () => {
     return result
   }
 
+  /** 批量添加选中作品到合集 */
+  const handleBatchAddToSeries = async (seriesId) => {
+    if (!hasSelection.value || !seriesId) return
+    const ids = [...selectedWorkIds.value]
+    const result = await batchAddWorksToSeries(ids, seriesId)
+    if (result.success) {
+      showSuccess(`已将 ${ids.length} 件作品添加到合集`)
+      selectedWorkIds.value = []
+      // 刷新作品列表以更新 series_id
+      loadWorks({ reset: true })
+    } else {
+      showError(result.message || '批量添加失败')
+    }
+    return result
+  }
+
   /** 修改作品信息 */
   const handleUpdateWork = async ({ workId, workTitle, file, seriesId, isOriginal, outUrl }) => {
     const result = await updateWork({ workId, workTitle, file, seriesId, isOriginal, outUrl })
@@ -247,6 +300,38 @@ export const useCreatorPanel = () => {
       seriesTotal.value--
     } else {
       showError(result.message || '删除失败')
+    }
+    return result
+  }
+
+  // ==================== 合集详情 ====================
+  const seriesDetail = ref(null)
+  const seriesDetailLoading = ref(false)
+  const seriesDetailWorks = ref([])
+
+  /** 加载合集详情 */
+  const loadSeriesDetail = async (seriesId) => {
+    seriesDetailLoading.value = true
+    seriesDetailWorks.value = []
+
+    const result = await fetchSeriesDetail(seriesId)
+    if (result.success && result.data) {
+      seriesDetailWorks.value = result.data.records || []
+    } else {
+      showError(result.message || '获取合集详情失败')
+    }
+    seriesDetailLoading.value = false
+    return result
+  }
+
+  /** 从合集移除作品 */
+  const handleRemoveWorkFromSeries = async (workId, seriesId) => {
+    const result = await batchRemoveWorksFromSeries([workId], seriesId)
+    if (result.success) {
+      showSuccess('已从合集移除')
+      seriesDetailWorks.value = seriesDetailWorks.value.filter(w => w.work_id !== workId)
+    } else {
+      showError(result.message || '移除失败')
     }
     return result
   }
@@ -367,6 +452,7 @@ export const useCreatorPanel = () => {
   // ==================== 初始化 ====================
   onMounted(() => {
     loadWorks({ reset: true })
+    loadUserStats()
   })
 
   return {
@@ -374,17 +460,20 @@ export const useCreatorPanel = () => {
     activeTab, tabs, switchTab,
 
     // 用户
-    userInfo,
+    userInfo, userStats,
 
     // 作品管理
     worksList, worksLoading, worksTotal, worksApprovalFilter, worksSearchTitle,
     selectedWorkIds, isAllSelected, hasSelection,
-    loadWorks, searchWorks, setWorksApprovalFilter, handleDeleteWork, handleBatchDeleteWorks, handleUpdateWork,
+    loadWorks, searchWorks, setWorksApprovalFilter, handleDeleteWork, handleBatchDeleteWorks, handleBatchAddToSeries, handleUpdateWork,
     toggleWorkSelect, toggleAllWorks, clearSelection,
 
     // 合集管理
     seriesList, seriesLoading, seriesTotal, seriesKeyword,
     loadSeries, searchSeries, handleAddSeries, handleUpdateSeries, handleDeleteSeries,
+    // 合集详情
+    seriesDetail, seriesDetailLoading, seriesDetailWorks,
+    loadSeriesDetail, handleRemoveWorkFromSeries,
 
     // 上传
     uploadForm, uploadLoading, resetUploadForm, setUploadFile, removeUploadFile, handleUpload,

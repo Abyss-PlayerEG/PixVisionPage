@@ -355,6 +355,49 @@ export const batchAddWorksToSeries = async (workIds, seriesId) => {
 }
 
 /**
+ * 获取合集详情（包含作品列表）
+ * 使用作品分页接口，传入 seriesId 筛选
+ * @param {number} seriesId - 合集ID
+ * @returns {Promise<Object>} { success, data: { records, total }, message }
+ */
+export const fetchSeriesDetail = async (seriesId) => {
+  try {
+    const token = localStorage.getItem('token')
+    if (!token) return { success: false, message: '未登录' }
+
+    const url = `${WORK_API.PAGE}/1/500?seriesId=${seriesId}`
+    console.log('[CreatorAPI] 获取合集详情:', url)
+    const response = await fetch(url, {
+      method: 'GET',
+      headers: { 'Authorization': `Bearer ${token}` },
+    })
+    const result = await response.json()
+    console.log('[CreatorAPI] 合集详情响应:', JSON.stringify(result, null, 2))
+
+    const statusCode = result.code || result.recode
+    if (statusCode === 200 && result.data) {
+      // 处理作品图片URL - 使用公开接口，携带 Token 时后端会判断是否是作者自己查看
+      if (result.data.records && Array.isArray(result.data.records)) {
+        result.data.records = result.data.records.map(work => {
+          return {
+            ...work,
+            thumbFullUrl: work.thumb_url ? getWorkImageUrl(work.thumb_url) : null,
+            imgFullUrl: work.img_url ? getWorkImageUrl(work.img_url) : null,
+          }
+        })
+      }
+      console.log('✅ 合集详情获取成功')
+      return { success: true, data: result.data }
+    }
+    console.error('❌ 合集详情获取失败:', result.message)
+    return { success: false, message: result.message || '获取失败' }
+  } catch (error) {
+    console.error('[CreatorAPI] 获取合集详情失败:', error)
+    return { success: false, message: '网络错误，请稍后重试' }
+  }
+}
+
+/**
  * 批量从系列移除作品
  * @param {number[]} workIds - 作品ID列表
  * @param {number} seriesId - 系列ID

@@ -4,19 +4,19 @@
  */
 
 // 后端 API 基础 URL
-export const API_BASE_URL = 'https://pix-version-api.playereg.top/';
+export const API_BASE_URL = 'https://pix-version-api.playereg.top';
 
 // 头像获取接口
-export const AVATAR_API = `${API_BASE_URL}api/image/avatar/get`;
+export const AVATAR_API = `${API_BASE_URL}/api/image/avatar/get`;
 
 // 头像上传接口
-export const AVATAR_UPLOAD_API = `${API_BASE_URL}api/image/avatar/upload`;
+export const AVATAR_UPLOAD_API = `${API_BASE_URL}/api/image/avatar/upload`;
 
 // 头像恢复接口
-export const AVATAR_RESET_DEFAULT_API = `${API_BASE_URL}api/image/avatar/reset-default`;
+export const AVATAR_RESET_DEFAULT_API = `${API_BASE_URL}/api/image/avatar/reset-default`;
 
 // 同步 Bilibili 头像接口
-export const AVATAR_SYNC_BILIBILI_API = `${API_BASE_URL}api/image/avatar/sync-bilibili`;
+export const AVATAR_SYNC_BILIBILI_API = `${API_BASE_URL}/api/image/avatar/sync-bilibili`;
 
 // 用户认证相关接口
 export const AUTH_API = {
@@ -94,10 +94,10 @@ export const COMMENT_API = {
 export const WORK_IMAGE_API = `${API_BASE_URL}/api/image/work/get`;
 
 // 管理员查看作品图片接口（可查看未通过审核的图片）
-export const WORK_IMAGE_ADMIN_API = `${API_BASE_URL}api/image/work/admin-view`;
+export const WORK_IMAGE_ADMIN_API = `${API_BASE_URL}/api/image/work/admin-view`;
 
 // 管理员查看头像接口（可查看未通过审核的头像）
-export const AVATAR_ADMIN_API = `${API_BASE_URL}api/image/avatar/admin-view`;
+export const AVATAR_ADMIN_API = `${API_BASE_URL}/api/image/avatar/admin-view`;
 
 // 点赞相关接口
 export const LIKE_API = {
@@ -116,7 +116,6 @@ export const STAR_API = {
 // 作品系列相关接口
 export const SERIES_API = {
   PAGE: `${API_BASE_URL}/api/work/series/page`, // GET，路径后拼 /userId/current/size
-  DETAIL: `${API_BASE_URL}/api/work/series/detail`, // GET，路径后拼 /seriesId
   ...CREATOR_SERIES_API, // 展开创作者系列管理接口
 };
 
@@ -148,36 +147,36 @@ export const HISTORY_API = {
 
 // 管理员相关接口
 export const ADMIN_API = {
-  DASHBOARD: `${API_BASE_URL}api/admin/dashboard`,
+  DASHBOARD: `${API_BASE_URL}/api/admin/dashboard`,
   // 用户管理
-  USER_LIST: `${API_BASE_URL}api/admin/user/page-select`,                          // GET, ?page/size/nickname
-  USER_UPDATE: `${API_BASE_URL}api/admin/user/update/user-role-status`,             // POST, body: userIds[]/newRole/newStatus
-  USER_DELETE: `${API_BASE_URL}api/admin/user/delete`,                              // POST, body: userIds[]
-  USER_CREATE: `${API_BASE_URL}api/admin/user/create`,                              // POST, body: username/password/confirmPassword/nickname/email
-  USER_RESET_PWD: `${API_BASE_URL}api/admin/user/update/password`,                  // POST, body: userIds[]
-  USER_INIT_AVATAR: `${API_BASE_URL}api/admin/user/init-avatar-nickname`,           // POST, body: userIds[]
-  USER_REFRESH_CACHE: `${API_BASE_URL}api/admin/user/refresh-permission-cache`,    // POST, 刷新权限缓存
+  USER_LIST: `${API_BASE_URL}/api/admin/user/page-select`,                          // GET, ?page/size/nickname
+  USER_UPDATE: `${API_BASE_URL}/api/admin/user/update/user-role-status`,             // POST, body: userIds[]/newRole/newStatus
+  USER_DELETE: `${API_BASE_URL}/api/admin/user/delete`,                              // POST, body: userIds[]
+  USER_CREATE: `${API_BASE_URL}/api/admin/user/create`,                              // POST, body: username/password/confirmPassword/nickname/email
+  USER_RESET_PWD: `${API_BASE_URL}/api/admin/user/update/password`,                  // POST, body: userIds[]
+  USER_INIT_AVATAR: `${API_BASE_URL}/api/admin/user/init-avatar-nickname`,           // POST, body: userIds[]
+  USER_REFRESH_CACHE: `${API_BASE_URL}/api/admin/user/refresh-permission-cache`,    // POST, 刷新权限缓存
   // 作品管理
-  WORK_LIST: (current, size) => `${API_BASE_URL}api/admin/works/page/${current}/${size}`, // GET, ?keyword=
-  WORK_DELETE: `${API_BASE_URL}api/admin/works/delete`,                             // POST, body: workIds[]
-  WORK_APPROVAL: `${API_BASE_URL}api/admin/works/update/approval-status`,           // POST, body: workIds[]/approvalStatus
-  WORK_TITLE: `${API_BASE_URL}api/admin/works/update/work-title`,                   // POST, body: workIds[]/workTitle
+  WORK_LIST: (current, size) => `${API_BASE_URL}/api/admin/works/page/${current}/${size}`, // GET, ?keyword=
+  WORK_DELETE: `${API_BASE_URL}/api/admin/works/delete`,                             // POST, body: workIds[]
+  WORK_APPROVAL: `${API_BASE_URL}/api/admin/works/update/approval-status`,           // POST, body: workIds[]/approvalStatus
+  WORK_TITLE: `${API_BASE_URL}/api/admin/works/update/work-title`,                   // POST, body: workIds[]/workTitle
   // 评论管理
-  COMMENT_LIST: (current, size) => `${API_BASE_URL}api/admin/comments/page/${current}/${size}`, // GET, ?keyword=
-  COMMENT_DELETE: `${API_BASE_URL}api/admin/comments/delete`,                       // POST, body: commentIds[]
-  COMMENT_APPROVAL: `${API_BASE_URL}api/admin/comments/update/approval-status`,     // POST, body: commentIds[]/approvalStatus
+  COMMENT_LIST: (current, size) => `${API_BASE_URL}/api/admin/comments/page/${current}/${size}`, // GET, ?keyword=
+  COMMENT_DELETE: `${API_BASE_URL}/api/admin/comments/delete`,                       // POST, body: commentIds[]
+  COMMENT_APPROVAL: `${API_BASE_URL}/api/admin/comments/update/approval-status`,     // POST, body: commentIds[]/approvalStatus
   // 合集管理
-  SERIES_LIST: (current, size) => `${API_BASE_URL}api/admin/series/page/${current}/${size}`, // GET, ?keyword=
-  SERIES_DELETE: `${API_BASE_URL}api/admin/series/delete`,                          // POST, body: seriesIds[]/deleteWorks
-  SERIES_APPROVAL: `${API_BASE_URL}api/admin/series/update/approval-status`,        // POST, body: seriesIds[]/approvalStatus
-  SERIES_UPDATE: `${API_BASE_URL}api/admin/series/update/series-info`,              // POST, body: seriesIds[]/seriesName/seriesDescription
+  SERIES_LIST: (current, size) => `${API_BASE_URL}/api/admin/series/page/${current}/${size}`, // GET, ?keyword=
+  SERIES_DELETE: `${API_BASE_URL}/api/admin/series/delete`,                          // POST, body: seriesIds[]/deleteWorks
+  SERIES_APPROVAL: `${API_BASE_URL}/api/admin/series/update/approval-status`,        // POST, body: seriesIds[]/approvalStatus
+  SERIES_UPDATE: `${API_BASE_URL}/api/admin/series/update/series-info`,              // POST, body: seriesIds[]/seriesName/seriesDescription
   // 审核记录
-  AUDIT_RECORDS: (current, size) => `${API_BASE_URL}api/admin/audit-records/page/${current}/${size}`, // GET
+  AUDIT_RECORDS: (current, size) => `${API_BASE_URL}/api/admin/audit-records/page/${current}/${size}`, // GET
   // 用户数据变更审核
-  PENDING_CHANGES: (current, size) => `${API_BASE_URL}api/admin/user-data-change/pending/${current}/${size}`, // GET
-  REVIEW_CHANGES: `${API_BASE_URL}api/admin/user-data-change/review`,               // POST, body: lockIds[]/approved
+  PENDING_CHANGES: (current, size) => `${API_BASE_URL}/api/admin/user-data-change/pending/${current}/${size}`, // GET
+  REVIEW_CHANGES: `${API_BASE_URL}/api/admin/user-data-change/review`,               // POST, body: lockIds[]/approved
   // 操作日志
-  LOGS: (current, size) => `${API_BASE_URL}api/admin/logs/page/${current}/${size}`, // GET
+  LOGS: (current, size) => `${API_BASE_URL}/api/admin/logs/page/${current}/${size}`, // GET
 };
 
 // 获取作品图片完整 URL

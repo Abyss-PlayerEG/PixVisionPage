@@ -12,7 +12,15 @@
           </svg>
           创作中心
         </h2>
-        <p class="cp-sidebar-subtitle">{{ userInfo.nickname || '创作者' }}</p>
+        <div class="cp-sidebar-user">
+          <div class="cp-sidebar-avatar">
+            <img :src="avatarUrl" alt="头像" class="cp-sidebar-avatar-img" />
+          </div>
+          <div class="cp-sidebar-user-info">
+            <span class="cp-sidebar-greeting">{{ greetingText }}</span>
+            <span class="cp-sidebar-nickname">{{ userInfo.nickname || '创作者' }}</span>
+          </div>
+        </div>
       </div>
 
       <nav class="cp-nav">
@@ -65,6 +73,14 @@
             <Transition name="cp-batch">
               <div v-if="hasSelection" class="cp-batch-bar">
                 <span class="cp-batch-count">已选 {{ selectedWorkIds.length }} 件作品</span>
+                <button class="cp-btn cp-btn-primary cp-btn-sm" @click="openAddToSeriesDialog">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>
+                    <line x1="12" y1="11" x2="12" y2="17"/>
+                    <line x1="9" y1="14" x2="15" y2="14"/>
+                  </svg>
+                  添加到合集
+                </button>
                 <button class="cp-btn cp-btn-danger cp-btn-sm" @click="handleBatchDeleteWorks">
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
@@ -274,6 +290,7 @@
               v-for="series in seriesList"
               :key="series.series_id"
               class="cp-series-card"
+              @click="openSeriesDetail(series)"
             >
               <div class="cp-series-header">
                 <h3 class="cp-series-title" :title="series.series_title">{{ series.series_title || '未命名合集' }}</h3>
@@ -550,6 +567,125 @@
       </div>
     </teleport>
 
+    <!-- ========== 弹窗：合集详情 ========== -->
+    <teleport to="body">
+      <div v-if="showSeriesDetailDialog" ref="seriesDetailOverlayRef" class="cp-dialog-overlay" @click.self="closeSeriesDetailDialog">
+        <div ref="seriesDetailDialogRef" class="cp-dialog cp-dialog-wide" @click.stop>
+          <!-- 标题栏 - 固定不滚动 -->
+          <div class="cp-dialog-header">
+            <h3 class="cp-dialog-title">{{ seriesDetail?.series_title || '合集详情' }}</h3>
+            <button class="cp-dialog-close" @click="closeSeriesDetailDialog">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M18 6L6 18M6 6l12 12"/>
+              </svg>
+            </button>
+          </div>
+          
+          <!-- 内容区域 - 可滚动 -->
+          <div class="cp-dialog-body">
+            <template v-if="seriesDetail">
+              <!-- 合集描述 -->
+              <div v-if="seriesDetail.about_text" class="cp-series-detail-desc">
+                {{ seriesDetail.about_text }}
+              </div>
+              
+              <!-- 编辑合集信息 -->
+              <div class="cp-series-detail-edit">
+                <div class="cp-form-group">
+                  <label class="cp-form-label">合集名称</label>
+                  <input
+                    v-model="seriesDetailForm.seriesTitle"
+                    class="cp-form-input"
+                    type="text"
+                    placeholder="请输入合集名称"
+                    maxlength="16"
+                  />
+                </div>
+                <div class="cp-form-group">
+                  <label class="cp-form-label">合集描述</label>
+                  <textarea
+                    v-model="seriesDetailForm.aboutText"
+                    class="cp-form-textarea"
+                    placeholder="请输入合集描述"
+                    maxlength="24"
+                    rows="2"
+                  ></textarea>
+                </div>
+                <button class="cp-btn cp-btn-primary cp-btn-sm" @click="submitSeriesDetailEdit">保存修改</button>
+              </div>
+              
+              <!-- 作品列表 -->
+              <div class="cp-series-detail-works">
+                <h4 class="cp-series-detail-works-title">合集作品 ({{ seriesDetailWorks.length }})</h4>
+                
+                <!-- 作品列表加载中 -->
+                <div v-if="seriesDetailLoading" class="cp-series-detail-loading">
+                  <div class="cp-spinner-sm"></div>
+                  <span>加载作品中...</span>
+                </div>
+                
+                <!-- 作品列表为空 -->
+                <div v-else-if="seriesDetailWorks.length === 0" class="cp-empty-mini">
+                  <p>暂无作品</p>
+                </div>
+                
+                <!-- 作品列表 -->
+                <div v-else class="cp-series-detail-grid">
+                  <div
+                    v-for="work in seriesDetailWorks"
+                    :key="work.work_id"
+                    class="cp-series-detail-work"
+                  >
+                    <img
+                      v-if="work.thumbFullUrl"
+                      :src="work.thumbFullUrl"
+                      :alt="work.work_title"
+                      class="cp-series-detail-thumb"
+                    />
+                    <div v-else class="cp-series-detail-thumb-placeholder">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                        <rect x="3" y="3" width="18" height="18" rx="2"/>
+                        <circle cx="8.5" cy="8.5" r="1.5"/>
+                        <polyline points="21 15 16 10 5 21"/>
+                      </svg>
+                    </div>
+                    <div class="cp-series-detail-work-info">
+                      <p class="cp-series-detail-work-title">{{ work.work_title || '未命名' }}</p>
+                      <button class="cp-btn cp-btn-danger cp-btn-sm" @click="removeWorkFromSeries(work.work_id)">移除</button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </template>
+          </div>
+        </div>
+      </div>
+    </teleport>
+
+    <!-- ========== 弹窗：批量添加到合集 ========== -->
+    <teleport to="body">
+      <div v-if="showAddToSeriesDialog" ref="addToSeriesOverlayRef" class="cp-dialog-overlay" @click.self="closeAddToSeriesDialog">
+        <div ref="addToSeriesDialogRef" class="cp-dialog" @click.stop>
+          <h3 class="cp-dialog-title">添加到合集</h3>
+          <div style="display:flex;flex-direction:column;gap:16px;">
+            <p style="font-size:14px;color:#aaa;margin:0;">将选中的 {{ selectedWorkIds.length }} 件作品添加到：</p>
+            <div class="cp-form-group">
+              <label class="cp-form-label">选择合集 *</label>
+              <select v-model="addToSeriesTargetId" class="cp-form-select">
+                <option :value="null" disabled>请选择目标合集</option>
+                <option v-for="s in seriesList" :key="s.series_id" :value="s.series_id">{{ s.series_title }}</option>
+              </select>
+            </div>
+            <p v-if="seriesList.length === 0" style="font-size:13px;color:#7e7e7e;margin:0;">暂无合集，请先创建合集</p>
+          </div>
+          <div class="cp-dialog-footer">
+            <button class="cp-btn" @click="closeAddToSeriesDialog">取消</button>
+            <button class="cp-btn cp-btn-primary" :disabled="!addToSeriesTargetId" @click="submitAddToSeries">确认添加</button>
+          </div>
+        </div>
+      </div>
+    </teleport>
+
     <!-- ========== 弹窗：删除确认（使用统一组件） ========== -->
     <ConfirmDialog
       v-model:show="showDeleteDialog"
@@ -565,10 +701,11 @@
 </template>
 
 <script setup>
-import { ref, reactive, watch, onMounted, onUnmounted, nextTick } from 'vue'
+import { ref, reactive, watch, onMounted, onUnmounted, nextTick, computed } from 'vue'
 import gsap from 'gsap'
 import { useCreatorPanel } from '@/composables/useCreatorPanel'
 import { showError } from '@/utils/notification'
+import { getAvatarUrl } from '@/config/api'
 import ConfirmDialog from '@/components/ConfirmDialog.vue'
 import '@/assets/CSS/creatorPanel.css'
 
@@ -576,15 +713,18 @@ const {
   // 导航
   activeTab, tabs, switchTab,
   // 用户
-  userInfo,
+  userInfo, userStats,
   // 作品管理
   worksList, worksLoading, worksTotal, worksApprovalFilter, worksSearchTitle,
   selectedWorkIds, isAllSelected, hasSelection,
-  loadWorks, searchWorks, setWorksApprovalFilter, handleDeleteWork, handleBatchDeleteWorks, handleUpdateWork,
+  loadWorks, searchWorks, setWorksApprovalFilter, handleDeleteWork, handleBatchDeleteWorks, handleBatchAddToSeries, handleUpdateWork,
   toggleWorkSelect, toggleAllWorks, clearSelection,
   // 合集管理
   seriesList, seriesLoading, seriesTotal, seriesKeyword,
   loadSeries, searchSeries, handleAddSeries, handleUpdateSeries, handleDeleteSeries,
+  // 合集详情
+  seriesDetail, seriesDetailLoading, seriesDetailWorks,
+  loadSeriesDetail, handleRemoveWorkFromSeries,
   // 上传
   uploadForm, uploadLoading, resetUploadForm, setUploadFile, removeUploadFile, handleUpload,
   // 统计
@@ -594,6 +734,26 @@ const {
   // 路由
   goBack,
 } = useCreatorPanel()
+
+// 头像 URL（兼容 Profile 处理过的完整 URL 和登录时的原始 avatar_url）
+const avatarUrl = computed(() => {
+  const info = userInfo.value
+  if (info.avatar) return info.avatar
+  if (info.avatar_url) return getAvatarUrl(info.avatar_url)
+  return getAvatarUrl(null)
+})
+
+// 问候语
+const greetingText = computed(() => {
+  const hour = new Date().getHours()
+  if (hour < 6) return '夜深了'
+  if (hour < 9) return '早上好'
+  if (hour < 12) return '上午好'
+  if (hour < 14) return '中午好'
+  if (hour < 18) return '下午好'
+  if (hour < 22) return '晚上好'
+  return '夜深了'
+})
 
 // ==================== 文件上传 ====================
 const fileInputRef = ref(null)
@@ -904,6 +1064,75 @@ const submitSeriesForm = async () => {
   closeSeriesDialog()
 }
 
+// ==================== 合集详情弹窗 ====================
+const showSeriesDetailDialog = ref(false)
+const seriesDetailForm = reactive({ seriesTitle: '', aboutText: '' })
+const seriesDetailOverlayRef = ref(null)
+const seriesDetailDialogRef = ref(null)
+
+const openSeriesDetail = async (series) => {
+  // 1. 先保存数据（弹窗还没显示）
+  seriesDetail.value = {
+    series_id: series.series_id,
+    series_title: series.series_title,
+    about_text: series.about_text,
+  }
+  seriesDetailForm.seriesTitle = series.series_title || ''
+  seriesDetailForm.aboutText = series.about_text || ''
+  seriesDetailWorks.value = []  // 清空旧作品列表
+
+  // 2. 显示弹窗
+  showSeriesDetailDialog.value = true
+
+  // 3. 等待 DOM 渲染
+  await nextTick()
+
+  // 4. 设置初始状态并执行入场动画
+  if (seriesDetailOverlayRef.value && seriesDetailDialogRef.value) {
+    gsap.set(seriesDetailOverlayRef.value, { autoAlpha: 0 })
+    gsap.set(seriesDetailDialogRef.value, { scale: 0.9, autoAlpha: 0 })
+    gsap.timeline()
+      .to(seriesDetailOverlayRef.value, { autoAlpha: 1, duration: 0.25, ease: 'power2.out' }, 0)
+      .to(seriesDetailDialogRef.value, { scale: 1, autoAlpha: 1, duration: 0.3, ease: 'back.out(1.4)' }, 0.04)
+  }
+
+  // 5. 加载作品列表（异步进行，不阻塞弹窗显示）
+  loadSeriesDetail(series.series_id)
+}
+
+const closeSeriesDetailDialog = () => {
+  if (seriesDetailOverlayRef.value && seriesDetailDialogRef.value) {
+    const tl = gsap.timeline({
+      onComplete: () => {
+        showSeriesDetailDialog.value = false
+      }
+    })
+    tl.to(seriesDetailDialogRef.value, { scale: 0.95, autoAlpha: 0, duration: 0.2, ease: 'power2.in' }, 0)
+      .to(seriesDetailOverlayRef.value, { autoAlpha: 0, duration: 0.25, ease: 'power2.in' }, 0)
+  } else {
+    showSeriesDetailDialog.value = false
+  }
+}
+
+const submitSeriesDetailEdit = async () => {
+  if (!seriesDetail.value) return
+  const title = seriesDetailForm.seriesTitle.trim()
+  if (!title) {
+    showError('请输入合集名称')
+    return
+  }
+  await handleUpdateSeries({
+    seriesId: seriesDetail.value.series_id,
+    seriesTitle: title,
+    aboutText: seriesDetailForm.aboutText.trim() || undefined,
+  })
+}
+
+const removeWorkFromSeries = async (workId) => {
+  if (!seriesDetail.value) return
+  await handleRemoveWorkFromSeries(workId, seriesDetail.value.series_id)
+}
+
 // ==================== 删除确认 ====================
 const showDeleteDialog = ref(false)
 const deleteDialogTitle = ref('')
@@ -928,6 +1157,56 @@ const executeDelete = async () => {
   if (deleteCallback) await deleteCallback()
   showDeleteDialog.value = false
   deleteCallback = null
+}
+
+// ==================== 批量添加到合集弹窗 ====================
+const showAddToSeriesDialog = ref(false)
+const addToSeriesTargetId = ref(null)
+const addToSeriesOverlayRef = ref(null)
+const addToSeriesDialogRef = ref(null)
+
+const openAddToSeriesDialog = () => {
+  addToSeriesTargetId.value = null
+  showAddToSeriesDialog.value = true
+  // 打开时自动加载合集列表
+  if (seriesList.value.length === 0) {
+    loadSeries({ reset: true })
+  }
+  // GSAP 入场动画
+  nextTick(() => {
+    if (addToSeriesOverlayRef.value && addToSeriesDialogRef.value) {
+      gsap.set(addToSeriesOverlayRef.value, { autoAlpha: 0 })
+      gsap.set(addToSeriesDialogRef.value, { scale: 0.9, autoAlpha: 0 })
+      gsap.timeline()
+        .to(addToSeriesOverlayRef.value, { autoAlpha: 1, duration: 0.25, ease: 'power2.out' }, 0)
+        .to(addToSeriesDialogRef.value, { scale: 1, autoAlpha: 1, duration: 0.3, ease: 'back.out(1.4)' }, 0.04)
+    }
+  })
+}
+
+const closeAddToSeriesDialog = () => {
+  if (addToSeriesOverlayRef.value && addToSeriesDialogRef.value) {
+    const tl = gsap.timeline({
+      onComplete: () => {
+        showAddToSeriesDialog.value = false
+        addToSeriesTargetId.value = null
+      }
+    })
+    tl.to(addToSeriesDialogRef.value, { scale: 0.95, autoAlpha: 0, duration: 0.2, ease: 'power2.in' }, 0)
+      .to(addToSeriesOverlayRef.value, { autoAlpha: 0, duration: 0.25, ease: 'power2.in' }, 0)
+  } else {
+    showAddToSeriesDialog.value = false
+    addToSeriesTargetId.value = null
+  }
+}
+
+const submitAddToSeries = async () => {
+  if (!addToSeriesTargetId.value) {
+    showError('请选择目标合集')
+    return
+  }
+  await handleBatchAddToSeries(addToSeriesTargetId.value)
+  closeAddToSeriesDialog()
 }
 
 // ==================== 滚动加载 ====================
@@ -982,5 +1261,9 @@ onUnmounted(() => {
   if (editWorkDialogRef.value) gsap.killTweensOf(editWorkDialogRef.value)
   if (seriesOverlayRef.value) gsap.killTweensOf(seriesOverlayRef.value)
   if (seriesDialogRef.value) gsap.killTweensOf(seriesDialogRef.value)
+  if (seriesDetailOverlayRef.value) gsap.killTweensOf(seriesDetailOverlayRef.value)
+  if (seriesDetailDialogRef.value) gsap.killTweensOf(seriesDetailDialogRef.value)
+  if (addToSeriesOverlayRef.value) gsap.killTweensOf(addToSeriesOverlayRef.value)
+  if (addToSeriesDialogRef.value) gsap.killTweensOf(addToSeriesDialogRef.value)
 })
 </script>
