@@ -22,6 +22,13 @@ import {
 import { fetchUserSeries } from '../api/workApi'
 import { showSuccess, showError, showInfo } from '../utils/notification'
 import { API_BASE_URL } from '../config/api'
+import { useDialogAnimation } from './creatorPanel/useDialogAnimation'
+import { useFileUpload } from './creatorPanel/useFileUpload'
+import { useIndicatorSlider } from './creatorPanel/useIndicatorSlider'
+import { useEditWorkDialog } from './creatorPanel/useEditWorkDialog'
+import { useSeriesDialogs } from './creatorPanel/useSeriesDialogs'
+import { useDeleteConfirm } from './creatorPanel/useDeleteConfirm'
+import { useScrollLoad } from './creatorPanel/useScrollLoad'
 
 export const useCreatorPanel = () => {
   const router = useRouter()
@@ -449,6 +456,54 @@ export const useCreatorPanel = () => {
     return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`
   }
 
+  // ==================== 子模块实例 ====================
+  
+  // 上传文件管理
+  const uploadFile = useFileUpload({
+    onFileSet: (file) => {
+      uploadForm.file = file
+    }
+  })
+
+  // 筛选标签指示器
+  const filterIndicator = useIndicatorSlider()
+
+  // 上传表单单选指示器
+  const uploadRadioIndicator = useIndicatorSlider()
+
+  // 编辑表单单选指示器
+  const editRadioIndicator = useIndicatorSlider()
+
+  // 编辑作品弹窗
+  const editWorkDialog = useEditWorkDialog({
+    seriesList,
+    loadSeries,
+    handleUpdateWork,
+    updateEditRadioIndicator: () => editRadioIndicator.update('.cp-radio-btn.active')
+  })
+
+  // 合集弹窗
+  const seriesDialogs = useSeriesDialogs({
+    handleAddSeries,
+    handleUpdateSeries,
+    handleRemoveWorkFromSeries,
+    handleBatchAddToSeries,
+    loadSeries,
+    seriesList,
+    selectedWorkIds,
+    loadSeriesDetail
+  })
+
+  // 删除确认
+  const deleteConfirm = useDeleteConfirm(handleDeleteWork, handleDeleteSeries)
+
+  // 滚动加载
+  const scrollLoad = useScrollLoad({
+    loadMore: loadWorks,
+    hasMore: () => worksList.value.length < worksTotal.value,
+    isLoading: () => worksLoading.value
+  })
+
   // ==================== 初始化 ====================
   onMounted(() => {
     loadWorks({ reset: true })
@@ -472,7 +527,6 @@ export const useCreatorPanel = () => {
     seriesList, seriesLoading, seriesTotal, seriesKeyword,
     loadSeries, searchSeries, handleAddSeries, handleUpdateSeries, handleDeleteSeries,
     // 合集详情
-    seriesDetail, seriesDetailLoading, seriesDetailWorks,
     loadSeriesDetail, handleRemoveWorkFromSeries,
 
     // 上传
@@ -486,5 +540,17 @@ export const useCreatorPanel = () => {
 
     // 路由
     goBack: () => router.push('/profile/me'),
+
+    // UI 交互子模块
+    uploadFile,
+    filterIndicator,
+    uploadRadioIndicator,
+    editRadioIndicator,
+
+    // 弹窗子模块
+    editWorkDialog,
+    seriesDialogs,
+    deleteConfirm,
+    scrollLoad,
   }
 }

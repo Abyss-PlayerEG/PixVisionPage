@@ -342,7 +342,7 @@
                 <p class="cp-upload-hint">支持 JPG / JPEG / PNG 格式，最大 32MB · 可拖拽上传</p>
               </template>
               <template v-else>
-                <img :src="uploadForm.filePreview" class="cp-upload-preview" alt="预览" />
+                <img :src="uploadFile.preview.value" class="cp-upload-preview" alt="预览" />
                 <button class="cp-upload-remove-btn" @click.stop="removeUploadFile" title="移除图片">
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
@@ -708,7 +708,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, watch, onMounted, onUnmounted, nextTick, computed } from 'vue'
+import { ref, watch, onMounted, onUnmounted, nextTick, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import gsap from 'gsap'
 import { useCreatorPanel } from '@/composables/useCreatorPanel'
@@ -731,16 +731,25 @@ const {
   seriesList, seriesLoading, seriesTotal, seriesKeyword,
   loadSeries, searchSeries, handleAddSeries, handleUpdateSeries, handleDeleteSeries,
   // 合集详情
-  seriesDetail, seriesDetailLoading, seriesDetailWorks,
   loadSeriesDetail, handleRemoveWorkFromSeries,
   // 上传
-  uploadForm, uploadLoading, resetUploadForm, setUploadFile, removeUploadFile, handleUpload,
+  uploadForm, uploadLoading, resetUploadForm, handleUpload,
   // 统计
   stats,
   // 工具
   approvalStatusLabel, approvalStatusClass, formatTime,
   // 路由
   goBack,
+  // UI 交互子模块
+  uploadFile,
+  filterIndicator,
+  uploadRadioIndicator,
+  editRadioIndicator,
+  // 弹窗子模块
+  editWorkDialog,
+  seriesDialogs,
+  deleteConfirm,
+  scrollLoad,
 } = useCreatorPanel()
 
 const router = useRouter()
@@ -750,51 +759,24 @@ const goToWorkDetail = (workId) => {
   router.push(`/work/${workId}`)
 }
 
-// ==================== 滑动指示器工具函数 ====================
-const updateIndicator = (containerRef, activeSelector, styleRef) => {
-  nextTick(() => {
-    if (!containerRef) return
-    const activeBtn = containerRef.querySelector(activeSelector)
-    if (activeBtn) {
-      const containerRect = containerRef.getBoundingClientRect()
-      const btnRect = activeBtn.getBoundingClientRect()
-      styleRef.value = {
-        left: `${btnRect.left - containerRect.left}px`,
-        width: `${btnRect.width}px`
-      }
-    }
-  })
-}
+// ==================== 指示器别名（方便模板使用） ====================
+const filterTabsRef = filterIndicator.containerRef
+const filterIndicatorStyle = filterIndicator.indicatorStyle
+const updateFilterIndicator = () => filterIndicator.update('.cp-filter-tab.active')
 
-// ==================== 筛选标签滑动指示器 ====================
-const filterTabsRef = ref(null)
-const filterIndicatorStyle = ref({ left: '4px', width: '0px' })
+const uploadRadioGroupRef = uploadRadioIndicator.containerRef
+const uploadRadioIndicatorStyle = uploadRadioIndicator.indicatorStyle
+const updateUploadRadioIndicator = () => uploadRadioIndicator.update('.cp-radio-btn.active')
 
-const updateFilterIndicator = () => {
-  updateIndicator(filterTabsRef.value, '.cp-filter-tab.active', filterIndicatorStyle)
-}
+const editRadioGroupRef = editRadioIndicator.containerRef
+const editRadioIndicatorStyle = editRadioIndicator.indicatorStyle
+const updateEditRadioIndicator = () => editRadioIndicator.update('.cp-radio-btn.active')
 
 // 监听筛选条件变化，更新指示器位置
 watch(() => worksApprovalFilter.value, updateFilterIndicator, { immediate: true })
 
-// ==================== 单选按钮滑动指示器 ====================
-const uploadRadioGroupRef = ref(null)
-const uploadRadioIndicatorStyle = ref({ left: '4px', width: '0px' })
-
-const editRadioGroupRef = ref(null)
-const editRadioIndicatorStyle = ref({ left: '4px', width: '0px' })
-
-const updateUploadRadioIndicator = () => {
-  updateIndicator(uploadRadioGroupRef.value, '.cp-radio-btn.active', uploadRadioIndicatorStyle)
-}
-
-const updateEditRadioIndicator = () => {
-  updateIndicator(editRadioGroupRef.value, '.cp-radio-btn.active', editRadioIndicatorStyle)
-}
-
 // 监听上传表单 isOriginal 变化
 watch(() => uploadForm.isOriginal, () => {
-  // 上传表单中的 radio group 可能不存在（tab 未切换到上传），需要检查
   if (uploadRadioGroupRef.value) {
     updateUploadRadioIndicator()
   }
@@ -837,35 +819,24 @@ const triggerFileInput = () => {
 
 const onFileSelect = (e) => {
   const file = e.target.files?.[0]
-  if (file) setUploadFile(file)
-  // 清空 input 以允许重复选择同一文件
+  if (file) {
+    uploadFile.setFile(file)
+    uploadForm.file = uploadFile.file.value
+  }
   e.target.value = ''
 }
 
-// ── 拖拽上传 ──
-const isUploadDragOver = ref(false)
-const uploadDragCounter = ref(0)  // 处理嵌套元素触发的多次 enter/leave
+// 拖拽上传 - 使用 uploadFile 模块
+const isUploadDragOver = uploadFile.isDragOver
+const onUploadDragEnter = uploadFile.onDragEnter
+const onUploadDragOver = uploadFile.onDragOver
+const onUploadDragLeave = uploadFile.onDragLeave
+const onUploadDrop = uploadFile.onDrop
 
-const onUploadDragEnter = (e) => {
-  e.preventDefault()
-  uploadDragCounter.value++
-  if (uploadDragCounter.value === 1) isUploadDragOver.value = true
-}
-const onUploadDragOver = (e) => { e.preventDefault() }
-const onUploadDragLeave = (e) => {
-  e.preventDefault()
-  uploadDragCounter.value--
-  if (uploadDragCounter.value <= 0) {
-    uploadDragCounter.value = 0
-    isUploadDragOver.value = false
-  }
-}
-const onUploadDrop = (e) => {
-  e.preventDefault()
-  isUploadDragOver.value = false
-  uploadDragCounter.value = 0
-  const file = e.dataTransfer?.files?.[0]
-  if (file) setUploadFile(file)
+// 上传文件的预览和移除
+const removeUploadFile = () => {
+  uploadFile.removeFile()
+  uploadForm.file = null
 }
 
 // 自动加载合集列表（供上传时选择）
@@ -881,129 +852,29 @@ watch(activeTab, (tab) => {
   }
 })
 
-// ==================== 编辑作品 ====================
-const showEditWorkDialog = ref(false)
-const editWorkTarget = ref(null)
-const editWorkSubmitting = ref(false)
-const editWorkForm = reactive({
-  workTitle: '',
-  seriesId: 0,
-  isOriginal: true,
-  outUrl: '',
-  file: null,
-  imagePreview: '',
-})
-
-// 监听编辑表单 isOriginal 变化
-watch(() => editWorkForm.isOriginal, () => {
-  // 编辑弹窗中的 radio group 可能不存在，需要检查
-  if (editRadioGroupRef.value) {
-    updateEditRadioIndicator()
-  }
-})
-
-// GSAP 动画 refs
-const editWorkOverlayRef = ref(null)
-const editWorkDialogRef = ref(null)
-
-const editFileInput = ref(null)
-
-const openEditWorkDialog = (work) => {
-  editWorkTarget.value = work
-  editWorkForm.workTitle = work.work_title || ''
-  editWorkForm.seriesId = work.series_id || 0
-  editWorkForm.isOriginal = work.is_original !== false
-  editWorkForm.outUrl = work.out_url || ''
-  editWorkForm.file = null
-  editWorkForm.imagePreview = work.thumbFullUrl || ''
-  showEditWorkDialog.value = true
-  // 打开时自动加载合集列表
-  if (seriesList.value.length === 0) {
-    loadSeries({ reset: true })
-  }
-  // GSAP 入场动画
-  nextTick(() => {
-    // 更新编辑弹窗中的 radio 指示器位置
-    updateEditRadioIndicator()
-    if (editWorkOverlayRef.value && editWorkDialogRef.value) {
-      gsap.set(editWorkOverlayRef.value, { autoAlpha: 0 })
-      gsap.set(editWorkDialogRef.value, { scale: 0.9, autoAlpha: 0 })
-      gsap.timeline()
-        .to(editWorkOverlayRef.value, { autoAlpha: 1, duration: 0.25, ease: 'power2.out' }, 0)
-        .to(editWorkDialogRef.value, { scale: 1, autoAlpha: 1, duration: 0.3, ease: 'back.out(1.4)' }, 0.04)
-    }
-  })
-}
-
-const closeEditWorkDialog = () => {
-  if (editWorkOverlayRef.value && editWorkDialogRef.value) {
-    const tl = gsap.timeline({
-      onComplete: () => {
-        showEditWorkDialog.value = false
-        editWorkSubmitting.value = false
-      }
-    })
-    tl.to(editWorkDialogRef.value, { scale: 0.95, autoAlpha: 0, duration: 0.2, ease: 'power2.in' }, 0)
-      .to(editWorkOverlayRef.value, { autoAlpha: 0, duration: 0.25, ease: 'power2.in' }, 0)
-  } else {
-    showEditWorkDialog.value = false
-  }
-}
-
-// ── 编辑弹窗文件选择 ──
-const onEditFileSelect = (e) => {
-  const file = e.target.files?.[0]
-  if (file) setEditFile(file)
-  e.target.value = ''
-}
-
-const setEditFile = (file) => {
-  const allowedTypes = ['image/jpeg', 'image/png']
-  if (!allowedTypes.includes(file.type)) {
-    showError('仅支持 JPG/JPEG/PNG 格式')
-    return
-  }
-  if (file.size > 32 * 1024 * 1024) {
-    showError('图片大小不能超过 32MB')
-    return
-  }
-  editWorkForm.file = file
-  editWorkForm.imagePreview = URL.createObjectURL(file)
-}
-
-const removeEditFile = () => {
-  if (editWorkForm.imagePreview && editWorkForm.file) {
-    URL.revokeObjectURL(editWorkForm.imagePreview)
-  }
-  editWorkForm.file = null
-  editWorkForm.imagePreview = editWorkTarget.value?.thumbFullUrl || ''
-}
-
-// ── 编辑弹窗拖拽上传 ──
-const isEditDragOver = ref(false)
-const editDragCounter = ref(0)
-
-const onEditDragEnter = (e) => {
-  e.preventDefault()
-  editDragCounter.value++
-  if (editDragCounter.value === 1) isEditDragOver.value = true
-}
-const onEditDragOver = (e) => { e.preventDefault() }
-const onEditDragLeave = (e) => {
-  e.preventDefault()
-  editDragCounter.value--
-  if (editDragCounter.value <= 0) {
-    editDragCounter.value = 0
-    isEditDragOver.value = false
-  }
-}
-const onEditDrop = (e) => {
-  e.preventDefault()
-  isEditDragOver.value = false
-  editDragCounter.value = 0
-  const file = e.dataTransfer?.files?.[0]
-  if (file) setEditFile(file)
-}
+// ==================== 编辑作品（使用 editWorkDialog 模块） ====================
+const {
+  show: showEditWorkDialog,
+  target: editWorkTarget,
+  submitting: editWorkSubmitting,
+  form: editWorkForm,
+  overlayRef: editWorkOverlayRef,
+  dialogRef: editWorkDialogRef,
+  fileInputRef: editFileInput,
+  editFile,
+  radioIndicator: editRadioIndicatorRef,
+  open: openEditWorkDialog,
+  close: closeEditWorkDialog,
+  onFileSelect: onEditFileSelect,
+  removeFile: removeEditFile,
+  toggleOriginal: toggleEditOriginal,
+  submit: submitEditWork,
+  isDragOver: isEditDragOver,
+  onDragEnter: onEditDragEnter,
+  onDragOver: onEditDragOver,
+  onDragLeave: onEditDragLeave,
+  onDrop: onEditDrop,
+} = editWorkDialog
 
 // ── 转载链接动画钩子 ──
 const onOutUrlBeforeEnter = (el) => {
@@ -1033,297 +904,55 @@ const onOutUrlLeave = (el, done) => {
   })
 }
 
-// ── 切换原创/转载 ──
-const toggleEditOriginal = (value) => {
-  if (editWorkForm.isOriginal === value) return
-  editWorkForm.isOriginal = value
-}
+// ==================== 合集弹窗（使用 seriesDialogs 模块） ====================
+const {
+  showAddSeriesDialog,
+  showEditSeriesDialog,
+  editSeriesTarget,
+  seriesForm,
+  seriesOverlayRef,
+  seriesDialogRef,
+  openAddSeriesDialog,
+  openEditSeriesDialog,
+  closeSeriesDialog,
+  submitSeriesForm,
 
-const submitEditWork = async () => {
-  if (!editWorkTarget.value) return
-  
-  // 参数校验
-  const newTitle = editWorkForm.workTitle.trim()
-  if (!newTitle) {
-    showError('请输入作品标题')
-    return
-  }
-  if (newTitle.length > 16) {
-    showError('作品标题最多16个中文字符')
-    return
-  }
-  if (!editWorkForm.isOriginal && !editWorkForm.outUrl.trim()) {
-    showError('转载作品必须填写外部链接')
-    return
-  }
+  showSeriesDetailDialog,
+  seriesDetail,
+  seriesDetailLoading,
+  seriesDetailWorks,
+  seriesDetailForm,
+  seriesDetailOverlayRef,
+  seriesDetailDialogRef,
+  openSeriesDetail,
+  closeSeriesDetailDialog,
+  submitSeriesDetailEdit,
+  removeWorkFromSeries,
 
-  editWorkSubmitting.value = true
-  await handleUpdateWork({
-    workId: editWorkTarget.value.work_id,
-    workTitle: newTitle,
-    file: editWorkForm.file,
-    seriesId: editWorkForm.seriesId,
-    isOriginal: editWorkForm.isOriginal,
-    outUrl: editWorkForm.isOriginal ? undefined : editWorkForm.outUrl.trim(),
-  })
-  editWorkSubmitting.value = false
-  closeEditWorkDialog()
-}
+  showAddToSeriesDialog,
+  addToSeriesTargetId,
+  addToSeriesOverlayRef,
+  addToSeriesDialogRef,
+  openAddToSeriesDialog,
+  closeAddToSeriesDialog,
+  submitAddToSeries,
+} = seriesDialogs
 
-// ==================== 合集弹窗 ====================
-const showAddSeriesDialog = ref(false)
-const showEditSeriesDialog = ref(false)
-const editSeriesTarget = ref(null)
-const seriesForm = reactive({ seriesTitle: '', aboutText: '' })
+// ==================== 删除确认（使用 deleteConfirm 模块） ====================
+const {
+  show: showDeleteDialog,
+  title: deleteDialogTitle,
+  message: deleteDialogMessage,
+  confirmDeleteWork,
+  confirmDeleteSeries,
+  execute: executeDelete,
+} = deleteConfirm
 
-// GSAP 动画 refs
-const seriesOverlayRef = ref(null)
-const seriesDialogRef = ref(null)
-
-const openAddSeriesDialog = () => {
-  showAddSeriesDialog.value = true
-  // GSAP 入场动画
-  nextTick(() => {
-    if (seriesOverlayRef.value && seriesDialogRef.value) {
-      gsap.set(seriesOverlayRef.value, { autoAlpha: 0 })
-      gsap.set(seriesDialogRef.value, { scale: 0.9, autoAlpha: 0 })
-      gsap.timeline()
-        .to(seriesOverlayRef.value, { autoAlpha: 1, duration: 0.25, ease: 'power2.out' }, 0)
-        .to(seriesDialogRef.value, { scale: 1, autoAlpha: 1, duration: 0.3, ease: 'back.out(1.4)' }, 0.04)
-    }
-  })
-}
-
-const openEditSeriesDialog = (series) => {
-  editSeriesTarget.value = series
-  seriesForm.seriesTitle = series.series_title || ''
-  seriesForm.aboutText = series.about_text || ''
-  showEditSeriesDialog.value = true
-  // GSAP 入场动画
-  nextTick(() => {
-    if (seriesOverlayRef.value && seriesDialogRef.value) {
-      gsap.set(seriesOverlayRef.value, { autoAlpha: 0 })
-      gsap.set(seriesDialogRef.value, { scale: 0.9, autoAlpha: 0 })
-      gsap.timeline()
-        .to(seriesOverlayRef.value, { autoAlpha: 1, duration: 0.25, ease: 'power2.out' }, 0)
-        .to(seriesDialogRef.value, { scale: 1, autoAlpha: 1, duration: 0.3, ease: 'back.out(1.4)' }, 0.04)
-    }
-  })
-}
-
-const closeSeriesDialog = () => {
-  if (seriesOverlayRef.value && seriesDialogRef.value) {
-    const tl = gsap.timeline({
-      onComplete: () => {
-        showAddSeriesDialog.value = false
-        showEditSeriesDialog.value = false
-        editSeriesTarget.value = null
-        seriesForm.seriesTitle = ''
-        seriesForm.aboutText = ''
-      }
-    })
-    tl.to(seriesDialogRef.value, { scale: 0.95, autoAlpha: 0, duration: 0.2, ease: 'power2.in' }, 0)
-      .to(seriesOverlayRef.value, { autoAlpha: 0, duration: 0.25, ease: 'power2.in' }, 0)
-  } else {
-    showAddSeriesDialog.value = false
-    showEditSeriesDialog.value = false
-    editSeriesTarget.value = null
-    seriesForm.seriesTitle = ''
-    seriesForm.aboutText = ''
-  }
-}
-
-const submitSeriesForm = async () => {
-  const title = seriesForm.seriesTitle.trim()
-  if (!title) return
-
-  if (showEditSeriesDialog.value && editSeriesTarget.value) {
-    await handleUpdateSeries({
-      seriesId: editSeriesTarget.value.series_id,
-      seriesTitle: title,
-      aboutText: seriesForm.aboutText.trim() || undefined,
-    })
-  } else {
-    await handleAddSeries({
-      seriesTitle: title,
-      aboutText: seriesForm.aboutText.trim() || undefined,
-    })
-  }
-  closeSeriesDialog()
-}
-
-// ==================== 合集详情弹窗 ====================
-const showSeriesDetailDialog = ref(false)
-const seriesDetailForm = reactive({ seriesTitle: '', aboutText: '' })
-const seriesDetailOverlayRef = ref(null)
-const seriesDetailDialogRef = ref(null)
-
-const openSeriesDetail = async (series) => {
-  // 1. 先保存数据（弹窗还没显示）
-  seriesDetail.value = {
-    series_id: series.series_id,
-    series_title: series.series_title,
-    about_text: series.about_text,
-  }
-  seriesDetailForm.seriesTitle = series.series_title || ''
-  seriesDetailForm.aboutText = series.about_text || ''
-  seriesDetailWorks.value = []  // 清空旧作品列表
-
-  // 2. 显示弹窗
-  showSeriesDetailDialog.value = true
-
-  // 3. 等待 DOM 渲染
-  await nextTick()
-
-  // 4. 设置初始状态并执行入场动画
-  if (seriesDetailOverlayRef.value && seriesDetailDialogRef.value) {
-    gsap.set(seriesDetailOverlayRef.value, { autoAlpha: 0 })
-    gsap.set(seriesDetailDialogRef.value, { scale: 0.9, autoAlpha: 0 })
-    gsap.timeline()
-      .to(seriesDetailOverlayRef.value, { autoAlpha: 1, duration: 0.25, ease: 'power2.out' }, 0)
-      .to(seriesDetailDialogRef.value, { scale: 1, autoAlpha: 1, duration: 0.3, ease: 'back.out(1.4)' }, 0.04)
-  }
-
-  // 5. 加载作品列表（异步进行，不阻塞弹窗显示）
-  loadSeriesDetail(series.series_id)
-}
-
-const closeSeriesDetailDialog = () => {
-  if (seriesDetailOverlayRef.value && seriesDetailDialogRef.value) {
-    const tl = gsap.timeline({
-      onComplete: () => {
-        showSeriesDetailDialog.value = false
-      }
-    })
-    tl.to(seriesDetailDialogRef.value, { scale: 0.95, autoAlpha: 0, duration: 0.2, ease: 'power2.in' }, 0)
-      .to(seriesDetailOverlayRef.value, { autoAlpha: 0, duration: 0.25, ease: 'power2.in' }, 0)
-  } else {
-    showSeriesDetailDialog.value = false
-  }
-}
-
-const submitSeriesDetailEdit = async () => {
-  if (!seriesDetail.value) return
-  const title = seriesDetailForm.seriesTitle.trim()
-  if (!title) {
-    showError('请输入合集名称')
-    return
-  }
-  await handleUpdateSeries({
-    seriesId: seriesDetail.value.series_id,
-    seriesTitle: title,
-    aboutText: seriesDetailForm.aboutText.trim() || undefined,
-  })
-}
-
-const removeWorkFromSeries = async (workId) => {
-  if (!seriesDetail.value) return
-  await handleRemoveWorkFromSeries(workId, seriesDetail.value.series_id)
-}
-
-// ==================== 删除确认 ====================
-const showDeleteDialog = ref(false)
-const deleteDialogTitle = ref('')
-const deleteDialogMessage = ref('')
-let deleteCallback = null
-
-const confirmDeleteWork = (work) => {
-  deleteDialogTitle.value = '删除作品'
-  deleteDialogMessage.value = `确定要删除作品「${work.work_title || '未命名'}」吗？此操作不可撤销。`
-  deleteCallback = () => handleDeleteWork(work.work_id)
-  showDeleteDialog.value = true
-}
-
-const confirmDeleteSeries = (series) => {
-  deleteDialogTitle.value = '删除合集'
-  deleteDialogMessage.value = `确定要删除合集「${series.series_title || '未命名'}」吗？合集内的作品不会被删除。`
-  deleteCallback = () => handleDeleteSeries(series.series_id, false)
-  showDeleteDialog.value = true
-}
-
-const executeDelete = async () => {
-  if (deleteCallback) await deleteCallback()
-  showDeleteDialog.value = false
-  deleteCallback = null
-}
-
-// ==================== 批量添加到合集弹窗 ====================
-const showAddToSeriesDialog = ref(false)
-const addToSeriesTargetId = ref(null)
-const addToSeriesOverlayRef = ref(null)
-const addToSeriesDialogRef = ref(null)
-
-const openAddToSeriesDialog = () => {
-  addToSeriesTargetId.value = null
-  showAddToSeriesDialog.value = true
-  // 打开时自动加载合集列表
-  if (seriesList.value.length === 0) {
-    loadSeries({ reset: true })
-  }
-  // GSAP 入场动画
-  nextTick(() => {
-    if (addToSeriesOverlayRef.value && addToSeriesDialogRef.value) {
-      gsap.set(addToSeriesOverlayRef.value, { autoAlpha: 0 })
-      gsap.set(addToSeriesDialogRef.value, { scale: 0.9, autoAlpha: 0 })
-      gsap.timeline()
-        .to(addToSeriesOverlayRef.value, { autoAlpha: 1, duration: 0.25, ease: 'power2.out' }, 0)
-        .to(addToSeriesDialogRef.value, { scale: 1, autoAlpha: 1, duration: 0.3, ease: 'back.out(1.4)' }, 0.04)
-    }
-  })
-}
-
-const closeAddToSeriesDialog = () => {
-  if (addToSeriesOverlayRef.value && addToSeriesDialogRef.value) {
-    const tl = gsap.timeline({
-      onComplete: () => {
-        showAddToSeriesDialog.value = false
-        addToSeriesTargetId.value = null
-      }
-    })
-    tl.to(addToSeriesDialogRef.value, { scale: 0.95, autoAlpha: 0, duration: 0.2, ease: 'power2.in' }, 0)
-      .to(addToSeriesOverlayRef.value, { autoAlpha: 0, duration: 0.25, ease: 'power2.in' }, 0)
-  } else {
-    showAddToSeriesDialog.value = false
-    addToSeriesTargetId.value = null
-  }
-}
-
-const submitAddToSeries = async () => {
-  if (!addToSeriesTargetId.value) {
-    showError('请选择目标合集')
-    return
-  }
-  await handleBatchAddToSeries(addToSeriesTargetId.value)
-  closeAddToSeriesDialog()
-}
-
-// ==================== 滚动加载 ====================
-const worksScrollTrigger = ref(null)
-let scrollObserver = null
-
-// 初始化 IntersectionObserver
-const initScrollObserver = () => {
-  // 先断开旧的
-  if (scrollObserver) {
-    scrollObserver.disconnect()
-    scrollObserver = null
-  }
-  
-  nextTick(() => {
-    if (worksScrollTrigger.value) {
-      scrollObserver = new IntersectionObserver(
-        (entries) => {
-          if (entries[0].isIntersecting && worksList.value.length < worksTotal.value && !worksLoading.value) {
-            loadWorks()
-          }
-        },
-        { rootMargin: '200px' }
-      )
-      scrollObserver.observe(worksScrollTrigger.value)
-      console.log('🔄 滚动加载观察器已初始化')
-    }
-  })
-}
+// ==================== 滚动加载（使用 scrollLoad 模块） ====================
+const {
+  triggerRef: worksScrollTrigger,
+  init: initScrollObserver,
+} = scrollLoad
 
 // 监听 tab 切换，重新初始化观察器
 watch(activeTab, (tab) => {
@@ -1345,20 +974,10 @@ onMounted(() => {
 })
 
 onUnmounted(() => {
-  if (scrollObserver) {
-    scrollObserver.disconnect()
-    scrollObserver = null
-  }
   // 移除窗口大小变化监听
   window.removeEventListener('resize', handleResize)
   // 清理 GSAP 动画
-  if (editWorkOverlayRef.value) gsap.killTweensOf(editWorkOverlayRef.value)
-  if (editWorkDialogRef.value) gsap.killTweensOf(editWorkDialogRef.value)
-  if (seriesOverlayRef.value) gsap.killTweensOf(seriesOverlayRef.value)
-  if (seriesDialogRef.value) gsap.killTweensOf(seriesDialogRef.value)
-  if (seriesDetailOverlayRef.value) gsap.killTweensOf(seriesDetailOverlayRef.value)
-  if (seriesDetailDialogRef.value) gsap.killTweensOf(seriesDetailDialogRef.value)
-  if (addToSeriesOverlayRef.value) gsap.killTweensOf(addToSeriesOverlayRef.value)
-  if (addToSeriesDialogRef.value) gsap.killTweensOf(addToSeriesDialogRef.value)
+  editWorkDialog.cleanup()
+  seriesDialogs.cleanup()
 })
 </script>
