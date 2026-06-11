@@ -66,6 +66,21 @@ export const WORK_API = {
   DETAIL: `${API_BASE_URL}/api/work/detail`,  // 查询单个作品（公开接口）
   LAST_ID: `${API_BASE_URL}/api/work/last-id`, // 获取最大作品 ID
   RANDOM: `${API_BASE_URL}/api/work/random`,   // 随机获取一个作品
+  MY_WORKS: `${API_BASE_URL}/api/work/my-works`, // 查询自己的作品（需登录），路径后拼 /current/size
+  UPDATE: `${API_BASE_URL}/api/work/update`,      // 修改作品（需登录）
+  DELETE: `${API_BASE_URL}/api/work/delete`,       // 删除作品（需登录）
+};
+
+// 作品上传接口
+export const WORK_UPLOAD_API = `${API_BASE_URL}/api/image/work/upload`;
+
+// 创作者作品系列管理接口
+export const CREATOR_SERIES_API = {
+  ADD: `${API_BASE_URL}/api/work/series/add`,                        // 新增系列
+  UPDATE: `${API_BASE_URL}/api/work/series/update`,                   // 更新系列
+  DELETE: `${API_BASE_URL}/api/work/series/delete`,                   // 删除系列
+  BATCH_ADD_WORKS: `${API_BASE_URL}/api/work/series/batch-add-works`, // 批量添加作品到系列
+  BATCH_REMOVE_WORKS: `${API_BASE_URL}/api/work/series/batch-remove-works`, // 批量从系列移除作品
 };
 
 // 评论相关接口
@@ -102,6 +117,7 @@ export const STAR_API = {
 export const SERIES_API = {
   PAGE: `${API_BASE_URL}/api/work/series/page`, // GET，路径后拼 /userId/current/size
   DETAIL: `${API_BASE_URL}/api/work/series/detail`, // GET，路径后拼 /seriesId
+  ...CREATOR_SERIES_API, // 展开创作者系列管理接口
 };
 
 // 账号管理相关接口

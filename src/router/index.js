@@ -42,6 +42,13 @@ const router = createRouter({
             component: () => import('../views/Admin.vue'),
             meta: { requiresAuth: true },
         },
+        // 创作者面板
+        {
+            path: '/creator',
+            name: 'creator',
+            component: () => import('../views/CreatorPanel.vue'),
+            meta: { requiresAuth: true },
+        },
         // 404页面 - 捕获所有未匹配的路径（必须放在最后）
         {
             path: '/:pathMatch(.*)*',
@@ -105,6 +112,17 @@ router.beforeEach((to) => {
         // 只有审核员(55)和系统管理员(77)可以访问管理后台
         if (userRole !== 55 && userRole !== 77) {
             return { name: 'home' };
+        }
+    }
+
+    // 创作者路由 - 额外检查角色权限
+    if (to.name === 'creator') {
+        const userInfo = JSON.parse(localStorage.getItem('userInfo') || '{}');
+        const userRole = userInfo.user_role || 0;
+        
+        // 只有创作者(22)和系统管理员(77)可以访问创作中心
+        if (userRole !== 22 && userRole !== 77) {
+            return { name: 'profileMe' };
         }
     }
 

@@ -675,12 +675,13 @@ export const fetchOperationLogs = async (params = {}) => {
 /**
  * 获取合集列表（分页）
  * @param {Object} params - 查询参数
- * @param {number} [params.current=1] - 当前页
- * @param {number} [params.size=20] - 每页数量
- * @param {string} [params.keyword] - 模糊搜索合集标题
- * @param {string} [params.orderBy] - 排序：newest/oldest
- * @param {number} [params.status] - 审核状态筛选
+ * @param {number} [params.current=1] - 当前页码（从1开始）
+ * @param {number} [params.size=20] - 每页大小
+ * @param {string} [params.keyword] - 搜索关键词（同时匹配标题和描述，标题匹配优先排序）
+ * @param {string} [params.orderBy] - 排序方式：'oldest'=最早创建，其他或不传=最新创建
+ * @param {number} [params.status] - 审核状态：10=正常, 20=待审核, 30=未过审
  * @param {number} [params.userId] - 用户ID筛选
+ * @param {boolean} [params.isDelete] - 删除状态：true=仅已删除, false=仅未删除, 不传=不过滤
  * @returns {Promise<Object>} { success, data: { records, total, current, size } }
  */
 export const fetchSeriesList = async (params = {}) => {
@@ -688,16 +689,17 @@ export const fetchSeriesList = async (params = {}) => {
     const token = localStorage.getItem('token')
     if (!token) return { success: false, message: '未登录' }
 
-    const { current = 1, size = 20, keyword = '', orderBy = 'newest', status, userId } = params
+    const { current = 1, size = 20, keyword = '', orderBy = 'newest', status, userId, isDelete } = params
     const queryParts = []
     if (keyword) queryParts.push(`keyword=${encodeURIComponent(keyword)}`)
     queryParts.push(`orderBy=${orderBy}`)
     if (status !== undefined && status !== '') queryParts.push(`status=${status}`)
     if (userId !== undefined && userId !== '') queryParts.push(`userId=${userId}`)
+    if (isDelete !== undefined) queryParts.push(`isDelete=${isDelete}`)
     let url = ADMIN_API.SERIES_LIST(current, size)
     if (queryParts.length > 0) url += '?' + queryParts.join('&')
 
-    console.log('📋 获取合集列表:', url, '参数:', { current, size, keyword: keyword || '(无)', orderBy, status, userId })
+    console.log('📋 获取合集列表:', url, '参数:', { current, size, keyword: keyword || '(无)', orderBy, status, userId, isDelete })
     const response = await fetch(url, {
       method: 'GET',
       headers: { 'Authorization': `Bearer ${token}` },

@@ -157,7 +157,7 @@ const formatStatNumber = (num) => {
 
 // 创作中心入口
 const goCreatorCenter = () => {
-  // todo: 跳转创作中心
+  router.push('/creator')
 }
 
 const showCreatorApplyDialog = ref(false)

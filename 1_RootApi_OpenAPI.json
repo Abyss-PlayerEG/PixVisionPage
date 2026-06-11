@@ -7,7 +7,7 @@
   },
   "servers": [
     {
-      "url": "http://localhost:9090",
+      "url": "http://124.221.107.68:1899",
       "description": "Generated server url"
     }
   ],
@@ -1971,7 +1971,7 @@
           "系统管理员接口 - 用户管理"
         ],
         "summary": "分页查询用户信息",
-        "description": "# 分页查询用户信息（需要登录认证 + 角色权限[55, 77]）\n\n## 特性\n- 支持分页查询用户完整信息\n- 支持按用户角色筛选（可选）\n- 支持按用户状态筛选（可选）\n- 支持按删除标记筛选（可选）\n- 支持按昵称关键字模糊查询（可选）\n- 支持排序方式（可选）\n- 审核员和系统管理员均可调用\n\n## 参数说明：\n- **page**: 页码（可选，默认 1）\n- **size**: 每页条目数（可选，默认 10）\n- **user_role**: 用户角色（可选），可选值：\n  - 11: 普通用户\n  - 22: 创作者\n  - 55: 审核员\n  - 66: 工单管理员\n  - 77: 系统管理员\n- **status**: 用户状态（可选），可选值：\n  - 10: 正常\n  - 20: 冻结\n  - 30: 封禁\n- **is_delete**: 是否已删除（可选）\n  - true: 仅查已删除\n  - false: 仅查未删除\n- **nickname**: 昵称关键字（可选，模糊匹配）\n- **orderBy**: 排序方式（可选）\n  - 'oldest': 按最早注册排列\n  - 其他值或不传: 按最新注册排列（默认）\n\n## 返回说明：\n- **成功**：返回分页用户列表（含总条数、总页数等分页信息）\n- **结果为空**：返回空分页对象和成功状态\n- **失败**：返回错误提示\n\n## 业务逻辑：\n1. 构建分页对象（Page）\n2. 将筛选条件传入 Service 层\n3. 数据库执行动态 SQL 分页查询\n4. 返回分页结果\n\n## 注意事项：\n- 返回的用户信息包含密码字段，请谨慎处理\n- 查询结果为空时返回空分页对象和成功状态\n- 所有筛选条件均为可选，不传则不过滤\n",
+        "description": "# 分页查询用户信息（需要登录认证 + 角色权限[55, 77]）\n\n## 特性\n- 支持分页查询用户信息\n- 支持按用户角色筛选（可选）\n- 支持按用户状态筛选（可选）\n- 支持按删除标记筛选（可选）\n- 支持按昵称关键字模糊查询（可选）\n- 支持排序方式（可选）\n- 审核员和系统管理员均可调用\n- 自动隐藏敏感字段（密码、UUID、邮箱）\n\n## 参数说明：\n- **page**: 页码（可选，默认 1）\n- **size**: 每页条目数（可选，默认 10）\n- **user_role**: 用户角色（可选），可选值：\n  - 11: 普通用户\n  - 22: 创作者\n  - 55: 审核员\n  - 66: 工单管理员\n  - 77: 系统管理员\n- **status**: 用户状态（可选），可选值：\n  - 10: 正常\n  - 20: 冻结\n  - 30: 封禁\n- **is_delete**: 是否已删除（可选）\n  - true: 仅查已删除\n  - false: 仅查未删除\n- **nickname**: 昵称关键字（可选，模糊匹配）\n- **orderBy**: 排序方式（可选）\n  - 'oldest': 按最早注册排列\n  - 其他值或不传: 按最新注册排列（默认）\n\n## 返回说明：\n- **成功**：返回分页用户列表（含总条数、总页数等分页信息），敏感字段已隐藏\n- **结果为空**：返回空分页对象和成功状态\n- **失败**：返回错误提示\n\n## 业务逻辑：\n1. 构建分页对象（Page）\n2. 将筛选条件传入 Service 层\n3. 数据库执行动态 SQL 分页查询\n4. 隐藏敏感字段后返回分页结果\n\n## 注意事项：\n- 返回的用户信息已隐藏敏感字段（密码、UUID、邮箱）\n- 查询结果为空时返回空分页对象和成功状态\n- 所有筛选条件均为可选，不传则不过滤\n",
         "operationId": "selectUserPage",
         "parameters": [
           {
@@ -2816,7 +2816,7 @@
           "用户接口 - 作品"
         ],
         "summary": "分页查询用户自己的作品",
-        "description": "# 分页查询用户自己的作品（需要登录认证）\n\n## 特性\n- 需要 Token 认证（支持 Header 和 URL 参数两种方式）\n- MyBatis-Plus 分页支持\n- 只过滤已删除作品（is_delete = 0）\n- **不过滤审核状态**，返回所有状态的作品（10-正常、20-待审核、30-未过审）\n- 支持按审核状态筛选（可选参数）\n- 按创建时间倒序排列（最新作品优先）\n\n## 参数说明：\n- Authorization: Header 中的 Token，格式为 `Bearer <token>`，或通过 URL 参数 `?token=<token>` 传递\n- current: **当前页码**，Long 类型，必填，**从 1 开始**，默认为 1\n- size: **每页大小**，Long 类型，必填，范围 1-500，默认为 10\n- approvalStatus: **审核状态**（可选），Integer 类型，可选值：\n  * 10: 正常（审核通过）\n  * 20: 待审核\n  * 30: 未过审\n  * null: 不限制，返回所有状态\n\n## 返回说明：\n- **查询成功**：返回 **{\"data\": {IPage<Works>对象}}** ，包含作品列表和分页信息\n- **Token 不存在**：返回 **{\"data\": null}** 和“Token 不存在”提示\n- **Token 已失效**：返回 **{\"data\": null}** 和“Token 已失效”提示\n- **参数错误**：返回 **{\"data\": null}** 和“页码或每页大小错误”提示\n- **无数据**：返回空的分页结果（total=0, records=[]）\n\n## 业务逻辑：\n1. 从请求头或 URL 参数中提取 Token（支持 Bearer 前缀）\n2. 验证 Token 是否在白名单中\n3. 从 Token 中解析用户 ID\n4. 校验页码和每页大小参数（current>=1, 1<=size<=100）\n5. 构建 MyBatis-Plus 分页对象\n6. 查询当前用户的作品列表（WHERE user_id = ? AND is_delete = 0）\n7. 如果提供了 approvalStatus 参数，添加审核状态过滤条件\n8. 按创建时间倒序排列（create_time DESC）\n9. 返回分页结果集（IPage<Works>）\n\n## 注意事项：\n- **必须携带有效的 Token 才能查询**\n- Token 必须在白名单中（未过期、未登出）\n- **只能查看自己的作品**，无法查看他人的作品\n- **返回所有审核状态的作品**，包括待审核和未过审的作品\n- 这是与普通查询接口的主要区别：普通接口只返回 approval_status = 10\n- 可以通过 approvalStatus 参数筛选特定状态的作品\n- 已自动过滤逻辑删除的作品（is_delete=0）\n- 默认返回完整 Works 实体字段，包含 approval_status\n- 每页大小限制：**1-500**\n- 图片 URL 为文件名，完整访问路径为：`/api/image/works?filePath={img_url}`\n- 使用 **RESTful 风格**路径参数，格式：`/my-works/{current}/{size}`\n",
+        "description": "# 分页查询用户自己的作品（需要登录认证）\n\n## 特性\n- 需要 Token 认证（支持 Header 和 URL 参数两种方式）\n- MyBatis-Plus 分页支持\n- 只过滤已删除作品（is_delete = 0）\n- **不过滤审核状态**，返回所有状态的作品（10-正常、20-待审核、30-未过审）\n- 支持按审核状态筛选（可选参数）\n- 按创建时间倒序排列（最新作品优先）\n\n## 参数说明：\n- Authorization: Header 中的 Token，格式为 `Bearer <token>`，或通过 URL 参数 `?token=<token>` 传递\n- current: **当前页码**，Long 类型，必填，**从 1 开始**，默认为 1\n- size: **每页大小**，Long 类型，必填，范围 1-500，默认为 10\n- approvalStatus: **审核状态**（可选），Integer 类型，可选值：\n  * 10: 正常（审核通过）\n  * 20: 待审核\n  * 30: 未过审\n  * null: 不限制，返回所有状态\n- keyword: **关键字**（可选），String 类型，支持模糊查询作品标题\n\n## 返回说明：\n- **查询成功**：返回 **{\"data\": {IPage<Works>对象}}** ，包含作品列表和分页信息\n- **Token 不存在**：返回 **{\"data\": null}** 和“Token 不存在”提示\n- **Token 已失效**：返回 **{\"data\": null}** 和“Token 已失效”提示\n- **参数错误**：返回 **{\"data\": null}** 和“页码或每页大小错误”提示\n- **无数据**：返回空的分页结果（total=0, records=[]）\n\n## 业务逻辑：\n1. 从请求头或 URL 参数中提取 Token（支持 Bearer 前缀）\n2. 验证 Token 是否在白名单中\n3. 从 Token 中解析用户 ID\n4. 校验页码和每页大小参数（current>=1, 1<=size<=100）\n5. 构建 MyBatis-Plus 分页对象\n6. 查询当前用户的作品列表（WHERE user_id = ? AND is_delete = 0）\n7. 如果提供了 approvalStatus 参数，添加审核状态过滤条件\n8. 如果提供了 keyword 参数，添加标题模糊查询条件（LIKE '%keyword%'）\n9. 按创建时间倒序排列（create_time DESC）\n10. 返回分页结果集（IPage<Works>）\n\n## 注意事项：\n- **必须携带有效的 Token 才能查询**\n- Token 必须在白名单中（未过期、未登出）\n- **只能查看自己的作品**，无法查看他人的作品\n- **返回所有审核状态的作品**，包括待审核和未过审的作品\n- 这是与普通查询接口的主要区别：普通接口只返回 approval_status = 10\n- 可以通过 approvalStatus 参数筛选特定状态的作品\n- 支持通过 keyword 参数模糊查询作品标题\n- 已自动过滤逻辑删除的作品（is_delete=0）\n- 默认返回完整 Works 实体字段，包含 approval_status\n- 每页大小限制：**1-500**\n- 图片 URL 为文件名，完整访问路径为：`/api/image/works?filePath={img_url}`\n- 使用 **RESTful 风格**路径参数，格式：`/my-works/{current}/{size}`\n",
         "operationId": "getMyWorks",
         "parameters": [
           {
@@ -2857,6 +2857,15 @@
               ]
             },
             "example": 20
+          },
+          {
+            "name": "keyword",
+            "in": "query",
+            "description": "关键字（可选，模糊搜索标题）",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
           }
         ],
         "responses": {
@@ -4684,6 +4693,19 @@
             "format": "int32",
             "example": 9
           },
+          "failedIds": {
+            "type": "array",
+            "description": "失败的 ID 列表",
+            "example": [
+              4,
+              7
+            ],
+            "items": {
+              "type": "integer",
+              "description": "失败的 ID 列表",
+              "format": "int32"
+            }
+          },
           "failedWorkIds": {
             "type": "array",
             "description": "失败作品的 ID 列表",
@@ -4881,15 +4903,15 @@
             "type": "integer",
             "format": "int64"
           },
+          "total": {
+            "type": "integer",
+            "format": "int64"
+          },
           "records": {
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/User"
             }
-          },
-          "total": {
-            "type": "integer",
-            "format": "int64"
           },
           "current": {
             "type": "integer",
@@ -5200,15 +5222,15 @@
             "type": "integer",
             "format": "int64"
           },
+          "total": {
+            "type": "integer",
+            "format": "int64"
+          },
           "records": {
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/Series"
             }
-          },
-          "total": {
-            "type": "integer",
-            "format": "int64"
           },
           "current": {
             "type": "integer",
@@ -5309,25 +5331,30 @@
         "properties": {
           "size": {
             "type": "integer",
-            "format": "int64"
+            "format": "int64",
+            "refType": null
+          },
+          "total": {
+            "type": "integer",
+            "format": "int64",
+            "refType": null
           },
           "records": {
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/Works"
-            }
-          },
-          "total": {
-            "type": "integer",
-            "format": "int64"
+            },
+            "refType": "Works"
           },
           "current": {
             "type": "integer",
-            "format": "int64"
+            "format": "int64",
+            "refType": null
           },
           "pages": {
             "type": "integer",
-            "format": "int64"
+            "format": "int64",
+            "refType": null
           }
         },
         "description": "响应数据"
@@ -5364,81 +5391,98 @@
           "work_id": {
             "type": "integer",
             "description": "作品 ID",
-            "format": "int32"
+            "format": "int32",
+            "refType": null
           },
           "user_id": {
             "type": "integer",
             "description": "用户 ID",
-            "format": "int32"
+            "format": "int32",
+            "refType": null
           },
           "work_title": {
             "type": "string",
-            "description": "作品标题，16 个中文长度"
+            "description": "作品标题，16 个中文长度",
+            "refType": null
           },
           "img_url": {
             "type": "string",
-            "description": "图片 URL"
+            "description": "图片 URL",
+            "refType": null
           },
           "thumb_url": {
             "type": "string",
-            "description": "封面缩略图文件名"
+            "description": "封面缩略图文件名",
+            "refType": null
           },
           "series_id": {
             "type": "integer",
             "description": "系列 ID",
-            "format": "int32"
+            "format": "int32",
+            "refType": null
           },
           "like_count": {
             "type": "integer",
             "description": "点赞数",
-            "format": "int32"
+            "format": "int32",
+            "refType": null
           },
           "star_count": {
             "type": "integer",
             "description": "收藏数",
-            "format": "int32"
+            "format": "int32",
+            "refType": null
           },
           "view_count": {
             "type": "integer",
             "description": "查看数",
-            "format": "int32"
+            "format": "int32",
+            "refType": null
           },
           "is_original_work": {
             "type": "boolean",
-            "description": "是否原创：1 - 原创、0 - 转载"
+            "description": "是否原创：1 - 原创、0 - 转载",
+            "refType": null
           },
           "out_url": {
             "type": "string",
-            "description": "外部转载链接"
+            "description": "外部转载链接",
+            "refType": null
           },
           "approval_status": {
             "type": "integer",
             "description": "审核状态：10 - 正常、20 - 待审核、30 - 未过审",
-            "format": "int32"
+            "format": "int32",
+            "refType": null
           },
           "is_delete": {
             "type": "boolean",
-            "description": "删除标签：0 - 未删除、1 - 已删除"
+            "description": "删除标签：0 - 未删除、1 - 已删除",
+            "refType": null
           },
           "update_time": {
             "type": "string",
             "description": "数据条目更新时间戳",
-            "format": "date-time"
+            "format": "date-time",
+            "refType": null
           },
           "update_user": {
             "type": "integer",
             "description": "修改者 id，系统修改为 0",
-            "format": "int32"
+            "format": "int32",
+            "refType": null
           },
           "create_time": {
             "type": "string",
             "description": "数据条目创建时间戳",
-            "format": "date-time"
+            "format": "date-time",
+            "refType": null
           },
           "create_user": {
             "type": "integer",
             "description": "存储创建者 id，系统创建为 0",
-            "format": "int32"
+            "format": "int32",
+            "refType": null
           }
         },
         "description": "作品实体"
@@ -5643,15 +5687,15 @@
             "type": "integer",
             "format": "int64"
           },
+          "total": {
+            "type": "integer",
+            "format": "int64"
+          },
           "records": {
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/History"
             }
-          },
-          "total": {
-            "type": "integer",
-            "format": "int64"
           },
           "current": {
             "type": "integer",
@@ -5985,15 +6029,15 @@
             "type": "integer",
             "format": "int64"
           },
+          "total": {
+            "type": "integer",
+            "format": "int64"
+          },
           "records": {
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/AdminWorkVO"
             }
-          },
-          "total": {
-            "type": "integer",
-            "format": "int64"
           },
           "current": {
             "type": "integer",
@@ -6039,15 +6083,15 @@
             "type": "integer",
             "format": "int64"
           },
+          "total": {
+            "type": "integer",
+            "format": "int64"
+          },
           "records": {
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/UserDataChangeLockVO"
             }
-          },
-          "total": {
-            "type": "integer",
-            "format": "int64"
           },
           "current": {
             "type": "integer",
@@ -6186,6 +6230,10 @@
             "description": "存储创建者 id，系统创建为 0",
             "format": "int32"
           },
+          "username": {
+            "type": "string",
+            "description": "作者用户名"
+          },
           "audit_reason": {
             "type": "string",
             "description": "AI 审核判断依据"
@@ -6204,15 +6252,15 @@
             "type": "integer",
             "format": "int64"
           },
+          "total": {
+            "type": "integer",
+            "format": "int64"
+          },
           "records": {
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/AdminSeriesVO"
             }
-          },
-          "total": {
-            "type": "integer",
-            "format": "int64"
           },
           "current": {
             "type": "integer",
@@ -6258,15 +6306,15 @@
             "type": "integer",
             "format": "int64"
           },
+          "total": {
+            "type": "integer",
+            "format": "int64"
+          },
           "records": {
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/OperateLogVO"
             }
-          },
-          "total": {
-            "type": "integer",
-            "format": "int64"
           },
           "current": {
             "type": "integer",
@@ -6382,6 +6430,10 @@
             "description": "评论时间",
             "format": "date-time"
           },
+          "work_title": {
+            "type": "string",
+            "description": "作品标题"
+          },
           "audit_reason": {
             "type": "string",
             "description": "AI 审核判断依据"
@@ -6400,15 +6452,15 @@
             "type": "integer",
             "format": "int64"
           },
+          "total": {
+            "type": "integer",
+            "format": "int64"
+          },
           "records": {
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/AdminCommentVO"
             }
-          },
-          "total": {
-            "type": "integer",
-            "format": "int64"
           },
           "current": {
             "type": "integer",
@@ -6497,15 +6549,15 @@
             "type": "integer",
             "format": "int64"
           },
+          "total": {
+            "type": "integer",
+            "format": "int64"
+          },
           "records": {
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/AdminAuditRecordVO"
             }
-          },
-          "total": {
-            "type": "integer",
-            "format": "int64"
           },
           "current": {
             "type": "integer",
