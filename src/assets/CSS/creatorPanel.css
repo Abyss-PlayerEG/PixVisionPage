@@ -317,11 +317,15 @@
   overflow: hidden;
   border: 1px solid rgba(255, 255, 255, 0.06);
   transition: all 0.25s ease;
-  cursor: pointer;
+  cursor: default;
   position: relative;
 }
 
-.cp-work-card:hover {
+.cp-work-card.clickable {
+  cursor: pointer;
+}
+
+.cp-work-card.clickable:hover {
   transform: translateY(-2px);
   border-color: rgba(255, 255, 255, 0.12);
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
@@ -586,26 +590,51 @@
 }
 
 .cp-upload-dropzone {
-  border: 2px dashed rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 16px;
   padding: 48px 24px;
   text-align: center;
   cursor: pointer;
   transition: all 0.3s ease;
-  background: rgba(255, 255, 255, 0.02);
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  box-shadow: inset 0 0 30px rgba(255, 255, 255, 0.02);
   position: relative;
   overflow: hidden;
 }
 
 .cp-upload-dropzone:hover {
-  border-color: rgba(0, 169, 71, 0.4);
-  background: rgba(0, 169, 71, 0.05);
+  border-color: rgba(0, 169, 71, 0.3);
+  background: rgba(0, 169, 71, 0.08);
+  box-shadow: inset 0 0 40px rgba(0, 169, 71, 0.05);
 }
 
 .cp-upload-dropzone.has-file {
   padding: 16px;
   border-style: solid;
-  border-color: rgba(0, 169, 71, 0.3);
+  border-color: rgba(0, 169, 71, 0.2);
+  background: rgba(255, 255, 255, 0.03);
+}
+
+/* 上传区域拖拽悬停高亮 */
+.cp-upload-dropzone.is-dragover {
+  border-color: #00A947;
+  border-style: solid;
+  background: rgba(0, 169, 71, 0.08);
+  box-shadow: 0 0 0 4px rgba(0, 169, 71, 0.1), inset 0 0 40px rgba(0, 169, 71, 0.05);
+}
+
+.cp-upload-dropzone.is-dragover .cp-upload-icon {
+  color: #00A947;
+}
+
+.cp-upload-dropzone.is-dragover .cp-upload-text {
+  color: #00A947;
+}
+
+.cp-upload-dropzone.is-dragover .cp-upload-hint {
+  color: rgba(0, 169, 71, 0.6);
 }
 
 .cp-upload-icon {
@@ -679,14 +708,16 @@
 .cp-form-input,
 .cp-form-select,
 .cp-form-textarea {
-  background: #0d0d0d;
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
   border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 10px;
   padding: 12px 16px;
   color: #ffffff;
   font-size: 14px;
   font-family: '微软雅黑', sans-serif;
-  transition: border-color 0.25s ease;
+  transition: border-color 0.25s ease, background 0.25s ease;
   outline: none;
   width: 100%;
   box-sizing: border-box;
@@ -745,7 +776,9 @@
   padding: 10px 16px;
   border-radius: 10px;
   border: 1px solid rgba(255, 255, 255, 0.1);
-  background: #0d0d0d;
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
   color: #7e7e7e;
   font-size: 13px;
   font-family: '微软雅黑', sans-serif;
@@ -756,6 +789,7 @@
 
 .cp-radio-btn:hover {
   border-color: rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.08);
   color: #cecece;
 }
 
@@ -1076,6 +1110,7 @@
 .cp-edit-image-area.is-dragover {
   border-color: #00A947;
   background: rgba(0, 169, 71, 0.1);
+  box-shadow: 0 0 0 4px rgba(0, 169, 71, 0.1);
 }
 
 .cp-edit-image-area.is-dragover .cp-edit-image-placeholder {

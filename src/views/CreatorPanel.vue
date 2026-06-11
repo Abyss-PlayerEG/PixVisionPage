@@ -150,6 +150,8 @@
               v-for="work in worksList"
               :key="work.work_id"
               class="cp-work-card"
+              :class="{ clickable: work.approval_status === 10 }"
+              @click="work.approval_status === 10 && goToWorkDetail(work.work_id)"
             >
               <!-- 选择框 -->
               <div
@@ -385,15 +387,21 @@
             </div>
 
             <!-- 转载链接 -->
-            <div v-if="!uploadForm.isOriginal" class="cp-form-group">
-              <label class="cp-form-label">转载链接 *</label>
-              <input
-                v-model="uploadForm.outUrl"
-                class="cp-form-input"
-                type="url"
-                placeholder="请输入原作链接"
-              />
-            </div>
+            <Transition
+              @before-enter="onOutUrlBeforeEnter"
+              @enter="onOutUrlEnter"
+              @leave="onOutUrlLeave"
+            >
+              <div v-if="!uploadForm.isOriginal" class="cp-form-group">
+                <label class="cp-form-label">转载链接 *</label>
+                <input
+                  v-model="uploadForm.outUrl"
+                  class="cp-form-input"
+                  type="url"
+                  placeholder="请输入原作链接"
+                />
+              </div>
+            </Transition>
 
             <!-- 提交按钮 -->
             <div style="display:flex;gap:12px;padding-top:8px;">
@@ -702,6 +710,7 @@
 
 <script setup>
 import { ref, reactive, watch, onMounted, onUnmounted, nextTick, computed } from 'vue'
+import { useRouter } from 'vue-router'
 import gsap from 'gsap'
 import { useCreatorPanel } from '@/composables/useCreatorPanel'
 import { showError } from '@/utils/notification'
@@ -734,6 +743,13 @@ const {
   // 路由
   goBack,
 } = useCreatorPanel()
+
+const router = useRouter()
+
+// 跳转到作品详情页
+const goToWorkDetail = (workId) => {
+  router.push(`/work/${workId}`)
+}
 
 // 头像 URL（兼容 Profile 处理过的完整 URL 和登录时的原始 avatar_url）
 const avatarUrl = computed(() => {
