@@ -854,7 +854,7 @@ defineExpose({
 /* 输入区域 */
 .cw-input-area {
   display: flex;
-  align-items: flex-end;
+  align-items: stretch;
   gap: 12px;
   padding: 16px 20px;
   border-top: 1px solid rgba(255, 255, 255, 0.06);
@@ -904,7 +904,6 @@ defineExpose({
   align-items: center;
   justify-content: center;
   width: 44px;
-  height: 44px;
   border-radius: 12px;
   border: 1px solid rgba(255, 255, 255, 0.1);
   background: #1a1a1a;
