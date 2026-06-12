@@ -128,7 +128,9 @@ export function useMessage() {
 
     const result = await getSystemMessages(1, 20, project, isRead)
     if (result.success) {
-      systemMessages.value = result.data.records || []
+      // API 返回降序，反转为升序（聊天界面：旧消息在上，新消息在下）
+      const records = result.data.records || []
+      systemMessages.value = records.reverse()
       systemPage.value = 2
       if (!result.data.records || result.data.records.length < 20) {
         systemFinished.value = true
@@ -148,7 +150,9 @@ export function useMessage() {
     const result = await getSystemMessages(systemPage.value, 20, project, isRead)
 
     if (result.success && result.data.records) {
-      systemMessages.value.push(...result.data.records)
+      // API 返回更早的消息（降序），反转后添加到开头
+      const records = result.data.records.reverse()
+      systemMessages.value.unshift(...records)
       systemPage.value++
       if (result.data.records.length < 20) {
         systemFinished.value = true
@@ -167,7 +171,8 @@ export function useMessage() {
     // 避免重复添加
     const exists = systemMessages.value.some(m => m.message_id === message.message_id)
     if (!exists) {
-      systemMessages.value.unshift(message)
+      // 新消息添加到末尾（升序：最新在最后）
+      systemMessages.value.push(message)
       console.log('✅ 实时追加系统通知:', message.message_id)
     }
   }
