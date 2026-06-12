@@ -49,6 +49,13 @@ const router = createRouter({
             component: () => import('../views/CreatorPanel.vue'),
             meta: { requiresAuth: true },
         },
+        // 消息中心
+        {
+            path: '/messages',
+            name: 'messages',
+            component: () => import('../views/Messages.vue'),
+            meta: { requiresAuth: true },
+        },
         // 404页面 - 捕获所有未匹配的路径（必须放在最后）
         {
             path: '/:pathMatch(.*)*',

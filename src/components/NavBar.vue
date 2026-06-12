@@ -5,6 +5,7 @@ import { useAuth } from '@/composables/useAuth';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import fallbackAvatar from '@/assets/IMG/suliusu.jpg';
+import MessageNotification from './message/MessageNotification.vue';
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -365,6 +366,8 @@ onUnmounted(() => {
                     </svg>
                 </div>
             </div>
+            <!-- 消息通知组件 -->
+            <MessageNotification />
             <div v-if="!isLoggedIn" class="login_btn" @click="$router.push('/login')">JoinUs</div>
             <div v-else class="avatar_pill" @click="$router.push('/profile/me')">
                 <div class="avatar_stack">
