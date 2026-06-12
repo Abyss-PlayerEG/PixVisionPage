@@ -175,6 +175,17 @@ const goAdminPanel = () => {
   router.push('/admin')
 }
 
+// 私信按钮：跳转到消息页面
+const goToMessage = () => {
+  const userId = userInfo.value.userId
+  if (userId) {
+    router.push({
+      path: '/messages',
+      query: { userId }
+    })
+  }
+}
+
 const showAccountManager = ref(false)
 
 const goAccountManagement = () => {
@@ -585,6 +596,13 @@ watch(
             <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
             <polyline points="17 21 17 13 7 13 7 21"></polyline>
             <polyline points="7 3 7 8 15 8"></polyline>
+          </svg>
+        </button>
+
+        <!-- 私信按钮：仅访客视角可见 -->
+        <button v-if="!isMyProfile" class="message-btn" title="私信" @click="goToMessage">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
           </svg>
         </button>
       </div>

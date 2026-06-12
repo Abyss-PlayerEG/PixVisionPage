@@ -249,6 +249,32 @@
     color: var(--color-primary);
 }
 
+/* 私信按钮（访客视角） */
+.message-btn {
+    width: 34px;
+    height: 34px;
+    border-radius: 8px;
+    border: 1px solid transparent;
+    background: transparent;
+    color: rgba(255, 255, 255, 0.35);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    transition: all 0.2s ease;
+}
+
+.message-btn svg {
+    width: 16px;
+    height: 16px;
+}
+
+.message-btn:hover {
+    background: rgba(0, 169, 71, 0.1);
+    color: var(--color-primary);
+}
+
 .save-spinner {
     width: 18px;
     height: 18px;

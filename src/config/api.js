@@ -146,6 +146,23 @@ export const HISTORY_API = {
   DELETE: `${API_BASE_URL}/api/history/delete`, // POST，批量删除历史记录
 };
 
+// 消息相关接口
+export const MESSAGE_API = {
+  UNREAD_COUNT: `${API_BASE_URL}/api/message/unread-count`,
+  CONVERSATIONS: `${API_BASE_URL}/api/message/conversations`,
+  CHAT: `${API_BASE_URL}/api/message/chat`,
+  SEND: `${API_BASE_URL}/api/message/send`,
+  READ_CONVERSATION: `${API_BASE_URL}/api/message/read/conversation`,
+  READ_ALL: `${API_BASE_URL}/api/message/read-all`,
+  RECALL: `${API_BASE_URL}/api/message/recall`,
+  DELETE: `${API_BASE_URL}/api/message/delete`,
+  BATCH_DELETE: `${API_BASE_URL}/api/message/batch-delete`,
+  SYSTEM: `${API_BASE_URL}/api/message/system`,
+};
+
+// WebSocket 连接地址
+export const WS_URL = `${API_BASE_URL.replace('http', 'ws')}/api/ws/notification`;
+
 // 管理员相关接口
 export const ADMIN_API = {
   DASHBOARD: `${API_BASE_URL}/api/admin/dashboard`,
