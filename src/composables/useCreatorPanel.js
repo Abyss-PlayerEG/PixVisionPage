@@ -479,7 +479,8 @@ export const useCreatorPanel = () => {
     seriesList,
     loadSeries,
     handleUpdateWork,
-    updateEditRadioIndicator: () => editRadioIndicator.update('.cp-radio-btn.active')
+    updateEditRadioIndicator: () => editRadioIndicator.update('.cp-radio-btn.active'),
+    radioIndicator: editRadioIndicator
   })
 
   // 合集弹窗

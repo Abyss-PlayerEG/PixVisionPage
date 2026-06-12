@@ -30,23 +30,59 @@ export const useIndicatorSlider = (options = {}) => {
   })
 
   /**
-   * 更新指示器位置
+   * 更新指示器位置（不带动画，用于初始化）
+   * @param {string} activeSelector - 当前激活元素的 CSS 选择器，例如 '.cp-filter-tab.active'
+   */
+  const updateImmediate = (activeSelector) => {
+    if (!containerRef.value) return
+    
+    const activeBtn = containerRef.value.querySelector(activeSelector)
+    if (activeBtn) {
+      const containerRect = containerRef.value.getBoundingClientRect()
+      const btnRect = activeBtn.getBoundingClientRect()
+      indicatorStyle.value = {
+        left: `${btnRect.left - containerRect.left}px`,
+        width: `${btnRect.width}px`
+      }
+    }
+  }
+
+  /**
+   * 更新指示器位置（带动画）
    * @param {string} activeSelector - 当前激活元素的 CSS 选择器，例如 '.cp-filter-tab.active'
    */
   const update = (activeSelector) => {
     nextTick(() => {
-      if (!containerRef.value) return
-      
-      const activeBtn = containerRef.value.querySelector(activeSelector)
-      if (activeBtn) {
-        const containerRect = containerRef.value.getBoundingClientRect()
-        const btnRect = activeBtn.getBoundingClientRect()
-        indicatorStyle.value = {
-          left: `${btnRect.left - containerRect.left}px`,
-          width: `${btnRect.width}px`
-        }
-      }
+      updateImmediate(activeSelector)
     })
+  }
+
+  /**
+   * 初始化指示器位置（用于弹窗等延迟渲染的场景）
+   * @param {string} activeSelector - 当前激活元素的 CSS 选择器
+   * @param {number} delay - 延迟时间，默认 100ms
+   */
+  const init = (activeSelector, delay = 100) => {
+    // 先隐藏指示器
+    indicatorStyle.value = {
+      left: '0px',
+      width: '0px',
+      opacity: '0'
+    }
+    
+    // 延迟更新位置，等待弹窗动画完成
+    setTimeout(() => {
+      updateImmediate(activeSelector)
+      // 显示指示器
+      setTimeout(() => {
+        if (containerRef.value) {
+          indicatorStyle.value = {
+            ...indicatorStyle.value,
+            opacity: '1'
+          }
+        }
+      }, 50)
+    }, delay)
   }
 
   /**
@@ -63,6 +99,8 @@ export const useIndicatorSlider = (options = {}) => {
     containerRef,
     indicatorStyle,
     update,
+    updateImmediate,
+    init,
     reset
   }
 }

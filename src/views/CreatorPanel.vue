@@ -862,7 +862,6 @@ const {
   dialogRef: editWorkDialogRef,
   fileInputRef: editFileInput,
   editFile,
-  radioIndicator: editRadioIndicatorRef,
   open: openEditWorkDialog,
   close: closeEditWorkDialog,
   onFileSelect: onEditFileSelect,
