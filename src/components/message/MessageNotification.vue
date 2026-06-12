@@ -107,8 +107,8 @@
 import { ref, onMounted, onUnmounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuth } from '@/composables/useAuth'
-import { useMessage } from '@/composables/useMessage'
-import { useWebSocket } from '@/composables/useWebSocket'
+import { useMessage } from '@/composables/message/useMessage'
+import { useWebSocket } from '@/composables/message/useWebSocket'
 import { getAvatarUrl } from '@/config/api'
 
 const router = useRouter()

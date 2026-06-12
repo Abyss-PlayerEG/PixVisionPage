@@ -9,8 +9,8 @@
 import { onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuth } from '@/composables/useAuth'
-import MessagesTopBar from '@/components/MessagesTopBar.vue'
-import ChatPanel from '@/components/ChatPanel.vue'
+import MessagesTopBar from '@/components/message/MessagesTopBar.vue'
+import ChatPanel from '@/components/message/ChatPanel.vue'
 
 const router = useRouter()
 const { isLoggedIn } = useAuth()

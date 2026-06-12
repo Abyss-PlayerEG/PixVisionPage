@@ -2,7 +2,7 @@
 import { watch, onUnmounted } from 'vue';
 import { RouterView, useRoute } from 'vue-router';
 import { useAuth } from '@/composables/useAuth';
-import { useWebSocket } from '@/composables/useWebSocket';
+import { useWebSocket } from '@/composables/message/useWebSocket';
 import { showToast } from '@/utils/notification';
 
 // 认证状态

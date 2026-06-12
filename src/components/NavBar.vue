@@ -5,7 +5,7 @@ import { useAuth } from '@/composables/useAuth';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import fallbackAvatar from '@/assets/IMG/suliusu.jpg';
-import MessageNotification from './MessageNotification.vue';
+import MessageNotification from './message/MessageNotification.vue';
 
 gsap.registerPlugin(ScrollTrigger);
 
