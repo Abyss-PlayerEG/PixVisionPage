@@ -179,6 +179,13 @@ const handleSelectPixBot = async () => {
     path: '/messages',
     query: { userId: 'pixbot' }
   })
+  // 设置 PixBot 虚拟用户信息（让 ChatWindow 显示聊天界面）
+  currentChatUser.value = {
+    user_id: 'pixbot',
+    nickname: 'PixBot',
+    avatar_url: null,
+    username: 'pixbot',
+  }
   // 加载系统通知
   await loadSystemMessages()
   // 标记系统通知为已读
