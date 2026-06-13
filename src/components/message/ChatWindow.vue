@@ -97,7 +97,7 @@
             @click.stop="goToProfile"
           />
           <div class="cw-msg-body">
-            <div class="cw-msg-bubble">{{ msg.message }}</div>
+            <div class="cw-msg-bubble" v-html="msg.message"></div>
             <div class="cw-msg-meta">
               <span class="cw-msg-time">{{ formatTime(msg.create_time) }}</span>
               <!-- 自己发送的消息显示已读/未读状态 -->
@@ -770,6 +770,45 @@ defineExpose({
 .cw-msg.received .cw-msg-bubble:hover {
   background: rgba(255, 255, 255, 0.08);
   border-color: rgba(255, 255, 255, 0.1);
+}
+
+/* HTML内容样式 */
+.cw-msg-bubble :deep(h1) {
+  margin: 12px 0 8px;
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.cw-msg-bubble :deep(h2) {
+  margin: 10px 0 6px;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.cw-msg-bubble :deep(h3) {
+  margin: 8px 0 4px;
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.cw-msg-bubble :deep(p) {
+  margin: 4px 0;
+}
+
+.cw-msg-bubble :deep(hr) {
+  border: none;
+  border-top: 1px solid rgba(255, 255, 255, 0.15);
+  margin: 8px 0;
+}
+
+.cw-msg.sent .cw-msg-bubble :deep(strong) {
+  color: #ffffff;
+  font-weight: 700;
+}
+
+.cw-msg.received .cw-msg-bubble :deep(strong) {
+  color: #00A947;
+  font-weight: 600;
 }
 
 .cw-msg-time {

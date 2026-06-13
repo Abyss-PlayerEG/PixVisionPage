@@ -43,7 +43,7 @@
           <span class="sn-item-project">{{ getProjectLabel(msg.project) }}</span>
           <span class="sn-item-time">{{ formatTime(msg.create_time) }}</span>
         </div>
-        <div class="sn-item-content">{{ msg.message }}</div>
+        <div class="sn-item-content" v-html="msg.message"></div>
       </div>
 
       <!-- 加载更多 -->
@@ -255,6 +255,43 @@ const formatTime = (timeStr) => {
   font-size: 13px;
   color: rgba(255, 255, 255, 0.8);
   line-height: 1.5;
+}
+
+/* HTML内容样式 */
+.sn-item-content :deep(h1) {
+  color: #ffffff;
+  margin: 12px 0 8px;
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.sn-item-content :deep(h2) {
+  color: #ffffff;
+  margin: 10px 0 6px;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.sn-item-content :deep(h3) {
+  color: #ffffff;
+  margin: 8px 0 4px;
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.sn-item-content :deep(p) {
+  margin: 4px 0;
+}
+
+.sn-item-content :deep(hr) {
+  border: none;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  margin: 8px 0;
+}
+
+.sn-item-content :deep(strong) {
+  color: #00A947;
+  font-weight: 600;
 }
 
 /* 底部提示 */

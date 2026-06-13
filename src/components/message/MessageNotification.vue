@@ -94,7 +94,7 @@
             @click="goToMessages"
           >
             <div class="notif-project">{{ getProjectLabel(msg.project) }}</div>
-            <div class="notif-content">{{ msg.message }}</div>
+            <div class="notif-content" v-html="msg.message"></div>
             <div class="notif-time">{{ formatTime(msg.create_time) }}</div>
           </div>
         </div>
@@ -110,6 +110,7 @@ import { useAuth } from '@/composables/useAuth'
 import { useMessage } from '@/composables/message/useMessage'
 import { useWebSocket } from '@/composables/message/useWebSocket'
 import { getAvatarUrl } from '@/config/api'
+import { showInfo } from '@/utils/notification'
 
 const router = useRouter()
 const containerRef = ref(null)
@@ -149,6 +150,23 @@ const handleWsMessage = (data) => {
   if (data.type === 'notification') {
     console.log('📨 MessageNotification 收到新消息，刷新未读数')
     refreshUnreadCount()
+    
+    // 如果当前在消息页面，不显示 toast（避免多余通知）
+    if (router.currentRoute.value.path === '/messages') {
+      return
+    }
+    
+    // 私信消息 Toast 提示
+    if (msg.message_type === 'private') {
+      const senderName = msg.from_nickname || msg.from_username || '好友'
+      showInfo(`${senderName} 发来一条新消息`, '新消息')
+    }
+    
+    // 系统通知 Toast 提示（只显示类型，不显示HTML内容）
+    if (msg.message_type === 'system') {
+      const typeLabel = getProjectLabel(msg.project)
+      showInfo(`收到一条${typeLabel}`, '系统通知')
+    }
   }
   
   // 收到已读回执时也刷新未读数
@@ -585,6 +603,28 @@ defineExpose({
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  max-height: 20px;
+}
+
+/* HTML内容样式 */
+.notif-content :deep(h1),
+.notif-content :deep(h2),
+.notif-content :deep(h3),
+.notif-content :deep(p),
+.notif-content :deep(hr) {
+  display: inline;
+  margin: 0;
+  font-size: inherit;
+}
+
+.notif-content :deep(hr) {
+  display: inline;
+  border: none;
+  margin: 0 4px;
+}
+
+.notif-content :deep(strong) {
+  color: #00A947;
 }
 
 .notif-time {
