@@ -1,11 +1,9 @@
 <template>
   <div>
     <!-- 头像预览浮层 -->
-    <Teleport to="body">
-      <div v-if="previewUrl" class="ad-avatar-float-preview" :style="previewStyle">
-        <AuthImage :url="getAdminAvatarUrl(previewUrl)" :alt="'头像预览'" class-name="ad-avatar-preview-img" />
-      </div>
-    </Teleport>
+    <div v-if="previewUrl" class="ad-avatar-float-preview" :style="previewStyle">
+      <AuthImage :url="getAdminAvatarUrl(previewUrl)" :alt="'头像预览'" class-name="ad-avatar-preview-img" />
+    </div>
 
     <!-- 标题栏 + 创建用户按钮 -->
     <div class="ad-table-header">
