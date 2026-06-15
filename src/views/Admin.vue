@@ -87,7 +87,7 @@
                 <tr v-for="u in userList" :key="u.user_id">
                   <td class="ap-cell-id">#{{ u.user_id }}</td>
                   <td><img :src="getAvatarSrc(u.avatar_url)" class="ap-avatar" @error="(e) => e.target.style.display='none'" @mouseenter="(e) => showPreview(e, getAvatarSrc(u.avatar_url))" @mouseleave="hidePreview" /></td>
-                  <td class="ap-cell-bold">{{ u.username }}</td>
+                  <td><span class="ap-link" @click="$router.push(`/profile/${u.user_id}`)">{{ u.username }}</span></td>
                   <td>{{ u.nickname || '—' }}</td>
                   <td><span class="ap-badge" :class="roleBadge(u.user_role)">{{ roleLabel(u.user_role) }}</span></td>
                   <td><span class="ap-badge" :class="statusBadge(u.status)">{{ statusLabel(u.status) }}</span></td>
@@ -151,7 +151,7 @@
                   <td class="ap-cell-id">#{{ w.work_id }}</td>
                   <td><img :src="getWorkImgSrc(w.img_url)" class="ap-thumb" @error="(e) => e.target.style.display='none'" @mouseenter="(e) => showPreview(e, getWorkImgSrc(w.img_url))" @mouseleave="hidePreview" @click="openFullscreen(getWorkImgSrc(w.img_url))" /></td>
                   <td class="ap-cell-bold">{{ w.work_title || '未命名' }}</td>
-                  <td>{{ w.nickname || w.username || ('用户 #' + w.user_id) }}</td>
+                  <td><span class="ap-link" @click="$router.push(`/profile/${w.user_id}`)">{{ w.nickname || w.username || ('用户 #' + w.user_id) }}</span></td>
                   <td><span class="ap-badge" :class="approvalBadge(w.approval_status)">{{ approvalLabel(w.approval_status) }}</span></td>
                   <td>{{ formatTime(w.create_time) }}</td>
                   <td>
@@ -327,11 +327,12 @@
           <div v-else-if="!auditLoading && auditList.length === 0" class="ap-empty">暂无审核记录</div>
           <div v-else class="ap-table-wrap">
             <table class="ap-table">
-              <thead><tr><th>ID</th><th>内容类型</th><th>审核结果</th><th>审核原因</th><th>审核时间</th></tr></thead>
+              <thead><tr><th>ID</th><th>内容类型</th><th>用户</th><th>审核结果</th><th>审核原因</th><th>审核时间</th></tr></thead>
               <tbody>
                 <tr v-for="a in auditList" :key="a.id || a.audit_id">
                   <td class="ap-cell-id">#{{ a.id || a.audit_id }}</td>
                   <td>{{ contentTypeLabel(a.content_type) }}</td>
+                  <td>{{ a.nickname || ('用户 #' + (a.user_id || '—')) }}</td>
                   <td><span class="ap-badge" :class="approvalBadge(a.approval_status)">{{ approvalLabel(a.approval_status) }}</span></td>
                   <td class="ap-cell-text">{{ a.reason || a.audit_reason || '—' }}</td>
                   <td>{{ formatTime(a.create_time || a.audit_time) }}</td>
@@ -428,7 +429,7 @@
           <div class="ap-form-group"><label>用户名</label><input v-model="createUserForm.username" placeholder="5-16位，字母/数字/下划线" maxlength="16" /><span v-if="createUserErrors.username" class="ap-form-error">{{ createUserErrors.username }}</span></div>
           <div class="ap-form-group"><label>密码</label><input v-model="createUserForm.password" type="password" placeholder="6-16位" maxlength="16" /><span v-if="createUserErrors.password" class="ap-form-error">{{ createUserErrors.password }}</span></div>
           <div class="ap-form-group"><label>确认密码</label><input v-model="createUserForm.confirmPassword" type="password" placeholder="再次输入密码" maxlength="16" /><span v-if="createUserErrors.confirmPassword" class="ap-form-error">{{ createUserErrors.confirmPassword }}</span></div>
-          <div class="ap-form-group"><label>昵称</label><input v-model="createUserForm.nickname" placeholder="用户昵称" maxlength="24" /><span v-if="createUserErrors.nickname" class="ap-form-error">{{ createUserErrors.nickname }}</span></div>
+          <div class="ap-form-group"><label>昵称（可选）</label><input v-model="createUserForm.nickname" placeholder="留空将自动生成" maxlength="24" /><span v-if="createUserErrors.nickname" class="ap-form-error">{{ createUserErrors.nickname }}</span></div>
           <div class="ap-form-group"><label>邮箱</label><input v-model="createUserForm.email" placeholder="user@example.com" /><span v-if="createUserErrors.email" class="ap-form-error">{{ createUserErrors.email }}</span></div>
         </div>
         <div class="ap-dialog-footer">

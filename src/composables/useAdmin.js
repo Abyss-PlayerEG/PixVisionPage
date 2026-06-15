@@ -324,7 +324,6 @@ export const useAdmin = () => {
     if (!createUserForm.password) e.password = '请输入密码'
     else if (!/^[a-zA-Z0-9_.]{6,16}$/.test(createUserForm.password)) e.password = '6-16位，只允许字母、数字、_、.'
     if (createUserForm.password !== createUserForm.confirmPassword) e.confirmPassword = '两次密码不一致'
-    if (!createUserForm.nickname) e.nickname = '请输入昵称'
     if (!createUserForm.email) e.email = '请输入邮箱'
     else if (!/^[a-zA-Z0-9_-]+@[a-zA-Z0-9_-]+(\.[a-zA-Z0-9_-]+)+$/.test(createUserForm.email)) e.email = '邮箱格式不正确'
     if (Object.keys(e).length > 0) { Object.assign(createUserErrors, e); return }
@@ -333,7 +332,7 @@ export const useAdmin = () => {
       username: createUserForm.username,
       password: createUserForm.password,
       confirmPassword: createUserForm.confirmPassword,
-      nickname: createUserForm.nickname,
+      nickname: createUserForm.nickname || undefined,
       email: createUserForm.email,
     })
     if (result.success) {

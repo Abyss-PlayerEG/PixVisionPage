@@ -356,7 +356,7 @@ export const createUser = async (params = {}) => {
     formData.append('username', username)
     formData.append('password', password)
     formData.append('confirmPassword', confirmPassword)
-    formData.append('nickname', nickname)
+    if (nickname) formData.append('nickname', nickname)
     formData.append('email', email)
     formData.append('role', role)
     formData.append('status', status)
