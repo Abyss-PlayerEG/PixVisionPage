@@ -1,0 +1,327 @@
+#Main{
+    width: 100%;
+    min-height: 100vh;
+    background-color: #0a0a0a;
+}
+
+#num1z{
+    width: 100%;
+    height: 300px;
+    /* background-color: #FDF9F0; */
+    padding: 30px 5%;
+}
+
+.n1_Main{
+    width: 100%;
+    height: 100%;
+    border-radius: 20px;
+    background-color: #FDF9F0;
+    padding:10px 20px;
+    display: flex;
+    justify-content: space-between;
+}
+
+.n1_titleCeb{
+    width: 40%;
+    height: 100%;
+    /* display: flex;
+    flex-direction: column;
+    justify-content: space-between; */
+
+    h1 {
+        font-family: sul-gbk6;
+        display: inline-block;
+        position: relative;
+        padding-left: 52px;
+
+        &::before {
+            content: "";
+            position: absolute;
+            left: 0;
+            top: 6px;
+            width: 40px;
+            height: 6px;
+            border-radius: 3px;
+            background-color: #00A947;
+        }
+        &::after {
+            content: "";
+            position: absolute;
+            left: 0;
+            top: 16px;
+            width: 25px;
+            height: 6px;
+            border-radius: 3px;
+            background-color: #00A947;
+        }
+    }
+    h1 .line-third {
+        position: absolute;
+        left: 0;
+        top: 26px;
+        width: 35px;
+        height: 6px;
+        border-radius: 3px;
+        background-color: #00A947;
+    }
+
+    /* 右下角小字标签不变 */
+    h1 div {
+        position: absolute;
+        width: 50px;
+        height: 20px;
+        border-radius: 8px;
+        background-color: #0a0a0a;
+        color: #FDF9F0;
+        font-size: 10px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        bottom: -5px;
+        right: -20px;
+    }
+
+    h2{
+        position:relative;
+        top:120px;
+        font-family: sul-gbk6;
+        div{
+            width: 30%;
+            height: 4px;
+            border-radius: 2px;
+            background-color: #00A947;
+        }
+    }
+}
+
+.n1_optionCeb{
+    width: 58%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    padding: 12px 0;
+}
+
+/* ═══════════════════════════════════════════════════
+   顶部：按钮行 + 数据栏
+   ═══════════════════════════════════════════════════ */
+.option-top {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 24px;
+}
+
+/* ── 按钮组 ── */
+.option-buttons {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-shrink: 0;
+}
+
+/* ── 药丸按钮基础 ── */
+.pill-btn {
+    display: inline-flex;
+    align-items: center;
+    height: 38px;
+    padding: 0 18px;
+    border: none;
+    border-radius: 19px;
+    background-color: var(--bg-primary);
+    color: var(--text-secondary);
+    font-size: 13px;
+    font-family: inherit;
+    cursor: pointer;
+    transition: color 0.25s, background-color 0.25s;
+    white-space: nowrap;
+    user-select: none;
+}
+
+.pill-btn:hover {
+    color: var(--text-primary);
+}
+
+.pill-btn:active {
+    scale: 0.97;
+}
+
+/* ── Home 按钮 ── */
+.home-btn {
+    gap: 7px;
+}
+
+.pill-icon {
+    width: 16px;
+    height: 16px;
+    flex-shrink: 0;
+}
+
+/* ── 切换按钮 ── */
+.toggle-btn {
+    position: relative;
+    width: 150px;
+    padding: 0;
+    background-color: var(--bg-secondary);
+    overflow: hidden;
+}
+
+.toggle-btn:active {
+    scale: 1; /* 切换按钮不缩放，避免影响内部定位 */
+}
+
+/* 文本标签 */
+.toggle-label {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 13px;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+    opacity: 0;
+    z-index: 0;
+}
+
+.toggle-label.show {
+    opacity: 1;
+}
+
+.label-welcome {
+    left: 14px;
+}
+
+.label-logout {
+    right: 14px;
+}
+
+.label-logout.show {
+    pointer-events: auto;
+    cursor: pointer;
+}
+
+.label-logout.show:hover {
+    color: var(--text-primary);
+}
+
+/* 滑动圆圈（后续用于放头像） */
+.toggle-circle {
+    position: absolute;
+    top: 4px;
+    left: 4px;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    background-color: var(--bg-tertiary);
+    z-index: 1;
+    pointer-events: none;
+}
+
+/* 头像模式：当圆圈内放头像时的覆盖样式（预留钩子） */
+.toggle-circle.has-avatar {
+    background-color: transparent;
+    background-size: cover;
+    background-position: center;
+}
+
+/* ═══════════════════════════════════════════════════
+   数据栏 — 无边框、无底色，仅分割线分隔
+   ═══════════════════════════════════════════════════ */
+.data-bar {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    flex-shrink: 0;
+    margin-left: 8px;
+}
+
+.data-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    padding: 0 16px;
+}
+
+.data-value {
+    font-family: sul-gbk6, sans-serif;
+    font-size: 20px;
+    font-weight: 600;
+    color: #0a0a0a;
+    line-height: 1;
+}
+
+.data-label {
+    font-size: 11px;
+    color: var(--text-muted);
+    letter-spacing: 0.5px;
+}
+
+.data-divider {
+    width: 1px;
+    height: 28px;
+    background-color: rgba(0, 0, 0, 0.12);
+    flex-shrink: 0;
+}
+
+/* ═══════════════════════════════════════════════════
+   预留区域
+   ═══════════════════════════════════════════════════ */
+.option-middle {
+    flex: 1;
+    min-height: 40px;
+    /* 后续填充中部内容 */
+}
+
+/* ═══════════════════════════════════════════════════
+   底部：选项卡
+   ═══════════════════════════════════════════════════ */
+.option-bottom {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 28px;
+    min-height: 40px;
+}
+
+/* 选项卡按钮 — 默认融入背景、无边框无色块 */
+.tab-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 8px 14px;
+    border: none;
+    background: transparent;
+    color: var(--text-muted);
+    font-size: 15px;
+    font-family: inherit;
+    cursor: pointer;
+    transition: transform 0.3s ease, box-shadow 0.3s ease, color 0.25s;
+    border-radius: 8px;
+}
+
+.tab-item:hover {
+    color: #0a0a0a;
+    transform: translateY(-2px);
+    box-shadow: 4px 6px 16px rgba(0, 0, 0, 0.12);
+}
+
+/* 激活态 — 保持浮空 + 阴影 */
+.tab-item.active {
+    color: #0a0a0a;
+    transform: translateY(-2px);
+    box-shadow: 4px 6px 16px rgba(0, 0, 0, 0.12);
+}
+
+/* 点击瞬间 — 取消浮空，产生按下反馈 */
+.tab-item:active {
+    transform: translateY(0);
+    box-shadow: none;
+    transition: transform 0.08s ease, box-shadow 0.08s ease;
+}
+
+.tab-icon {
+    width: 20px;
+    height: 20px;
+    flex-shrink: 0;
+}

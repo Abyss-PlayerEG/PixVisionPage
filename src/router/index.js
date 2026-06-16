@@ -49,6 +49,13 @@ const router = createRouter({
             component: () => import('../views/CreatorPanel.vue'),
             meta: { requiresAuth: true },
         },
+        // test创作者面板
+        {
+            path: '/creatorT',
+            name: 'creatorT',
+            component: () => import('../views/CreatorCenter.vue'),
+            meta: { requiresAuth: true },
+        },
         // 消息中心
         {
             path: '/messages',
