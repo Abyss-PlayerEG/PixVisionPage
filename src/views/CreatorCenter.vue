@@ -144,6 +144,64 @@
             </div>
         </section>
 
+        <section id="num2z">
+            <!-- 左栏：作品状态分类（仅"我的作品"选项卡可见） -->
+            <div class="n2_Lceb" v-if="activeTab === 'works'">
+                <div class="status-header">
+                    <span class="status-dot"></span>
+                    <span class="status-title">作品状态</span>
+                </div>
+                <span class="status-divider"></span>
+                <div class="status-options">
+                    <button
+                        class="status-option"
+                        :class="{ active: statusFilter === 'all' }"
+                        @click="statusFilter = 'all'"
+                    >全部</button>
+                    <button
+                        class="status-option"
+                        :class="{ active: statusFilter === 'approved' }"
+                        @click="statusFilter = 'approved'"
+                    >已通过</button>
+                    <button
+                        class="status-option"
+                        :class="{ active: statusFilter === 'pending' }"
+                        @click="statusFilter = 'pending'"
+                    >待审核</button>
+                    <button
+                        class="status-option"
+                        :class="{ active: statusFilter === 'rejected' }"
+                        @click="statusFilter = 'rejected'"
+                    >未通过</button>
+                </div>
+            </div>
+
+            <!-- 右栏：搜索栏 -->
+            <div class="n2_Rceb">
+                <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="11" cy="11" r="8"/>
+                    <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+                </svg>
+                <input
+                    class="search-input"
+                    type="text"
+                    v-model="searchQuery"
+                    placeholder="搜索作品..."
+                />
+                <button
+                    class="search-clear"
+                    v-if="searchQuery"
+                    @click="searchQuery = ''"
+                    aria-label="清除搜索"
+                >
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="18" y1="6" x2="6" y2="18"/>
+                        <line x1="6" y1="6" x2="18" y2="18"/>
+                    </svg>
+                </button>
+            </div>
+        </section>
+
     </section>
 </template>
 
@@ -174,6 +232,8 @@ const collapseBtnRef = ref(null)
 const isToggled = ref(false)    // false = 圆圈在右（初始），true = 圆圈在左
 const isCollapsed = ref(false)  // false = 展开，true = 收起
 const activeTab = ref('works')  // 当前激活的选项卡
+const statusFilter = ref('all')  // 作品状态筛选：all / approved / pending / rejected
+const searchQuery = ref('')      // 搜索关键词
 
 // ── 头像 ──
 const avatarUrl = ref(getAvatarFromCache())
@@ -293,8 +353,8 @@ const toggleCollapse = () => {
         // 1. 隐藏 H2（消除 top 偏移 + 高度 + 透明度）
         tl.to(h2Ref.value, { top: 0, height: 0, opacity: 0, marginTop: 0, marginBottom: 0, paddingTop: 0, paddingBottom: 0, duration: 0.35 }, 0)
 
-        // 2. 隐藏底部选项卡
-        tl.to(optionBottomRef.value, { height: 0, opacity: 0, marginTop: 0, marginBottom: 0, paddingTop: 0, paddingBottom: 0, duration: 0.35 }, 0.05)
+        // 2. 隐藏底部选项卡（minHeight: 0 覆盖 CSS min-height: 40px）
+        tl.to(optionBottomRef.value, { height: 0, minHeight: 0, opacity: 0, marginTop: 0, marginBottom: 0, paddingTop: 0, paddingBottom: 0, duration: 0.35 }, 0.05)
 
         // 3. 隐藏两个返回按钮（不隐藏数据栏）
         tl.to(optionButtonsRef.value, { width: 0, opacity: 0, marginLeft: 0, marginRight: 0, paddingLeft: 0, paddingRight: 0, gap: 0, overflow: 'hidden', duration: 0.35 }, 0.1)
@@ -316,7 +376,7 @@ const toggleCollapse = () => {
         tl.to(h2Ref.value, { top: 60, height: _origH2Height, opacity: 1, marginTop: 0, marginBottom: 0, paddingTop: 0, paddingBottom: 0, duration: 0.35 }, 0.05)
 
         // 3. 恢复底部选项卡
-        tl.to(optionBottomRef.value, { height: _origBottomHeight, opacity: 1, marginTop: 0, marginBottom: 0, paddingTop: 0, paddingBottom: 0, duration: 0.35 }, 0.1)
+        tl.to(optionBottomRef.value, { height: _origBottomHeight, minHeight: 40, opacity: 1, marginTop: 0, marginBottom: 0, paddingTop: 0, paddingBottom: 0, duration: 0.35 }, 0.1)
 
         // 4. 恢复两个返回按钮
         tl.to(optionButtonsRef.value, { width: _origButtonsWidth, opacity: 1, marginLeft: 0, marginRight: 0, paddingLeft: 0, paddingRight: 0, gap: 12, overflow: 'hidden', duration: 0.35 }, 0.15)

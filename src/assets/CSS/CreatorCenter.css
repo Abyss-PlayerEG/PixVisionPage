@@ -9,6 +9,7 @@
     height: 240px;
     /* background-color: #FDF9F0; */
     padding: 30px 5%;
+    overflow: hidden;
 }
 
 .n1_Main{
@@ -336,8 +337,8 @@
 
 /* ═══════════════════════════════════════════════════
    #num1z — 收起动画容器
-   注意：不使用 overflow:hidden，否则收起按钮（bottom:-10px）会被裁切。
-   内部元素（H2 / .option-bottom / .option-buttons）各自处理溢出裁剪。
+   收起按钮 position:absolute; bottom:-20px 在两种状态下
+   均位于 #num1z 高度范围内，overflow:hidden 不会裁切它。
    ═══════════════════════════════════════════════════ */
 
 /* ═══════════════════════════════════════════════════
@@ -401,4 +402,178 @@
 
 .collapse-btn-text {
     line-height: 1;
+}
+
+/* ═══════════════════════════════════════════════════
+   #num2z — 状态筛选栏 + 搜索栏
+   ═══════════════════════════════════════════════════ */
+#num2z{
+    width: 100%;
+    height: 50px;
+    padding: 0 5%;
+    display: flex;
+    justify-content: flex-end;
+    align-items: flex-start;
+    gap: 20px;
+    /* background-color: #fff; */
+
+    /* ── 左栏：作品状态分类面板（左右布局，最大高度 50px） ── */
+    .n2_Lceb{
+        /* width: 22%; */
+        position: relative;
+        min-height: 50px;
+        margin-right: 20px;
+        border-radius: 12px;
+        /* padding: 0 14px; */
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        gap: 12px;
+    }
+
+    .n2_Lceb::after{
+        content: "";
+        position: absolute;
+        left: 0;
+        right: 0;
+        top: 90%;
+        height: 2px;
+        border-radius: 2px;
+        background-color: #FDF9F0;
+    }
+
+    /* 状态头部：绿点 + 文字 */
+    .status-header{
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        flex-shrink: 0;
+    }
+
+    .status-dot{
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background-color: var(--color-primary);
+        flex-shrink: 0;
+    }
+
+    .status-title{
+        font-size: 14px;
+        font-weight: 500;
+        color: var(--text-primary);
+        letter-spacing: 0.5px;
+        white-space: nowrap;
+    }
+
+    /* 竖分割线（标题与选项之间） */
+    .status-divider{
+        width: 1px;
+        height: 24px;
+        background-color: rgba(255, 255, 255, 0.10);
+        flex-shrink: 0;
+    }
+
+    /* 筛选选项列表 — 水平排列 */
+    .status-options{
+        display: flex;
+        flex-direction: row;
+        gap: 2px;
+    }
+
+    .status-option{
+        padding: 6px 20px;
+        border: none;
+        border-radius: 8px;
+        background: transparent;
+        color: var(--text-secondary);
+        font-size: 13px;
+        font-family: inherit;
+        cursor: pointer;
+        transition: background-color 0.2s ease, color 0.2s ease;
+        white-space: nowrap;
+    }
+
+    .status-option:hover{
+        background-color: var(--bg-tertiary);
+        color: var(--text-primary);
+    }
+
+    .status-option:active{
+        scale: 0.97;
+    }
+
+    .status-option.active{
+        background-color: #00A947;
+        color: #0f0f0f;
+    }
+
+    /* ── 右栏：搜索栏 ── */
+    .n2_Rceb{
+        width: 30%;
+        min-width: 240px;
+        height: 50px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 0 16px;
+        border-radius: 12px;
+        background-color: #FDF9F0;
+        border: 1px solid transparent;
+        transition: border-color 0.25s ease, background-color 0.25s ease;
+    }
+
+    .n2_Rceb:focus-within{
+        border-color: rgba(255, 255, 255, 0.12);
+        background-color:#FFF9E8
+    }
+
+    .search-icon{
+        width: 18px;
+        height: 18px;
+        flex-shrink: 0;
+        color: var(--text-muted);
+        transition: color 0.25s ease;
+    }
+
+    .search-input{
+        flex: 1;
+        min-width: 0;
+        height: 100%;
+        border: none;
+        outline: none;
+        background: transparent;
+        color: #0a0a0a;
+        font-size: 14px;
+        font-family: inherit;
+    }
+
+    .search-input::placeholder{
+        color: var(--text-muted);
+    }
+
+    .search-clear{
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 22px;
+        height: 22px;
+        padding: 0;
+        border: none;
+        border-radius: 50%;
+        background-color: var(--bg-tertiary);
+        color: var(--text-muted);
+        cursor: pointer;
+        flex-shrink: 0;
+        transition: background-color 0.2s ease, color 0.2s ease;
+    }
+
+    .search-clear:hover{
+        color: #00A947;
+    }
+
+    .search-clear svg{
+        width: 14px;
+        height: 14px;
+    }
 }
