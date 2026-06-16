@@ -1,12 +1,12 @@
 #Main{
     width: 100%;
     min-height: 100vh;
-    background-color: #0a0a0a;
+    background-color: #0f0f0f;
 }
 
 #num1z{
     width: 100%;
-    height: 300px;
+    height: 240px;
     /* background-color: #FDF9F0; */
     padding: 30px 5%;
 }
@@ -19,6 +19,7 @@
     padding:10px 20px;
     display: flex;
     justify-content: space-between;
+    position: relative;
 }
 
 .n1_titleCeb{
@@ -83,8 +84,9 @@
 
     h2{
         position:relative;
-        top:120px;
+        top:60px;
         font-family: sul-gbk6;
+        overflow: hidden;
         div{
             width: 30%;
             height: 4px;
@@ -119,6 +121,7 @@
     align-items: center;
     gap: 12px;
     flex-shrink: 0;
+    overflow: hidden;
 }
 
 /* ── 药丸按钮基础 ── */
@@ -169,6 +172,11 @@
 
 .toggle-btn:active {
     scale: 1; /* 切换按钮不缩放，避免影响内部定位 */
+}
+
+/* 切换至「回到个人中心」状态时，文字变为主题绿色 */
+.toggle-btn.toggled .label-logout.show {
+    color: var(--color-primary);
 }
 
 /* 文本标签 */
@@ -324,4 +332,73 @@
     width: 20px;
     height: 20px;
     flex-shrink: 0;
+}
+
+/* ═══════════════════════════════════════════════════
+   #num1z — 收起动画容器
+   注意：不使用 overflow:hidden，否则收起按钮（bottom:-10px）会被裁切。
+   内部元素（H2 / .option-bottom / .option-buttons）各自处理溢出裁剪。
+   ═══════════════════════════════════════════════════ */
+
+/* ═══════════════════════════════════════════════════
+   收起状态下的中部选项卡（展开时隐藏）
+   ═══════════════════════════════════════════════════ */
+.n1_collapsedTabs {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    width: 0;
+    overflow: hidden;
+    opacity: 0;
+    pointer-events: none;
+    flex-shrink: 0;
+    white-space: nowrap;
+}
+
+/* ═══════════════════════════════════════════════════
+   收起 / 展开按钮
+   ═══════════════════════════════════════════════════ */
+.collapse-toggle-btn {
+    position: absolute;
+    bottom: -20px;
+    left: 65%;
+    /* transform: translateX(-50%); */
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    height: 40px;
+    padding: 0 14px;
+    border: 1px solid rgba(0, 0, 0, 0.12);
+    border-radius: 15px;
+    background-color: #FDF9F0;
+    color: var(--text-muted);
+    font-size: 12px;
+    font-family: inherit;
+    cursor: pointer;
+    user-select: none;
+    white-space: nowrap;
+    z-index: 10;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    transition: color 0.2s, border-color 0.2s;
+    /* 初始 y: 12 + opacity: 0 由 GSAP set 控制，
+       此处设置一个贴近最终位置的无动画默认值，避免 JS 未加载时闪烁 */
+}
+
+.collapse-toggle-btn:hover {
+    color: #0a0a0a;
+    border-color: rgba(0, 0, 0, 0.25);
+}
+
+.collapse-toggle-btn:active {
+    scale: 0.96;
+}
+
+.collapse-icon {
+    width: 16px;
+    height: 16px;
+    flex-shrink: 0;
+}
+
+.collapse-btn-text {
+    line-height: 1;
 }
