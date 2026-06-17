@@ -747,11 +747,10 @@
     background: #0a0a0a;
     border-radius: 14px;
     overflow: hidden;
-    /* box-shadow 替代 border — 随合成层移动，translateY 时无亚像素毛边 */
     box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.06);
-    transition: transform 0.5s ease, box-shadow 0.5s ease;
+    transition: box-shadow 0.5s ease;
     cursor: default;
-    /* 硬件合成层 */
+    /* 不移动卡片 — 毛玻璃 backdrop-filter 永远在整数像素渲染，零毛边 */
     transform: translateZ(0);
     -webkit-transform: translateZ(0);
     backface-visibility: hidden;
@@ -769,19 +768,27 @@
     cursor: pointer;
 }
 
+/* hover — 纯阴影浮起，卡片不位移，毛玻璃不产生亚像素毛边 */
 .n3_workCard.clickable:hover{
-    transform: translateY(-3px);
-    box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.12), 0 12px 40px rgba(0, 0, 0, 0.6);
+    box-shadow:
+        0 0 0 1px rgba(255, 255, 255, 0.12),
+        0 6px 20px rgba(0, 0, 0, 0.5),
+        0 2px 6px rgba(0, 0, 0, 0.4);
 }
 
-/* 选中态 — 永久保持浮起，边框微弱提亮 */
+/* 选中态 — 阴影加深 + 描边提亮，表达"按住"感 */
 .n3_workCard.selected{
-    transform: translateY(-3px);
-    box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.18), 0 12px 40px rgba(0, 0, 0, 0.6);
+    box-shadow:
+        0 0 0 1px rgba(255, 255, 255, 0.18),
+        0 6px 20px rgba(0, 0, 0, 0.5),
+        0 2px 6px rgba(0, 0, 0, 0.4);
 }
 
 .n3_workCard.selected:hover{
-    box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.25), 0 12px 40px rgba(0, 0, 0, 0.6);
+    box-shadow:
+        0 0 0 1px rgba(255, 255, 255, 0.25),
+        0 6px 20px rgba(0, 0, 0, 0.5),
+        0 2px 6px rgba(0, 0, 0, 0.4);
 }
 
 /* 缩略图 — full-bleed 背景层，置于 ::before 之上 */
