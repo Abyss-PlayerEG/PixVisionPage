@@ -63,6 +63,12 @@ const router = createRouter({
             component: () => import('../views/Messages.vue'),
             meta: { requiresAuth: true },
         },
+        // 搜索页面
+        {
+            path: '/search',
+            name: 'search',
+            component: () => import('../views/SearchPage.vue'),
+        },
         // 404页面 - 捕获所有未匹配的路径（必须放在最后）
         {
             path: '/:pathMatch(.*)*',

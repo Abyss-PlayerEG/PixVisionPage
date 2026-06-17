@@ -43,6 +43,7 @@ export const USER_API = {
   PROFILE_ME: `${API_BASE_URL}/api/user/profile/me`,
   PROFILE_INFO: `${API_BASE_URL}/api/user/profile/info`, // 根据 userId 或 uuid 查询用户信息（公开接口）
   NICKNAME_CHANGE: `${API_BASE_URL}/api/user/profile/nickname/change`,
+  PAGE: `${API_BASE_URL}/api/user/profile/page`, // 用户分页查询（公开接口）
 };
 
 // 用户拓展数据相关接口
@@ -120,6 +121,14 @@ export const SERIES_API = {
   ...CREATOR_SERIES_API, // 展开创作者系列管理接口
 };
 
+// 关注相关接口
+export const FOLLOW_API = {
+  TOGGLE: `${API_BASE_URL}/api/follow/toggle`, // POST，路径后拼 /userId
+  STATUS: `${API_BASE_URL}/api/follow/status`, // GET，路径后拼 /userId
+  FOLLOWERS: `${API_BASE_URL}/api/follow/followers`, // GET，路径后拼 /userId/current/size
+  FOLLOWING: `${API_BASE_URL}/api/follow/following`, // GET，路径后拼 /userId/current/size
+};
+
 // 账号管理相关接口
 export const ACCOUNT_API = {
   DELETE_ACCOUNT: `${API_BASE_URL}/api/auth/delete-account`,           // 删除账号
@@ -144,6 +153,21 @@ export const ROLE_API = {
 export const HISTORY_API = {
   PAGE: `${API_BASE_URL}/api/history`,         // GET，路径后拼 /current/size
   DELETE: `${API_BASE_URL}/api/history/delete`, // POST，批量删除历史记录
+};
+
+// 搜索相关接口
+export const SEARCH_API = {
+  // 作品搜索（公开接口）
+  // GET /api/work/page/{current}/{size}?workTitle=xxx&userId=xxx&seriesId=xxx&isOriginal=true/false
+  WORK_PAGE: (current, size) => `${API_BASE_URL}/api/work/page/${current}/${size}`,
+  
+  // 合集搜索（公开接口）
+  // GET /api/work/series/page/{userId}/{current}/{size}?keyword=xxx
+  SERIES_PAGE: (userId, current, size) => `${API_BASE_URL}/api/work/series/page/${userId}/${current}/${size}`,
+  
+  // 用户搜索（公开接口）
+  // GET /api/user/profile/page/{current}/{size}?keyword=xxx
+  USER_PAGE: (current, size) => `${API_BASE_URL}/api/user/profile/page/${current}/${size}`,
 };
 
 // 消息相关接口
