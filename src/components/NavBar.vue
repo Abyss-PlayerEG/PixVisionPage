@@ -75,9 +75,17 @@ const onSearchIconClick = () => {
 
 const onSearchSubmit = () => {
   if (searchQuery.value.trim()) {
-    searchQuery.value = '';
+    // 跳转到搜索页面，并携带搜索关键词
+    router.push({
+      name: 'search',
+      query: { q: searchQuery.value.trim() }
+    })
+    searchQuery.value = ''
+  } else {
+    // 没有输入关键词，直接跳转到搜索页面
+    router.push({ name: 'search' })
   }
-};
+}
 
 // 计算属性：背景是否应该显示
 const shouldShowBg = computed(() => {

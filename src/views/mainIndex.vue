@@ -263,7 +263,7 @@ onUnmounted(() => {
   </section>
 
   <section id="num2z_2">
-    <div class="view-more-btn">
+    <div class="view-more-btn" @click="router.push('/search')">
       <span>查看更多</span>
       <svg
         class="arrow-icon"

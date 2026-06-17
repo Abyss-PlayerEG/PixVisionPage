@@ -168,6 +168,10 @@ export const SEARCH_API = {
   // 用户搜索（公开接口）
   // GET /api/user/profile/page/{current}/{size}?keyword=xxx
   USER_PAGE: (current, size) => `${API_BASE_URL}/api/user/profile/page/${current}/${size}`,
+  
+  // 用户详情（公开接口，用于获取统计数据）
+  // GET /api/user/profile/info?userId=xxx
+  USER_DETAIL: `${API_BASE_URL}/api/user/profile/info`,
 };
 
 // 消息相关接口

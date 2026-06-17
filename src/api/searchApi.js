@@ -103,6 +103,27 @@ export const searchSeries = async (params) => {
 }
 
 /**
+ * 获取单个用户的详细信息（包含统计数据）
+ * @param {number} userId - 用户ID
+ * @returns {Promise<Object|null>} 用户详细信息或null
+ */
+const fetchUserDetail = async (userId) => {
+  try {
+    const url = `${SEARCH_API.USER_DETAIL}?userId=${userId}`
+    const response = await fetch(url, { method: 'GET', headers: { 'Content-Type': 'application/json' } })
+    const result = await response.json()
+    const statusCode = result.code || result.recode
+    if (statusCode === 200 && result.data) {
+      return result.data
+    }
+    return null
+  } catch (error) {
+    console.warn('获取用户详情失败:', userId, error)
+    return null
+  }
+}
+
+/**
  * 搜索用户列表
  * @param {Object} params - 搜索参数
  * @param {number} params.current - 当前页码（从1开始）
@@ -133,8 +154,34 @@ export const searchUsers = async (params) => {
 
     const statusCode = result.code || result.recode
     if (statusCode === 200 && result.data) {
-      console.log('✅ 用户搜索成功，记录数:', result.data.records?.length || 0)
-      return { success: true, data: result.data }
+      const records = result.data.records || []
+      console.log('✅ 用户搜索成功，记录数:', records.length)
+
+      // 为每个用户获取详细统计数据
+      const enrichedRecords = await Promise.all(
+        records.map(async (user) => {
+          const detail = await fetchUserDetail(user.user_id)
+          if (detail) {
+            // 合并统计数据到用户对象
+            return {
+              ...user,
+              work_count: detail.work_count ?? user.work_count ?? 0,
+              total_likes: detail.total_likes ?? user.total_likes ?? 0,
+              total_views: detail.total_views ?? user.total_views ?? 0,
+              total_stars: detail.total_stars ?? user.total_stars ?? 0
+            }
+          }
+          return user
+        })
+      )
+
+      return {
+        success: true,
+        data: {
+          ...result.data,
+          records: enrichedRecords
+        }
+      }
     } else {
       console.error('❌ 用户搜索失败:', result.message)
       return { success: false, message: result.message || '搜索用户失败' }

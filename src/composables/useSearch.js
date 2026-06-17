@@ -294,8 +294,10 @@ export const useSearch = () => {
   }
 
   // ============ 用户相关操作 ============
-  const goToProfile = (userId) => {
-    router.push(`/profile/${userId}`)
+  const goToProfile = (user) => {
+    // 优先使用用户名，如果没有则使用用户ID
+    const identifier = user.username || user.user_id
+    router.push(`/profile/${identifier}`)
   }
 
   const toggleFollow = async (user) => {

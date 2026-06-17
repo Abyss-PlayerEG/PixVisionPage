@@ -68,14 +68,10 @@ export const useProfile = () => {
           return
         }
         
-        // 判断是 userId、uuid 还是 username
-        const isUserId = /^\d+$/.test(identifier)
+        // 判断是 uuid 还是 username（不再支持 userId）
         const isUuid = /^[0-9a-fA-F]{8}-?[0-9a-fA-F]{4}-?[0-9a-fA-F]{4}-?[0-9a-fA-F]{4}-?[0-9a-fA-F]{12}$/.test(identifier)
         
-        if (isUserId) {
-          // 通过 userId 查询
-          await fetchOtherUserByUserId(Number(identifier))
-        } else if (isUuid) {
+        if (isUuid) {
           // 通过 uuid 查询
           await fetchOtherUserByUuid(identifier)
         } else {
@@ -165,44 +161,8 @@ export const useProfile = () => {
       }
     } else {
       console.error('获取其他用户信息失败:', result.message)
-      showError(result.message || '用户不存在')
-    }
-  }
-
-  /**
-   * 通过 userId 获取其他用户信息
-   */
-  const fetchOtherUserByUserId = async (userId) => {
-    const result = await getUserInfoByUsernameOrUuid({ userId })
-    
-    if (result.success && result.data) {
-      const data = result.data
-      const id = data.user_id || null
-      
-      // 映射后端字段到前端展示字段
-      userInfo.value = {
-        avatar: getAvatarUrl(data.avatar_url),
-        nickname: data.nickname || '未设置昵称',
-        username: '@' + (data.username || 'unknown'),
-        uuid: null,
-        fullUuid: '',
-        userId: id,
-        userRole: data.user_role || 0,
-        workCount: data.work_count || 0,
-        totalLikes: data.total_likes || 0,
-        totalStars: data.total_stars || 0,
-        totalViews: data.total_views || 0
-      }
-      
-      console.log('✅ 其他用户信息已加载（userId）:', userInfo.value)
-      
-      // 获取联系方式
-      if (id) {
-        await fetchContactList(id)
-      }
-    } else {
-      console.error('获取其他用户信息失败:', result.message)
-      showError(result.message || '用户不存在')
+      // 用户不存在，跳转到404页面
+      router.push({ name: 'notFound' })
     }
   }
 
@@ -239,7 +199,8 @@ export const useProfile = () => {
       }
     } else {
       console.error('获取其他用户信息失败:', result.message)
-      showError(result.message || '用户不存在')
+      // 用户不存在，跳转到404页面
+      router.push({ name: 'notFound' })
     }
   }
 

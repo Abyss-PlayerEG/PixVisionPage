@@ -1,5 +1,5 @@
 <template>
-  <MessagesTopBar />
+  <TopNavBar back-text="返回" home-text="首页" />
   <main class="msg-main">
     <ChatPanel />
   </main>
@@ -9,7 +9,7 @@
 import { onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuth } from '@/composables/useAuth'
-import MessagesTopBar from '@/components/message/MessagesTopBar.vue'
+import TopNavBar from '@/components/TopNavBar.vue'
 import ChatPanel from '@/components/message/ChatPanel.vue'
 
 const router = useRouter()
