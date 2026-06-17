@@ -97,6 +97,7 @@
                       <button v-if="u.status !== 30" class="ap-btn ap-btn-sm ap-btn-freeze" @click="handleBanUser(u)">{{ u.status === 20 ? '解冻' : '冻结' }}</button>
                       <button class="ap-btn ap-btn-sm ap-btn-warn" @click="handleBanUser(u)">{{ u.status === 30 ? '解封' : '封禁' }}</button>
                       <button class="ap-btn ap-btn-sm" @click="handleResetPwd(u)">重置密码</button>
+                      <button class="ap-btn ap-btn-sm ap-btn-danger" @click="handleInitAvatarNickname(u)">初始化</button>
                     </div>
                   </td>
                 </tr>
@@ -149,8 +150,8 @@
               <tbody>
                 <tr v-for="w in workList" :key="w.work_id">
                   <td class="ap-cell-id">#{{ w.work_id }}</td>
-                  <td><img :src="getWorkImgSrc(w.img_url)" class="ap-thumb" @error="(e) => e.target.style.display='none'" @mouseenter="(e) => showPreview(e, getWorkImgSrc(w.img_url))" @mouseleave="hidePreview" @click="openFullscreen(getWorkImgSrc(w.img_url))" /></td>
-                  <td class="ap-cell-bold">{{ w.work_title || '未命名' }}</td>
+                  <td><AuthImage :url="getWorkImgSrc(w.img_url)" class-name="ap-thumb" @mouseenter="(e) => showPreview(e, getWorkImgSrc(w.img_url))" @mouseleave="hidePreview" @click="openFullscreen(getWorkImgSrc(w.img_url))" /></td>
+                  <td><span class="ap-link" @click="$router.push(`/work/${w.work_id}`)">{{ w.work_title || '未命名' }}</span></td>
                   <td><span class="ap-link" @click="$router.push(`/profile/${w.username}`)">{{ w.nickname || w.username || ('用户 #' + w.user_id) }}</span></td>
                   <td><span class="ap-badge" :class="approvalBadge(w.approval_status)">{{ approvalLabel(w.approval_status) }}</span></td>
                   <td>{{ formatTime(w.create_time) }}</td>
@@ -210,7 +211,7 @@
                 <tr v-for="c in commentList" :key="c.comment_id">
                   <td class="ap-cell-id">#{{ c.comment_id }}</td>
                   <td class="ap-cell-text">{{ c.comment_text || '—' }}</td>
-                  <td>{{ c.nickname || c.username || ('用户 #' + c.user_id) }}</td>
+                  <td><span class="ap-link" @click="$router.push(`/profile/${c.username}`)">{{ c.nickname || c.username || ('用户 #' + c.user_id) }}</span></td>
                   <td><span class="ap-badge" :class="approvalBadge(c.approval_status)">{{ approvalLabel(c.approval_status) }}</span></td>
                   <td>{{ formatTime(c.time) }}</td>
                   <td>
@@ -275,6 +276,7 @@
                   <td>{{ formatTime(s.create_time) }}</td>
                   <td>
                     <div class="ap-actions">
+                      <button class="ap-btn ap-btn-sm" @click="openEditSeriesDialog(s)">编辑</button>
                       <button class="ap-btn ap-btn-sm ap-btn-approve" @click="handleApproveSeries(s, 10)">通过</button>
                       <button class="ap-btn ap-btn-sm ap-btn-danger" @click="handleApproveSeries(s, 30)">不通过</button>
                       <button class="ap-btn ap-btn-sm ap-btn-warn" @click="handleDeleteSeries(s)">删除</button>
@@ -371,7 +373,14 @@
                   <td class="ap-cell-id">#{{ c.lock_id }}</td>
                   <td>{{ c.username || '用户 #' + c.user_id }}</td>
                   <td><span class="ap-badge" :class="changeTypeBadge(c.type)">{{ changeTypeLabel(c.type) }}</span></td>
-                  <td>{{ changeContent(c) }}</td>
+                  <td>
+                    <template v-if="c.type === 300">
+                      <AuthImage :url="getAdminAvatarSrc(c.avatar_url)" class-name="ap-thumb ap-clickable" @mouseenter="(e) => showPreview(e, getAdminAvatarSrc(c.avatar_url))" @mouseleave="hidePreview" @click="openFullscreen(getAdminAvatarSrc(c.avatar_url))" />
+                    </template>
+                    <template v-else>
+                      {{ changeContent(c) }}
+                    </template>
+                  </td>
                   <td>{{ formatTime(c.create_time) }}</td>
                   <td>
                     <div class="ap-actions">
@@ -384,6 +393,60 @@
             </table>
           </div>
           <div v-if="changeLoading && changeList.length > 0" class="ap-loading">加载中...</div>
+        </div>
+      </section>
+
+      <!-- ========== 消息管理 ========== -->
+      <section v-if="activeTab === 'messages'" class="ap-section">
+        <div class="ap-topbar">
+          <h1 class="ap-topbar-title">消息管理 <span class="ap-count">共 {{ messageTotal }} 条</span></h1>
+          <div class="ap-topbar-actions">
+            <div class="ap-search">
+              <input v-model="messageKeyword" class="ap-search-input" placeholder="搜索消息内容..." @keyup.enter="handleSearchMessages" />
+              <button class="ap-search-btn" @click="handleSearchMessages">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+              </button>
+            </div>
+            <button class="ap-btn ap-btn-warn" @click="handleRotateKeys" :disabled="isRotatingKeys">
+              {{ isRotatingKeys ? '更换中...' : '更换密钥' }}
+            </button>
+          </div>
+        </div>
+        <div class="ap-filters">
+          <div class="ap-filter-group">
+            <label>用户名</label>
+            <input v-model="messageUsername" class="ap-search-input" placeholder="筛选用户..." @keyup.enter="handleSearchMessages" />
+          </div>
+          <div class="ap-filter-group">
+            <label>参与者</label>
+            <input v-model="messageParticipants" class="ap-search-input" placeholder="user1,user2" @keyup.enter="handleSearchMessages" />
+          </div>
+          <div class="ap-filter-group">
+            <label>排序</label>
+            <select v-model="messageOrderBy" @change="handleSearchMessages">
+              <option value="newest">最新优先</option>
+              <option value="oldest">最早优先</option>
+            </select>
+          </div>
+        </div>
+        <div class="ap-content">
+          <div v-if="messageLoading && messageList.length === 0" class="ap-skeleton"><div v-for="n in 6" :key="n" class="ap-skeleton-row"></div></div>
+          <div v-else-if="!messageLoading && messageList.length === 0" class="ap-empty">暂无消息记录</div>
+          <div v-else class="ap-table-wrap">
+            <table class="ap-table">
+              <thead><tr><th>ID</th><th>发送者</th><th>接收者</th><th>内容</th><th>时间</th></tr></thead>
+              <tbody>
+                <tr v-for="m in messageList" :key="m.message_id">
+                  <td class="ap-cell-id">#{{ m.message_id }}</td>
+                  <td>{{ m.sender_nickname || m.sender_username || '—' }}</td>
+                  <td>{{ m.receiver_nickname || m.receiver_username || '—' }}</td>
+                  <td class="ap-cell-text">{{ m.decrypted_content || m.encrypted_content || '—' }}</td>
+                  <td>{{ formatTime(m.create_time) }}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <div v-if="messageLoading && messageList.length > 0" class="ap-loading">加载中...</div>
         </div>
       </section>
 
@@ -439,6 +502,21 @@
       </div>
     </div>
 
+    <!-- 编辑合集弹窗 -->
+    <div v-if="showEditSeriesDialog" class="ap-overlay" @click.self="showEditSeriesDialog = false">
+      <div class="ap-dialog">
+        <h3 class="ap-dialog-title">编辑合集信息</h3>
+        <div class="ap-dialog-body">
+          <div class="ap-form-group"><label>合集名称</label><input v-model="editSeriesForm.seriesName" placeholder="最多16个字符" maxlength="16" /></div>
+          <div class="ap-form-group"><label>合集描述</label><input v-model="editSeriesForm.seriesDescription" placeholder="最多24个字符" maxlength="24" /></div>
+        </div>
+        <div class="ap-dialog-footer">
+          <button class="ap-btn" @click="showEditSeriesDialog = false">取消</button>
+          <button class="ap-btn ap-btn-primary" @click="handleEditSeries">保存</button>
+        </div>
+      </div>
+    </div>
+
     <!-- 图片悬浮预览 -->
     <div v-if="previewUrl" class="ap-preview" :style="previewStyle">
       <img :src="previewUrl" class="ap-preview-img" />
@@ -455,17 +533,19 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { useAdmin } from '@/composables/useAdmin'
-import { API_BASE_URL, AVATAR_API, WORK_IMAGE_API } from '@/config/api'
+import { API_BASE_URL, AVATAR_API, WORK_IMAGE_API, WORK_IMAGE_ADMIN_API, AVATAR_ADMIN_API } from '@/config/api'
+import { fetchAuthImage } from '@/utils/adminHelpers'
+import AuthImage from '@/components/AuthImage.vue'
 
 import '../assets/CSS/admin.css'
 
 // 图片悬浮预览
 const previewUrl = ref('')
 const previewStyle = ref({})
-const showPreview = (e, url) => {
+const showPreview = async (e, url) => {
   if (!url) return
   const rect = e.currentTarget.getBoundingClientRect()
-  previewUrl.value = url
+  previewUrl.value = await fetchAuthImage(url)
   previewStyle.value = {
     left: `${rect.left + rect.width / 2}px`,
     top: `${rect.top - 8}px`,
@@ -475,7 +555,9 @@ const hidePreview = () => { previewUrl.value = '' }
 
 // 全屏查看器
 const fullscreenUrl = ref('')
-const openFullscreen = (url) => { if (url) fullscreenUrl.value = url }
+const openFullscreen = async (url) => {
+  if (url) fullscreenUrl.value = await fetchAuthImage(url)
+}
 const closeFullscreen = () => { fullscreenUrl.value = '' }
 
 const {
@@ -486,14 +568,17 @@ const {
   auditList, auditLoading, auditTotal, auditKeyword, auditContentTypeFilter, auditApprovalFilter,
   changeList, changeLoading, changeTotal, changeTypeFilter,
   logList, logLoading, logTotal, logKeyword,
+  messageList, messageLoading, messageKeyword, messageTotal, messageUsername, messageParticipants, messageOrderBy, isRotatingKeys,
   seriesList, seriesLoading, seriesKeyword, seriesTotal, seriesStatusFilter, seriesOrderBy,
   hasMore, formatTime,
   showCreateUserDialog, createUserForm, createUserErrors, openCreateUserDialog, handleCreateUser,
-  loadUsers, handleSearchUsers, handleBanUser, handleResetPwd,
+  loadUsers, handleSearchUsers, handleBanUser, handleResetPwd, handleInitAvatarNickname,
   loadWorks, handleSearchWorks, handleDeleteWork, handleApproveWork,
   loadComments, handleSearchComments, handleDeleteComment, handleApproveComment,
   loadAudits, loadChanges, handleApproveChange, loadLogs,
+  loadMessages, handleSearchMessages, handleRotateKeys,
   loadSeries, handleSearchSeries, handleDeleteSeries, handleApproveSeries,
+  showEditSeriesDialog, editSeriesForm, openEditSeriesDialog, handleEditSeries,
   switchTab, handleLogout,
 } = useAdmin()
 
@@ -504,6 +589,7 @@ const tabs = [
   { key: 'series', label: '合集管理', icon: 'M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10' },
   { key: 'audits', label: '审核记录', icon: 'M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z' },
   { key: 'changes', label: '变更审核', icon: 'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4' },
+  { key: 'messages', label: '消息管理', icon: 'M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9 8s9 3.582 9 8z' },
   { key: 'logs', label: '操作日志', icon: 'M4 6h16M4 10h16M4 14h16M4 18h16M9 6V4h6v2' },
 ]
 
@@ -538,9 +624,14 @@ const getAvatarSrc = (avatarPath) => {
   return `${AVATAR_API}?filePath=${encodeURIComponent(avatarPath)}`
 }
 
+const getAdminAvatarSrc = (avatarPath) => {
+  if (!avatarPath) return ''
+  return `${AVATAR_ADMIN_API}?filePath=${encodeURIComponent(avatarPath)}`
+}
+
 const getWorkImgSrc = (filePath) => {
   if (!filePath) return ''
-  return `${WORK_IMAGE_API}?filePath=${encodeURIComponent(filePath)}`
+  return `${WORK_IMAGE_ADMIN_API}?filePath=${encodeURIComponent(filePath)}`
 }
 
 onMounted(() => {

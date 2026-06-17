@@ -223,6 +223,9 @@ export const ADMIN_API = {
   REVIEW_CHANGES: `${API_BASE_URL}/api/admin/user-data-change/review`,               // POST, body: lockIds[]/approved
   // 操作日志
   LOGS: (current, size) => `${API_BASE_URL}/api/admin/logs/page/${current}/${size}`, // GET
+  // 消息管理
+  MESSAGES: (current, size) => `${API_BASE_URL}/api/admin/message/page/${current}/${size}`, // GET
+  ROTATE_KEYS: `${API_BASE_URL}/api/admin/message/rotate-keys`,                             // POST
 };
 
 // 获取作品图片完整 URL

@@ -800,6 +800,48 @@ export const updateSeriesApproval = async (seriesIds, approvalStatus) => {
   }
 }
 
+/**
+ * 批量更新合集信息（标题和描述）
+ * @param {number|number[]} seriesIds - 合集 ID 或合集 ID 数组
+ * @param {string} [seriesName] - 新合集名称（可选，最多16字符）
+ * @param {string} [seriesDescription] - 新合集描述（可选，最多24字符）
+ * @returns {Promise<Object>} { success, message }
+ */
+export const updateSeriesInfo = async (seriesIds, seriesName, seriesDescription) => {
+  try {
+    const token = localStorage.getItem('token')
+    if (!token) return { success: false, message: '未登录' }
+
+    const ids = Array.isArray(seriesIds) ? seriesIds : [seriesIds]
+    console.log('✏️ 更新合集信息:', ids, { seriesName, seriesDescription })
+    const formData = new URLSearchParams()
+    ids.forEach(id => formData.append('seriesIds', id))
+    if (seriesName) formData.append('seriesName', seriesName)
+    if (seriesDescription) formData.append('seriesDescription', seriesDescription)
+
+    const response = await fetch(ADMIN_API.SERIES_UPDATE, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+      body: formData,
+    })
+    const result = await response.json()
+    console.log('合集信息更新响应:', JSON.stringify(result, null, 2))
+
+    if (result.recode === 200) {
+      console.log('✅ 合集信息更新成功')
+      return { success: true, message: result.message || '更新成功', data: result.data }
+    }
+    console.error('❌ 合集信息更新失败:', result.message)
+    return { success: false, message: result.message || '操作失败' }
+  } catch (error) {
+    console.error('网络请求失败:', error)
+    return { success: false, message: '网络错误，请稍后重试' }
+  }
+}
+
 // ─── 权限管理 ───
 
 /**
@@ -868,6 +910,128 @@ export const refreshPermissionCache = async () => {
       return { success: true, message: result.message || '权限缓存刷新成功', data: result.data }
     }
     console.error('❌ 权限缓存刷新失败:', result.message)
+    return { success: false, message: result.message || '操作失败' }
+  } catch (error) {
+    console.error('网络请求失败:', error)
+    return { success: false, message: '网络错误，请稍后重试' }
+  }
+}
+
+/**
+ * 批量初始化用户头像和昵称
+ * @param {number|number[]} userIds - 用户 ID 或用户 ID 数组
+ * @returns {Promise<Object>} { success, message }
+ */
+export const initUserAvatarNickname = async (userIds) => {
+  try {
+    const token = localStorage.getItem('token')
+    if (!token) return { success: false, message: '未登录' }
+
+    const ids = Array.isArray(userIds) ? userIds : [userIds]
+    console.log('🔄 初始化用户头像昵称:', ids)
+    const formData = new URLSearchParams()
+    ids.forEach(id => formData.append('userIds', id))
+
+    const response = await fetch(ADMIN_API.USER_INIT_AVATAR, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+      body: formData,
+    })
+    const result = await response.json()
+    console.log('初始化头像昵称响应:', JSON.stringify(result, null, 2))
+
+    if (result.recode === 200) {
+      console.log('✅ 初始化头像昵称成功')
+      return { success: true, message: result.message || '初始化成功', data: result.data }
+    }
+    console.error('❌ 初始化头像昵称失败:', result.message)
+    return { success: false, message: result.message || '操作失败' }
+  } catch (error) {
+    console.error('网络请求失败:', error)
+    return { success: false, message: '网络错误，请稍后重试' }
+  }
+}
+
+// ─── 消息管理 ───
+
+/**
+ * 获取管理员消息列表（分页）
+ * @param {Object} params - 查询参数
+ * @param {number} [params.current=1] - 当前页
+ * @param {number} [params.size=20] - 每页数量
+ * @param {string} [params.username] - 用户名筛选
+ * @param {string} [params.participants] - 参与者用户名（格式：'user1,user2'）
+ * @param {string} [params.keyword] - 关键字搜索
+ * @param {string} [params.startTime] - 开始时间
+ * @param {string} [params.endTime] - 结束时间
+ * @param {string} [params.orderBy] - 排序 newest/oldest
+ * @returns {Promise<Object>} { success, data: { records, total, current, size } }
+ */
+export const fetchMessageList = async (params = {}) => {
+  try {
+    const token = localStorage.getItem('token')
+    if (!token) return { success: false, message: '未登录' }
+
+    const { current = 1, size = 20, username, participants, keyword, startTime, endTime, orderBy = 'newest' } = params
+    const queryParts = []
+    if (username) queryParts.push(`username=${encodeURIComponent(username)}`)
+    if (participants) queryParts.push(`participants=${encodeURIComponent(participants)}`)
+    if (keyword) queryParts.push(`keyword=${encodeURIComponent(keyword)}`)
+    if (startTime) queryParts.push(`startTime=${encodeURIComponent(startTime)}`)
+    if (endTime) queryParts.push(`endTime=${encodeURIComponent(endTime)}`)
+    queryParts.push(`orderBy=${orderBy}`)
+    let url = ADMIN_API.MESSAGES(current, size)
+    if (queryParts.length > 0) url += '?' + queryParts.join('&')
+
+    console.log('📋 获取消息列表:', url, '参数:', { current, size, username, participants, keyword, orderBy })
+    const response = await fetch(url, {
+      method: 'GET',
+      headers: { 'Authorization': `Bearer ${token}` },
+    })
+    const result = await response.json()
+    console.log('消息列表响应:', JSON.stringify(result, null, 2))
+
+    const statusCode = result.recode
+    if (statusCode === 200 && result.data) {
+      console.log('✅ 消息列表获取成功')
+      return { success: true, data: result.data }
+    }
+    console.error('❌ 消息列表获取失败:', result.message)
+    return { success: false, message: result.message || '获取消息列表失败' }
+  } catch (error) {
+    console.error('网络请求失败:', error)
+    return { success: false, message: '网络错误，请稍后重试' }
+  }
+}
+
+/**
+ * 更换消息加密密钥
+ * @returns {Promise<Object>} { success, message, data }
+ */
+export const rotateMessageKeys = async () => {
+  try {
+    const token = localStorage.getItem('token')
+    if (!token) return { success: false, message: '未登录' }
+
+    console.log('🔄 更换消息加密密钥...')
+    const response = await fetch(ADMIN_API.ROTATE_KEYS, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+    })
+    const result = await response.json()
+    console.log('更换密钥响应:', JSON.stringify(result, null, 2))
+
+    if (result.recode === 200) {
+      console.log('✅ 密钥更换成功')
+      return { success: true, message: result.message || '密钥更换成功', data: result.data }
+    }
+    console.error('❌ 密钥更换失败:', result.message)
     return { success: false, message: result.message || '操作失败' }
   } catch (error) {
     console.error('网络请求失败:', error)

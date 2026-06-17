@@ -9,8 +9,9 @@ import {
   fetchWorkList, deleteWork, updateWorkApproval, updateWorkTitle,
   fetchCommentList, deleteComment, updateCommentApproval,
   fetchAuditRecords, fetchPendingChanges, reviewDataChanges, fetchOperationLogs,
-  fetchSeriesList, deleteSeries, updateSeriesApproval,
-  updateUserRole, refreshPermissionCache
+  fetchSeriesList, deleteSeries, updateSeriesApproval, updateSeriesInfo,
+  fetchMessageList, rotateMessageKeys,
+  updateUserRole, refreshPermissionCache, initUserAvatarNickname
 } from '@/api/adminApi'
 import { showSuccess, showError } from '@/utils/notification'
 import { showConfirm } from '@/utils/confirmDialog'
@@ -98,6 +99,18 @@ export const useAdmin = () => {
   const logPageSize = 20
   const logKeyword = ref('')
   const logOrderBy = ref('newest')
+
+  // ── 消息管理 ──
+  const messageList = ref([])
+  const messageLoading = ref(false)
+  const messageCurrent = ref(1)
+  const messageTotal = ref(0)
+  const messagePageSize = 20
+  const messageKeyword = ref('')
+  const messageUsername = ref('')
+  const messageParticipants = ref('')
+  const messageOrderBy = ref('newest')
+  const isRotatingKeys = ref(false)
 
   // ── 合集管理 ──
   const seriesList = ref([])
@@ -297,6 +310,25 @@ export const useAdmin = () => {
       showSuccess(result.message || '权限缓存刷新成功')
     } else {
       showError(result.message || '权限缓存刷新失败')
+    }
+  }
+
+  // ── 初始化用户头像昵称 ──
+  const handleInitAvatarNickname = async (user) => {
+    const ok = await showConfirm({
+      title: '初始化头像昵称',
+      message: `确定要将「${user.nickname || user.username}」的头像和昵称重置为随机默认值吗？此操作不可撤销。`,
+      yesText: '确定初始化',
+      noText: '取消',
+      type: 'warning'
+    })
+    if (!ok) return
+    const result = await initUserAvatarNickname(user.user_id)
+    if (result.success) {
+      showSuccess(result.message || '初始化成功')
+      loadUsers({ reset: true })
+    } else {
+      showError(result.message || '初始化失败')
     }
   }
 
@@ -666,6 +698,53 @@ export const useAdmin = () => {
     logLoading.value = false
   }
 
+  // ───────── 消息管理 ─────────
+
+  const loadMessages = async ({ reset = false } = {}) => {
+    if (messageLoading.value) return
+    if (reset) { messageCurrent.value = 1; messageList.value = [] }
+    messageLoading.value = true
+    const result = await fetchMessageList({
+      current: messageCurrent.value,
+      size: messagePageSize,
+      username: messageUsername.value || undefined,
+      participants: messageParticipants.value || undefined,
+      keyword: messageKeyword.value || undefined,
+      orderBy: messageOrderBy.value,
+    })
+    if (result.success && result.data) {
+      const { records, total } = result.data
+      const newRecords = records || []
+      messageList.value = reset ? newRecords : [...messageList.value, ...newRecords]
+      messageTotal.value = total || 0
+      if (newRecords.length > 0 && messageList.value.length < messageTotal.value) {
+        messageCurrent.value++
+      }
+    }
+    messageLoading.value = false
+  }
+
+  const handleSearchMessages = () => loadMessages({ reset: true })
+
+  const handleRotateKeys = async () => {
+    const ok = await showConfirm({
+      title: '更换消息加密密钥',
+      message: '确定要更换消息加密密钥吗？此操作将重新加密所有私信，执行时间较长。',
+      yesText: '确定更换',
+      noText: '取消',
+      type: 'warning'
+    })
+    if (!ok) return
+    isRotatingKeys.value = true
+    const result = await rotateMessageKeys()
+    isRotatingKeys.value = false
+    if (result.success) {
+      showSuccess(result.message || '密钥更换成功')
+    } else {
+      showError(result.message || '密钥更换失败')
+    }
+  }
+
   // ───────── 合集管理 ─────────
 
   const loadSeries = async ({ reset = false } = {}) => {
@@ -733,6 +812,46 @@ export const useAdmin = () => {
     }
   }
 
+  // ── 合集编辑 ──
+  const showEditSeriesDialog = ref(false)
+  const editSeriesForm = reactive({ seriesId: null, seriesName: '', seriesDescription: '' })
+
+  const openEditSeriesDialog = (series) => {
+    editSeriesForm.seriesId = series.series_id
+    editSeriesForm.seriesName = series.series_title || ''
+    editSeriesForm.seriesDescription = series.about_text || ''
+    showEditSeriesDialog.value = true
+  }
+
+  const handleEditSeries = async () => {
+    const name = editSeriesForm.seriesName.trim()
+    const desc = editSeriesForm.seriesDescription.trim()
+    if (!name && !desc) {
+      showError('合集名称和描述至少需要填写一个')
+      return
+    }
+    if (name.length > 16) {
+      showError('合集名称最多16个字符')
+      return
+    }
+    if (desc.length > 24) {
+      showError('合集描述最多24个字符')
+      return
+    }
+    const result = await updateSeriesInfo(editSeriesForm.seriesId, name || undefined, desc || undefined)
+    if (result.success) {
+      const series = seriesList.value.find(s => s.series_id === editSeriesForm.seriesId)
+      if (series) {
+        if (name) series.series_title = name
+        if (desc) series.about_text = desc
+      }
+      showSuccess('合集信息已更新')
+      showEditSeriesDialog.value = false
+    } else {
+      showError(result.message || '更新失败')
+    }
+  }
+
   // ── 合集批量选择 ──
   const toggleSeriesSelect = (seriesId) => {
     if (selectedSeriesIds.value.has(seriesId)) {
@@ -796,6 +915,7 @@ export const useAdmin = () => {
       changes: () => changeList.value.length === 0 && loadChanges({ reset: true }),
       logs: () => logList.value.length === 0 && loadLogs({ reset: true }),
       series: () => seriesList.value.length === 0 && loadSeries({ reset: true }),
+      messages: () => messageList.value.length === 0 && loadMessages({ reset: true }),
     }
     loaders[tab]?.()
   }
@@ -824,18 +944,21 @@ export const useAdmin = () => {
     auditList, auditLoading, auditTotal, auditKeyword, auditContentTypeFilter, auditApprovalFilter, auditOrderBy,
     changeList, changeLoading, changeTotal, changeTypeFilter,
     logList, logLoading, logTotal, logKeyword, logOrderBy,
+    messageList, messageLoading, messageKeyword, messageTotal, messageUsername, messageParticipants, messageOrderBy, isRotatingKeys,
     seriesList, seriesLoading, seriesKeyword, seriesTotal, seriesOrderBy, seriesStatusFilter, seriesUserIdFilter,
     selectedSeriesIds, toggleSeriesSelect, toggleAllSeries,
     handleBatchDeleteSeries, handleBatchApproveSeries,
+    showEditSeriesDialog, editSeriesForm, openEditSeriesDialog, handleEditSeries,
     hasMore, formatTime,
     showCreateUserDialog, createUserForm, createUserErrors, openCreateUserDialog, handleCreateUser,
     showEditTitleDialog, editTitleForm, openEditTitleDialog, handleEditWorkTitle,
     showChangeRoleDialog, changeRoleForm, openChangeRoleDialog, handleChangeRole,
     isRefreshingCache, handleRefreshPermissionCache,
-    loadUsers, handleSearchUsers, handleBanUser, handleFreezeUser, handleDeleteUser, handleResetPwd,
+    loadUsers, handleSearchUsers, handleBanUser, handleFreezeUser, handleDeleteUser, handleResetPwd, handleInitAvatarNickname,
     loadWorks, handleSearchWorks, handleDeleteWork, handleApproveWork,
     loadComments, handleSearchComments, handleDeleteComment, handleApproveComment,
     loadAudits, loadChanges, handleApproveChange, loadLogs,
+    loadMessages, handleSearchMessages, handleRotateKeys,
     loadSeries, handleSearchSeries, handleDeleteSeries, handleApproveSeries,
     switchTab, handleLogout,
   }
