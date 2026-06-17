@@ -87,7 +87,7 @@
                 <tr v-for="u in userList" :key="u.user_id">
                   <td class="ap-cell-id">#{{ u.user_id }}</td>
                   <td><img :src="getAvatarSrc(u.avatar_url)" class="ap-avatar" @error="(e) => e.target.style.display='none'" @mouseenter="(e) => showPreview(e, getAvatarSrc(u.avatar_url))" @mouseleave="hidePreview" /></td>
-                  <td><span class="ap-link" @click="$router.push(`/profile/${u.user_id}`)">{{ u.username }}</span></td>
+                  <td><span class="ap-link" @click="$router.push(`/profile/${u.username}`)">{{ u.username }}</span></td>
                   <td>{{ u.nickname || '—' }}</td>
                   <td><span class="ap-badge" :class="roleBadge(u.user_role)">{{ roleLabel(u.user_role) }}</span></td>
                   <td><span class="ap-badge" :class="statusBadge(u.status)">{{ statusLabel(u.status) }}</span></td>
@@ -151,7 +151,7 @@
                   <td class="ap-cell-id">#{{ w.work_id }}</td>
                   <td><img :src="getWorkImgSrc(w.img_url)" class="ap-thumb" @error="(e) => e.target.style.display='none'" @mouseenter="(e) => showPreview(e, getWorkImgSrc(w.img_url))" @mouseleave="hidePreview" @click="openFullscreen(getWorkImgSrc(w.img_url))" /></td>
                   <td class="ap-cell-bold">{{ w.work_title || '未命名' }}</td>
-                  <td><span class="ap-link" @click="$router.push(`/profile/${w.user_id}`)">{{ w.nickname || w.username || ('用户 #' + w.user_id) }}</span></td>
+                  <td><span class="ap-link" @click="$router.push(`/profile/${w.username}`)">{{ w.nickname || w.username || ('用户 #' + w.user_id) }}</span></td>
                   <td><span class="ap-badge" :class="approvalBadge(w.approval_status)">{{ approvalLabel(w.approval_status) }}</span></td>
                   <td>{{ formatTime(w.create_time) }}</td>
                   <td>
