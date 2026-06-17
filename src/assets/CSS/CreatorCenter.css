@@ -405,7 +405,7 @@
 }
 
 /* ═══════════════════════════════════════════════════
-   #num2z — 状态筛选栏 + 搜索栏
+   #num2z — 批量操作栏（左） + 状态筛选栏（右） + 搜索栏（右）
    ═══════════════════════════════════════════════════ */
 #num2z{
     width: 100%;
@@ -415,16 +415,13 @@
     justify-content: flex-end;
     align-items: flex-start;
     gap: 20px;
-    /* background-color: #fff; */
 
     /* ── 左栏：作品状态分类面板（左右布局，最大高度 50px） ── */
     .n2_Lceb{
-        /* width: 22%; */
         position: relative;
         min-height: 50px;
         margin-right: 20px;
         border-radius: 12px;
-        /* padding: 0 14px; */
         display: flex;
         flex-direction: row;
         align-items: center;
@@ -479,9 +476,23 @@
         display: flex;
         flex-direction: row;
         gap: 2px;
+        position: relative;
+    }
+
+    /* 状态筛选滑块（亮色聚焦指示器） */
+    .status-slider{
+        position: absolute;
+        top: 0;
+        height: 100%;
+        border-radius: 8px;
+        background-color: #00A947;
+        z-index: 0;
+        pointer-events: none;
     }
 
     .status-option{
+        position: relative;
+        z-index: 1;
         padding: 6px 20px;
         border: none;
         border-radius: 8px;
@@ -490,12 +501,11 @@
         font-size: 13px;
         font-family: inherit;
         cursor: pointer;
-        transition: background-color 0.2s ease, color 0.2s ease;
+        transition: color 0.25s ease;
         white-space: nowrap;
     }
 
     .status-option:hover{
-        background-color: var(--bg-tertiary);
         color: var(--text-primary);
     }
 
@@ -504,7 +514,6 @@
     }
 
     .status-option.active{
-        background-color: #00A947;
         color: #0f0f0f;
     }
 
@@ -575,5 +584,843 @@
     .search-clear svg{
         width: 14px;
         height: 14px;
+    }
+}
+
+/* ── 批量操作栏（黑色长条胶囊，num2z 最左边） ── */
+.n2_batchPill{
+    position: relative;
+    display: flex;
+    align-items: center;
+    height: 40px;
+    padding: 4px;
+    border-radius: 12px;
+    background-color: #0a0a0a;
+    flex-shrink: 0;
+    margin-right: auto;
+    overflow: hidden;
+}
+
+/* 亮色滑动高亮块 */
+.n2_batchPill .batch-highlight{
+    position: absolute;
+    top: 4px;
+    height: calc(100% - 8px);
+    border-radius: 9px;
+    background-color: rgba(255, 255, 255, 0.12);
+    z-index: 0;
+    pointer-events: none;
+}
+
+/* 批量操作栏内每个选项 */
+.n2_batchPill .batch-segment{
+    position: relative;
+    z-index: 1;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 14px;
+    border: none;
+    border-radius: 9px;
+    background: transparent;
+    color: var(--text-secondary);
+    font-size: 13px;
+    font-family: inherit;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: color 0.25s ease;
+    user-select: none;
+}
+
+.n2_batchPill .batch-segment:hover{
+    color: #ffffff;
+}
+
+.n2_batchPill .batch-segment:active{
+    scale: 0.97;
+}
+
+/* 已选数量文字） */
+.n2_batchPill .batch-count{
+    position: relative;
+    z-index: 1;
+    padding: 6px 14px;
+    font-size: 13px;
+    color: #00A947;
+    white-space: nowrap;
+    user-select: none;
+}
+
+.n2_batchPill .batch-segment svg{
+    width: 14px;
+    height: 14px;
+}
+
+/* 批量操作栏删除按钮悬停变红 */
+.n2_batchPill .batch-segment.danger:hover{
+    color: #ff4d4f;
+}
+
+/* 批量操作栏入场/退场动画 */
+.n2-batch-enter-active{
+    transition: all 0.3s ease-out;
+}
+
+.n2-batch-leave-active{
+    transition: all 0.25s ease-in;
+}
+
+.n2-batch-enter-from{
+    opacity: 0;
+    transform: translateX(-12px);
+}
+
+.n2-batch-leave-to{
+    opacity: 0;
+    transform: translateX(-12px);
+}
+
+/* ═══════════════════════════════════════════════════
+   #num3z — 内容区
+   ═══════════════════════════════════════════════════ */
+#num3z{
+    width: 100%;
+    min-height: 400px;
+    padding: 44px 5% 60px;
+}
+
+/* ── 加载 / 空状态 ── */
+.n3_state{
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 60px 20px;
+    color: var(--text-muted);
+    font-size: 14px;
+    gap: 12px;
+    text-align: center;
+}
+
+.n3_spinner{
+    width: 22px;
+    height: 22px;
+    border: 2px solid rgba(255, 255, 255, 0.1);
+    border-top-color: var(--color-primary);
+    border-radius: 50%;
+    animation: n3-spin 0.8s linear infinite;
+}
+
+@keyframes n3-spin{
+    to { transform: rotate(360deg); }
+}
+
+.n3_emptyIcon{
+    width: 56px;
+    height: 56px;
+    color: #2a2a2a;
+    margin-bottom: 8px;
+}
+
+.n3_emptyTitle{
+    font-size: 16px;
+    color: var(--text-tertiary);
+    margin: 0;
+}
+
+.n3_emptyDesc{
+    font-size: 13px;
+    color: var(--text-muted);
+    margin: 0;
+}
+
+/* ── 作品网格 ── */
+.n3_workGrid{
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 16px;
+}
+
+/* ── 作品卡片 ── */
+.n3_workCard{
+    position: relative;
+    background: #0a0a0a;
+    border-radius: 14px;
+    overflow: hidden;
+    /* box-shadow 替代 border — 随合成层移动，translateY 时无亚像素毛边 */
+    box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.06);
+    transition: transform 0.5s ease, box-shadow 0.5s ease;
+    cursor: default;
+    /* 硬件合成层 */
+    transform: translateZ(0);
+    -webkit-transform: translateZ(0);
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+}
+
+/* 卡片占高 — 用 ::before 撑开高度（比 4:3 略高，保证卡片不小） */
+.n3_workCard::before{
+    content: '';
+    display: block;
+    padding-bottom: 88%;
+}
+
+.n3_workCard.clickable{
+    cursor: pointer;
+}
+
+.n3_workCard.clickable:hover{
+    transform: translateY(-3px);
+    box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.12), 0 12px 40px rgba(0, 0, 0, 0.6);
+}
+
+/* 选中态 — 永久保持浮起，边框微弱提亮 */
+.n3_workCard.selected{
+    transform: translateY(-3px);
+    box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.18), 0 12px 40px rgba(0, 0, 0, 0.6);
+}
+
+.n3_workCard.selected:hover{
+    box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.25), 0 12px 40px rgba(0, 0, 0, 0.6);
+}
+
+/* 缩略图 — full-bleed 背景层，置于 ::before 之上 */
+.n3_thumb{
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    z-index: 0;
+    transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* hover — 轻微放大 */
+.n3_workCard:hover .n3_thumb{
+    transform: scale(1.05);
+}
+
+/* 选中态 — 更大放大 */
+.n3_workCard.selected .n3_thumb{
+    transform: scale(1.12);
+}
+
+.n3_workCard.selected:hover .n3_thumb{
+    transform: scale(1.12);
+}
+
+/* 无图片时占位背景 — 覆盖整个卡片 */
+.n3_thumbPlaceholder{
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    background: linear-gradient(135deg, #111 0%, #1a1a1a 100%);
+    z-index: 0;
+}
+
+.n3_thumbIcon{
+    width: 32px;
+    height: 32px;
+    color: #444;
+    opacity: 0.8;
+}
+
+.n3_thumbIcon.pending{
+    color: var(--color-warning);
+    animation: pulse-pending 2s ease-in-out infinite;
+}
+
+.n3_thumbIcon.rejected{
+    color: var(--color-danger);
+    opacity: 0.7;
+}
+
+@keyframes pulse-pending{
+    0%, 100% { opacity: 0.6; transform: scale(1); }
+    50% { opacity: 1; transform: scale(1.05); }
+}
+
+.n3_thumbText{
+    font-size: 12px;
+    color: #555;
+    font-weight: 500;
+}
+
+.n3_thumbText.pending{
+    color: var(--color-warning);
+}
+
+.n3_thumbText.rejected{
+    color: var(--color-danger);
+    opacity: 0.8;
+}
+
+/* ── 毛玻璃信息区 — 默认紧凑底条，选中后向上长高 ── */
+.n3_cardInfo{
+    position: absolute;
+    left: -1px;
+    right: -1px;
+    bottom: -1px;
+    z-index: 1;
+    padding: 10px 14px 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    background: rgba(10, 10, 10, 0.55);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    box-shadow: 0 -12px 24px rgba(0, 0, 0, 0.4) inset;
+    transition: padding-top 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+    /* GPU 合成层 */
+    transform: translateZ(0);
+    -webkit-transform: translateZ(0);
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+    will-change: padding-top;
+}
+
+/* 选中态 — 向上长高约 42px，覆盖图片下半部 */
+.n3_workCard.selected .n3_cardInfo{
+    padding-top: 52px;
+}
+
+.n3_workTitle{
+    font-size: 14px;
+    font-weight: 500;
+    color: #ffffff;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    margin: 0;
+}
+
+.n3_workMeta{
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+}
+
+.n3_workTime{
+    font-size: 12px;
+    color: var(--text-tertiary);
+    flex-shrink: 0;
+}
+
+/* ── 状态：色点 + 文字 ── */
+.n3_status{
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    flex-shrink: 0;
+}
+
+.n3_statusDot{
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+
+.n3_statusDot.status-approved{
+    background-color: var(--color-success);
+    box-shadow: 0 0 6px rgba(42, 157, 106, 0.5);
+}
+
+.n3_statusDot.status-pending{
+    background-color: var(--color-warning);
+    box-shadow: 0 0 6px rgba(251, 191, 36, 0.5);
+}
+
+.n3_statusDot.status-rejected{
+    background-color: var(--color-danger);
+    box-shadow: 0 0 6px rgba(255, 77, 79, 0.4);
+}
+
+.n3_statusLabel{
+    font-size: 12px;
+    color: var(--text-tertiary);
+}
+
+/* ── 选择框 ── */
+.n3_checkbox{
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    width: 22px;
+    height: 22px;
+    border-radius: 6px;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    background: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(6px);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+    opacity: 0;
+    z-index: 2;
+}
+
+.n3_workCard:hover .n3_checkbox,
+.n3_checkbox.checked{
+    opacity: 1;
+}
+
+.n3_checkbox.checked{
+    background: var(--color-primary);
+    border-color: var(--color-primary);
+}
+
+.n3_checkbox svg{
+    width: 12px;
+    height: 12px;
+    color: #ffffff;
+}
+
+/* ── 操作按钮 ── */
+.n3_actions{
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    display: flex;
+    gap: 4px;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+    z-index: 2;
+}
+
+.n3_workCard:hover .n3_actions{
+    opacity: 1;
+}
+
+.n3_actionBtn{
+    width: 28px;
+    height: 28px;
+    border-radius: 8px;
+    border: none;
+    background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(6px);
+    color: rgba(255, 255, 255, 0.8);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+}
+
+.n3_actionBtn:hover{
+    background: rgba(0, 0, 0, 0.8);
+    color: #ffffff;
+}
+
+.n3_actionBtn.danger:hover{
+    background: rgba(230, 77, 60, 0.8);
+}
+
+.n3_actionBtn svg{
+    width: 14px;
+    height: 14px;
+}
+
+/* ═══════════════════════════════════════════════════
+   #num3z — 占位块（合集管理 / 上传作品）
+   ═══════════════════════════════════════════════════ */
+.n3_placeholder{
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 80px 20px;
+    text-align: center;
+    border-radius: 16px;
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px dashed rgba(255, 255, 255, 0.08);
+    transition: border-color 0.3s ease, background-color 0.3s ease;
+}
+
+.n3_placeholder:hover{
+    border-color: rgba(255, 255, 255, 0.15);
+    background: rgba(255, 255, 255, 0.03);
+}
+
+.n3_placeholderIcon{
+    width: 40px;
+    height: 40px;
+    color: #2a2a2a;
+    margin-bottom: 16px;
+}
+
+.n3_placeholderTitle{
+    font-family: sul-gm1, sans-serif;
+    font-size: 18px;
+    color: var(--text-tertiary);
+    margin: 0 0 8px;
+}
+
+.n3_placeholderDesc{
+    font-size: 13px;
+    color: var(--text-muted);
+    margin: 0;
+}
+
+/* ═══════════════════════════════════════════════════
+   弹窗（编辑作品）
+   ═══════════════════════════════════════════════════ */
+.n3_dialogOverlay{
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.65);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10000;
+}
+
+.n3_dialog{
+    background: #1a1a1a;
+    border: 1px solid #333;
+    border-radius: 16px;
+    padding: 28px 24px 24px;
+    width: 420px;
+    max-width: calc(100vw - 48px);
+    max-height: 75vh;
+    overflow-y: auto;
+    box-shadow: 0 12px 48px rgba(0, 0, 0, 0.55);
+    scrollbar-width: none;
+}
+
+.n3_dialog::-webkit-scrollbar{
+    display: none;
+}
+
+.n3_dialogWide{
+    width: 680px;
+    max-width: calc(100vw - 48px);
+}
+
+.n3_dialogTitle{
+    font-family: sul-gbo4, sans-serif;
+    font-size: 17px;
+    font-weight: 600;
+    color: #ffffff;
+    margin: 0 0 20px;
+}
+
+.n3_dialogFooter{
+    display: flex;
+    gap: 12px;
+    margin-top: 20px;
+}
+
+.n3_dialogFooter .n3_btn{
+    flex: 1;
+    padding: 10px 20px;
+    border-radius: 10px;
+    font-weight: 500;
+    justify-content: center;
+}
+
+.n3_dialogFooter .n3_btn:active{
+    transform: scale(0.97);
+}
+
+/* ── 编辑弹窗左右布局 ── */
+.n3_editLayout{
+    display: flex;
+    gap: 24px;
+    align-items: flex-start;
+}
+
+.n3_editLeft{
+    flex: 0 0 260px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    align-items: center;
+}
+
+.n3_editRight{
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+.n3_editImageArea{
+    width: 100%;
+    min-height: 140px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #0d0d0d;
+    border-radius: 10px;
+    overflow: hidden;
+    cursor: pointer;
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    transition: border-color 0.25s ease;
+}
+
+.n3_editImageArea:hover{
+    border-color: rgba(255, 255, 255, 0.15);
+}
+
+.n3_editImage{
+    width: 100%;
+    max-height: 220px;
+    object-fit: contain;
+    display: block;
+}
+
+.n3_editImageEmpty{
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    color: #555;
+    font-size: 13px;
+    padding: 40px 20px;
+}
+
+.n3_editImageEmpty svg{
+    width: 32px;
+    height: 32px;
+}
+
+.n3_editTip{
+    font-size: 12px;
+    color: #555;
+    margin: 0;
+}
+
+/* ── 弹窗表单 ── */
+.n3_formGroup{
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.n3_formLabel{
+    font-size: 13px;
+    color: #aaa;
+    font-weight: 500;
+}
+
+.n3_formInput,
+.n3_formSelect{
+    background: rgba(255, 255, 255, 0.05);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+    padding: 10px 14px;
+    color: #ffffff;
+    font-size: 14px;
+    font-family: inherit;
+    transition: border-color 0.25s ease;
+    outline: none;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.n3_formInput:focus,
+.n3_formSelect:focus{
+    border-color: rgba(0, 169, 71, 0.5);
+}
+
+.n3_formInput::placeholder{
+    color: #555;
+}
+
+.n3_formSelect{
+    cursor: pointer;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%237e7e7e' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    padding-right: 36px;
+}
+
+.n3_formSelect option{
+    background: #1a1a1a;
+    color: #cecece;
+}
+
+.n3_formTip{
+    font-size: 12px;
+    color: #555;
+}
+
+/* ── 单选按钮组 ── */
+.n3_radioGroup{
+    display: flex;
+    gap: 4px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+    padding: 4px;
+    position: relative;
+}
+
+.n3_radioHighlight{
+    position: absolute;
+    top: 4px;
+    height: calc(100% - 8px);
+    background: rgba(0, 169, 71, 0.15);
+    border: 1px solid rgba(0, 169, 71, 0.3);
+    border-radius: 8px;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    z-index: 0;
+}
+
+.n3_radioBtn{
+    flex: 1;
+    padding: 10px 16px;
+    border-radius: 8px;
+    border: none;
+    background: transparent;
+    color: #7e7e7e;
+    font-size: 13px;
+    font-family: inherit;
+    cursor: pointer;
+    transition: color 0.25s ease;
+    text-align: center;
+    position: relative;
+    z-index: 1;
+}
+
+.n3_radioBtn:hover{
+    color: #cecece;
+}
+
+.n3_radioBtn.active{
+    color: #00A947;
+}
+
+/* ── 通用按钮（弹窗内） ── */
+.n3_btn{
+    padding: 8px 16px;
+    border-radius: 10px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: #1a1a1a;
+    color: #cecece;
+    font-size: 13px;
+    font-family: inherit;
+    cursor: pointer;
+    transition: all 0.25s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    white-space: nowrap;
+}
+
+.n3_btn:hover{
+    background: #2a2a2a;
+    border-color: rgba(255, 255, 255, 0.2);
+}
+
+.n3_btn svg{
+    width: 14px;
+    height: 14px;
+}
+
+.n3_btnPrimary{
+    background: #00A947;
+    border-color: #00A947;
+    color: #ffffff;
+}
+
+.n3_btnPrimary:hover{
+    background: #00c054;
+    border-color: #00c054;
+}
+
+.n3_btn:disabled{
+    opacity: 0.4;
+    cursor: not-allowed;
+    pointer-events: none;
+}
+
+.n3_btnSm{
+    padding: 6px 12px;
+    font-size: 12px;
+    border-radius: 8px;
+}
+
+/* ═══════════════════════════════════════════════════
+   响应式
+   ═══════════════════════════════════════════════════ */
+@media (max-width: 1024px) {
+    .n3_workGrid{
+        grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+        gap: 12px;
+    }
+
+    .n3_editLayout{
+        flex-direction: column;
+    }
+
+    .n3_editLeft{
+        flex: 0 0 auto;
+        width: 100%;
+    }
+}
+
+@media (max-width: 768px) {
+    #num2z{
+        flex-direction: column;
+        height: auto;
+        gap: 10px;
+        padding-top: 12px;
+        padding-bottom: 12px;
+    }
+
+    .n2_filterPill{
+        width: 100%;
+    }
+
+    .pill-segment{
+        padding: 6px 12px;
+        font-size: 12px;
+    }
+
+    .n2_searchBar{
+        width: 100%;
+        min-width: 0;
+    }
+
+    #num3z{
+        padding: 16px 4% 40px;
+    }
+
+    .n3_workGrid{
+        grid-template-columns: repeat(2, 1fr);
+        gap: 10px;
+    }
+
+    .n3_dialogWide{
+        width: 100%;
+    }
+}
+
+@media (max-width: 480px) {
+    .n3_workGrid{
+        grid-template-columns: 1fr;
+    }
+
+    .n2_filterPill{
+        border-radius: 10px;
+    }
+
+    .pill-segment{
+        padding: 6px 10px;
+        font-size: 11px;
     }
 }
