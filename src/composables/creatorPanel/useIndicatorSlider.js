@@ -35,14 +35,15 @@ export const useIndicatorSlider = (options = {}) => {
    */
   const updateImmediate = (activeSelector) => {
     if (!containerRef.value) return
-    
+
     const activeBtn = containerRef.value.querySelector(activeSelector)
     if (activeBtn) {
       const containerRect = containerRef.value.getBoundingClientRect()
       const btnRect = activeBtn.getBoundingClientRect()
       indicatorStyle.value = {
         left: `${btnRect.left - containerRect.left}px`,
-        width: `${btnRect.width}px`
+        width: `${btnRect.width}px`,
+        opacity: '1'
       }
     }
   }

@@ -153,6 +153,7 @@
                 <div v-if="activeTab === 'works' && hasSelection" class="n2_batchPill" ref="batchPillRef">
                     <div class="batch-highlight" ref="batchHighlightRef"></div>
                     <span class="batch-count">已选 {{ selectedWorkIds.length }} 件</span>
+                    <span class="batch-divider"></span>
                     <button class="batch-segment" @click="openAddToSeriesDialog">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                             <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>
@@ -161,7 +162,7 @@
                         </svg>
                         添加到合集
                     </button>
-                    <button class="batch-segment danger" @click="handleBatchDeleteWorks">
+                    <button class="batch-segment danger" @click="confirmBatchDeleteWorks">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                             <polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
                         </svg>
@@ -453,8 +454,8 @@
         :title="deleteDialogTitle"
         :message="deleteDialogMessage"
         type="danger"
-        yes-text="确认删除"
-        no-text="取消"
+        :yes-text="deleteDialogYesText"
+        :no-text="deleteDialogNoText"
         @confirm="executeDelete"
         @cancel="showDeleteDialog = false"
     />
@@ -478,7 +479,7 @@ const {
     // 作品管理
     worksList, worksLoading, worksTotal, worksApprovalFilter, worksSearchTitle,
     selectedWorkIds, isAllSelected, hasSelection,
-    loadWorks, searchWorks, setWorksApprovalFilter, handleDeleteWork, handleBatchDeleteWorks, handleUpdateWork,
+    loadWorks, searchWorks, setWorksApprovalFilter, handleDeleteWork, handleUpdateWork,
     toggleWorkSelect, toggleAllWorks, clearSelection,
     // 合集
     seriesList, loadSeries,
@@ -494,7 +495,7 @@ const {
     scrollLoad,
     // 指示器
     editRadioIndicator,
-} = useCreatorPanel()
+} = useCreatorPanel({ activeSelector: '.n3_radioBtn.active' })
 
 // 编辑器弹窗模块析构
 const {
@@ -519,7 +520,10 @@ const {
     show: showDeleteDialog,
     title: deleteDialogTitle,
     message: deleteDialogMessage,
+    noText: deleteDialogNoText,
+    yesText: deleteDialogYesText,
     confirmDeleteWork,
+    confirmBatchDeleteWorks,
     execute: executeDelete,
 } = deleteConfirm
 

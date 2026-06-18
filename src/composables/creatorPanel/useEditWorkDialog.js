@@ -53,8 +53,8 @@ export const useEditWorkDialog = (deps) => {
 
   // 监听 isOriginal 变化，更新指示器
   watch(() => form.isOriginal, () => {
-    if (radioIndicator && radioIndicator.containerRef.value) {
-      radioIndicator.update('.cp-radio-btn.active')
+    if (updateEditRadioIndicator) {
+      updateEditRadioIndicator()
     }
   })
 
@@ -84,9 +84,9 @@ export const useEditWorkDialog = (deps) => {
     // 使用弹窗动画模块
     dialogAnim.open()
 
-    // 初始化指示器位置（延迟等待弹窗动画完成）
+    // 初始化指示器：先隐藏避免错误位置闪现，延迟后由外部回调定位
     if (radioIndicator) {
-      radioIndicator.init('.cp-radio-btn.active', 350)
+      radioIndicator.indicatorStyle.value = { left: '0px', width: '0px', opacity: '0' }
     }
     if (updateEditRadioIndicator) {
       setTimeout(() => updateEditRadioIndicator(), 350)

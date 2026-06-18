@@ -165,7 +165,7 @@ defineExpose({ showDialog, cancel })
   max-width: calc(100vw - 48px);
   padding: 32px 28px 24px;
   border-radius: 16px;
-  background: #1a1a1a;
+  background: #0a0a0a;
   border: 1px solid #333;
   box-shadow: 0 8px 40px rgba(0, 0, 0, 0.5);
   text-align: center;

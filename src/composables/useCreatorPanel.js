@@ -30,7 +30,8 @@ import { useSeriesDialogs } from './creatorPanel/useSeriesDialogs'
 import { useDeleteConfirm } from './creatorPanel/useDeleteConfirm'
 import { useScrollLoad } from './creatorPanel/useScrollLoad'
 
-export const useCreatorPanel = () => {
+export const useCreatorPanel = (options = {}) => {
+  const { activeSelector = '.cp-radio-btn.active' } = options
   const router = useRouter()
 
   // ==================== 侧边栏导航 ====================
@@ -479,7 +480,7 @@ export const useCreatorPanel = () => {
     seriesList,
     loadSeries,
     handleUpdateWork,
-    updateEditRadioIndicator: () => editRadioIndicator.update('.cp-radio-btn.active'),
+    updateEditRadioIndicator: () => editRadioIndicator.update(activeSelector),
     radioIndicator: editRadioIndicator
   })
 
@@ -496,7 +497,7 @@ export const useCreatorPanel = () => {
   })
 
   // 删除确认
-  const deleteConfirm = useDeleteConfirm(handleDeleteWork, handleDeleteSeries)
+  const deleteConfirm = useDeleteConfirm(handleDeleteWork, handleDeleteSeries, handleBatchDeleteWorks)
 
   // 滚动加载
   const scrollLoad = useScrollLoad({
