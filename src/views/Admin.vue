@@ -45,6 +45,9 @@
               </button>
             </div>
             <button class="ap-btn ap-btn-primary" @click="openCreateUserDialog">+ 创建用户</button>
+            <button class="ap-btn ap-btn-warn" @click="handleRefreshPermissionCache" :disabled="isRefreshingCache">
+              {{ isRefreshingCache ? '刷新中...' : '刷新权限缓存' }}
+            </button>
           </div>
         </div>
 
@@ -97,6 +100,7 @@
                       <button v-if="u.status !== 30" class="ap-btn ap-btn-sm ap-btn-freeze" @click="handleBanUser(u)">{{ u.status === 20 ? '解冻' : '冻结' }}</button>
                       <button class="ap-btn ap-btn-sm ap-btn-warn" @click="handleBanUser(u)">{{ u.status === 30 ? '解封' : '封禁' }}</button>
                       <button class="ap-btn ap-btn-sm" @click="handleResetPwd(u)">重置密码</button>
+                      <button class="ap-btn ap-btn-sm" @click="openChangeRoleDialog(u)">改权限</button>
                       <button class="ap-btn ap-btn-sm ap-btn-danger" @click="handleInitAvatarNickname(u)">初始化</button>
                     </div>
                   </td>
@@ -502,6 +506,29 @@
       </div>
     </div>
 
+    <!-- 修改权限弹窗 -->
+    <div v-if="showChangeRoleDialog" class="ap-overlay" @click.self="showChangeRoleDialog = false">
+      <div class="ap-dialog">
+        <h3 class="ap-dialog-title">修改用户权限</h3>
+        <div class="ap-dialog-body">
+          <div class="ap-form-group">
+            <label>目标角色</label>
+            <select v-model="changeRoleForm.newRole">
+              <option :value="11">普通用户</option>
+              <option :value="22">创作者</option>
+              <option :value="55">审核员</option>
+              <option :value="77">系统管理员</option>
+            </select>
+          </div>
+          <p style="color: rgba(255,255,255,0.4); font-size: 12px; margin-top: 8px;">权限更改将在24小时内生效</p>
+        </div>
+        <div class="ap-dialog-footer">
+          <button class="ap-btn" @click="showChangeRoleDialog = false">取消</button>
+          <button class="ap-btn ap-btn-primary" @click="handleChangeRole">确定更改</button>
+        </div>
+      </div>
+    </div>
+
     <!-- 编辑合集弹窗 -->
     <div v-if="showEditSeriesDialog" class="ap-overlay" @click.self="showEditSeriesDialog = false">
       <div class="ap-dialog">
@@ -572,6 +599,8 @@ const {
   seriesList, seriesLoading, seriesKeyword, seriesTotal, seriesStatusFilter, seriesOrderBy,
   hasMore, formatTime,
   showCreateUserDialog, createUserForm, createUserErrors, openCreateUserDialog, handleCreateUser,
+  showChangeRoleDialog, changeRoleForm, openChangeRoleDialog, handleChangeRole,
+  isRefreshingCache, handleRefreshPermissionCache,
   loadUsers, handleSearchUsers, handleBanUser, handleResetPwd, handleInitAvatarNickname,
   loadWorks, handleSearchWorks, handleDeleteWork, handleApproveWork,
   loadComments, handleSearchComments, handleDeleteComment, handleApproveComment,
