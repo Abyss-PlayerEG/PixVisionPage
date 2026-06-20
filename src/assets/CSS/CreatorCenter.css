@@ -2146,3 +2146,404 @@
         font-size: 14px;
     }
 }
+
+/* ═══════════════════════════════════════════════════
+   上传作品板块
+   ═══════════════════════════════════════════════════ */
+
+/* ── num2z 上传类型面板 ── */
+.status-dot--upload{
+    background-color: #ffd269 !important;
+}
+
+/* 上传模式滑块 — 暖金色 */
+.status-slider--upload{
+    background-color: #ffe099 !important;
+    border-radius: 10px;
+    position: absolute;
+    top: 0;
+    height: 100%;
+    z-index: 0;
+    pointer-events: none;
+    transition: left 0.35s cubic-bezier(0.4, 0, 0.2, 1),
+                width 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.n3_uploadRadioBtn{
+    position: relative;
+    z-index: 1;
+}
+
+/* ── num2z 转载链接药丸 ── */
+.n2_uploadLinkPill{
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    height: 42px;
+    padding: 0 16px;
+    border-radius: 21px;
+    background: #1a1a1a;
+    color: var(--text-secondary);
+    flex-shrink: 0;
+    margin-left: 8px;
+}
+
+.n2_uploadLinkPill svg{
+    flex-shrink: 0;
+    color: var(--text-tertiary);
+}
+
+.n2_uploadLinkInput{
+    border: none;
+    outline: none;
+    background: transparent;
+    color: var(--text-secondary);
+    font-size: 13px;
+    width: 200px;
+    font-family: inherit;
+}
+
+.n2_uploadLinkInput::placeholder{
+    color: var(--text-muted);
+}
+
+/* ── num2z 上传操作按钮组 ── */
+.n2_uploadActions{
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-left: auto;
+    flex-shrink: 0;
+}
+
+.n2_uploadPillBtn{
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    height: 42px;
+    padding: 0 22px;
+    border-radius: 21px;
+    border: none;
+    background: #0a0a0a;
+    color: var(--text-secondary);
+    font-size: 15px;
+    font-family: inherit;
+    cursor: pointer;
+    transition: color 0.25s, background-color 0.25s;
+    white-space: nowrap;
+}
+
+.n2_uploadPillBtn svg{
+    flex-shrink: 0;
+}
+
+.n2_uploadPillBtn--cancel:hover{
+    color: var(--color-danger);
+}
+
+.n2_uploadPillBtn--submit{
+    background: var(--color-primary);
+    color: #0a0a0a;
+    font-weight: 600;
+}
+
+.n2_uploadPillBtn--submit:hover{
+    background: #00c955;
+}
+
+.n2_uploadPillBtn--submit:disabled{
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* ═══════════════════════════════════════════════════
+   num3z 上传主内容区
+   ═══════════════════════════════════════════════════ */
+
+.n3_uploadLayout{
+    display: flex;
+    gap: 32px;
+    width: 100%;
+    height: 480px;
+}
+
+/* ── 左侧 60%：图片预览区 ── */
+.n3_uploadPreview{
+    flex: 0 0 58%;
+    position: relative;
+    border-radius: 24px;
+    overflow: hidden;
+    background: rgba(10, 10, 10, 0.3);
+    cursor: pointer;
+    transition: box-shadow 0.3s ease;
+    aspect-ratio: 4 / 3;
+    max-height: 62vh;
+}
+
+.n3_uploadPreview:hover{
+    box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.08),
+                0 16px 64px rgba(0, 0, 0, 0.5);
+}
+
+/* 预览区背景层（GalleryViewer 风格毛玻璃） */
+.n3_uploadPreviewBg{
+    position: absolute;
+    inset: -30px;
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    z-index: 0;
+}
+
+.n3_uploadPreviewBg--blur{
+    position: absolute;
+    inset: 0;
+    background: inherit;
+    background-size: cover;
+    background-position: center;
+    filter: blur(48px) brightness(0.3) saturate(0.5);
+    transform: scale(1.05);
+}
+
+/* 预览区中间卡片 */
+.n3_uploadPreviewCard{
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 1;
+    max-width: 90%;
+    max-height: 85%;
+    border-radius: 20px;
+    overflow: hidden;
+    box-shadow:
+        0 0 0 1px rgba(255, 255, 255, 0.05),
+        0 24px 72px rgba(0, 0, 0, 0.55),
+        0 8px 24px rgba(0, 0, 0, 0.35);
+    background: rgba(10, 10, 10, 0.2);
+}
+
+.n3_uploadPreviewImg{
+    display: block;
+    max-width: 100%;
+    max-height: 55vh;
+    object-fit: contain;
+    -webkit-user-drag: none;
+}
+
+/* 移除图片按钮 */
+.n3_uploadPreviewRemove{
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    z-index: 2;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    border: none;
+    background: rgba(0, 0, 0, 0.6);
+    color: var(--text-secondary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: color 0.25s, background 0.25s;
+}
+
+.n3_uploadPreviewRemove:hover{
+    color: var(--color-danger);
+    background: rgba(0, 0, 0, 0.85);
+}
+
+/* 空状态 */
+.n3_uploadPreviewEmpty{
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    z-index: 1;
+}
+
+.n3_uploadPreviewEmptyText{
+    color: var(--text-secondary);
+    font-size: 15px;
+}
+
+/* ── 右侧 40%：上传表单（上下两端对齐） ── */
+.n3_uploadForm{
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    padding: 4px 0;
+}
+
+/* ── 上下独立块 ── */
+.n3_uploadBlock{
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+.n3_uploadBlockTitle{
+    margin: 0;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-primary);
+    letter-spacing: 0.4px;
+}
+
+/* ── 中部：已选文件数据信息 ── */
+.n3_uploadFileMeta{
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 16px 18px;
+    border-radius: 14px;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.n3_uploadFileMetaRow{
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.n3_uploadFileMetaLabel{
+    font-size: 12px;
+    color: var(--text-muted);
+    flex-shrink: 0;
+}
+
+.n3_uploadFileMetaValue{
+    font-size: 13px;
+    color: var(--text-secondary);
+    text-align: right;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* ── 提示框（单行紧凑） ── */
+.n3_uploadInfoBox{
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 16px;
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    color: var(--text-tertiary);
+    font-size: 12px;
+    line-height: 1.5;
+}
+
+.n3_uploadInfoBox svg{
+    flex-shrink: 0;
+    color: var(--text-muted);
+}
+
+/* ── 选择图片按钮（白色底色 + 2px 黑色实线） ── */
+.n3_uploadSelectBtn{
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    width: 100%;
+    height: 48px;
+    border-radius: 14px;
+    border: 2px solid #0a0a0a;
+    background: #FDF9F0;
+    color: #0a0a0a;
+    font-size: 15px;
+    font-weight: 600;
+    font-family: inherit;
+    cursor: pointer;
+    transition: background 0.25s, transform 0.15s;
+}
+
+.n3_uploadSelectBtn:hover{
+    background: #f5f0e5;
+}
+
+.n3_uploadSelectBtn:active{
+    transform: scale(0.98);
+}
+
+/* ── 表单组 ── */
+.n3_uploadFormGroup{
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.n3_uploadFormLabel{
+    font-size: 13px;
+    color: var(--text-muted);
+    font-weight: 500;
+}
+
+.n3_uploadTitleWrap{
+    position: relative;
+}
+
+.n3_uploadTitleInput{
+    width: 100%;
+    height: 46px;
+    padding: 0 56px 0 16px;
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.04);
+    color: var(--text-primary);
+    font-size: 15px;
+    font-family: inherit;
+    outline: none;
+    transition: border-color 0.25s;
+}
+
+.n3_uploadTitleInput:focus{
+    border-color: var(--color-primary);
+}
+
+.n3_uploadTitleInput::placeholder{
+    color: var(--text-muted);
+}
+
+.n3_uploadTitleCount{
+    position: absolute;
+    right: 14px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--text-muted);
+    font-size: 12px;
+    pointer-events: none;
+}
+
+/* ── 添加到合集按钮 ── */
+.n3_uploadSeriesBtn{
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    width: 100%;
+    height: 44px;
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.04);
+    color: var(--text-secondary);
+    font-size: 14px;
+    font-family: inherit;
+    cursor: pointer;
+    transition: color 0.25s, border-color 0.25s, background 0.25s;
+}
+
+.n3_uploadSeriesBtn:hover{
+    color: var(--text-primary);
+    border-color: rgba(255, 255, 255, 0.25);
+    background: rgba(255, 255, 255, 0.08);
+}

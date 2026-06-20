@@ -184,8 +184,13 @@ onUnmounted(() => {
 // ── Handlers ───────────────────────────────────────────────────
 const handleClose = () => {
   emit('close')
-  if (window.history.length > 1) {
+  // 从合集进入 → 返回创作者中心合集页
+  if (resolvedSeriesId.value) {
+    router.replace({ name: 'creatorT', query: { tab: 'collections' } })
+  } else if (window.history.length > 1) {
     router.back()
+  } else {
+    router.replace({ name: 'creatorT' })
   }
 }
 </script>

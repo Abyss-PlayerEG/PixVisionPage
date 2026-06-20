@@ -204,6 +204,64 @@
                 </div>
             </div>
 
+            <!-- 左栏：上传类型面板（上传模式） -->
+            <div class="n2_Lceb n2_Lceb--upload" v-if="activeTab === 'upload'">
+                <div class="status-header">
+                    <span class="status-dot status-dot--upload"></span>
+                    <span class="status-title">作品类型</span>
+                </div>
+                <span class="status-divider"></span>
+                <div class="status-options" ref="uploadRadioGroupRef">
+                    <div class="status-slider status-slider--upload" :style="uploadRadioIndicatorStyle"></div>
+                    <button
+                        class="status-option n3_uploadRadioBtn"
+                        :class="{ active: uploadForm.isOriginal === true }"
+                        @click="toggleUploadOriginal(true)"
+                    >原创</button>
+                    <button
+                        class="status-option n3_uploadRadioBtn"
+                        :class="{ active: uploadForm.isOriginal === false }"
+                        @click="toggleUploadOriginal(false)"
+                    >转载</button>
+                </div>
+            </div>
+
+            <!-- 转载链接药丸 — 独立于作品类型条，右→左入场动画 -->
+            <Transition
+                name="uploadLink"
+                @enter="onUploadLinkEnter"
+                @leave="onUploadLinkLeave"
+            >
+                <div v-if="uploadForm.isOriginal === false" class="n2_uploadLinkPill" ref="uploadLinkPillRef">
+                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/>
+                        <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>
+                    </svg>
+                    <input
+                        v-model="uploadForm.outUrl"
+                        type="text"
+                        placeholder="请输入转载链接"
+                        class="n2_uploadLinkInput"
+                    />
+                </div>
+            </Transition>
+
+            <!-- 右栏：上传操作按钮（上传模式） -->
+            <div class="n2_uploadActions" v-if="activeTab === 'upload'">
+                <button class="n2_uploadPillBtn n2_uploadPillBtn--cancel" @click="cancelUpload">
+                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+                    </svg>
+                    <span>取消上传</span>
+                </button>
+                <button class="n2_uploadPillBtn n2_uploadPillBtn--submit" :disabled="uploadLoading" @click="submitUpload">
+                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="20 6 9 17 4 12"/>
+                    </svg>
+                    <span>{{ uploadLoading ? '上传中...' : '提交上传' }}</span>
+                </button>
+            </div>
+
             <!-- 左栏：作品状态分类面板（原有样式不动） -->
             <div class="n2_Lceb" v-if="activeTab === 'works'">
                 <div class="status-header">
@@ -602,16 +660,121 @@
                 </div>
             </template>
 
-            <!-- ══════ 上传作品（占位） ══════ -->
+            <!-- ══════ 上传作品 ══════ -->
             <template v-if="activeTab === 'upload'">
-                <div class="n3_placeholder">
-                    <svg class="n3_placeholderIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-                        <polyline points="17 8 12 3 7 8"/>
-                        <line x1="12" y1="3" x2="12" y2="15"/>
-                    </svg>
-                    <p class="n3_placeholderTitle">上传作品</p>
-                    <p class="n3_placeholderDesc">此功能正在建设中，敬请期待</p>
+                <div class="n3_uploadLayout">
+                    <!-- ═══ 左侧 60%：图片预览区（GalleryViewer 风格） ═══ -->
+                    <div
+                        class="n3_uploadPreview"
+                        @click="uploadFileInputRef?.click()"
+                        @dragover="onUploadDragOver"
+                        @drop="onUploadDrop"
+                        :class="{ 'n3_uploadPreview--hasImage': uploadForm.filePreview }"
+                    >
+                        <template v-if="uploadForm.filePreview">
+                            <div class="n3_uploadPreviewBg" :style="{ backgroundImage: `url(${uploadForm.filePreview})` }">
+                                <div class="n3_uploadPreviewBg--blur"></div>
+                            </div>
+                            <div class="n3_uploadPreviewCard">
+                                <img :src="uploadForm.filePreview" class="n3_uploadPreviewImg" alt="预览" draggable="false" />
+                            </div>
+                            <button class="n3_uploadPreviewRemove" @click.stop="onUploadRemoveFile" aria-label="移除图片">
+                                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+                                    <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+                                </svg>
+                            </button>
+                        </template>
+                        <div v-else class="n3_uploadPreviewEmpty">
+                            <svg viewBox="0 0 24 24" width="56" height="56" fill="none" stroke="var(--text-muted)" stroke-width="1" stroke-linecap="round" stroke-linejoin="round">
+                                <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+                                <circle cx="8.5" cy="8.5" r="1.5"/>
+                                <polyline points="21 15 16 10 5 21"/>
+                            </svg>
+                            <span class="n3_uploadPreviewEmptyText">点击或拖拽图片至此区域可进行预览</span>
+                        </div>
+                    </div>
+
+                    <!-- ═══ 右侧 40%：上传表单（上下两块独立区域，space-between） ═══ -->
+                    <div class="n3_uploadForm">
+                        <!-- ═══ 上板块：作品基础信息 ═══ -->
+                        <div class="n3_uploadBlock n3_uploadBlock--top">
+                            <h4 class="n3_uploadBlockTitle">作品基础信息</h4>
+
+                            <!-- 作品标题 -->
+                            <div class="n3_uploadFormGroup">
+                                <label class="n3_uploadFormLabel">作品标题</label>
+                                <div class="n3_uploadTitleWrap">
+                                    <input
+                                        v-model="uploadForm.workTitle"
+                                        class="n3_uploadTitleInput"
+                                        type="text"
+                                        maxlength="16"
+                                        placeholder="请输入作品标题"
+                                    />
+                                    <span class="n3_uploadTitleCount">{{ uploadForm.workTitle.length }}/16</span>
+                                </div>
+                            </div>
+
+                            <!-- 添加到合集 -->
+                            <button class="n3_uploadSeriesBtn" @click="openUploadSeriesDialog">
+                                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>
+                                    <line x1="12" y1="11" x2="12" y2="17"/>
+                                    <line x1="9" y1="14" x2="15" y2="14"/>
+                                </svg>
+                                <span>{{ uploadForm.seriesId && uploadForm.seriesId !== 0 ? '已选择合集' : '添加到合集' }}</span>
+                            </button>
+                        </div>
+
+                        <!-- ═══ 中部：已选文件数据信息（仅当有文件时出现） ═══ -->
+                        <div v-if="uploadForm.file" class="n3_uploadFileMeta">
+                            <div class="n3_uploadFileMetaRow">
+                                <span class="n3_uploadFileMetaLabel">文件名称</span>
+                                <span class="n3_uploadFileMetaValue" :title="uploadForm.file.name">{{ uploadFileNameDisplay }}</span>
+                            </div>
+                            <div class="n3_uploadFileMetaRow">
+                                <span class="n3_uploadFileMetaLabel">图片尺寸</span>
+                                <span class="n3_uploadFileMetaValue">{{ uploadImageDimensions.width }} × {{ uploadImageDimensions.height }}</span>
+                            </div>
+                            <div class="n3_uploadFileMetaRow">
+                                <span class="n3_uploadFileMetaLabel">文件大小</span>
+                                <span class="n3_uploadFileMetaValue">{{ (uploadForm.file.size / 1024 / 1024).toFixed(2) }} MB</span>
+                            </div>
+                        </div>
+
+                        <!-- ═══ 下板块：作品上传须知 ═══ -->
+                        <div class="n3_uploadBlock n3_uploadBlock--bottom">
+                            <h4 class="n3_uploadBlockTitle">作品上传须知</h4>
+
+                            <!-- 上传按钮（白色底色 + 2px 黑色实线边框） -->
+                            <button class="n3_uploadSelectBtn" @click="uploadFileInputRef?.click()">
+                                <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                                    <polyline points="17 8 12 3 7 8"/>
+                                    <line x1="12" y1="3" x2="12" y2="15"/>
+                                </svg>
+                                <span>选择图片上传</span>
+                            </button>
+
+                            <!-- 提示信息 -->
+                            <div class="n3_uploadInfoBox">
+                                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <circle cx="12" cy="12" r="10"/>
+                                    <line x1="12" y1="16" x2="12" y2="12"/>
+                                    <line x1="12" y1="8" x2="12.01" y2="8"/>
+                                </svg>
+                                <span>支持 JPG、JPEG、PNG 格式，单个文件最大 32MB</span>
+                            </div>
+                        </div>
+
+                        <input
+                            ref="uploadFileInputRef"
+                            type="file"
+                            accept="image/jpeg,image/png"
+                            style="display:none"
+                            @change="onUploadFileSelect"
+                        />
+                    </div>
                 </div>
             </template>
         </section>
@@ -844,6 +1007,39 @@
     </teleport>
 
     <!-- ═══════════════════════════════════════════════════
+       弹窗：上传作品 — 添加到合集
+       ═══════════════════════════════════════════════════ -->
+    <teleport to="body">
+        <div v-if="showUploadSeriesDialog" class="n3_dialogOverlay" @click.self="closeUploadSeriesDialog">
+            <div class="n3_dialog" @click.stop>
+                <h3 class="n3_dialogTitle">添加到合集</h3>
+                <p class="n3_addToSeriesDesc">将作品加入目标合集（可在上传后修改）</p>
+                <div class="n3_seriesSelectList">
+                    <button
+                        v-for="s in seriesList"
+                        :key="s.series_id"
+                        class="n3_seriesSelectItem"
+                        :class="{ active: uploadSeriesTargetId === s.series_id }"
+                        @click="uploadSeriesTargetId = uploadSeriesTargetId === s.series_id ? 0 : s.series_id"
+                    >
+                        <span class="n3_seriesSelectName">{{ s.series_title || '未命名合集' }}</span>
+                        <svg v-if="uploadSeriesTargetId === s.series_id" class="n3_seriesSelectCheck" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                            <polyline points="20 6 9 17 4 12"/>
+                        </svg>
+                    </button>
+                    <div v-if="seriesList.length === 0" class="n3_seriesSelectEmpty">
+                        <span>暂无可用的合集，请先在「我的合集」中创建</span>
+                    </div>
+                </div>
+                <div class="n3_dialogFooter">
+                    <button class="n3_btn" @click="closeUploadSeriesDialog">取消</button>
+                    <button class="n3_btn n3_btnPrimary" @click="confirmUploadSeries">确认</button>
+                </div>
+            </div>
+        </div>
+    </teleport>
+
+    <!-- ═══════════════════════════════════════════════════
        弹窗：合集为空提示
        ═══════════════════════════════════════════════════ -->
     <ConfirmDialog
@@ -860,7 +1056,7 @@
 
 <script setup>
 import { ref, reactive, computed, watch, onMounted, onUnmounted, nextTick } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRouter, useRoute } from 'vue-router'
 import gsap from 'gsap'
 import { useCreatorPanel } from '@/composables/useCreatorPanel'
 import { getUserProfile } from '@/api/profileApi.js'
@@ -870,6 +1066,7 @@ import { showError, showSuccess } from '@/utils/notification'
 import ConfirmDialog from '@/components/ConfirmDialog.vue'
 
 const router = useRouter()
+const route = useRoute()
 
 // ═══════════════════════════════════════════════════
 // 创作者面板逻辑（复用 useCreatorPanel 数据层）
@@ -895,7 +1092,9 @@ const {
     // 滚动加载
     scrollLoad,
     // 指示器
-    editRadioIndicator,
+    editRadioIndicator, uploadRadioIndicator,
+    // 上传
+    uploadForm, uploadLoading, resetUploadForm, setUploadFile, removeUploadFile, handleUpload,
 } = useCreatorPanel({ activeSelector: '.n3_radioBtn.active' })
 
 // 编辑器弹窗模块析构
@@ -957,6 +1156,124 @@ const updateEditRadioIndicator = () => editRadioIndicator.update('.n3_radioBtn.a
 watch(() => editWorkForm.isOriginal, () => {
     nextTick(() => updateEditRadioIndicator())
 })
+
+// ═══════════════════════════════════════════════════
+// 上传 — radio 指示器（原创 / 转载）
+// ═══════════════════════════════════════════════════
+const uploadRadioGroupRef = uploadRadioIndicator.containerRef
+const uploadRadioIndicatorStyle = uploadRadioIndicator.indicatorStyle
+const updateUploadRadioIndicator = () => uploadRadioIndicator.update('.n3_uploadRadioBtn.active')
+
+// 上传表单原创/转载切换
+const toggleUploadOriginal = (val) => {
+    uploadForm.isOriginal = val
+    nextTick(() => updateUploadRadioIndicator())
+}
+
+// 上传 — 文件选择（含拖拽支持）
+const uploadFileInputRef = ref(null)
+
+const onUploadFileSelect = (e) => {
+    const file = e.target.files?.[0]
+    if (file) setUploadFile(file)
+}
+
+const onUploadDragOver = (e) => {
+    e.preventDefault()
+    e.stopPropagation()
+}
+
+const onUploadDrop = (e) => {
+    e.preventDefault()
+    e.stopPropagation()
+    const file = e.dataTransfer?.files?.[0]
+    if (file) setUploadFile(file)
+}
+
+const onUploadRemoveFile = () => {
+    removeUploadFile()
+    if (uploadFileInputRef.value) uploadFileInputRef.value.value = ''
+    uploadImageDimensions.value = { width: 0, height: 0 }
+}
+
+// 上传 — 图片尺寸追踪
+const uploadImageDimensions = ref({ width: 0, height: 0 })
+
+watch(() => uploadForm.filePreview, (preview) => {
+    if (!preview) {
+        uploadImageDimensions.value = { width: 0, height: 0 }
+        return
+    }
+    const img = new Image()
+    img.onload = () => {
+        uploadImageDimensions.value = { width: img.naturalWidth, height: img.naturalHeight }
+    }
+    img.src = preview
+})
+
+// 上传 — 文件名截断显示（>12 字符则截断 + ...）
+const uploadFileNameDisplay = computed(() => {
+    const name = uploadForm.file?.name || ''
+    if (!name) return ''
+    const dotIndex = name.lastIndexOf('.')
+    const baseName = dotIndex > 0 ? name.substring(0, dotIndex) : name
+    const ext = dotIndex > 0 ? name.substring(dotIndex) : ''
+    if (baseName.length > 12) {
+        return baseName.substring(0, 12) + '...' + ext
+    }
+    return name
+})
+
+// 上传 — 转载链接药丸入场/离场动画
+const uploadLinkPillRef = ref(null)
+
+const onUploadLinkEnter = (el, done) => {
+    gsap.fromTo(el,
+        { x: 24, opacity: 0 },
+        { x: 0, opacity: 1, duration: 0.35, ease: 'power2.out', onComplete: done }
+    )
+}
+
+const onUploadLinkLeave = (el, done) => {
+    gsap.to(el,
+        { x: 24, opacity: 0, duration: 0.2, ease: 'power2.in', onComplete: done }
+    )
+}
+
+// 上传 — 提交
+const submitUpload = async () => {
+    const result = await handleUpload()
+    if (result.success) {
+        if (uploadFileInputRef.value) uploadFileInputRef.value.value = ''
+        // 刷新仪表盘数据 + 自动跳转「我的作品」
+        await fetchUserStats()
+        switchTab('works')
+    }
+}
+
+// 上传 — 取消（重置所有表单）
+const cancelUpload = () => {
+    resetUploadForm()
+    if (uploadFileInputRef.value) uploadFileInputRef.value.value = ''
+}
+
+// 上传 — 添加到合集（复用系列弹窗模式）
+const showUploadSeriesDialog = ref(false)
+const uploadSeriesTargetId = ref(0)
+
+const openUploadSeriesDialog = () => {
+    uploadSeriesTargetId.value = uploadForm.seriesId || 0
+    showUploadSeriesDialog.value = true
+}
+
+const confirmUploadSeries = () => {
+    uploadForm.seriesId = uploadSeriesTargetId.value
+    showUploadSeriesDialog.value = false
+}
+
+const closeUploadSeriesDialog = () => {
+    showUploadSeriesDialog.value = false
+}
 
 // ═══════════════════════════════════════════════════
 // Refs
@@ -1398,6 +1715,9 @@ const switchTab = (tab) => {
     activeTab.value = tab
     if (tab === 'works' && worksList.value.length === 0) loadWorks({ reset: true })
     if (tab === 'collections' && seriesList.value.length === 0) loadSeries({ reset: true })
+    if (tab === 'upload') {
+        nextTick(() => updateUploadRadioIndicator())
+    }
 }
 
 const goToWorkDetail = (workId) => {
@@ -1747,6 +2067,12 @@ const animateNum2zEntrance = () => {
 // 生命周期
 // ═══════════════════════════════════════════════════
 onMounted(async () => {
+    // 从 Gallery 返回等场景 → 恢复目标 tab
+    const targetTab = route.query.tab
+    if (targetTab && ['works', 'collections', 'upload'].includes(targetTab)) {
+        activeTab.value = targetTab
+    }
+
     await fetchUserStats()
 
     // 初始化 GSAP 上下文
