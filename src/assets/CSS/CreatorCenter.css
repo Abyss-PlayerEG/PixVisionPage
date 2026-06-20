@@ -1275,7 +1275,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: 12px 16px;
+    padding: 6px 16px;
     min-width: 0;
     overflow: hidden;
 }
@@ -1305,40 +1305,74 @@
     flex-direction: column;
 }
 
-/* 多块列（2、3、4）上下间距 2% */
+/* 多块列（2、3、4）上下间距 10% */
 .n3_phCol--2,
 .n3_phCol--3,
 .n3_phCol--4{
-    gap: 2%;
+    gap: 10%;
 }
 
 /* ── 占位块基础样式（与 n3_seriesPreviewCard 保持一致） ── */
 .n3_phBlock{
     width: 100%;
     border-radius: 10px;
-    background: #f0e8d8;
-    border: 1px dashed rgba(0, 0, 0, 0.12);
+    border: 2px solid #0a0a0a;
+    overflow: hidden;
+    background-color: #f0e8d8;  /* 图片加载前/失败时的回退色 */
+    background-size: cover;
+    background-repeat: no-repeat;
     /* 默认隐藏 — hover 时 GSAP 入场 */
     opacity: 0;
     transform: scale(0);
 }
 
-/* 列 1、列 5：单块填满高度 */
+/* 列 1、列 5：完整图，居中裁切填满 */
 .n3_phCol:not(.n3_phCol--2):not(.n3_phCol--3):not(.n3_phCol--4) .n3_phBlock--upper{
     height: 100%;
+    background-position: center;
 }
 
-/* ── 列 2：上块 60%，下块 38% ── */
+/* 列 2-4 上块：展示图片上半部分 */
+.n3_phCol--2 .n3_phBlock--upper,
+.n3_phCol--3 .n3_phBlock--upper,
+.n3_phCol--4 .n3_phBlock--upper{
+    background-position: top;
+}
+
+/* 列 2-4 下块：展示图片下半部分 */
+.n3_phCol--2 .n3_phBlock--lower,
+.n3_phCol--3 .n3_phBlock--lower,
+.n3_phCol--4 .n3_phBlock--lower{
+    background-position: bottom;
+}
+
+/* ── 列 2：上块 60%，下块 30%（gap 10%） ── */
 .n3_phCol--2 .n3_phBlock--upper{ height: 60%; }
-.n3_phCol--2 .n3_phBlock--lower{ height: 38%; }
+.n3_phCol--2 .n3_phBlock--lower{ height: 30%; }
 
-/* ── 列 3：上块 40%，下块 58% ── */
+/* ── 列 3：上块 40%，下块 50%（gap 10%） ── */
 .n3_phCol--3 .n3_phBlock--upper{ height: 40%; }
-.n3_phCol--3 .n3_phBlock--lower{ height: 58%; }
+.n3_phCol--3 .n3_phBlock--lower{ height: 50%; }
 
-/* ── 列 4：上块 30%，下块 68% ── */
+/* ── 列 4：上块 30%，下块 60%（gap 10%） ── */
 .n3_phCol--4 .n3_phBlock--upper{ height: 30%; }
-.n3_phCol--4 .n3_phBlock--lower{ height: 68%; }
+.n3_phCol--4 .n3_phBlock--lower{ height: 60%; }
+
+/* ── 短块毛玻璃质感 ── */
+.n3_phBlock--frosted{
+    position: relative;
+}
+
+.n3_phBlock--frosted::after{
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, .1);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(2px);
+    border-radius: inherit;
+    pointer-events: none;
+}
 
 /* ── 编辑界面区（输入框） ── */
 .n3_seriesEditForm{

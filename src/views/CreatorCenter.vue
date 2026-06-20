@@ -421,30 +421,54 @@
                                 class="n3_seriesCoverImg"
                                 alt="合集封面"
                             />
-                            <!-- 无合集图片时使用纯色占位块 -->
+                            <!-- 无合集图片时使用图片占位块 -->
                             <div v-else class="n3_seriesPlaceholderGrid">
-                                <!-- 第 1 列：1 个占位块，填满高度 -->
+                                <!-- 第 1 列：完整图片，填满高度 -->
                                 <div class="n3_phCol">
-                                    <div class="n3_phBlock n3_phBlock--upper"></div>
+                                    <div
+                                        class="n3_phBlock n3_phBlock--upper"
+                                        :style="{ backgroundImage: `url(${phImages[0]})` }"
+                                    ></div>
                                 </div>
-                                <!-- 第 2 列：上 60% / 下 38% -->
+                                <!-- 第 2 列：上 60% / 下 30%（gap 10%，下块毛玻璃） -->
                                 <div class="n3_phCol n3_phCol--2">
-                                    <div class="n3_phBlock n3_phBlock--upper"></div>
-                                    <div class="n3_phBlock n3_phBlock--lower"></div>
+                                    <div
+                                        class="n3_phBlock n3_phBlock--upper"
+                                        :style="{ backgroundImage: `url(${phImages[1]})` }"
+                                    ></div>
+                                    <div
+                                        class="n3_phBlock n3_phBlock--lower n3_phBlock--frosted"
+                                        :style="{ backgroundImage: `url(${phImages[1]})` }"
+                                    ></div>
                                 </div>
-                                <!-- 第 3 列：上 40% / 下 58% -->
+                                <!-- 第 3 列：上 40% / 下 50%（gap 10%，上块毛玻璃） -->
                                 <div class="n3_phCol n3_phCol--3">
-                                    <div class="n3_phBlock n3_phBlock--upper"></div>
-                                    <div class="n3_phBlock n3_phBlock--lower"></div>
+                                    <div
+                                        class="n3_phBlock n3_phBlock--upper n3_phBlock--frosted"
+                                        :style="{ backgroundImage: `url(${phImages[2]})` }"
+                                    ></div>
+                                    <div
+                                        class="n3_phBlock n3_phBlock--lower"
+                                        :style="{ backgroundImage: `url(${phImages[2]})` }"
+                                    ></div>
                                 </div>
-                                <!-- 第 4 列：上 30% / 下 68% -->
+                                <!-- 第 4 列：上 30% / 下 60%（gap 10%，上块毛玻璃） -->
                                 <div class="n3_phCol n3_phCol--4">
-                                    <div class="n3_phBlock n3_phBlock--upper"></div>
-                                    <div class="n3_phBlock n3_phBlock--lower"></div>
+                                    <div
+                                        class="n3_phBlock n3_phBlock--upper n3_phBlock--frosted"
+                                        :style="{ backgroundImage: `url(${phImages[3]})` }"
+                                    ></div>
+                                    <div
+                                        class="n3_phBlock n3_phBlock--lower"
+                                        :style="{ backgroundImage: `url(${phImages[3]})` }"
+                                    ></div>
                                 </div>
-                                <!-- 第 5 列：1 个占位块，填满高度 -->
+                                <!-- 第 5 列：完整图片，填满高度 -->
                                 <div class="n3_phCol">
-                                    <div class="n3_phBlock n3_phBlock--upper"></div>
+                                    <div
+                                        class="n3_phBlock n3_phBlock--upper"
+                                        :style="{ backgroundImage: `url(${phImages[4]})` }"
+                                    ></div>
                                 </div>
                             </div>
                         </div>
@@ -643,6 +667,18 @@ import { useCreatorPanel } from '@/composables/useCreatorPanel'
 import { getUserProfile } from '@/api/profileApi.js'
 import { getAvatarUrl } from '@/config/api.js'
 import ConfirmDialog from '@/components/ConfirmDialog.vue'
+
+// ═══════════════════════════════════════════════════
+// 占位块图片（5 列，每列 1 张图；2-4 列上下切分展示）
+// 后续可替换为合集真实封面图
+// ═══════════════════════════════════════════════════
+const phImages = [
+    new URL('../assets/IMG/end2.jpg', import.meta.url).href,
+    new URL('../assets/IMG/end2.jpg', import.meta.url).href,
+    new URL('../assets/IMG/end2.jpg', import.meta.url).href,
+    new URL('../assets/IMG/end2.jpg', import.meta.url).href,
+    new URL('../assets/IMG/end2.jpg', import.meta.url).href,
+]
 
 const router = useRouter()
 
@@ -855,15 +891,14 @@ const openSeriesEdit = (series) => {
     nextTick(() => {
         const card = document.querySelector('.n3_seriesCard--editing')
         if (!card) return
-        const blocks = card.querySelectorAll('.n3_phBlock')
-        if (blocks.length === 0 || gsap.getProperty(blocks[0], 'opacity') > 0.5) return
-        if (card._phTimeline) { card._phTimeline.kill() }
-        const upperBlocks = card.querySelectorAll('.n3_phBlock--upper')
-        const lowerBlocks = card.querySelectorAll('.n3_phBlock--lower')
-        const tl = gsap.timeline({ defaults: { duration: 0.4, ease: 'back.out(1.7)', overwrite: true } })
-        tl.to(upperBlocks, { opacity: 1, scale: 1, stagger: 0.07 })
-          .to(lowerBlocks, { opacity: 1, scale: 1, stagger: 0.07 }, '-=0.12')
-        card._phTimeline = tl
+        card._phMouseOver = true
+        // 清除防抖定时器
+        if (card._phEnterTimeout) { clearTimeout(card._phEnterTimeout); card._phEnterTimeout = null }
+        if (card._phLeaveTimeout) { clearTimeout(card._phLeaveTimeout); card._phLeaveTimeout = null }
+        // 尚不可见 → 入场
+        if (card._phState === 'hidden' || !card._phState) {
+            playPhEnter(card)
+        }
     })
 }
 
@@ -873,17 +908,11 @@ const cancelSeriesEdit = () => {
     seriesEditForm.seriesTitle = ''
     seriesEditForm.aboutText = ''
 
-    // 退出编辑态收回占位块
     if (card) {
-        if (card._phTimeline) { card._phTimeline.kill(); card._phTimeline = null }
-        const blocks = card.querySelectorAll('.n3_phBlock')
-        gsap.to(blocks, {
-            opacity: 0,
-            scale: 0,
-            duration: 0.25,
-            ease: 'power2.in',
-            overwrite: true,
-        })
+        card._phMouseOver = false
+        if (card._phEnterTimeout) { clearTimeout(card._phEnterTimeout); card._phEnterTimeout = null }
+        if (card._phLeaveTimeout) { clearTimeout(card._phLeaveTimeout); card._phLeaveTimeout = null }
+        playPhLeave(card)
     }
 }
 
@@ -900,17 +929,11 @@ const saveSeriesEdit = async (series) => {
         seriesEditForm.seriesTitle = ''
         seriesEditForm.aboutText = ''
 
-        // 保存成功后收回占位块
         if (card) {
-            if (card._phTimeline) { card._phTimeline.kill(); card._phTimeline = null }
-            const blocks = card.querySelectorAll('.n3_phBlock')
-            gsap.to(blocks, {
-                opacity: 0,
-                scale: 0,
-                duration: 0.25,
-                ease: 'power2.in',
-                overwrite: true,
-            })
+            card._phMouseOver = false
+            if (card._phEnterTimeout) { clearTimeout(card._phEnterTimeout); card._phEnterTimeout = null }
+            if (card._phLeaveTimeout) { clearTimeout(card._phLeaveTimeout); card._phLeaveTimeout = null }
+            playPhLeave(card)
         }
     }
 }
@@ -1131,54 +1154,106 @@ const onN1MainLeave = () => {
 }
 
 // ═══════════════════════════════════════════════════
-// 合集卡片 hover → 中间占位块分上下两组依次入场
+// 合集卡片 hover → 中间占位块分上下两组依次入场（防抖 + 完整播放）
+//
+// 状态机：hidden → waiting → entering → visible → leaving → hidden
+// 动画一旦开始必定完整播放，完成后根据 _phMouseOver 决定下一步
 // ═══════════════════════════════════════════════════
-const onSeriesCardEnter = (e) => {
-    const card = e.currentTarget
-    // 编辑态跳过占位块动画
-    if (card.classList.contains('n3_seriesCard--editing')) return
+const PH_ENTER_DELAY = 180   // 进入防抖延迟
+const PH_LEAVE_DELAY = 350   // 动画完成后鼠标已离开 → 停留片刻再退场
 
+/** 播放入场动画（必定完整播放） */
+const playPhEnter = (card) => {
+    card._phState = 'entering'
     const upperBlocks = card.querySelectorAll('.n3_phBlock--upper')
     const lowerBlocks = card.querySelectorAll('.n3_phBlock--lower')
 
-    // 先清除该卡片残留动画
-    if (card._phTimeline) {
-        card._phTimeline.kill()
-    }
-
-    const tl = gsap.timeline({ defaults: { duration: 0.4, ease: 'back.out(1.7)', overwrite: true } })
-    tl.to(upperBlocks, {
-        opacity: 1,
-        scale: 1,
-        stagger: 0.07,
+    const tl = gsap.timeline({
+        defaults: { duration: 0.4, ease: 'back.out(1.7)', overwrite: true },
+        onComplete: () => {
+            card._phTimeline = null
+            card._phState = 'visible'
+            // 动画播完鼠标已离开 → 延迟后退场
+            if (!card._phMouseOver) schedulePhLeave(card)
+        },
     })
-    .to(lowerBlocks, {
-        opacity: 1,
-        scale: 1,
-        stagger: 0.07,
-    }, '-=0.12')
-
+    tl.to(upperBlocks, { opacity: 1, scale: 1, stagger: 0.07 })
+      .to(lowerBlocks, { opacity: 1, scale: 1, stagger: 0.07 }, '-=0.12')
     card._phTimeline = tl
+}
+
+/** 播放退场动画（必定完整播放） */
+const playPhLeave = (card) => {
+    card._phState = 'leaving'
+    if (card._phTimeline) { card._phTimeline.kill(); card._phTimeline = null }
+
+    const allBlocks = card.querySelectorAll('.n3_phBlock')
+    const tl = gsap.timeline({
+        defaults: { duration: 0.25, ease: 'power2.in', overwrite: true },
+        onComplete: () => {
+            card._phTimeline = null
+            card._phState = 'hidden'
+            // 退场播完鼠标又回来了 → 重新走入场流程
+            if (card._phMouseOver) schedulePhEnter(card)
+        },
+    })
+    tl.to(allBlocks, { opacity: 0, scale: 0 })
+    card._phTimeline = tl
+}
+
+/** 延迟退场 */
+const schedulePhLeave = (card) => {
+    if (card._phLeaveTimeout) return
+    card._phLeaveTimeout = setTimeout(() => {
+        card._phLeaveTimeout = null
+        playPhLeave(card)
+    }, PH_LEAVE_DELAY)
+}
+
+/** 延迟入场 */
+const schedulePhEnter = (card) => {
+    if (card._phEnterTimeout) return
+    card._phState = 'waiting'
+    card._phEnterTimeout = setTimeout(() => {
+        card._phEnterTimeout = null
+        playPhEnter(card)
+    }, PH_ENTER_DELAY)
+}
+
+const onSeriesCardEnter = (e) => {
+    const card = e.currentTarget
+    if (card.classList.contains('n3_seriesCard--editing')) return
+    card._phMouseOver = true
+
+    // 退场动画进行中 → 不打断，onComplete 检测到 _phMouseOver 会重新入场
+    if (card._phState === 'leaving') return
+
+    // 取消待执行的退场定时器
+    if (card._phLeaveTimeout) { clearTimeout(card._phLeaveTimeout); card._phLeaveTimeout = null }
+
+    // 已可见 / 正在入场 / 等待入场 → 不动
+    if (card._phState === 'visible' || card._phState === 'entering' || card._phState === 'waiting') return
+
+    // 状态为 hidden → 启动入场防抖
+    schedulePhEnter(card)
 }
 
 const onSeriesCardLeave = (e) => {
     const card = e.currentTarget
-    // 编辑态不收回占位块
     if (card.classList.contains('n3_seriesCard--editing')) return
+    card._phMouseOver = false
 
-    if (card._phTimeline) {
-        card._phTimeline.kill()
-        card._phTimeline = null
-    }
+    // 入场动画进行中 → 不打断，onComplete 检测到 !_phMouseOver 会触发退场
+    if (card._phState === 'entering') return
 
-    const allBlocks = card.querySelectorAll('.n3_phBlock')
-    gsap.to(allBlocks, {
-        opacity: 0,
-        scale: 0,
-        duration: 0.25,
-        ease: 'power2.in',
-        overwrite: true,
-    })
+    // 取消待执行的入场定时器
+    if (card._phEnterTimeout) { clearTimeout(card._phEnterTimeout); card._phEnterTimeout = null; card._phState = 'hidden' }
+
+    // 退场进行中 / 已隐藏 → 不动
+    if (card._phState === 'leaving' || card._phState === 'hidden') return
+
+    // 状态为 visible → 启动退场延迟
+    schedulePhLeave(card)
 }
 
 // ═══════════════════════════════════════════════════
