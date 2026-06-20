@@ -473,8 +473,8 @@ const handleClose = () => {
 }
 
 .pill-brand--svg2 {
-  top: 4px;
-  left: 68px;
+  top: 6px;
+  left: 64px;
   z-index: 3;
 }
 

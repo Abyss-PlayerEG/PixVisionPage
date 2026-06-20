@@ -172,6 +172,38 @@
                 </div>
             </Transition>
 
+            <!-- 新建合集按钮（合集模式最左边，#0a0a0a 圆角药丸） -->
+            <button v-if="activeTab === 'collections'" class="n2_createSeriesPill" @click="openAddSeriesDialog">
+                <svg class="n2_createSeriesIcon" viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M413.866667 832a53.333333 53.333333 0 0 1-75.52 0l-92.373334-92.373333-209.066666 208.853333a31.146667 31.146667 0 0 1-16.426667 8.32 64 64 0 0 0 42.666667 17.066667H746.666667a128 128 0 0 0 128-128v-170.666667l-152.106667-152.533333z"/>
+                    <path d="M865.92 50.773333H288a32 32 0 0 0 0 64h577.92A95.146667 95.146667 0 0 1 960 210.773333v544a32 32 0 0 0 64 0V210.773333a159.146667 159.146667 0 0 0-158.08-160z"/>
+                    <path d="M746.666667 205.226667H128a128 128 0 0 0-128 128v561.28l208.213333-208.426667a53.76 53.76 0 0 1 75.52 0l92.373334 92.586667L684.8 469.333333a53.333333 53.333333 0 0 1 75.306667 0L874.666667 584.533333V333.226667a128 128 0 0 0-128-128zM315.306667 458.24a85.333333 85.333333 0 1 1-97.92-97.92 85.333333 85.333333 0 0 1 97.92 97.92z"/>
+                </svg>
+                <span>新建合集</span>
+            </button>
+
+            <!-- 左栏：合集排序面板（暖黄点，复用作品状态结构） -->
+            <div class="n2_Lceb n2_Lceb--series" v-if="activeTab === 'collections'">
+                <div class="status-header">
+                    <span class="status-dot status-dot--warm"></span>
+                    <span class="status-title">合集排序方式</span>
+                </div>
+                <span class="status-divider"></span>
+                <div class="status-options" ref="seriesSortOptionsRef">
+                    <div class="status-slider status-slider--warm" ref="seriesSortSliderRef"></div>
+                    <button
+                        class="status-option"
+                        :class="{ active: seriesSortOrder === 'asc' }"
+                        @click="onSeriesSortClick('asc')"
+                    >最早创建</button>
+                    <button
+                        class="status-option"
+                        :class="{ active: seriesSortOrder === 'desc' }"
+                        @click="onSeriesSortClick('desc')"
+                    >最近创建</button>
+                </div>
+            </div>
+
             <!-- 左栏：作品状态分类面板（原有样式不动） -->
             <div class="n2_Lceb" v-if="activeTab === 'works'">
                 <div class="status-header">
@@ -398,7 +430,7 @@
                 <!-- 合集卡片列表 -->
                 <div v-else class="n3_seriesList">
                     <div
-                        v-for="(series, idx) in seriesList"
+                        v-for="(series, idx) in sortedSeriesList"
                         :key="series.series_id"
                         class="n3_seriesCard"
                         :class="{ 'n3_seriesCard--editing': editingSeriesId === series.series_id }"
@@ -659,6 +691,82 @@
     />
 
     <!-- ═══════════════════════════════════════════════════
+       弹窗：新建合集
+       ═══════════════════════════════════════════════════ -->
+    <teleport to="body">
+        <div v-if="showAddSeriesDialog" class="n3_dialogOverlay" ref="seriesOverlayRef" @click.self="closeSeriesDialog">
+            <div class="n3_dialog" ref="seriesDialogRef" @click.stop>
+                <h3 class="n3_dialogTitle">新建合集</h3>
+                <div class="n3_formGroup">
+                    <label class="n3_formLabel">合集名称</label>
+                    <input
+                        v-model="seriesForm.seriesTitle"
+                        class="n3_formInput"
+                        type="text"
+                        maxlength="16"
+                        placeholder="请输入合集名称"
+                    />
+                    <span class="n3_formTip">{{ seriesForm.seriesTitle.length }}/16</span>
+                </div>
+                <div class="n3_formGroup" style="margin-top: 20px;">
+                    <label class="n3_formLabel">合集描述</label>
+                    <input
+                        v-model="seriesForm.aboutText"
+                        class="n3_formInput"
+                        type="text"
+                        maxlength="24"
+                        placeholder="请输入合集描述（选填）"
+                    />
+                    <span class="n3_formTip">{{ seriesForm.aboutText.length }}/24</span>
+                </div>
+                <div class="n3_dialogFooter">
+                    <button class="n3_btn" @click="closeSeriesDialog">取消</button>
+                    <button class="n3_btn n3_btnPrimary" @click="submitSeriesForm">创建合集</button>
+                </div>
+            </div>
+        </div>
+    </teleport>
+
+    <!-- ═══════════════════════════════════════════════════
+       弹窗：批量添加到合集
+       ═══════════════════════════════════════════════════ -->
+    <teleport to="body">
+        <div v-if="showAddToSeriesDialog" class="n3_dialogOverlay" ref="addToSeriesOverlayRef" @click.self="closeAddToSeriesDialog">
+            <div class="n3_dialog" ref="addToSeriesDialogRef" @click.stop>
+                <h3 class="n3_dialogTitle">添加到合集</h3>
+                <p class="n3_addToSeriesDesc">将已选的 {{ selectedWorkIds.length }} 件作品批量加入目标合集</p>
+                <div class="n3_seriesSelectList">
+                    <button
+                        v-for="s in seriesList"
+                        :key="s.series_id"
+                        class="n3_seriesSelectItem"
+                        :class="{ active: addToSeriesTargetId === s.series_id }"
+                        @click="addToSeriesTargetId = s.series_id"
+                    >
+                        <span class="n3_seriesSelectName">{{ s.series_title || '未命名合集' }}</span>
+                        <svg v-if="addToSeriesTargetId === s.series_id" class="n3_seriesSelectCheck" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                            <polyline points="20 6 9 17 4 12"/>
+                        </svg>
+                    </button>
+                    <div v-if="seriesList.length === 0" class="n3_seriesSelectEmpty">
+                        <span>暂无可用的合集，请先创建合集</span>
+                    </div>
+                </div>
+                <div class="n3_dialogFooter">
+                    <template v-if="seriesList.length === 0">
+                        <button class="n3_btn" @click="closeAddToSeriesDialog">取消</button>
+                        <button class="n3_btn n3_btnWarm" @click="goCreateSeries">前往创建</button>
+                    </template>
+                    <template v-else>
+                        <button class="n3_btn" @click="closeAddToSeriesDialog">取消</button>
+                        <button class="n3_btn n3_btnPrimary" :disabled="!addToSeriesTargetId" @click="handleAddToSeries">确认添加</button>
+                    </template>
+                </div>
+            </div>
+        </div>
+    </teleport>
+
+    <!-- ═══════════════════════════════════════════════════
        弹窗：合集为空提示
        ═══════════════════════════════════════════════════ -->
     <ConfirmDialog
@@ -680,6 +788,7 @@ import gsap from 'gsap'
 import { useCreatorPanel } from '@/composables/useCreatorPanel'
 import { getUserProfile } from '@/api/profileApi.js'
 import { getAvatarUrl } from '@/config/api.js'
+import { showWarning } from '@/utils/notification'
 import ConfirmDialog from '@/components/ConfirmDialog.vue'
 
 const router = useRouter()
@@ -726,6 +835,19 @@ const {
 // 合集弹窗模块析构
 const {
     openAddToSeriesDialog,
+    openAddSeriesDialog,
+    showAddSeriesDialog,
+    showAddToSeriesDialog,
+    addToSeriesTargetId,
+    seriesForm,
+    submitSeriesForm,
+    submitAddToSeries,
+    closeSeriesDialog,
+    closeAddToSeriesDialog,
+    seriesOverlayRef,
+    seriesDialogRef,
+    addToSeriesOverlayRef,
+    addToSeriesDialogRef,
 } = seriesDialogs
 
 // 删除确认模块析构
@@ -773,12 +895,29 @@ const toggleBtnRef = ref(null)
 const circleRef = ref(null)
 const collapseBtnRef = ref(null)
 const num2zRef = ref(null)
+const seriesSortOptionsRef = ref(null)
+const seriesSortSliderRef = ref(null)
 // ═══════════════════════════════════════════════════
 // 状态
 // ═══════════════════════════════════════════════════
 const isToggled = ref(false)
 const isCollapsed = ref(false)
 const activeTab = ref('works')
+
+// ═══════════════════════════════════════════════════
+// 合集排序
+// ═══════════════════════════════════════════════════
+const seriesSortOrder = ref('desc')  // 'asc' = 最早创建, 'desc' = 最近创建
+
+const sortedSeriesList = computed(() => {
+    const list = [...seriesList.value]
+    if (seriesSortOrder.value === 'asc') {
+        list.sort((a, b) => new Date(a.create_time) - new Date(b.create_time))
+    } else {
+        list.sort((a, b) => new Date(b.create_time) - new Date(a.create_time))
+    }
+    return list
+})
 
 // ═══════════════════════════════════════════════════
 // 合集编辑状态
@@ -971,6 +1110,66 @@ const updateStatusIndicator = () => {
 const onStatusFilterClick = (value) => {
     setWorksApprovalFilter(value)
     nextTick(() => updateStatusIndicator())
+}
+
+// ═══════════════════════════════════════════════════
+// 合集排序 — 滑块聚焦动画
+// ═══════════════════════════════════════════════════
+const updateSeriesSortIndicator = () => {
+    if (!seriesSortOptionsRef.value || !seriesSortSliderRef.value) return
+    const activeBtn = seriesSortOptionsRef.value.querySelector('.status-option.active')
+    if (!activeBtn) {
+        gsap.to(seriesSortSliderRef.value, { opacity: 0, duration: 0.2 })
+        return
+    }
+    const containerRect = seriesSortOptionsRef.value.getBoundingClientRect()
+    const btnRect = activeBtn.getBoundingClientRect()
+    const left = btnRect.left - containerRect.left
+    const width = btnRect.width
+
+    gsap.to(seriesSortSliderRef.value, {
+        left,
+        width,
+        opacity: 1,
+        duration: 0.35,
+        ease: 'power2.out',
+        overwrite: true,
+    })
+}
+
+const onSeriesSortClick = (order) => {
+    seriesSortOrder.value = order
+    nextTick(() => updateSeriesSortIndicator())
+}
+
+// ═══════════════════════════════════════════════════
+// 批量添加到合集 — 查重后提交
+// ═══════════════════════════════════════════════════
+const handleAddToSeries = () => {
+    if (!addToSeriesTargetId.value) return
+
+    const targetId = addToSeriesTargetId.value
+    const selectedWorks = worksList.value.filter(w => selectedWorkIds.value.includes(w.work_id))
+
+    // 检查所选作品是否全部已在目标合集中
+    const allAlreadyInSeries = selectedWorks.length > 0 &&
+        selectedWorks.every(w => w.series_id === targetId)
+
+    if (allAlreadyInSeries) {
+        showWarning('添加成功，但这些图片本就在合集中', '提示')
+        closeAddToSeriesDialog()
+        return
+    }
+
+    submitAddToSeries()
+}
+
+// ═══════════════════════════════════════════════════
+// 无合集时 → 前往创建
+// ═══════════════════════════════════════════════════
+const goCreateSeries = () => {
+    closeAddToSeriesDialog()
+    switchTab('collections')
 }
 
 // ═══════════════════════════════════════════════════
@@ -1322,6 +1521,7 @@ const fetchUserStats = async () => {
 // 窗口大小变化 → 更新指示器
 const handleResize = () => {
     updateStatusIndicator()
+    updateSeriesSortIndicator()
     updateEditRadioIndicator()
 }
 
@@ -1337,9 +1537,21 @@ const animateNum2zEntrance = () => {
 
     const lCeb = num2zRef.value.querySelector('.n2_Lceb')
     const rCeb = num2zRef.value.querySelector('.n2_Rceb')
+    const createPill = num2zRef.value.querySelector('.n2_createSeriesPill')
+
+    if (createPill) {
+        // 新建合集按钮从左侧滑入（set 初始态 + to 动画，配合 CSS visibility:hidden 防闪烁）
+        gsap.set(createPill, { x: -20, autoAlpha: 0 })
+        num2zTweens.push(gsap.to(createPill, {
+            x: 0,
+            autoAlpha: 1,
+            duration: 0.4,
+            ease: 'power2.out',
+        }))
+    }
 
     if (lCeb) {
-        // 状态栏整体从左滑入
+        // 状态栏/排序栏整体从左滑入
         num2zTweens.push(gsap.from(lCeb, {
             x: -30,
             autoAlpha: 0,
@@ -1347,7 +1559,7 @@ const animateNum2zEntrance = () => {
             ease: 'power2.out',
         }))
 
-        // 状态选项按钮依次从下方淡入
+        // 状态/排序选项按钮依次从下方淡入
         const options = lCeb.querySelectorAll('.status-option')
         if (options.length) {
             num2zTweens.push(gsap.from(options, {
@@ -1387,7 +1599,10 @@ onMounted(async () => {
     }, n1MainRef.value)
 
     // 初始化状态筛选滑块
-    nextTick(() => updateStatusIndicator())
+    nextTick(() => {
+        updateStatusIndicator()
+        updateSeriesSortIndicator()
+    })
 
     // 初始加载时触发 num2z 入场动画
     if (activeTab.value === 'works') {
@@ -1424,7 +1639,10 @@ watch(activeTab, (tab) => {
         }
     }
     if (tab === 'collections') {
-        nextTick(() => animateNum2zEntrance())
+        nextTick(() => {
+            updateSeriesSortIndicator()
+            animateNum2zEntrance()
+        })
     }
 })
 

@@ -204,6 +204,8 @@ export const useCreatorPanel = (options = {}) => {
       selectedWorkIds.value = []
       // 刷新作品列表以更新 series_id
       loadWorks({ reset: true })
+      // 同步刷新合集列表以更新缩略图
+      loadSeries({ reset: true })
     } else {
       showError(result.message || '批量添加失败')
     }

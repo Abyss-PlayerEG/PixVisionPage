@@ -411,6 +411,42 @@
     align-items: flex-start;
     gap: 25px;
 
+    /* ── 新建合集按钮（合集模式最左边，#0a0a0a 圆角药丸） ── */
+    .n2_createSeriesPill{
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        height: 50px;
+        padding: 0 22px;
+        border: none;
+        border-radius: 25px;
+        background-color: #0a0a0a;
+        color: #ffe099;
+        font-size: 16px;
+        font-family: inherit;
+        cursor: pointer;
+        flex-shrink: 0;
+        margin-right: auto;
+        visibility: hidden;  /* 防止切换 tab 时闪烁，由 GSAP 控制显示 */
+        transition: color 0.25s ease, background-color 0.25s ease;
+        user-select: none;
+    }
+
+    .n2_createSeriesPill:hover{
+        color: #ffffff;
+    }
+
+    .n2_createSeriesPill:active{
+        scale: 0.97;
+    }
+
+    .n2_createSeriesIcon{
+        width: 22px;
+        height: 22px;
+        flex-shrink: 0;
+        fill: currentColor;
+    }
+
     /* ── 左栏：作品状态分类面板（左右布局，最大高度 63px） ── */
     .n2_Lceb{
         position: relative;
@@ -450,6 +486,11 @@
         flex-shrink: 0;
     }
 
+    /* 合集排序暖黄点 */
+    .status-dot--warm{
+        background-color: #ffe099;
+    }
+
     .status-title{
         font-size: 18px;
         font-weight: 500;
@@ -483,6 +524,11 @@
         background-color: #00A947;
         z-index: 0;
         pointer-events: none;
+    }
+
+    /* 合集排序暖黄滑块 */
+    .status-slider--warm{
+        background-color: #ffe099;
     }
 
     .status-option{
@@ -1793,6 +1839,17 @@
     border-color: #00c054;
 }
 
+.n3_btnWarm{
+    background: #ffe099;
+    border-color: #ffe099;
+    color: #0a0a0a;
+}
+
+.n3_btnWarm:hover{
+    background: #ffe9b3;
+    border-color: #ffe9b3;
+}
+
 .n3_btn:disabled{
     opacity: 0.4;
     cursor: not-allowed;
@@ -1803,6 +1860,74 @@
     padding: 8px 15px;
     font-size: 15px;
     border-radius: 10px;
+}
+
+/* ═══════════════════════════════════════════════════
+   弹窗：批量添加到合集 — 合集选择列表
+   ═══════════════════════════════════════════════════ */
+.n3_addToSeriesDesc{
+    font-size: 15px;
+    color: #7e7e7e;
+    margin: -10px 0 20px;
+    line-height: 1.5;
+}
+
+.n3_seriesSelectList{
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    max-height: 260px;
+    overflow-y: auto;
+    margin-bottom: 5px;
+}
+
+.n3_seriesSelectItem{
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 13px 18px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.03);
+    color: #aaa;
+    font-size: 16px;
+    font-family: inherit;
+    cursor: pointer;
+    transition: border-color 0.25s ease, background-color 0.25s ease, color 0.25s ease;
+}
+
+.n3_seriesSelectItem:hover{
+    border-color: rgba(255, 255, 255, 0.18);
+    color: #ffffff;
+}
+
+.n3_seriesSelectItem.active{
+    border-color: #ffe099;
+    background: rgba(255, 224, 153, 0.06);
+    color: #ffe099;
+}
+
+.n3_seriesSelectName{
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.n3_seriesSelectCheck{
+    width: 20px;
+    height: 20px;
+    flex-shrink: 0;
+    color: #ffe099;
+}
+
+.n3_seriesSelectEmpty{
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 30px 20px;
+    color: #555;
+    font-size: 15px;
+    text-align: center;
 }
 
 /* ═══════════════════════════════════════════════════
