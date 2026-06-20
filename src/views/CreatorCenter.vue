@@ -147,7 +147,7 @@
         <!-- ═══════════════════════════════════════════════════
            num2z — 批量操作栏（左） + 状态筛选栏（右） + 搜索栏（右）
            ═══════════════════════════════════════════════════ -->
-        <section id="num2z">
+        <section id="num2z" ref="num2zRef">
             <!-- 批量操作栏：选中作品时出现在最左边，黑色圆角长条胶囊 -->
             <Transition name="n2-batch">
                 <div v-if="activeTab === 'works' && hasSelection" class="n2_batchPill" ref="batchPillRef">
@@ -558,6 +558,7 @@ const dataBarRef = ref(null)
 const toggleBtnRef = ref(null)
 const circleRef = ref(null)
 const collapseBtnRef = ref(null)
+const num2zRef = ref(null)
 // ═══════════════════════════════════════════════════
 // 状态
 // ═══════════════════════════════════════════════════
@@ -593,6 +594,7 @@ const userInfo = reactive({
 // ═══════════════════════════════════════════════════
 let ctx = null
 let collapseTl = null
+let num2zTweens = []
 
 // 原始尺寸缓存
 let _origNum1zHeight = null
@@ -869,6 +871,54 @@ const handleResize = () => {
 }
 
 // ═══════════════════════════════════════════════════
+// num2z 入场动画 — 状态栏从左滑入 + 搜索栏从右滑入
+// ═══════════════════════════════════════════════════
+const animateNum2zEntrance = () => {
+    // 先清除之前可能残留的动画
+    num2zTweens.forEach(t => t.kill())
+    num2zTweens = []
+
+    if (!num2zRef.value) return
+
+    const lCeb = num2zRef.value.querySelector('.n2_Lceb')
+    const rCeb = num2zRef.value.querySelector('.n2_Rceb')
+
+    if (lCeb) {
+        // 状态栏整体从左滑入
+        num2zTweens.push(gsap.from(lCeb, {
+            x: -24,
+            autoAlpha: 0,
+            duration: 0.45,
+            ease: 'power2.out',
+        }))
+
+        // 状态选项按钮依次从下方淡入
+        const options = lCeb.querySelectorAll('.status-option')
+        if (options.length) {
+            num2zTweens.push(gsap.from(options, {
+                y: 8,
+                autoAlpha: 0,
+                duration: 0.3,
+                stagger: 0.06,
+                ease: 'power2.out',
+                delay: 0.12,
+            }))
+        }
+    }
+
+    if (rCeb) {
+        // 搜索栏从右滑入，略微延迟形成节奏感
+        num2zTweens.push(gsap.from(rCeb, {
+            x: 24,
+            autoAlpha: 0,
+            duration: 0.45,
+            ease: 'power2.out',
+            delay: 0.1,
+        }))
+    }
+}
+
+// ═══════════════════════════════════════════════════
 // 生命周期
 // ═══════════════════════════════════════════════════
 onMounted(async () => {
@@ -884,6 +934,11 @@ onMounted(async () => {
     // 初始化状态筛选滑块
     nextTick(() => updateStatusIndicator())
 
+    // 初始加载时触发 num2z 入场动画
+    if (activeTab.value === 'works') {
+        nextTick(() => animateNum2zEntrance())
+    }
+
     // 初始化 scroll 加载观察器
     if (activeTab.value === 'works') {
         initScrollObserver()
@@ -898,11 +953,14 @@ onMounted(async () => {
     window.addEventListener('resize', handleResize)
 })
 
-// 监听 tab 切换以初始化滚动观察器
+// 监听 tab 切换以初始化滚动观察器 + 触发入场动画
 watch(activeTab, (tab) => {
     if (tab === 'works') {
         initScrollObserver()
-        nextTick(() => updateStatusIndicator())
+        nextTick(() => {
+            updateStatusIndicator()
+            animateNum2zEntrance()
+        })
     }
 })
 
@@ -914,6 +972,7 @@ watch(() => worksApprovalFilter.value, () => {
 onUnmounted(() => {
     if (ctx) ctx.revert()
     if (collapseTl) collapseTl.kill()
+    num2zTweens.forEach(t => t.kill())
     window.removeEventListener('resize', handleResize)
     editWorkDialog.cleanup()
 })
