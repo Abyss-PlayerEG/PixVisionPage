@@ -402,12 +402,51 @@
                         :key="series.series_id"
                         class="n3_seriesCard"
                         :class="{ 'n3_seriesCard--editing': editingSeriesId === series.series_id }"
+                        @mouseenter="onSeriesCardEnter"
+                        @mouseleave="onSeriesCardLeave"
                     >
                         <!-- ═══ 左侧标题区（flex:1 自动撑满） ═══ -->
                         <div class="n3_seriesLeft">
                             <span class="n3_seriesGalleryTitle">Galleries {{ String(idx + 1).padStart(2, '0') }}</span>
                             <h3 class="n3_seriesName">{{ series.series_title || '未命名合集' }}</h3>
                             <span class="n3_seriesDate">{{ formatTime(series.create_time) }}</span>
+                        </div>
+
+                        <!-- ═══ 中间图片展示区 ═══ -->
+                        <div class="n3_seriesMiddle">
+                            <!-- 有合集封面图时展示图片 -->
+                            <img
+                                v-if="series.cover_img"
+                                :src="series.cover_img"
+                                class="n3_seriesCoverImg"
+                                alt="合集封面"
+                            />
+                            <!-- 无合集图片时使用纯色占位块 -->
+                            <div v-else class="n3_seriesPlaceholderGrid">
+                                <!-- 第 1 列：1 个占位块，填满高度 -->
+                                <div class="n3_phCol">
+                                    <div class="n3_phBlock n3_phBlock--upper"></div>
+                                </div>
+                                <!-- 第 2 列：上 60% / 下 38% -->
+                                <div class="n3_phCol n3_phCol--2">
+                                    <div class="n3_phBlock n3_phBlock--upper"></div>
+                                    <div class="n3_phBlock n3_phBlock--lower"></div>
+                                </div>
+                                <!-- 第 3 列：上 40% / 下 58% -->
+                                <div class="n3_phCol n3_phCol--3">
+                                    <div class="n3_phBlock n3_phBlock--upper"></div>
+                                    <div class="n3_phBlock n3_phBlock--lower"></div>
+                                </div>
+                                <!-- 第 4 列：上 30% / 下 68% -->
+                                <div class="n3_phCol n3_phCol--4">
+                                    <div class="n3_phBlock n3_phBlock--upper"></div>
+                                    <div class="n3_phBlock n3_phBlock--lower"></div>
+                                </div>
+                                <!-- 第 5 列：1 个占位块，填满高度 -->
+                                <div class="n3_phCol">
+                                    <div class="n3_phBlock n3_phBlock--upper"></div>
+                                </div>
+                            </div>
                         </div>
 
                         <!-- ═══ 右侧 40% 内容编辑区 ═══ -->
@@ -811,12 +850,41 @@ const openSeriesEdit = (series) => {
     editingSeriesId.value = series.series_id
     seriesEditForm.seriesTitle = series.series_title || ''
     seriesEditForm.aboutText = series.about_text || ''
+
+    // 编辑态下占位块保持可见，若未显示则触发入场动画
+    nextTick(() => {
+        const card = document.querySelector('.n3_seriesCard--editing')
+        if (!card) return
+        const blocks = card.querySelectorAll('.n3_phBlock')
+        if (blocks.length === 0 || gsap.getProperty(blocks[0], 'opacity') > 0.5) return
+        if (card._phTimeline) { card._phTimeline.kill() }
+        const upperBlocks = card.querySelectorAll('.n3_phBlock--upper')
+        const lowerBlocks = card.querySelectorAll('.n3_phBlock--lower')
+        const tl = gsap.timeline({ defaults: { duration: 0.4, ease: 'back.out(1.7)', overwrite: true } })
+        tl.to(upperBlocks, { opacity: 1, scale: 1, stagger: 0.07 })
+          .to(lowerBlocks, { opacity: 1, scale: 1, stagger: 0.07 }, '-=0.12')
+        card._phTimeline = tl
+    })
 }
 
 const cancelSeriesEdit = () => {
+    const card = document.querySelector('.n3_seriesCard--editing')
     editingSeriesId.value = null
     seriesEditForm.seriesTitle = ''
     seriesEditForm.aboutText = ''
+
+    // 退出编辑态收回占位块
+    if (card) {
+        if (card._phTimeline) { card._phTimeline.kill(); card._phTimeline = null }
+        const blocks = card.querySelectorAll('.n3_phBlock')
+        gsap.to(blocks, {
+            opacity: 0,
+            scale: 0,
+            duration: 0.25,
+            ease: 'power2.in',
+            overwrite: true,
+        })
+    }
 }
 
 const saveSeriesEdit = async (series) => {
@@ -827,9 +895,23 @@ const saveSeriesEdit = async (series) => {
         aboutText: seriesEditForm.aboutText.trim(),
     })
     if (result.success) {
+        const card = document.querySelector('.n3_seriesCard--editing')
         editingSeriesId.value = null
         seriesEditForm.seriesTitle = ''
         seriesEditForm.aboutText = ''
+
+        // 保存成功后收回占位块
+        if (card) {
+            if (card._phTimeline) { card._phTimeline.kill(); card._phTimeline = null }
+            const blocks = card.querySelectorAll('.n3_phBlock')
+            gsap.to(blocks, {
+                opacity: 0,
+                scale: 0,
+                duration: 0.25,
+                ease: 'power2.in',
+                overwrite: true,
+            })
+        }
     }
 }
 
@@ -1042,6 +1124,57 @@ const onN1MainLeave = () => {
     gsap.to(collapseBtnRef.value, {
         y: 15,
         opacity: 0,
+        duration: 0.25,
+        ease: 'power2.in',
+        overwrite: true,
+    })
+}
+
+// ═══════════════════════════════════════════════════
+// 合集卡片 hover → 中间占位块分上下两组依次入场
+// ═══════════════════════════════════════════════════
+const onSeriesCardEnter = (e) => {
+    const card = e.currentTarget
+    // 编辑态跳过占位块动画
+    if (card.classList.contains('n3_seriesCard--editing')) return
+
+    const upperBlocks = card.querySelectorAll('.n3_phBlock--upper')
+    const lowerBlocks = card.querySelectorAll('.n3_phBlock--lower')
+
+    // 先清除该卡片残留动画
+    if (card._phTimeline) {
+        card._phTimeline.kill()
+    }
+
+    const tl = gsap.timeline({ defaults: { duration: 0.4, ease: 'back.out(1.7)', overwrite: true } })
+    tl.to(upperBlocks, {
+        opacity: 1,
+        scale: 1,
+        stagger: 0.07,
+    })
+    .to(lowerBlocks, {
+        opacity: 1,
+        scale: 1,
+        stagger: 0.07,
+    }, '-=0.12')
+
+    card._phTimeline = tl
+}
+
+const onSeriesCardLeave = (e) => {
+    const card = e.currentTarget
+    // 编辑态不收回占位块
+    if (card.classList.contains('n3_seriesCard--editing')) return
+
+    if (card._phTimeline) {
+        card._phTimeline.kill()
+        card._phTimeline = null
+    }
+
+    const allBlocks = card.querySelectorAll('.n3_phBlock')
+    gsap.to(allBlocks, {
+        opacity: 0,
+        scale: 0,
         duration: 0.25,
         ease: 'power2.in',
         overwrite: true,

@@ -1092,7 +1092,6 @@
 .n3_seriesCard{
     display: flex;
     flex-direction: row;
-    justify-content: space-between;
     width: 100%;
     height: 120px;
     background-color: #fff9eb;
@@ -1217,16 +1216,16 @@
 }
 
 /* hover — 三张占位卡向不同方向移动，露出查看按钮 */
-.n3_seriesCard:hover .n3_seriesPreviewCard--1{
+.n3_seriesPreview:hover .n3_seriesPreviewCard--1{
     transform: translate(-24px, 12px) rotate(-10deg);
 }
 
-.n3_seriesCard:hover .n3_seriesPreviewCard--2{
+.n3_seriesPreview:hover .n3_seriesPreviewCard--2{
     transform: translate(6px, -6px);
     background-color: #fff;
 }
 
-.n3_seriesCard:hover .n3_seriesPreviewCard--3{
+.n3_seriesPreview:hover .n3_seriesPreviewCard--3{
     transform: translate(16px, 12px) rotate(10deg);
 }
 
@@ -1269,6 +1268,77 @@
     width: 18px;
     height: 18px;
 }
+
+/* ═══ 中间图片展示区 ═══ */
+.n3_seriesMiddle{
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 12px 16px;
+    min-width: 0;
+    overflow: hidden;
+}
+
+/* 合集封面图 */
+.n3_seriesCoverImg{
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 10px;
+}
+
+/* 占位块网格容器 — 5 列 flex 布局 */
+.n3_seriesPlaceholderGrid{
+    display: flex;
+    gap: 8px;
+    width: 100%;
+    height: 100%;
+    align-items: stretch;
+}
+
+/* 占位列 */
+.n3_phCol{
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+}
+
+/* 多块列（2、3、4）上下间距 2% */
+.n3_phCol--2,
+.n3_phCol--3,
+.n3_phCol--4{
+    gap: 2%;
+}
+
+/* ── 占位块基础样式（与 n3_seriesPreviewCard 保持一致） ── */
+.n3_phBlock{
+    width: 100%;
+    border-radius: 10px;
+    background: #f0e8d8;
+    border: 1px dashed rgba(0, 0, 0, 0.12);
+    /* 默认隐藏 — hover 时 GSAP 入场 */
+    opacity: 0;
+    transform: scale(0);
+}
+
+/* 列 1、列 5：单块填满高度 */
+.n3_phCol:not(.n3_phCol--2):not(.n3_phCol--3):not(.n3_phCol--4) .n3_phBlock--upper{
+    height: 100%;
+}
+
+/* ── 列 2：上块 60%，下块 38% ── */
+.n3_phCol--2 .n3_phBlock--upper{ height: 60%; }
+.n3_phCol--2 .n3_phBlock--lower{ height: 38%; }
+
+/* ── 列 3：上块 40%，下块 58% ── */
+.n3_phCol--3 .n3_phBlock--upper{ height: 40%; }
+.n3_phCol--3 .n3_phBlock--lower{ height: 58%; }
+
+/* ── 列 4：上块 30%，下块 68% ── */
+.n3_phCol--4 .n3_phBlock--upper{ height: 30%; }
+.n3_phCol--4 .n3_phBlock--lower{ height: 68%; }
 
 /* ── 编辑界面区（输入框） ── */
 .n3_seriesEditForm{
