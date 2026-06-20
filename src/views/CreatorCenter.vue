@@ -1059,6 +1059,7 @@ import { ref, reactive, computed, watch, onMounted, onUnmounted, nextTick } from
 import { useRouter, useRoute } from 'vue-router'
 import gsap from 'gsap'
 import { useCreatorPanel } from '@/composables/useCreatorPanel'
+import { useUploadForm } from '@/composables/creatorPanel/useUploadForm'
 import { getUserProfile } from '@/api/profileApi.js'
 import { batchRemoveWorksFromSeries } from '@/api/creatorApi'
 import { getAvatarUrl } from '@/config/api.js'
@@ -1156,124 +1157,6 @@ const updateEditRadioIndicator = () => editRadioIndicator.update('.n3_radioBtn.a
 watch(() => editWorkForm.isOriginal, () => {
     nextTick(() => updateEditRadioIndicator())
 })
-
-// ═══════════════════════════════════════════════════
-// 上传 — radio 指示器（原创 / 转载）
-// ═══════════════════════════════════════════════════
-const uploadRadioGroupRef = uploadRadioIndicator.containerRef
-const uploadRadioIndicatorStyle = uploadRadioIndicator.indicatorStyle
-const updateUploadRadioIndicator = () => uploadRadioIndicator.update('.n3_uploadRadioBtn.active')
-
-// 上传表单原创/转载切换
-const toggleUploadOriginal = (val) => {
-    uploadForm.isOriginal = val
-    nextTick(() => updateUploadRadioIndicator())
-}
-
-// 上传 — 文件选择（含拖拽支持）
-const uploadFileInputRef = ref(null)
-
-const onUploadFileSelect = (e) => {
-    const file = e.target.files?.[0]
-    if (file) setUploadFile(file)
-}
-
-const onUploadDragOver = (e) => {
-    e.preventDefault()
-    e.stopPropagation()
-}
-
-const onUploadDrop = (e) => {
-    e.preventDefault()
-    e.stopPropagation()
-    const file = e.dataTransfer?.files?.[0]
-    if (file) setUploadFile(file)
-}
-
-const onUploadRemoveFile = () => {
-    removeUploadFile()
-    if (uploadFileInputRef.value) uploadFileInputRef.value.value = ''
-    uploadImageDimensions.value = { width: 0, height: 0 }
-}
-
-// 上传 — 图片尺寸追踪
-const uploadImageDimensions = ref({ width: 0, height: 0 })
-
-watch(() => uploadForm.filePreview, (preview) => {
-    if (!preview) {
-        uploadImageDimensions.value = { width: 0, height: 0 }
-        return
-    }
-    const img = new Image()
-    img.onload = () => {
-        uploadImageDimensions.value = { width: img.naturalWidth, height: img.naturalHeight }
-    }
-    img.src = preview
-})
-
-// 上传 — 文件名截断显示（>12 字符则截断 + ...）
-const uploadFileNameDisplay = computed(() => {
-    const name = uploadForm.file?.name || ''
-    if (!name) return ''
-    const dotIndex = name.lastIndexOf('.')
-    const baseName = dotIndex > 0 ? name.substring(0, dotIndex) : name
-    const ext = dotIndex > 0 ? name.substring(dotIndex) : ''
-    if (baseName.length > 12) {
-        return baseName.substring(0, 12) + '...' + ext
-    }
-    return name
-})
-
-// 上传 — 转载链接药丸入场/离场动画
-const uploadLinkPillRef = ref(null)
-
-const onUploadLinkEnter = (el, done) => {
-    gsap.fromTo(el,
-        { x: 24, opacity: 0 },
-        { x: 0, opacity: 1, duration: 0.35, ease: 'power2.out', onComplete: done }
-    )
-}
-
-const onUploadLinkLeave = (el, done) => {
-    gsap.to(el,
-        { x: 24, opacity: 0, duration: 0.2, ease: 'power2.in', onComplete: done }
-    )
-}
-
-// 上传 — 提交
-const submitUpload = async () => {
-    const result = await handleUpload()
-    if (result.success) {
-        if (uploadFileInputRef.value) uploadFileInputRef.value.value = ''
-        // 刷新仪表盘数据 + 自动跳转「我的作品」
-        await fetchUserStats()
-        switchTab('works')
-    }
-}
-
-// 上传 — 取消（重置所有表单）
-const cancelUpload = () => {
-    resetUploadForm()
-    if (uploadFileInputRef.value) uploadFileInputRef.value.value = ''
-}
-
-// 上传 — 添加到合集（复用系列弹窗模式）
-const showUploadSeriesDialog = ref(false)
-const uploadSeriesTargetId = ref(0)
-
-const openUploadSeriesDialog = () => {
-    uploadSeriesTargetId.value = uploadForm.seriesId || 0
-    showUploadSeriesDialog.value = true
-}
-
-const confirmUploadSeries = () => {
-    uploadForm.seriesId = uploadSeriesTargetId.value
-    showUploadSeriesDialog.value = false
-}
-
-const closeUploadSeriesDialog = () => {
-    showUploadSeriesDialog.value = false
-}
 
 // ═══════════════════════════════════════════════════
 // Refs
@@ -1995,6 +1878,25 @@ const fetchUserStats = async () => {
         }
     }
 }
+
+// ═══════════════════════════════════════════════════
+// 上传 — UI 交互逻辑（委托 useUploadForm composable）
+// ═══════════════════════════════════════════════════
+const {
+    uploadRadioGroupRef, uploadRadioIndicatorStyle,
+    updateUploadRadioIndicator, toggleUploadOriginal,
+    uploadFileInputRef,
+    onUploadFileSelect, onUploadDragOver, onUploadDrop, onUploadRemoveFile,
+    uploadImageDimensions, uploadFileNameDisplay,
+    submitUpload, cancelUpload,
+    showUploadSeriesDialog, uploadSeriesTargetId,
+    openUploadSeriesDialog, confirmUploadSeries, closeUploadSeriesDialog,
+    uploadLinkPillRef, onUploadLinkEnter, onUploadLinkLeave,
+} = useUploadForm({
+    uploadForm, uploadLoading, uploadRadioIndicator,
+    handleUpload, setUploadFile, removeUploadFile, resetUploadForm,
+    fetchUserStats, switchTab, seriesList,
+})
 
 // 窗口大小变化 → 更新指示器
 const handleResize = () => {

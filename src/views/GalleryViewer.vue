@@ -1,9 +1,6 @@
 <script setup>
-import { ref, computed, onMounted, onUnmounted, watch, nextTick } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
-import { getWorkImageUrl } from '@/config/api'
-import { fetchSeriesDetail } from '@/api/creatorApi'
-import gsap from 'gsap'
+import { useGalleryViewer } from '@/composables/useGalleryViewer'
+import '@/assets/CSS/galleryViewer.css'
 
 // ═══════════════════════════════════════════════════════════════
 // GalleryViewer — 合集作品预览页面
@@ -13,16 +10,12 @@ import gsap from 'gsap'
 //   单图模式 — 传入 imagePath，仅展示单张图片（向后兼容）
 //
 // 分层结构：
-//   Layer 1 底层 — 全屏毛玻璃模糊背景（当前预览原图铺满 + blur）
-//   Layer 2 中层 — 居中预览卡片（大圆角 + 大面积外阴影 + 清晰原图）
-//   Layer 3 底层 — 底部导航控件栏（药丸胶囊 #0a0a0a）
-//   Top-left — 两个黑色药丸（Pixel Vision 品牌 + 返回按钮）
+//   Layer 1 底层 — 全屏毛玻璃模糊背景
+//   Layer 2 中层 — 居中预览卡片
+//   Layer 3 底层 — 底部导航控件栏
+//   Top-left — Pixel Vision 品牌药丸 + 返回按钮
 // ═══════════════════════════════════════════════════════════════
 
-const route = useRoute()
-const router = useRouter()
-
-// ── Props ──────────────────────────────────────────────────────
 const props = defineProps({
   seriesId: { type: [Number, String], default: null },
   imagePath: { type: String, default: '' },
@@ -31,168 +24,13 @@ const props = defineProps({
 
 const emit = defineEmits(['prev', 'next', 'close'])
 
-// ── Refs ───────────────────────────────────────────────────────
-const containerRef = ref(null)
-const cardRef = ref(null)
-const navRef = ref(null)
-const topLeftRef = ref(null)
-const bgRef = ref(null)
-
-// ═══════════════════════════════════════════════════════════════
-// 合集模式 — 加载合集内所有作品
-// ═══════════════════════════════════════════════════════════════
-const resolvedSeriesId = computed(() => {
-  if (props.seriesId) return Number(props.seriesId)
-  if (route.query.seriesId) return Number(route.query.seriesId)
-  return null
-})
-
-const works = ref([])
-const currentIndex = ref(0)
-const seriesLoading = ref(false)
-const loadError = ref('')
-
-const loadSeriesWorks = async () => {
-  const sid = resolvedSeriesId.value
-  if (!sid) return
-
-  seriesLoading.value = true
-  loadError.value = ''
-
-  try {
-    const result = await fetchSeriesDetail(sid)
-    if (result.success && result.data) {
-      works.value = (result.data.records || []).map(w => ({
-        id: w.work_id,
-        title: w.work_title || '未命名作品',
-        imgUrl: w.imgFullUrl || '',
-        thumbUrl: w.thumbFullUrl || '',
-      }))
-      currentIndex.value = 0
-    } else {
-      loadError.value = result.message || '加载合集失败'
-    }
-  } catch {
-    loadError.value = '网络错误，请稍后重试'
-  }
-
-  seriesLoading.value = false
-}
-
-// ═══════════════════════════════════════════════════════════════
-// 当前作品 / 图片 / 标题
-// ═══════════════════════════════════════════════════════════════
-const currentWork = computed(() => works.value[currentIndex.value] || null)
-
-const currentImage = computed(() => {
-  if (currentWork.value) return currentWork.value.imgUrl || ''
-  // 单图模式兜底
-  if (props.imagePath) {
-    return props.imagePath.startsWith('http') ? props.imagePath : getWorkImageUrl(props.imagePath)
-  }
-  return ''
-})
-
-const currentTitle = computed(() => {
-  if (currentWork.value) return currentWork.value.title
-  return props.workTitle || route.query.title || '未命名作品'
-})
-
-const totalCount = computed(() => works.value.length)
-
-const bgStyle = computed(() => ({
-  backgroundImage: currentImage.value ? `url(${currentImage.value})` : 'none',
-}))
-
-// ═══════════════════════════════════════════════════════════════
-// 导航状态
-// ═══════════════════════════════════════════════════════════════
-const canGoPrev = computed(() => works.value.length > 0 && currentIndex.value > 0)
-const canGoNext = computed(() => works.value.length > 0 && currentIndex.value < works.value.length - 1)
-
-const goPrev = () => {
-  if (!canGoPrev.value) return
-  currentIndex.value--
-  emit('prev')
-}
-
-const goNext = () => {
-  if (!canGoNext.value) return
-  currentIndex.value++
-  emit('next')
-}
-
-// ═══════════════════════════════════════════════════════════════
-// GSAP 动画
-// ═══════════════════════════════════════════════════════════════
-let ctx = null
-
-const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches
-
-onMounted(async () => {
-  // 合集模式 → 加载作品列表
-  if (resolvedSeriesId.value) {
-    await loadSeriesWorks()
-  }
-
-  if (prefersReduced) return
-
-  ctx = gsap.context(() => {
-    const tl = gsap.timeline({ defaults: { ease: 'power2.out' } })
-
-    tl.fromTo(bgRef.value,
-      { opacity: 0 },
-      { opacity: 1, duration: 0.5 },
-      0
-    )
-    .fromTo(cardRef.value,
-      { scale: 0.92, opacity: 0 },
-      { scale: 1, opacity: 1, duration: 0.5, ease: 'expo.out' },
-      0.08
-    )
-    .fromTo(topLeftRef.value,
-      { opacity: 0, y: -12 },
-      { opacity: 1, y: 0, duration: 0.4 },
-      0.12
-    )
-    .fromTo(navRef.value,
-      { opacity: 0, y: 20 },
-      { opacity: 1, y: 0, duration: 0.45 },
-      0.18
-    )
-  }, containerRef.value)
-})
-
-// 切换图片时的卡片过渡动画
-watch(currentIndex, () => {
-  if (prefersReduced || !cardRef.value) return
-  nextTick(() => {
-    gsap.fromTo(cardRef.value,
-      { opacity: 0, scale: 0.97 },
-      { opacity: 1, scale: 1, duration: 0.3, ease: 'power2.out' }
-    )
-  })
-})
-
-onUnmounted(() => {
-  if (ctx) {
-    ctx.revert()
-    ctx = null
-  }
-})
-
-// ── Handlers ───────────────────────────────────────────────────
-const handleClose = () => {
-  emit('close')
-  // 从合集进入 → 返回创作者中心合集页
-  if (resolvedSeriesId.value) {
-    router.replace({ name: 'creatorT', query: { tab: 'collections' } })
-  } else if (window.history.length > 1) {
-    router.back()
-  } else {
-    router.replace({ name: 'creatorT' })
-  }
-}
+const {
+  containerRef, cardRef, navRef, topLeftRef, bgRef,
+  resolvedSeriesId, works, seriesLoading, loadError,
+  currentImage, currentTitle, totalCount, bgStyle,
+  canGoPrev, canGoNext, goPrev, goNext,
+  currentIndex, handleClose,
+} = useGalleryViewer(props, emit)
 </script>
 
 <template>
@@ -200,7 +38,6 @@ const handleClose = () => {
 
     <!-- ═══════════════════════════════════════════════════════
          Layer 1 — 底层全屏背景
-         当前预览原图铺满视口 + 重度毛玻璃模糊 + 暗化
          ═══════════════════════════════════════════════════════ -->
     <div class="gallery-bg" ref="bgRef" :style="bgStyle" aria-hidden="true">
       <div class="gallery-bg--blur"></div>
@@ -255,8 +92,6 @@ const handleClose = () => {
 
     <!-- ═══════════════════════════════════════════════════════
          Top-Left — 两个黑色药丸
-         Pill 1: Pixel Vision 品牌（照搬 NavBar 标题 + 三枚 SVG）
-         Pill 2: 返回按钮（白色 SVG，hover → 主题绿）
          ═══════════════════════════════════════════════════════ -->
     <div class="gallery-top-left" ref="topLeftRef">
 
@@ -281,12 +116,7 @@ const handleClose = () => {
          Layer 3 — 底部导航控件栏
          ═══════════════════════════════════════════════════════ -->
     <nav class="gallery-nav" ref="navRef" aria-label="作品导航">
-      <button
-        class="nav-btn nav-btn--prev"
-        :class="{ 'nav-btn--disabled': !canGoPrev }"
-        :disabled="!canGoPrev"
-        @click="goPrev"
-      >
+      <button class="nav-btn nav-btn--prev" :class="{ 'nav-btn--disabled': !canGoPrev }" :disabled="!canGoPrev" @click="goPrev">
         <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <polyline points="15 18 9 12 15 6"/>
         </svg>
@@ -298,12 +128,7 @@ const handleClose = () => {
         <span v-if="totalCount > 0" class="nav-title--index">{{ currentIndex + 1 }}/{{ totalCount }}</span>
       </span>
 
-      <button
-        class="nav-btn nav-btn--next"
-        :class="{ 'nav-btn--disabled': !canGoNext }"
-        :disabled="!canGoNext"
-        @click="goNext"
-      >
+      <button class="nav-btn nav-btn--next" :class="{ 'nav-btn--disabled': !canGoNext }" :disabled="!canGoNext" @click="goNext">
         <span>下一张</span>
         <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <polyline points="9 18 15 12 9 6"/>
@@ -313,271 +138,3 @@ const handleClose = () => {
 
   </div>
 </template>
-
-<style scoped>
-/* ═══════════════════════════════════════════════════════════════
-   GalleryViewer — 分层视觉样式
-   ═══════════════════════════════════════════════════════════════ */
-
-.gallery-viewer {
-  position: fixed;
-  inset: 0;
-  z-index: 2000;
-  background: var(--bg-primary);
-  overflow: hidden;
-}
-
-/* ── Layer 1: 底层全屏模糊背景 ──────────────────────────────── */
-.gallery-bg {
-  position: absolute;
-  inset: -40px; /* 扩展防止模糊边缘露出黑边 */
-  background-size: cover;
-  background-position: center;
-  background-repeat: no-repeat;
-  z-index: 0;
-}
-
-.gallery-bg--blur {
-  position: absolute;
-  inset: 0;
-  background: inherit;
-  background-size: cover;
-  background-position: center;
-  filter: blur(64px) brightness(0.35) saturate(0.6);
-  transform: scale(1.05);
-}
-
-/* ── Layer 2: 中层预览卡片 ──────────────────────────────────── */
-.gallery-card {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  z-index: 1;
-  max-width: 82vw;
-  max-height: 74vh;
-  border-radius: 24px;
-  overflow: hidden;
-  background: rgba(10, 10, 10, 0.25);
-  box-shadow:
-    0 0 0 1px rgba(255, 255, 255, 0.04),
-    0 32px 96px rgba(0, 0, 0, 0.65),
-    0 12px 40px rgba(0, 0, 0, 0.45),
-    0 4px 12px rgba(0, 0, 0, 0.3);
-  user-select: none;
-}
-
-.gallery-card--inner {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 120px;
-  min-height: 120px;
-}
-
-.gallery-card--img {
-  display: block;
-  max-width: 82vw;
-  max-height: 74vh;
-  object-fit: contain;
-  -webkit-user-drag: none;
-}
-
-.gallery-card--placeholder {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 16px;
-  width: 280px;
-  min-height: 240px;
-  opacity: 0.6;
-}
-
-.gallery-card--spinner {
-  width: 32px;
-  height: 32px;
-  border: 2px solid rgba(255, 255, 255, 0.1);
-  border-top-color: var(--color-primary);
-  border-radius: 50%;
-  animation: gv-spin 0.8s linear infinite;
-}
-
-@keyframes gv-spin {
-  to { transform: rotate(360deg); }
-}
-
-.gallery-card--loading-text,
-.gallery-card--error-text,
-.gallery-card--empty-text {
-  color: var(--text-secondary);
-  font-size: 13px;
-  text-align: center;
-}
-
-.gallery-card--error-text {
-  color: var(--color-danger);
-}
-
-/* ── Top-Left: 黑色药丸 ────────────────────────────────────── */
-.gallery-top-left {
-  position: absolute;
-  top: 24px;
-  left: 24px;
-  z-index: 2;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.pill {
-  width: 160px;
-  height: 40px;
-  border-radius: 999px;
-  background: #0a0a0a;
-  display: flex;
-  align-items: center;
-  border: none;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
-  display: flex;
-  justify-content: center;
-  align-items: center;  
-}
-
-/* Pill 1 — Pixel Vision 品牌药丸 */
-.pill-brand {
-  position: relative;
-  cursor: default;
-  gap: 4px;
-}
-
-.pill-brand--text {
-  margin: 0;
-  font-family: "华文琥珀", sans-serif;
-  font-size: 18px;
-  line-height: 40px;
-  white-space: nowrap;
-  background: linear-gradient(to right, #19b859 0%, #6EC597 49.5%, #fff 50.5%, #fff 100%);
-  background-size: 200% 100%;
-  background-position-x: 100%;
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-  position: relative;
-  z-index: 2;
-}
-
-.pill-brand--svg {
-  position: absolute;
-  z-index: 1;
-}
-
-.pill-brand--svg1 {
-  top: 11px;
-  left: 17px;
-}
-
-.pill-brand--svg2 {
-  top: 6px;
-  left: 64px;
-  z-index: 3;
-}
-
-.pill-brand--svg3 {
-  top: 12px;
-  left: 122px;
-}
-
-/* Pill 2 — 返回按钮 */
-.pill-back {
-  width: 40px;
-  padding: 0;
-  justify-content: center;
-  cursor: pointer;
-  color: #ffffff;
-  transition: color 0.25s ease;
-}
-
-.pill-back:hover {
-  color: var(--color-primary);
-}
-
-/* ── Layer 3: 底部导航控件栏 ───────────────────────────────── */
-.gallery-nav {
-  position: absolute;
-  bottom: 40px;
-  left: 50%;
-  transform: translateX(-50%);
-  z-index: 2;
-  display: flex;
-  align-items: center;
-  height: 48px;
-  padding: 0 8px;
-  border-radius: 999px;
-  background: #0a0a0a;
-  box-shadow:
-    0 8px 32px rgba(0, 0, 0, 0.55),
-    inset 0 1px 0 rgba(255, 255, 255, 0.04);
-  min-width: 360px;
-  max-width: 90vw;
-}
-
-.nav-btn {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  height: 34px;
-  padding: 0 16px;
-  border-radius: 999px;
-  border: none;
-  background: transparent;
-  color: var(--text-secondary);
-  font-size: 13px;
-  cursor: pointer;
-  transition: color 0.2s ease, background 0.2s ease;
-  white-space: nowrap;
-  flex-shrink: 0;
-}
-
-.nav-btn:hover:not(.nav-btn--disabled) {
-  color: var(--text-primary);
-  background: rgba(255, 255, 255, 0.06);
-}
-
-.nav-btn--disabled {
-  opacity: 0.25;
-  cursor: default;
-}
-
-.nav-title {
-  flex: 1;
-  text-align: center;
-  color: var(--text-primary);
-  font-size: 14px;
-  font-weight: 500;
-  line-height: 1.4;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  padding: 0 12px;
-  min-width: 0;
-}
-
-.nav-title--index {
-  margin-left: 8px;
-  color: var(--text-tertiary);
-  font-size: 12px;
-  font-weight: 400;
-}
-
-/* ── Reduced Motion ─────────────────────────────────────────── */
-@media (prefers-reduced-motion: reduce) {
-  .gallery-card,
-  .gallery-nav,
-  .gallery-top-left,
-  .gallery-bg {
-    animation: none !important;
-    transition: none !important;
-  }
-}
-</style>
