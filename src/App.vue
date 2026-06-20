@@ -1,14 +1,12 @@
 <script setup>
-import { watch, onUnmounted } from 'vue';
-import { RouterView, useRoute } from 'vue-router';
+import { ref, watch, onUnmounted, nextTick } from 'vue';
+import { RouterView, useRouter } from 'vue-router';
 import { useAuth } from '@/composables/useAuth';
 import { useWebSocket } from '@/composables/message/useWebSocket';
+import gsap from 'gsap';
 
 // 认证状态
 const { isLoggedIn } = useAuth();
-
-// 路由状态
-const route = useRoute();
 
 // WebSocket 连接管理
 const { connect, disconnect } = useWebSocket();
@@ -23,9 +21,41 @@ watch(isLoggedIn, (newVal) => {
     disconnect();
   }
 }, { immediate: true });
+
+// ── 全局加载遮罩 ──
+const router = useRouter();
+const loadingOverlay = ref(null);
+let loadingTween = null;
+
+router.beforeEach(() => {
+  if (loadingOverlay.value) {
+    loadingTween?.kill();
+    gsap.set(loadingOverlay.value, { autoAlpha: 1 });
+  }
+});
+
+router.afterEach(async () => {
+  if (loadingOverlay.value) {
+    // 等待 Vue DOM 渲染完成 + 额外缓冲确保布局稳定再淡出
+    await nextTick();
+    await new Promise(r => setTimeout(r, 500));
+
+    loadingTween = gsap.to(loadingOverlay.value, {
+      autoAlpha: 0,
+      duration: 0.5,
+      ease: 'power2.out',
+      onComplete: () => { loadingTween = null; },
+    });
+  }
+});
+
+onUnmounted(() => {
+  loadingTween?.kill();
+});
 </script>
 
 <template>
+  <div ref="loadingOverlay" class="global-loading-overlay"></div>
   <RouterView />
 </template>
 
@@ -39,6 +69,15 @@ watch(isLoggedIn, (newVal) => {
 
 html,body{
   background-color: #1a1a1a;
+}
+
+/* ── 全局路由加载遮罩 ── */
+.global-loading-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  background: #000000;
+  pointer-events: all;
 }
 
 /* 全局滚动条样式 */

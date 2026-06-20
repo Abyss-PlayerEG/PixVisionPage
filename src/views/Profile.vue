@@ -1172,6 +1172,6 @@ watch(
   />
 </template>
 
-<style>
+<style scoped>
 @import "@/assets/CSS/Profile.css";
 </style>

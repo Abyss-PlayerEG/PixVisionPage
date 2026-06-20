@@ -560,6 +560,6 @@ onUnmounted(() => {
   
 </template>
 
-<style>
+<style scoped>
 @import url(../assets/CSS/mainIndex.css);
 </style>
