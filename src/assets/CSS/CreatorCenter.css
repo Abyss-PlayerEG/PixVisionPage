@@ -1,3 +1,4 @@
+
 #Main{
     width: 100%;
     min-height: 100vh;
@@ -1287,9 +1288,10 @@
     margin-top: 20px;
     width: 38px;
     height: 38px;
-    border-radius: 50%;
+    border-radius: 8px;
     border: none;
-    background: rgba(0, 0, 0, 0.6);
+    background: #ffd269;
+    border:2px #0a0a0a solid;
     backdrop-filter: blur(6px);
     -webkit-backdrop-filter: blur(6px);
     color: #fff9eb;
@@ -1299,7 +1301,7 @@
     justify-content: center;
     opacity: 0;
     transform: scale(0.85);
-    transition: opacity 0.3s ease, transform 0.3s ease;
+    transition: opacity 0.3s ease, transform 0.3s ease, background .3s ease;
     z-index: 10;
     pointer-events: none;
 }
@@ -1311,8 +1313,7 @@
 }
 
 .n3_seriesViewBtn:hover{
-    background: rgba(0, 0, 0, 0.85);
-    transform: scale(1.08);
+    background-color: #ffe099;
 }
 
 .n3_seriesViewBtn svg{
@@ -1466,6 +1467,7 @@
     background-color: #0a0a0a;
     flex-shrink: 0;
     gap: 2px;
+    overflow: hidden;
 }
 
 .n3_seriesEditBar-label{
@@ -1489,7 +1491,7 @@
     display: inline-flex;
     align-items: center;
     gap: 7px;
-    padding: 7px 16px;
+    padding: 7px 8px;
     border: none;
     border-radius: 10px;
     background: transparent;
@@ -1514,6 +1516,40 @@
 
 .n3_seriesEditBar-btn--cancel:hover{
     color: #ffffff;
+}
+
+/* 从合集移除作品按钮 — 推到编辑栏最右边 */
+.n3_seriesEditBar-btn--removeWorks{
+    margin-left: auto;
+}
+
+.n3_seriesEditBar-btn--removeWorks:hover{
+    color: #ff4d4f;
+}
+
+/* 有待移除作品时 — 按钮常驻红色提示 */
+.n3_seriesEditBar-btn--removeWorks.has-pending{
+    color: #ff4d4f;
+}
+
+.n3_seriesEditBar-btn--removeWorks.has-pending:hover{
+    color: #ff6666;
+}
+
+/* 待移除数量角标 */
+.n3_seriesEditBar-badge{
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 20px;
+    height: 20px;
+    padding: 0 3px;
+    border-radius: 10px;
+    background: #ff4d4f;
+    color: #ffffff;
+    font-size: 13px;
+    font-weight: 600;
+    line-height: 1;
 }
 
 .n3_seriesEditBar-btn:active{
@@ -1928,6 +1964,116 @@
     color: #555;
     font-size: 15px;
     text-align: center;
+}
+
+/* ═══════════════════════════════════════════════════
+   弹窗：从合集移除作品 — 作品列表
+   ═══════════════════════════════════════════════════ */
+.n3_removeWorksList{
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    max-height: 340px;
+    overflow-y: auto;
+    margin-bottom: 5px;
+}
+
+.n3_removeWorksItem{
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 10px 16px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.03);
+    color: #aaa;
+    font-size: 15px;
+    font-family: inherit;
+    cursor: pointer;
+    transition: border-color 0.25s ease, background-color 0.25s ease;
+}
+
+.n3_removeWorksItem:hover{
+    border-color: rgba(255, 255, 255, 0.15);
+    color: #ffffff;
+}
+
+.n3_removeWorksItem.selected{
+    border-color: #ff4d4f;
+    background: rgba(255, 77, 79, 0.06);
+}
+
+.n3_removeWorksThumb{
+    width: 56px;
+    height: 42px;
+    border-radius: 6px;
+    object-fit: cover;
+    flex-shrink: 0;
+}
+
+.n3_removeWorksThumbPlaceholder{
+    width: 56px;
+    height: 42px;
+    border-radius: 6px;
+    background: #1a1a1a;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.n3_removeWorksThumbPlaceholder svg{
+    width: 22px;
+    height: 22px;
+    color: #333;
+}
+
+.n3_removeWorksTitle{
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.n3_removeWorksCheck{
+    width: 24px;
+    height: 24px;
+    border-radius: 6px;
+    border: 2px solid rgba(255, 255, 255, 0.2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    transition: border-color 0.25s ease, background-color 0.25s ease;
+}
+
+.n3_removeWorksItem.selected .n3_removeWorksCheck{
+    border-color: #ff4d4f;
+    background: #ff4d4f;
+}
+
+.n3_removeWorksCheck svg{
+    width: 14px;
+    height: 14px;
+    color: #ffffff;
+}
+
+/* ── 危险操作主按钮（红色） ── */
+.n3_btnDanger{
+    background: #e64d3c;
+    border-color: #e64d3c;
+    color: #ffffff;
+}
+
+.n3_btnDanger:hover{
+    background: #f05a4a;
+    border-color: #f05a4a;
+}
+
+.n3_btnDanger:disabled{
+    opacity: 0.35;
+    cursor: not-allowed;
+    pointer-events: none;
 }
 
 /* ═══════════════════════════════════════════════════

@@ -21,7 +21,7 @@ import {
   batchRemoveWorksFromSeries,
 } from '../api/creatorApi'
 import { fetchUserSeries } from '../api/workApi'
-import { showSuccess, showError, showInfo } from '../utils/notification'
+import { showSuccess, showError, showInfo, showWarning } from '../utils/notification'
 import { API_BASE_URL } from '../config/api'
 import { useDialogAnimation } from './creatorPanel/useDialogAnimation'
 import { useFileUpload } from './creatorPanel/useFileUpload'
@@ -134,23 +134,26 @@ export const useCreatorPanel = (options = {}) => {
     if (reset) { worksCurrent.value = 1; worksList.value = [] }
     worksLoading.value = true
 
-    const result = await fetchMyWorks({
-      current: worksCurrent.value,
-      size: worksPageSize,
-      approvalStatus: worksApprovalFilter.value !== '' ? Number(worksApprovalFilter.value) : undefined,
-      keyword: worksSearchTitle.value || undefined,
-    })
+    try {
+      const result = await fetchMyWorks({
+        current: worksCurrent.value,
+        size: worksPageSize,
+        approvalStatus: worksApprovalFilter.value !== '' ? Number(worksApprovalFilter.value) : undefined,
+        keyword: worksSearchTitle.value || undefined,
+      })
 
-    if (result.success && result.data) {
-      const { records, total } = result.data
-      const newRecords = records || []
-      worksList.value = reset ? newRecords : [...worksList.value, ...newRecords]
-      worksTotal.value = total || 0
-      if (newRecords.length > 0 && worksList.value.length < worksTotal.value) {
-        worksCurrent.value++
+      if (result.success && result.data) {
+        const { records, total } = result.data
+        const newRecords = records || []
+        worksList.value = reset ? newRecords : [...worksList.value, ...newRecords]
+        worksTotal.value = total || 0
+        if (newRecords.length > 0 && worksList.value.length < worksTotal.value) {
+          worksCurrent.value++
+        }
       }
+    } finally {
+      worksLoading.value = false
     }
-    worksLoading.value = false
   }
 
   /** 搜索作品 */
@@ -194,22 +197,38 @@ export const useCreatorPanel = (options = {}) => {
     return result
   }
 
-  /** 批量添加选中作品到合集 */
+  /** 批量添加选中作品到合集（自动过滤已在目标合集中的作品） */
   const handleBatchAddToSeries = async (seriesId) => {
     if (!hasSelection.value || !seriesId) return
-    const ids = [...selectedWorkIds.value]
-    const result = await batchAddWorksToSeries(ids, seriesId)
-    if (result.success) {
-      showSuccess(`已将 ${ids.length} 件作品添加到合集`)
+    const allIds = [...selectedWorkIds.value]
+
+    // 过滤掉已在目标合集中的作品
+    const newIds = allIds.filter(id => {
+      const work = worksList.value.find(w => w.work_id === id)
+      return !work || work.series_id !== seriesId
+    })
+    const alreadyInCount = allIds.length - newIds.length
+
+    // 全部已在合集中 → 仅提示
+    if (newIds.length === 0) {
+      showWarning('这些图片本就在合集中', '提示')
       selectedWorkIds.value = []
-      // 刷新作品列表以更新 series_id
+      return { success: true, skipped: allIds.length }
+    }
+
+    const result = await batchAddWorksToSeries(newIds, seriesId)
+    if (result.success) {
+      let msg = `已将 ${newIds.length} 件作品添加到合集`
+      if (alreadyInCount > 0) msg += `，${alreadyInCount} 件已在合集中`
+      showSuccess(msg)
+      selectedWorkIds.value = []
       loadWorks({ reset: true })
-      // 同步刷新合集列表以更新缩略图
       loadSeries({ reset: true })
+      return { success: true, added: newIds.length, skipped: alreadyInCount }
     } else {
       showError(result.message || '批量添加失败')
+      return result
     }
-    return result
   }
 
   /** 修改作品信息 */
@@ -246,38 +265,43 @@ export const useCreatorPanel = (options = {}) => {
     if (reset) { seriesCurrent.value = 1; seriesList.value = [] }
     seriesLoading.value = true
 
-    const userId = userInfo.value.user_id
-    if (!userId) { seriesLoading.value = false; return }
+    try {
+      const userId = userInfo.value.user_id
+      if (!userId) return
 
-    const result = await fetchUserSeries({
-      userId,
-      current: seriesCurrent.value,
-      size: seriesPageSize,
-      keyword: seriesKeyword.value || undefined,
-    })
-
-    if (result.success && result.data) {
-      const { records, total } = result.data
-      const newRecords = records || []
-      // 为每条合集初始化 5 个空缩略图位
-      newRecords.forEach(series => {
-        if (!series.thumbnails) series.thumbnails = ['', '', '', '', '']
+      const result = await fetchUserSeries({
+        userId,
+        current: seriesCurrent.value,
+        size: seriesPageSize,
+        keyword: seriesKeyword.value || undefined,
       })
-      seriesList.value = reset ? newRecords : [...seriesList.value, ...newRecords]
-      seriesTotal.value = total || 0
-      if (newRecords.length > 0 && seriesList.value.length < seriesTotal.value) {
-        seriesCurrent.value++
-      }
-      // 异步获取每组合集的前 5 张作品缩略图
-      newRecords.forEach(series => {
-        fetchSeriesThumbnails(series.series_id).then(res => {
-          if (res.success) {
-            series.thumbnails = res.data
-          }
+
+      if (result.success && result.data) {
+        const { records, total } = result.data
+        const newRecords = records || []
+        // 为每条合集初始化 5 个空缩略图位
+        newRecords.forEach(series => {
+          if (!series.thumbnails) series.thumbnails = ['', '', '', '', '']
         })
-      })
+        seriesList.value = reset ? newRecords : [...seriesList.value, ...newRecords]
+        seriesTotal.value = total || 0
+        if (newRecords.length > 0 && seriesList.value.length < seriesTotal.value) {
+          seriesCurrent.value++
+        }
+        // 异步获取每组合集的前 5 张作品缩略图
+        // 注意：必须通过 seriesList.value（响应式 Proxy）写入，否则 Vue 不触发更新
+        newRecords.forEach(series => {
+          fetchSeriesThumbnails(series.series_id).then(res => {
+            if (res.success) {
+              const target = seriesList.value.find(s => s.series_id === series.series_id)
+              if (target) target.thumbnails = res.data
+            }
+          })
+        })
+      }
+    } finally {
+      seriesLoading.value = false
     }
-    seriesLoading.value = false
   }
 
   /** 搜索合集 */
@@ -544,7 +568,7 @@ export const useCreatorPanel = (options = {}) => {
     seriesList, seriesLoading, seriesTotal, seriesKeyword,
     loadSeries, searchSeries, handleAddSeries, handleUpdateSeries, handleDeleteSeries,
     // 合集详情
-    loadSeriesDetail, handleRemoveWorkFromSeries,
+    loadSeriesDetail, handleRemoveWorkFromSeries, seriesDetailWorks, seriesDetailLoading,
 
     // 上传
     uploadForm, uploadLoading, resetUploadForm, setUploadFile, removeUploadFile, handleUpload,

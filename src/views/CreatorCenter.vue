@@ -535,10 +535,19 @@
                                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                                 <polyline points="20 6 9 17 4 12"/>
                                             </svg>
-                                            <span>保存</span>
+                                            <span>确定修改</span>
                                         </button>
                                         <button class="n3_seriesEditBar-btn n3_seriesEditBar-btn--cancel" @click.stop="cancelSeriesEdit">
                                             <span>取消</span>
+                                        </button>
+                                        <button class="n3_seriesEditBar-btn n3_seriesEditBar-btn--removeWorks" :class="{ 'has-pending': pendingRemoveWorkIds.length }" @click.stop="openRemoveWorksDialog(series)">
+                                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                                <circle cx="12" cy="12" r="10"/>
+                                                <line x1="15" y1="9" x2="9" y2="15"/>
+                                                <line x1="9" y1="9" x2="15" y2="15"/>
+                                            </svg>
+                                            <span>从合集移除作品</span>
+                                            <span v-if="pendingRemoveWorkIds.length" class="n3_seriesEditBar-badge">{{ pendingRemoveWorkIds.length }}</span>
                                         </button>
                                     </div>
                                 </template>
@@ -767,6 +776,74 @@
     </teleport>
 
     <!-- ═══════════════════════════════════════════════════
+       弹窗：从合集移除作品
+       ═══════════════════════════════════════════════════ -->
+    <teleport to="body">
+        <div v-if="showRemoveWorksDialog" class="n3_dialogOverlay" @click.self="closeRemoveWorksDialog">
+            <div class="n3_dialog n3_dialogWide" @click.stop>
+                <h3 class="n3_dialogTitle">从合集移除作品</h3>
+                <p class="n3_addToSeriesDesc">「{{ removeWorksTarget?.series_title || '未命名合集' }}」共 {{ seriesDetailWorks.length }} 件作品</p>
+
+                <!-- 加载中 -->
+                <div v-if="seriesDetailLoading" class="n3_state" style="padding: 40px 0;">
+                    <div class="n3_spinner"></div>
+                    <span>加载中...</span>
+                </div>
+
+                <!-- 作品为空 -->
+                <div v-else-if="seriesDetailWorks.length === 0" class="n3_state" style="padding: 40px 0;">
+                    <span style="color: #555;">该合集暂无作品</span>
+                </div>
+
+                <!-- 作品可滚动列表 -->
+                <div v-else class="n3_removeWorksList">
+                    <button
+                        v-for="work in seriesDetailWorks"
+                        :key="work.work_id"
+                        class="n3_removeWorksItem"
+                        :class="{ selected: removeWorksSelectedIds.includes(work.work_id) }"
+                        @click="toggleRemoveWorkSelect(work.work_id)"
+                    >
+                        <img
+                            v-if="work.thumbFullUrl"
+                            :src="work.thumbFullUrl"
+                            class="n3_removeWorksThumb"
+                            :alt="work.work_title"
+                        />
+                        <div v-else class="n3_removeWorksThumbPlaceholder">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                                <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+                                <circle cx="8.5" cy="8.5" r="1.5"/>
+                                <polyline points="21 15 16 10 5 21"/>
+                            </svg>
+                        </div>
+                        <span class="n3_removeWorksTitle">{{ work.work_title || '未命名' }}</span>
+                        <div class="n3_removeWorksCheck">
+                            <svg v-if="removeWorksSelectedIds.includes(work.work_id)" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                                <polyline points="20 6 9 17 4 12"/>
+                            </svg>
+                        </div>
+                    </button>
+                </div>
+
+                <div class="n3_dialogFooter">
+                    <button class="n3_btn" @click="closeRemoveWorksDialog">返回</button>
+                    <button
+                        v-if="pendingRemoveWorkIds.length"
+                        class="n3_btn n3_btnWarm"
+                        @click="resetRemoveWorksSelection"
+                    >重置</button>
+                    <button
+                        class="n3_btn n3_btnDanger"
+                        :disabled="!removeWorksSelectedIds.length"
+                        @click="confirmRemoveWorks"
+                    >移除所选（{{ removeWorksSelectedIds.length }}）</button>
+                </div>
+            </div>
+        </div>
+    </teleport>
+
+    <!-- ═══════════════════════════════════════════════════
        弹窗：合集为空提示
        ═══════════════════════════════════════════════════ -->
     <ConfirmDialog
@@ -787,8 +864,9 @@ import { useRouter } from 'vue-router'
 import gsap from 'gsap'
 import { useCreatorPanel } from '@/composables/useCreatorPanel'
 import { getUserProfile } from '@/api/profileApi.js'
+import { batchRemoveWorksFromSeries } from '@/api/creatorApi'
 import { getAvatarUrl } from '@/config/api.js'
-import { showWarning } from '@/utils/notification'
+import { showError, showSuccess } from '@/utils/notification'
 import ConfirmDialog from '@/components/ConfirmDialog.vue'
 
 const router = useRouter()
@@ -805,6 +883,7 @@ const {
     // 合集
     seriesList, seriesLoading, seriesKeyword,
     loadSeries, searchSeries, handleUpdateSeries, handleDeleteSeries,
+    loadSeriesDetail, seriesDetailWorks, seriesDetailLoading,
     // 合集弹窗
     seriesDialogs,
     // 工具
@@ -929,6 +1008,14 @@ const seriesEditForm = reactive({
 })
 
 // ═══════════════════════════════════════════════════
+// 从合集移除作品 — 弹窗状态
+// ═══════════════════════════════════════════════════
+const showRemoveWorksDialog = ref(false)
+const removeWorksTarget = ref(null)         // 当前操作的合集
+const removeWorksSelectedIds = ref([])      // 弹窗中选中的作品 ID
+const pendingRemoveWorkIds = ref([])        // 暂存待移除的作品 ID（保存时真正执行）
+
+// ═══════════════════════════════════════════════════
 // 头像
 // ═══════════════════════════════════════════════════
 const avatarUrl = ref(getAvatarFromCache())
@@ -1024,6 +1111,12 @@ const clearCollectionSearch = () => {
 }
 
 const openSeriesEdit = (series) => {
+    // 再次点击同一合集 → 视为取消，收起编辑态
+    if (editingSeriesId.value === series.series_id) {
+        cancelSeriesEdit()
+        return
+    }
+
     editingSeriesId.value = series.series_id
     seriesEditForm.seriesTitle = series.series_title || ''
     seriesEditForm.aboutText = series.about_text || ''
@@ -1048,6 +1141,7 @@ const cancelSeriesEdit = () => {
     editingSeriesId.value = null
     seriesEditForm.seriesTitle = ''
     seriesEditForm.aboutText = ''
+    pendingRemoveWorkIds.value = []  // 清除暂存的移除操作
 
     if (card) {
         card._phMouseOver = false
@@ -1058,25 +1152,103 @@ const cancelSeriesEdit = () => {
 }
 
 const saveSeriesEdit = async (series) => {
-    if (!seriesEditForm.seriesTitle.trim()) return
-    const result = await handleUpdateSeries({
-        seriesId: series.series_id,
-        seriesTitle: seriesEditForm.seriesTitle.trim(),
-        aboutText: seriesEditForm.aboutText.trim(),
-    })
-    if (result.success) {
-        const card = document.querySelector('.n3_seriesCard--editing')
-        editingSeriesId.value = null
-        seriesEditForm.seriesTitle = ''
-        seriesEditForm.aboutText = ''
+    const newTitle = seriesEditForm.seriesTitle.trim()
+    const newAbout = seriesEditForm.aboutText.trim()
+    const hasMetadataChange =
+        newTitle !== (series.series_title || '') ||
+        newAbout !== (series.about_text || '')
+    const hasPendingRemovals = pendingRemoveWorkIds.value.length > 0
 
-        if (card) {
-            card._phMouseOver = false
-            if (card._phEnterTimeout) { clearTimeout(card._phEnterTimeout); card._phEnterTimeout = null }
-            if (card._phLeaveTimeout) { clearTimeout(card._phLeaveTimeout); card._phLeaveTimeout = null }
-            playPhLeave(card)
-        }
+    // 无任何修改 → 提示并终止
+    if (!hasMetadataChange && !hasPendingRemovals) {
+        showError('操作失败，暂未进行修改操作')
+        return
     }
+    if (hasMetadataChange && !newTitle) {
+        showError('合集名称不能为空')
+        return
+    }
+
+    let updateOk = true
+    if (hasMetadataChange) {
+        const result = await handleUpdateSeries({
+            seriesId: series.series_id,
+            seriesTitle: newTitle,
+            aboutText: newAbout,
+        })
+        updateOk = result.success
+    }
+
+    if (!updateOk) return
+
+    // 执行暂存的移除操作（批量一次提交）
+    let removedCount = 0
+    if (hasPendingRemovals) {
+        const ids = [...pendingRemoveWorkIds.value]
+        pendingRemoveWorkIds.value = []
+        const res = await batchRemoveWorksFromSeries(ids, series.series_id)
+        if (res.success) removedCount = ids.length
+    }
+
+    // 成功提示
+    if (removedCount > 0) {
+        showSuccess(`操作成功，已将 ${removedCount} 份作品移出合集`)
+    }
+
+    const card = document.querySelector('.n3_seriesCard--editing')
+    editingSeriesId.value = null
+    seriesEditForm.seriesTitle = ''
+    seriesEditForm.aboutText = ''
+
+    // 同步刷新合集和作品列表，保持 series_id 一致
+    loadSeries({ reset: true })
+    loadWorks({ reset: true })
+
+    if (card) {
+        card._phMouseOver = false
+        if (card._phEnterTimeout) { clearTimeout(card._phEnterTimeout); card._phEnterTimeout = null }
+        if (card._phLeaveTimeout) { clearTimeout(card._phLeaveTimeout); card._phLeaveTimeout = null }
+        playPhLeave(card)
+    }
+}
+
+// ═══════════════════════════════════════════════════
+// 从合集移除作品 — 弹窗逻辑
+// ═══════════════════════════════════════════════════
+const openRemoveWorksDialog = async (series) => {
+    removeWorksTarget.value = series
+    // 预选已暂存待移除的作品（用户可增删）
+    removeWorksSelectedIds.value = [...pendingRemoveWorkIds.value]
+    showRemoveWorksDialog.value = true
+    // 加载合集内作品列表
+    await loadSeriesDetail(series.series_id)
+}
+
+const closeRemoveWorksDialog = () => {
+    showRemoveWorksDialog.value = false
+    removeWorksTarget.value = null
+    removeWorksSelectedIds.value = []
+}
+
+const toggleRemoveWorkSelect = (workId) => {
+    const idx = removeWorksSelectedIds.value.indexOf(workId)
+    if (idx === -1) {
+        removeWorksSelectedIds.value.push(workId)
+    } else {
+        removeWorksSelectedIds.value.splice(idx, 1)
+    }
+}
+
+const confirmRemoveWorks = () => {
+    if (!removeWorksSelectedIds.value.length || !removeWorksTarget.value) return
+    // 暂存待移除的作品 ID，点击「确定修改」时真正执行
+    pendingRemoveWorkIds.value = [...removeWorksSelectedIds.value]
+    closeRemoveWorksDialog()
+}
+
+const resetRemoveWorksSelection = () => {
+    pendingRemoveWorkIds.value = []
+    removeWorksSelectedIds.value = []
 }
 
 // ═══════════════════════════════════════════════════
@@ -1143,24 +1315,10 @@ const onSeriesSortClick = (order) => {
 }
 
 // ═══════════════════════════════════════════════════
-// 批量添加到合集 — 查重后提交
+// 批量添加到合集 — 委托 composable（内部自动过滤重复作品）
 // ═══════════════════════════════════════════════════
 const handleAddToSeries = () => {
     if (!addToSeriesTargetId.value) return
-
-    const targetId = addToSeriesTargetId.value
-    const selectedWorks = worksList.value.filter(w => selectedWorkIds.value.includes(w.work_id))
-
-    // 检查所选作品是否全部已在目标合集中
-    const allAlreadyInSeries = selectedWorks.length > 0 &&
-        selectedWorks.every(w => w.series_id === targetId)
-
-    if (allAlreadyInSeries) {
-        showWarning('添加成功，但这些图片本就在合集中', '提示')
-        closeAddToSeriesDialog()
-        return
-    }
-
     submitAddToSeries()
 }
 
