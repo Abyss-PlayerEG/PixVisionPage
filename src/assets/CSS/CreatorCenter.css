@@ -79,7 +79,7 @@
         display: flex;
         justify-content: center;
         align-items: center;
-        bottom: -6px;
+        bottom: -12px;
         right: -25px;
     }
 
@@ -1077,6 +1077,332 @@
     font-size: 16px;
     color: var(--text-muted);
     margin: 0;
+}
+
+/* ═══════════════════════════════════════════════════
+   #num3z — 合集卡片列表
+   ═══════════════════════════════════════════════════ */
+.n3_seriesList{
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+/* ── 合集卡片 — 通栏 150px，左右分布 ── */
+.n3_seriesCard{
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    width: 100%;
+    height: 120px;
+    background-color: #fff9eb;
+    border-radius: 18px;
+    overflow: hidden;
+    transition: height 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* 编辑态 — 轻微增高以容纳编辑区 */
+.n3_seriesCard--editing{
+    height: 210px;
+}
+
+/* ═══ 左侧标题区 — flex:1 自动撑满剩余空间 ═══ */
+.n3_seriesLeft{
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 20px 32px;
+    gap: 6px;
+}
+
+.n3_seriesGalleryTitle{
+    font-family: sul-gbk6, sans-serif;
+    font-size: 26px;
+    font-weight: 700;
+    color: #0a0a0a;
+    letter-spacing: 2px;
+    line-height: 1;
+}
+
+.n3_seriesName{
+    font-family: sul-gbk6, sans-serif;
+    font-size: 20px;
+    font-weight: 600;
+    color: #00A947;
+    margin: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.n3_seriesDate{
+    font-size: 13px;
+    color: #999;
+}
+
+/* ═══ 右侧 40% 内容编辑区 ═══ */
+.n3_seriesRight{
+    width: 40%;
+    min-width: 380px;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    padding: 15px 20px 15px 0;
+    gap: 24px;
+    flex-shrink: 0;
+}
+
+/* ── 可切换视图区域 ── */
+.n3_seriesViewArea{
+    flex: 1;
+    height: 100%;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+/* ── 图片预览区（靠右对齐） ── */
+.n3_seriesPreview{
+    position: relative;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    padding-right: 8px;
+}
+
+/* 斜向堆叠图片容器 */
+.n3_seriesPreviewStack{
+    position: relative;
+    width: 160px;
+    height: 105px;
+    flex-shrink: 0;
+}
+
+/* 堆叠占位卡片 */
+.n3_seriesPreviewCard{
+    position: absolute;
+    width: 115px;
+    height: 80px;
+    border-radius: 10px;
+    background: #f0e8d8;
+    border: 1px dashed rgba(0, 0, 0, 0.12);
+    transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.n3_seriesPreviewCard--1{
+    top: 0;
+    left: 0;
+    z-index: 3;
+    background: #e8dfcc;
+}
+
+.n3_seriesPreviewCard--2{
+    top: 7px;
+    left: 24px;
+    z-index: 2;
+    background: #ddd4bf;
+}
+
+.n3_seriesPreviewCard--3{
+    top: 14px;
+    left: 48px;
+    z-index: 1;
+    background: #d2c9b3;
+}
+
+/* hover — 三张占位卡向不同方向移动，露出查看按钮 */
+.n3_seriesPreview:hover .n3_seriesPreviewCard--1{
+    transform: translate(-16px, -8px);
+}
+
+.n3_seriesPreview:hover .n3_seriesPreviewCard--2{
+    transform: translateY(-12px);
+}
+
+.n3_seriesPreview:hover .n3_seriesPreviewCard--3{
+    transform: translate(16px, 6px);
+}
+
+/* 查看按钮 — 默认隐藏，hover 浮现 */
+.n3_seriesViewBtn{
+    position: absolute;
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    border: none;
+    background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    color: #fff9eb;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transform: scale(0.85);
+    transition: opacity 0.3s ease, transform 0.3s ease;
+    z-index: 10;
+    pointer-events: none;
+}
+
+.n3_seriesPreview:hover .n3_seriesViewBtn{
+    opacity: 1;
+    transform: scale(1);
+    pointer-events: auto;
+}
+
+.n3_seriesViewBtn:hover{
+    background: rgba(0, 0, 0, 0.85);
+    transform: scale(1.08);
+}
+
+.n3_seriesViewBtn svg{
+    width: 18px;
+    height: 18px;
+}
+
+/* ── 编辑界面区（输入框） ── */
+.n3_seriesEditForm{
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 0 5px;
+    margin-bottom: 10px;
+}
+
+.n3_seriesEditInput{
+    background: rgba(0, 0, 0, 0.04);
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    border-radius: 10px;
+    padding: 9px 14px;
+    color: #0a0a0a;
+    font-size: 15px;
+    font-family: inherit;
+    outline: none;
+    transition: border-color 0.25s ease;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.n3_seriesEditInput:focus{
+    border-color: rgba(0, 0, 0, 0.25);
+}
+
+.n3_seriesEditInput::placeholder{
+    color: #aaa;
+}
+
+/* ── 编辑状态操作栏（复用 num2z 批量操作栏黑色胶囊风格） ── */
+.n3_seriesEditBar{
+    display: flex;
+    align-items: center;
+    height: 42px;
+    padding: 4px;
+    border-radius: 13px;
+    background-color: #0a0a0a;
+    flex-shrink: 0;
+    gap: 2px;
+}
+
+.n3_seriesEditBar-label{
+    padding: 6px 16px;
+    font-size: 15px;
+    color: var(--text-secondary);
+    white-space: nowrap;
+    user-select: none;
+}
+
+.n3_seriesEditBar-divider{
+    width: 1px;
+    height: 20px;
+    border-radius: 0.5px;
+    background: rgba(255, 255, 255, 0.12);
+    flex-shrink: 0;
+    margin: 0 4px;
+}
+
+.n3_seriesEditBar-btn{
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 7px 16px;
+    border: none;
+    border-radius: 10px;
+    background: transparent;
+    color: var(--text-secondary);
+    font-size: 15px;
+    font-family: inherit;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: color 0.25s ease;
+    user-select: none;
+}
+
+.n3_seriesEditBar-btn svg{
+    width: 18px;
+    height: 18px;
+    flex-shrink: 0;
+}
+
+.n3_seriesEditBar-btn--save:hover{
+    color: #00A947;
+}
+
+.n3_seriesEditBar-btn--cancel:hover{
+    color: #ffffff;
+}
+
+.n3_seriesEditBar-btn:active{
+    scale: 0.97;
+}
+
+/* ── 操作按钮（带文字标签） ── */
+.n3_seriesActions{
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    flex-shrink: 0;
+}
+
+.n3_seriesActionBtn{
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 16px;
+    border: none;
+    border-radius: 10px;
+    background: rgba(0, 0, 0, 0.05);
+    color: rgba(0, 0, 0, 0.5);
+    font-size: 14px;
+    font-family: inherit;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: all 0.2s ease;
+}
+
+.n3_seriesActionBtn svg{
+    width: 17px;
+    height: 17px;
+    flex-shrink: 0;
+}
+
+.n3_seriesActionBtn:hover{
+    background: rgba(0, 0, 0, 0.1);
+    color: #0a0a0a;
+}
+
+.n3_seriesActionBtn--danger:hover{
+    background: rgba(230, 77, 60, 0.12);
+    color: #e64d3c;
+}
+
+.n3_seriesActionBtn:active{
+    scale: 0.97;
 }
 
 /* ═══════════════════════════════════════════════════

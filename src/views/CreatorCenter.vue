@@ -204,7 +204,7 @@
                 </div>
             </div>
 
-            <!-- 右栏：搜索栏 -->
+            <!-- 右栏：搜索栏 — 作品 -->
             <div class="n2_Rceb" v-if="activeTab === 'works'">
                 <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <circle cx="11" cy="11" r="8"/>
@@ -221,6 +221,32 @@
                     class="search-clear"
                     v-if="worksSearchTitle"
                     @click="clearSearch"
+                    aria-label="清除搜索"
+                >
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="18" y1="6" x2="6" y2="18"/>
+                        <line x1="6" y1="6" x2="18" y2="18"/>
+                    </svg>
+                </button>
+            </div>
+
+            <!-- 右栏：搜索栏 — 合集 -->
+            <div class="n2_Rceb" v-if="activeTab === 'collections'">
+                <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="11" cy="11" r="8"/>
+                    <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+                </svg>
+                <input
+                    class="search-input"
+                    type="text"
+                    v-model="seriesKeyword"
+                    placeholder="搜索合集…"
+                    @keyup.enter="searchCollections"
+                />
+                <button
+                    class="search-clear"
+                    v-if="seriesKeyword"
+                    @click="clearCollectionSearch"
                     aria-label="清除搜索"
                 >
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -352,14 +378,123 @@
                 <div ref="worksScrollTrigger" style="height: 1px;"></div>
             </template>
 
-            <!-- ══════ 合集管理（占位） ══════ -->
+            <!-- ══════ 合集管理 ══════ -->
             <template v-if="activeTab === 'collections'">
-                <div class="n3_placeholder">
-                    <svg class="n3_placeholderIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                <!-- 加载中 -->
+                <div v-if="seriesLoading && seriesList.length === 0" class="n3_state">
+                    <div class="n3_spinner"></div>
+                    <span>加载合集中...</span>
+                </div>
+
+                <!-- 空状态 -->
+                <div v-else-if="seriesList.length === 0 && !seriesLoading" class="n3_state">
+                    <svg class="n3_emptyIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
                         <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>
                     </svg>
-                    <p class="n3_placeholderTitle">合集管理</p>
-                    <p class="n3_placeholderDesc">此功能正在建设中，敬请期待</p>
+                    <p class="n3_emptyTitle">还没有合集</p>
+                    <p class="n3_emptyDesc">切换到「上传作品」开始创作</p>
+                </div>
+
+                <!-- 合集卡片列表 -->
+                <div v-else class="n3_seriesList">
+                    <div
+                        v-for="(series, idx) in seriesList"
+                        :key="series.series_id"
+                        class="n3_seriesCard"
+                        :class="{ 'n3_seriesCard--editing': editingSeriesId === series.series_id }"
+                    >
+                        <!-- ═══ 左侧标题区（flex:1 自动撑满） ═══ -->
+                        <div class="n3_seriesLeft">
+                            <span class="n3_seriesGalleryTitle">Galleries {{ String(idx + 1).padStart(2, '0') }}</span>
+                            <h3 class="n3_seriesName">{{ series.series_title || '未命名合集' }}</h3>
+                            <span class="n3_seriesDate">{{ formatTime(series.create_time) }}</span>
+                        </div>
+
+                        <!-- ═══ 右侧 40% 内容编辑区 ═══ -->
+                        <div class="n3_seriesRight">
+                            <!-- 可切换视图区域 -->
+                            <div class="n3_seriesViewArea">
+                                <!-- 编辑界面区 -->
+                                <template v-if="editingSeriesId === series.series_id">
+                                    <div class="n3_seriesEditForm">
+                                        <input
+                                            v-model="seriesEditForm.seriesTitle"
+                                            class="n3_seriesEditInput"
+                                            type="text"
+                                            maxlength="16"
+                                            placeholder="合集名称"
+                                        />
+                                        <input
+                                            v-model="seriesEditForm.aboutText"
+                                            class="n3_seriesEditInput"
+                                            type="text"
+                                            maxlength="24"
+                                            placeholder="合集描述"
+                                        />
+                                    </div>
+                                    <!-- 编辑状态操作栏（复用 num2z 批量操作栏风格） -->
+                                    <div class="n3_seriesEditBar">
+                                        <span class="n3_seriesEditBar-label">正在编辑</span>
+                                        <span class="n3_seriesEditBar-divider"></span>
+                                        <button class="n3_seriesEditBar-btn n3_seriesEditBar-btn--save" @click.stop="saveSeriesEdit(series)">
+                                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                                <polyline points="20 6 9 17 4 12"/>
+                                            </svg>
+                                            <span>保存</span>
+                                        </button>
+                                        <button class="n3_seriesEditBar-btn n3_seriesEditBar-btn--cancel" @click.stop="cancelSeriesEdit">
+                                            <span>取消</span>
+                                        </button>
+                                    </div>
+                                </template>
+
+                                <!-- 图片预览区（默认） -->
+                                <template v-else>
+                                    <div class="n3_seriesPreview">
+                                        <div class="n3_seriesPreviewStack">
+                                            <div class="n3_seriesPreviewCard n3_seriesPreviewCard--1"></div>
+                                            <div class="n3_seriesPreviewCard n3_seriesPreviewCard--2"></div>
+                                            <div class="n3_seriesPreviewCard n3_seriesPreviewCard--3"></div>
+                                        </div>
+                                        <button class="n3_seriesViewBtn" title="查看合集">
+                                            <svg viewBox="0 0 24 24" fill="currentColor">
+                                                <path d="M8 5v14l11-7z"/>
+                                            </svg>
+                                        </button>
+                                    </div>
+                                </template>
+                            </div>
+
+                            <!-- 操作按钮（带文字标签） -->
+                            <div class="n3_seriesActions">
+                                <button
+                                    class="n3_seriesActionBtn"
+                                    @click.stop="openSeriesEdit(series)"
+                                >
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                                        <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                                    </svg>
+                                    <span>编辑合集</span>
+                                </button>
+                                <button
+                                    class="n3_seriesActionBtn n3_seriesActionBtn--danger"
+                                    @click.stop="confirmDeleteSeries(series)"
+                                >
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+                                    </svg>
+                                    <span>删除合集</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 加载更多 -->
+                <div v-if="seriesLoading && seriesList.length > 0" class="n3_state" style="padding-top: 30px;">
+                    <div class="n3_spinner"></div>
+                    <span>加载更多...</span>
                 </div>
             </template>
 
@@ -482,7 +617,8 @@ const {
     loadWorks, searchWorks, setWorksApprovalFilter, handleDeleteWork, handleUpdateWork,
     toggleWorkSelect, toggleAllWorks, clearSelection,
     // 合集
-    seriesList, loadSeries,
+    seriesList, seriesLoading, seriesKeyword,
+    loadSeries, searchSeries, handleUpdateSeries, handleDeleteSeries,
     // 合集弹窗
     seriesDialogs,
     // 工具
@@ -524,6 +660,7 @@ const {
     yesText: deleteDialogYesText,
     confirmDeleteWork,
     confirmBatchDeleteWorks,
+    confirmDeleteSeries,
     execute: executeDelete,
 } = deleteConfirm
 
@@ -565,6 +702,15 @@ const num2zRef = ref(null)
 const isToggled = ref(false)
 const isCollapsed = ref(false)
 const activeTab = ref('works')
+
+// ═══════════════════════════════════════════════════
+// 合集编辑状态
+// ═══════════════════════════════════════════════════
+const editingSeriesId = ref(null)
+const seriesEditForm = reactive({
+    seriesTitle: '',
+    aboutText: '',
+})
 
 // ═══════════════════════════════════════════════════
 // 头像
@@ -647,6 +793,44 @@ const formatStatNumber = (num) => {
 const clearSearch = () => {
     worksSearchTitle.value = ''
     searchWorks()
+}
+
+// ═══════════════════════════════════════════════════
+// 合集搜索 / 编辑
+// ═══════════════════════════════════════════════════
+const searchCollections = () => {
+    searchSeries()
+}
+
+const clearCollectionSearch = () => {
+    seriesKeyword.value = ''
+    searchSeries()
+}
+
+const openSeriesEdit = (series) => {
+    editingSeriesId.value = series.series_id
+    seriesEditForm.seriesTitle = series.series_title || ''
+    seriesEditForm.aboutText = series.about_text || ''
+}
+
+const cancelSeriesEdit = () => {
+    editingSeriesId.value = null
+    seriesEditForm.seriesTitle = ''
+    seriesEditForm.aboutText = ''
+}
+
+const saveSeriesEdit = async (series) => {
+    if (!seriesEditForm.seriesTitle.trim()) return
+    const result = await handleUpdateSeries({
+        seriesId: series.series_id,
+        seriesTitle: seriesEditForm.seriesTitle.trim(),
+        aboutText: seriesEditForm.aboutText.trim(),
+    })
+    if (result.success) {
+        editingSeriesId.value = null
+        seriesEditForm.seriesTitle = ''
+        seriesEditForm.aboutText = ''
+    }
 }
 
 // ═══════════════════════════════════════════════════
@@ -749,6 +933,7 @@ const goToProfile = () => {
 const switchTab = (tab) => {
     activeTab.value = tab
     if (tab === 'works' && worksList.value.length === 0) loadWorks({ reset: true })
+    if (tab === 'collections' && seriesList.value.length === 0) loadSeries({ reset: true })
 }
 
 const goToWorkDetail = (workId) => {
@@ -995,6 +1180,9 @@ watch(activeTab, (tab) => {
         if (worksList.value.length > 0 && !worksLoading.value) {
             animateWorkCardsEntrance()
         }
+    }
+    if (tab === 'collections') {
+        nextTick(() => animateNum2zEntrance())
     }
 })
 
