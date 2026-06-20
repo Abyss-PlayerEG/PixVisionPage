@@ -69,6 +69,12 @@ const router = createRouter({
             name: 'search',
             component: () => import('../views/SearchPage.vue'),
         },
+        // 合集作品预览 Gallery（UI 模板页面）
+        {
+            path: '/gallery',
+            name: 'gallery',
+            component: () => import('../views/GalleryViewer.vue'),
+        },
         // 404页面 - 捕获所有未匹配的路径（必须放在最后）
         {
             path: '/:pathMatch(.*)*',

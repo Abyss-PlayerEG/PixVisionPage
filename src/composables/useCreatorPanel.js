@@ -16,6 +16,7 @@ import {
   updateSeries,
   deleteSeries,
   fetchSeriesDetail,
+  fetchSeriesThumbnails,
   batchAddWorksToSeries,
   batchRemoveWorksFromSeries,
 } from '../api/creatorApi'
@@ -256,11 +257,23 @@ export const useCreatorPanel = (options = {}) => {
     if (result.success && result.data) {
       const { records, total } = result.data
       const newRecords = records || []
+      // 为每条合集初始化 5 个空缩略图位
+      newRecords.forEach(series => {
+        if (!series.thumbnails) series.thumbnails = ['', '', '', '', '']
+      })
       seriesList.value = reset ? newRecords : [...seriesList.value, ...newRecords]
       seriesTotal.value = total || 0
       if (newRecords.length > 0 && seriesList.value.length < seriesTotal.value) {
         seriesCurrent.value++
       }
+      // 异步获取每组合集的前 5 张作品缩略图
+      newRecords.forEach(series => {
+        fetchSeriesThumbnails(series.series_id).then(res => {
+          if (res.success) {
+            series.thumbnails = res.data
+          }
+        })
+      })
     }
     seriesLoading.value = false
   }

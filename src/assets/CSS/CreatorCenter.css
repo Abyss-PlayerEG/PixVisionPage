@@ -1225,6 +1225,11 @@
     background-color: #fff;
 }
 
+/* 合集内有图片可查看时，hover 展开第二张卡片变为暖金色 */
+.n3_seriesPreview--hasContent:hover .n3_seriesPreviewCard--2{
+    background-color: #ffe099;
+}
+
 .n3_seriesPreview:hover .n3_seriesPreviewCard--3{
     transform: translate(16px, 12px) rotate(10deg);
 }

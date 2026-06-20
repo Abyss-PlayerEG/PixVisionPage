@@ -398,6 +398,44 @@ export const fetchSeriesDetail = async (seriesId) => {
 }
 
 /**
+ * 获取合集前 5 张作品缩略图（用于合集卡片占位块展示）
+ * 调用 /api/work/page/1/5?seriesId=...（复用已有作品分页接口，seriesId 筛选）
+ * 返回固定 5 个位置的图片 URL 数组，不足/失败位为空字符串
+ * @param {number} seriesId - 合集ID
+ * @returns {Promise<Object>} { success, data: string[5], message }
+ */
+export const fetchSeriesThumbnails = async (seriesId) => {
+  const emptyResult = ['', '', '', '', '']
+  try {
+    const url = `${WORK_API.PAGE}/1/5?seriesId=${seriesId}`
+    console.log('[CreatorAPI] 获取合集缩略图:', url)
+    const response = await fetch(url, {
+      method: 'GET',
+      headers: { 'Content-Type': 'application/json' },
+    })
+    const result = await response.json()
+    console.log('[CreatorAPI] 合集缩略图响应:', JSON.stringify(result, null, 2))
+
+    const statusCode = result.code || result.recode
+    if (statusCode === 200 && result.data && result.data.records) {
+      const thumbnails = [...emptyResult]
+      result.data.records.forEach((work, i) => {
+        if (i < 5 && work.thumb_url) {
+          thumbnails[i] = getWorkImageUrl(work.thumb_url)
+        }
+      })
+      console.log('✅ 合集缩略图获取成功:', thumbnails.filter(Boolean).length, '张')
+      return { success: true, data: thumbnails }
+    }
+    // 接口报错 / 无数据 → 返回全空（色块兜底）
+    return { success: true, data: emptyResult }
+  } catch (error) {
+    console.error('[CreatorAPI] 获取合集缩略图失败:', error)
+    return { success: true, data: emptyResult }
+  }
+}
+
+/**
  * 批量从系列移除作品
  * @param {number[]} workIds - 作品ID列表
  * @param {number} seriesId - 系列ID

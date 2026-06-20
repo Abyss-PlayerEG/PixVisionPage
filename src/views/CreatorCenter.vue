@@ -427,47 +427,47 @@
                                 <div class="n3_phCol">
                                     <div
                                         class="n3_phBlock n3_phBlock--upper"
-                                        :style="{ backgroundImage: `url(${phImages[0]})` }"
+                                        :style="{ backgroundImage: series.thumbnails?.[0] ? `url(${series.thumbnails[0]})` : '' }"
                                     ></div>
                                 </div>
                                 <!-- 第 2 列：上 60% / 下 30%（gap 10%，下块毛玻璃） -->
                                 <div class="n3_phCol n3_phCol--2">
                                     <div
                                         class="n3_phBlock n3_phBlock--upper"
-                                        :style="{ backgroundImage: `url(${phImages[1]})` }"
+                                        :style="{ backgroundImage: series.thumbnails?.[1] ? `url(${series.thumbnails[1]})` : '' }"
                                     ></div>
                                     <div
                                         class="n3_phBlock n3_phBlock--lower n3_phBlock--frosted"
-                                        :style="{ backgroundImage: `url(${phImages[1]})` }"
+                                        :style="{ backgroundImage: series.thumbnails?.[1] ? `url(${series.thumbnails[1]})` : '' }"
                                     ></div>
                                 </div>
                                 <!-- 第 3 列：上 40% / 下 50%（gap 10%，上块毛玻璃） -->
                                 <div class="n3_phCol n3_phCol--3">
                                     <div
                                         class="n3_phBlock n3_phBlock--upper n3_phBlock--frosted"
-                                        :style="{ backgroundImage: `url(${phImages[2]})` }"
+                                        :style="{ backgroundImage: series.thumbnails?.[2] ? `url(${series.thumbnails[2]})` : '' }"
                                     ></div>
                                     <div
                                         class="n3_phBlock n3_phBlock--lower"
-                                        :style="{ backgroundImage: `url(${phImages[2]})` }"
+                                        :style="{ backgroundImage: series.thumbnails?.[2] ? `url(${series.thumbnails[2]})` : '' }"
                                     ></div>
                                 </div>
                                 <!-- 第 4 列：上 30% / 下 60%（gap 10%，上块毛玻璃） -->
                                 <div class="n3_phCol n3_phCol--4">
                                     <div
                                         class="n3_phBlock n3_phBlock--upper n3_phBlock--frosted"
-                                        :style="{ backgroundImage: `url(${phImages[3]})` }"
+                                        :style="{ backgroundImage: series.thumbnails?.[3] ? `url(${series.thumbnails[3]})` : '' }"
                                     ></div>
                                     <div
                                         class="n3_phBlock n3_phBlock--lower"
-                                        :style="{ backgroundImage: `url(${phImages[3]})` }"
+                                        :style="{ backgroundImage: series.thumbnails?.[3] ? `url(${series.thumbnails[3]})` : '' }"
                                     ></div>
                                 </div>
                                 <!-- 第 5 列：完整图片，填满高度 -->
                                 <div class="n3_phCol">
                                     <div
                                         class="n3_phBlock n3_phBlock--upper"
-                                        :style="{ backgroundImage: `url(${phImages[4]})` }"
+                                        :style="{ backgroundImage: series.thumbnails?.[4] ? `url(${series.thumbnails[4]})` : '' }"
                                     ></div>
                                 </div>
                             </div>
@@ -513,13 +513,13 @@
 
                                 <!-- 图片预览区（默认） -->
                                 <template v-else>
-                                    <div class="n3_seriesPreview">
+                                    <div class="n3_seriesPreview" :class="{ 'n3_seriesPreview--hasContent': series.thumbnails && series.thumbnails.some(url => url && url.trim()) }">
                                         <div class="n3_seriesPreviewStack">
                                             <div class="n3_seriesPreviewCard n3_seriesPreviewCard--1"></div>
                                             <div class="n3_seriesPreviewCard n3_seriesPreviewCard--2"></div>
                                             <div class="n3_seriesPreviewCard n3_seriesPreviewCard--3"></div>
                                         </div>
-                                        <button class="n3_seriesViewBtn" title="查看合集">
+                                        <button class="n3_seriesViewBtn" title="查看合集" @click.stop="handleViewSeries(series)">
                                             <svg viewBox="0 0 24 24" fill="currentColor">
                                                 <path d="M8 5v14l11-7z"/>
                                             </svg>
@@ -657,6 +657,20 @@
         @confirm="executeDelete"
         @cancel="showDeleteDialog = false"
     />
+
+    <!-- ═══════════════════════════════════════════════════
+       弹窗：合集为空提示
+       ═══════════════════════════════════════════════════ -->
+    <ConfirmDialog
+        v-model:show="showEmptySeriesDialog"
+        title="合集为空"
+        message="该合集是空的，是否添加图片？"
+        type="info"
+        yes-text="是"
+        no-text="否"
+        @confirm="handleGoToWorksFromEmptySeries"
+        @cancel="showEmptySeriesDialog = false"
+    />
 </template>
 
 <script setup>
@@ -667,18 +681,6 @@ import { useCreatorPanel } from '@/composables/useCreatorPanel'
 import { getUserProfile } from '@/api/profileApi.js'
 import { getAvatarUrl } from '@/config/api.js'
 import ConfirmDialog from '@/components/ConfirmDialog.vue'
-
-// ═══════════════════════════════════════════════════
-// 占位块图片（5 列，每列 1 张图；2-4 列上下切分展示）
-// 后续可替换为合集真实封面图
-// ═══════════════════════════════════════════════════
-const phImages = [
-    new URL('../assets/IMG/end2.jpg', import.meta.url).href,
-    new URL('../assets/IMG/end2.jpg', import.meta.url).href,
-    new URL('../assets/IMG/end2.jpg', import.meta.url).href,
-    new URL('../assets/IMG/end2.jpg', import.meta.url).href,
-    new URL('../assets/IMG/end2.jpg', import.meta.url).href,
-]
 
 const router = useRouter()
 
@@ -1046,6 +1048,38 @@ const goToWorkDetail = (workId) => {
 }
 
 // ═══════════════════════════════════════════════════
+// 合集查看 — 跳转 Gallery / 空合集提示
+// ═══════════════════════════════════════════════════
+const showEmptySeriesDialog = ref(false)
+const emptySeriesTarget = ref(null)
+
+const handleViewSeries = (series) => {
+    // 检查合集中是否有图片（thumbnails 中至少有一个非空 URL）
+    const hasImages = series.thumbnails && series.thumbnails.some(url => url && url.trim())
+
+    if (hasImages) {
+        // 合集有图片 → 跳转 Gallery 预览（Gallery 根据 seriesId 自动加载所有作品）
+        router.push({
+            name: 'gallery',
+            query: {
+                seriesId: series.series_id,
+                title: series.series_title || '未命名合集',
+            },
+        })
+    } else {
+        // 合集为空 → 弹窗提示
+        emptySeriesTarget.value = series
+        showEmptySeriesDialog.value = true
+    }
+}
+
+const handleGoToWorksFromEmptySeries = () => {
+    showEmptySeriesDialog.value = false
+    emptySeriesTarget.value = null
+    switchTab('works')
+}
+
+// ═══════════════════════════════════════════════════
 // 切换面板
 // ═══════════════════════════════════════════════════
 const togglePanel = () => {
@@ -1160,7 +1194,7 @@ const onN1MainLeave = () => {
 // 动画一旦开始必定完整播放，完成后根据 _phMouseOver 决定下一步
 // ═══════════════════════════════════════════════════
 const PH_ENTER_DELAY = 180   // 进入防抖延迟
-const PH_LEAVE_DELAY = 350   // 动画完成后鼠标已离开 → 停留片刻再退场
+const PH_LEAVE_DELAY = 0   // 动画完成后鼠标已离开 → 停留片刻再退场（调试为0，效果还行）
 
 /** 播放入场动画（必定完整播放） */
 const playPhEnter = (card) => {
