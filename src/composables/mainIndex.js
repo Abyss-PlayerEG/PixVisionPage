@@ -1315,8 +1315,8 @@ export const useNum7zAnimation = (expandedFAQs) => {
             tlPills = gsap.timeline({
                 scrollTrigger: {
                     trigger: '#num7z',
-                    start: 'top 30%',
-                    end: 'top -10%',
+                    start: 'top 5%',
+                    end: 'top -30%',
                     scrub: 0.6,
                 },
             })
