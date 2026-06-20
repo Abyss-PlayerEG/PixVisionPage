@@ -10,7 +10,7 @@ import MessageNotification from './message/MessageNotification.vue';
 gsap.registerPlugin(ScrollTrigger);
 
 const router = useRouter();
-const { isLoggedIn, userAvatar, checkAuth } = useAuth();
+const { isLoggedIn, userInfo, userAvatar, checkAuth } = useAuth();
 const avatarLoaded = ref(false);
 
 // Logo SVG refs for scroll-driven spin
@@ -36,6 +36,65 @@ const isDropdownVisible = ref(false); // 下拉菜单是否可见
 const dropdownContent = ref(''); // 下拉菜单内容
 const hoveredBtnIndex = ref(-1); // hover状态的按钮索引
 const showUnderline = ref(false); // 控制白色横条显示（需要等待背景加载完成）
+
+// ==================== 资源总览数据 ====================
+
+// 列1：页面导览 —— 首页各区块锚点
+const homepageSections = [
+  { id: 'num1z', label: '视觉头图', desc: 'Hero' },
+  { id: 'num2z', label: '瀑布流画廊', desc: 'Gallery' },
+  { id: 'num3z', label: '系列合集', desc: 'Series' },
+  { id: 'num4z', label: '创意集锦', desc: 'Creative' },
+  { id: 'num5z', label: '设计理念', desc: 'Design' },
+  { id: 'num6z', label: '像素物语', desc: 'Slogan' },
+  { id: 'num7z', label: '加入我们 · 常见问题', desc: 'CTA & FAQ' },
+  { id: 'num8z', label: '页脚', desc: 'Footer' },
+]
+
+// 列2：站内跳转 —— 权限感知路由
+const siteNavItems = computed(() => {
+  const role = userInfo.value?.user_role || 0
+  const items = [
+    // 公开入口
+    { label: '首页', route: '/', show: true },
+    { label: '搜索发现', route: '/search', show: true },
+    // 登录（仅未登录时显示）
+    { label: '登录', route: '/login', show: !isLoggedIn.value },
+    // 需登录
+    { label: '个人中心', route: '/profile/me', show: isLoggedIn.value },
+    { label: '消息中心', route: '/messages', show: isLoggedIn.value },
+    // 待补全页面
+    { label: '订阅', route: '/subscribe', show: true },
+    { label: '像素创作者邀请', route: '/creator-invite', show: true },
+    { label: '关于我们', route: '/about', show: true },
+    // 权限控制（置底）
+    { label: '创作者中心', route: '/creatorT', show: isLoggedIn.value && (role === 22 || role === 77) },
+    { label: '管理员面板', route: '/admin', show: isLoggedIn.value && (role === 55 || role === 77) },
+  ]
+  return items.filter(i => i.show)
+})
+
+// 滚动到首页指定区块
+const scrollToSection = (sectionId) => {
+  closeDropdown()
+  setTimeout(() => {
+    // num1z 在页面顶部，scrollIntoView 无法生效，直接滚回顶部
+    if (sectionId === 'num1z') {
+      window.scrollTo({ top: 0, behavior: 'smooth' })
+      return
+    }
+    const el = document.getElementById(sectionId)
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    }
+  }, 150)
+}
+
+// 路由跳转（资源总览内使用）
+const navToRoute = (routePath) => {
+  closeDropdown()
+  router.push(routePath)
+}
 
 // 搜索框相关状态
 const isSearchFocused = ref(false);
@@ -405,7 +464,51 @@ onUnmounted(() => {
     <!-- 下拉选项卡 - 独立于导航栏 -->
     <transition name="dropdown">
         <div v-if="isDropdownVisible" class="dropdown-menu" :style="{ height: currentMenuHeight }">
-            <div class="dropdown-content">
+            <!-- 资源总览：三列布局 -->
+            <div v-if="activeMenuIndex === 0" class="dropdown-content overview-layout">
+                <!-- 列1：页面导览 -->
+                <div class="ov-col">
+                    <h3 class="col-title">页面导览</h3>
+                    <ul class="col-list">
+                        <li
+                            v-for="(sec, i) in homepageSections"
+                            :key="sec.id"
+                            class="col-item"
+                            :style="{ animationDelay: `${0.3 + i * 0.05}s` }"
+                            @click="scrollToSection(sec.id)"
+                        >
+                            <span class="item-dot"></span>
+                            <span class="item-label">{{ sec.label }}</span>
+                            <span class="item-desc">{{ sec.desc }}</span>
+                        </li>
+                    </ul>
+                </div>
+                <!-- 列2：站内跳转 -->
+                <div class="ov-col">
+                    <h3 class="col-title">站内跳转</h3>
+                    <ul class="col-list">
+                        <li
+                            v-for="(item, i) in siteNavItems"
+                            :key="item.route"
+                            class="col-item"
+                            :style="{ animationDelay: `${0.3 + i * 0.05}s` }"
+                            @click="navToRoute(item.route)"
+                        >
+                            <span class="item-dot"></span>
+                            <span class="item-label">{{ item.label }}</span>
+                        </li>
+                    </ul>
+                </div>
+                <!-- 列3：待定 -->
+                <div class="ov-col col-pending">
+                    <h3 class="col-title">即将推出</h3>
+                    <div class="pending-box">
+                        <p class="pending-text">更多功能<br/>开发中···</p>
+                    </div>
+                </div>
+            </div>
+            <!-- 其他菜单：纯文本内容 -->
+            <div v-else class="dropdown-content">
                 {{ dropdownContent }}
             </div>
         </div>
@@ -797,5 +900,123 @@ onUnmounted(() => {
 .dropdown-leave-to {
     opacity: 0;
     transform: translateY(-100%);
+}
+
+/* ==================== 资源总览三列布局 ==================== */
+.overview-layout {
+    display: flex;
+    gap: 48px;
+    justify-content: space-between;
+}
+
+.ov-col {
+    min-width: 0;
+}
+.ov-col:nth-child(1) { width: 25%; }  /* 页面导览 */
+.ov-col:nth-child(2) { width: 20%; }  /* 站内跳转 */
+.ov-col:nth-child(3) { width: 20%; }  /* 即将推出 */
+
+.col-title {
+    font-size: 13px;
+    font-weight: 500;
+    color: rgba(255, 255, 255, 0.4);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin: 0 0 16px 0;
+    padding-bottom: 10px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.col-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.col-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 10px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background 0.2s ease;
+    position: relative;
+    animation: itemFadeUp 0.45s ease both;
+}
+
+@keyframes itemFadeUp {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.col-item:hover {
+    background: rgba(255, 255, 255, 0.06);
+}
+
+.item-dot {
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.2);
+    flex-shrink: 0;
+    transition: background 0.2s ease, transform 0.2s ease;
+}
+
+.col-item:hover .item-dot {
+    background: rgba(255, 255, 255, 0.7);
+    transform: scale(1.4);
+}
+
+.item-label {
+    font-size: 14px;
+    color: rgba(255, 255, 255, 0.75);
+    white-space: nowrap;
+    transition: color 0.2s ease;
+}
+
+.col-item:hover .item-label {
+    color: #fff;
+}
+
+.item-desc {
+    font-size: 11px;
+    color: rgba(255, 255, 255, 0.25);
+    margin-left: auto;
+    font-style: italic;
+    white-space: nowrap;
+}
+
+/* 列3：待定占位 */
+.col-pending {
+    display: flex;
+    flex-direction: column;
+}
+
+.pending-box {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px dashed rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    min-height: 240px;
+}
+
+.pending-text {
+    font-size: 13px;
+    color: rgba(255, 255, 255, 0.2);
+    text-align: center;
+    line-height: 1.8;
+    margin: 0;
 }
 </style>
