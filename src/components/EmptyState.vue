@@ -87,10 +87,10 @@ onMounted(() => {
   align-items: center;
   gap: 8px;
   padding: 10px 24px;
-  background: rgba(0, 169, 71, 0.15);
-  border: 1px solid rgba(0, 169, 71, 0.3);
+  background: var(--color-primary);
+  border: 1px solid var(--color-primary);
   border-radius: 8px;
-  color: rgba(0, 200, 100, 0.9);
+  color: #000000;
   font-size: 14px;
   font-weight: 500;
   cursor: pointer;
@@ -98,8 +98,8 @@ onMounted(() => {
 }
 
 .empty-action:hover {
-  background: rgba(0, 169, 71, 0.25);
-  color: #00A947;
+  background: var(--color-primary);
+  color: #000000;
   transform: translateY(-1px);
 }
 
