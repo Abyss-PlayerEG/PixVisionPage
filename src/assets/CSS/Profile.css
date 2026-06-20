@@ -286,15 +286,16 @@
     to { transform: rotate(360deg); }
 }
 
-/* ── UUID 区域 — 去背景块，纯文本 + 微妙 hover ── */
+/* ── UUID 区域 — 纯文本 + 微妙 hover ── */
 .uuid-wrapper {
     display: flex;
+    margin-left: 18px;
     align-items: center;
     gap: 8px;
     padding: 0;
     cursor: pointer;
     transition: opacity 0.2s ease;
-    width: 100%;
+    width: calc(100% - 30px);
     box-sizing: border-box;
 }
 
@@ -316,7 +317,6 @@
     font-size: 12px;
     font-family: 'SF Mono', 'Cascadia Code', 'Courier New', monospace;
     overflow: hidden;
-    text-overflow: ellipsis;
     white-space: nowrap;
     flex: 1;
     min-width: 0;
@@ -387,6 +387,7 @@
     line-height: 1;
     letter-spacing: -0.2px;
     font-variant-numeric: tabular-nums;
+    margin-left: 2px;
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
@@ -522,18 +523,6 @@
 
 .menu-item.active .menu-icon {
     opacity: 1;
-}
-
-/* 菜单项点击时 SVG 轻微弹动 */
-.menu-item:active .menu-icon {
-    animation: menu-icon-bounce 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
-}
-
-@keyframes menu-icon-bounce {
-    0%   { transform: scale(1) translateY(0); }
-    30%  { transform: scale(1.2) translateY(-4px); }
-    60%  { transform: scale(0.9) translateY(0); }
-    100% { transform: scale(1) translateY(0); }
 }
 
 /* 菜单项选中时 SVG 图标变色（从上到下依次） */

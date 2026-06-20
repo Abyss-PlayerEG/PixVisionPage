@@ -42,13 +42,13 @@ const router = createRouter({
             component: () => import('../views/Admin.vue'),
             meta: { requiresAuth: true },
         },
-        // 创作者面板
-        {
-            path: '/creator',
-            name: 'creator',
-            component: () => import('../views/CreatorPanel.vue'),
-            meta: { requiresAuth: true },
-        },
+        // // 创作者面板
+        // {
+        //     path: '/creator',
+        //     name: 'creator',
+        //     component: () => import('../views/CreatorPanel.vue'),
+        //     meta: { requiresAuth: true },
+        // },
         // test创作者面板
         {
             path: '/creatorT',
