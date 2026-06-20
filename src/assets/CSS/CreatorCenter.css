@@ -1108,12 +1108,11 @@
 
 /* ═══ 左侧标题区 — flex:1 自动撑满剩余空间 ═══ */
 .n3_seriesLeft{
-    flex: 1;
-    min-width: 0;
+    max-width: 30%;
     display: flex;
     flex-direction: column;
     justify-content: center;
-    padding: 20px 32px;
+    padding: 10px 32px;
     gap: 6px;
 }
 
@@ -1199,38 +1198,43 @@
     left: 0;
     z-index: 3;
     background: #e8dfcc;
+    /* transform-origin: left top; */
 }
 
 .n3_seriesPreviewCard--2{
     top: 7px;
-    left: 24px;
+    left: 12px;
     z-index: 2;
     background: #ddd4bf;
+    transition: background .3s ease;
 }
 
 .n3_seriesPreviewCard--3{
     top: 14px;
-    left: 48px;
+    left: 24px;
     z-index: 1;
     background: #d2c9b3;
 }
 
 /* hover — 三张占位卡向不同方向移动，露出查看按钮 */
-.n3_seriesPreview:hover .n3_seriesPreviewCard--1{
-    transform: translate(-16px, -8px);
+.n3_seriesCard:hover .n3_seriesPreviewCard--1{
+    transform: translate(-24px, 12px) rotate(-10deg);
 }
 
-.n3_seriesPreview:hover .n3_seriesPreviewCard--2{
-    transform: translateY(-12px);
+.n3_seriesCard:hover .n3_seriesPreviewCard--2{
+    transform: translate(6px, -6px);
+    background-color: #fff;
 }
 
-.n3_seriesPreview:hover .n3_seriesPreviewCard--3{
-    transform: translate(16px, 6px);
+.n3_seriesCard:hover .n3_seriesPreviewCard--3{
+    transform: translate(16px, 12px) rotate(10deg);
 }
 
 /* 查看按钮 — 默认隐藏，hover 浮现 */
 .n3_seriesViewBtn{
     position: absolute;
+    margin-right: 60px;
+    margin-top: 20px;
     width: 38px;
     height: 38px;
     border-radius: 50%;
@@ -1312,7 +1316,7 @@
 .n3_seriesEditBar-label{
     padding: 6px 16px;
     font-size: 15px;
-    color: var(--text-secondary);
+    color: var(--color-primary);
     white-space: nowrap;
     user-select: none;
 }
