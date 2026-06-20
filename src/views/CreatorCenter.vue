@@ -1249,6 +1249,14 @@ let num2zTweens = []
 const hasPlayedWorkEntrance = ref(false)
 let workEntranceTween = null
 
+// 合集卡片入场动画
+const hasPlayedSeriesEntrance = ref(false)
+let seriesEntranceTween = null
+
+// 上传板块入场动画
+const hasPlayedUploadEntrance = ref(false)
+let uploadEntranceTl = null
+
 const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
 
 const animateWorkCardsEntrance = () => {
@@ -1270,6 +1278,77 @@ const animateWorkCardsEntrance = () => {
             ease: 'power2.out',
             onComplete: () => { workEntranceTween = null },
         })
+    })
+}
+
+// ═══════════════════════════════════════════════════
+// 合集卡片入场动画 — 逐张轻微上浮
+// ═══════════════════════════════════════════════════
+const animateSeriesCardsEntrance = () => {
+    if (hasPlayedSeriesEntrance.value || prefersReducedMotion) return
+
+    nextTick(() => {
+        const cards = document.querySelectorAll('#num3z .n3_seriesCard')
+        if (!cards.length) return
+
+        hasPlayedSeriesEntrance.value = true
+
+        if (seriesEntranceTween) seriesEntranceTween.kill()
+
+        seriesEntranceTween = gsap.from(cards, {
+            y: 16,
+            opacity: 0,
+            duration: 0.4,
+            stagger: 0.08,
+            ease: 'power2.out',
+            onComplete: () => { seriesEntranceTween = null },
+        })
+    })
+}
+
+// ═══════════════════════════════════════════════════
+// 上传板块入场动画 — 预览区缩放浮现 + 表单逐块滑入
+// ═══════════════════════════════════════════════════
+const animateUploadEntrance = () => {
+    if (hasPlayedUploadEntrance.value || prefersReducedMotion) return
+
+    nextTick(() => {
+        const preview = document.querySelector('#num3z .n3_uploadPreview')
+        const topBlock = document.querySelector('#num3z .n3_uploadBlock--top')
+        const fileMeta = document.querySelector('#num3z .n3_uploadFileMeta')
+        const bottomBlock = document.querySelector('#num3z .n3_uploadBlock--bottom')
+
+        if (!preview && !topBlock && !bottomBlock) return
+
+        hasPlayedUploadEntrance.value = true
+
+        if (uploadEntranceTl) uploadEntranceTl.kill()
+
+        const tl = gsap.timeline({
+            defaults: { duration: 0.4, ease: 'power2.out' },
+            onComplete: () => { uploadEntranceTl = null },
+        })
+        uploadEntranceTl = tl
+
+        // 左侧预览区：轻微缩放淡入，像画布浮现
+        if (preview) {
+            tl.from(preview, { scale: 0.97, opacity: 0, duration: 0.45, ease: 'expo.out' }, 0)
+        }
+
+        // 右侧上板块：从右滑入
+        if (topBlock) {
+            tl.from(topBlock, { x: 20, opacity: 0, duration: 0.35 }, 0.08)
+        }
+
+        // 中部文件信息（若有）：从右滑入
+        if (fileMeta) {
+            tl.from(fileMeta, { x: 20, opacity: 0, duration: 0.35 }, 0.16)
+        }
+
+        // 右侧下板块：从右滑入
+        if (bottomBlock) {
+            tl.from(bottomBlock, { x: 20, opacity: 0, duration: 0.35 }, 0.24)
+        }
     })
 }
 
@@ -2025,9 +2104,20 @@ watch(activeTab, (tab) => {
         }
     }
     if (tab === 'collections') {
+        hasPlayedSeriesEntrance.value = false
         nextTick(() => {
             updateSeriesSortIndicator()
             animateNum2zEntrance()
+        })
+        // 已有合集且不在加载中 → 直接播放动画
+        if (seriesList.value.length > 0 && !seriesLoading.value) {
+            animateSeriesCardsEntrance()
+        }
+    }
+    if (tab === 'upload') {
+        hasPlayedUploadEntrance.value = false
+        nextTick(() => {
+            animateUploadEntrance()
         })
     }
 })
@@ -2047,10 +2137,21 @@ watch([() => worksList.value.length, worksLoading], ([len, loading]) => {
     }
 })
 
+// ═══════════════════════════════════════════════════
+// 合集卡片入场动画 — 加载完成后触发
+// ═══════════════════════════════════════════════════
+watch([() => seriesList.value.length, seriesLoading], ([len, loading]) => {
+    if (!loading && len > 0 && activeTab.value === 'collections') {
+        animateSeriesCardsEntrance()
+    }
+})
+
 onUnmounted(() => {
     if (ctx) ctx.revert()
     if (collapseTl) collapseTl.kill()
     if (workEntranceTween) workEntranceTween.kill()
+    if (seriesEntranceTween) seriesEntranceTween.kill()
+    if (uploadEntranceTl) uploadEntranceTl.kill()
     num2zTweens.forEach(t => t.kill())
     window.removeEventListener('resize', handleResize)
     editWorkDialog.cleanup()
