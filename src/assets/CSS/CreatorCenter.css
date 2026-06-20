@@ -6,18 +6,18 @@
 
 #num1z{
     width: 100%;
-    height: 240px;
+    height: 300px;
     /* background-color: #FDF9F0; */
-    padding: 30px 5%;
+    padding: 38px 5%;
     overflow: hidden;
 }
 
 .n1_Main{
     width: 100%;
     height: 100%;
-    border-radius: 20px;
+    border-radius: 25px;
     background-color: #FDF9F0;
-    padding:10px 20px;
+    padding: 13px 25px;
     display: flex;
     justify-content: space-between;
     position: relative;
@@ -34,64 +34,64 @@
         font-family: sul-gbk6;
         display: inline-block;
         position: relative;
-        padding-left: 52px;
+        padding-left: 65px;
 
         &::before {
             content: "";
             position: absolute;
             left: 0;
-            top: 6px;
-            width: 40px;
-            height: 6px;
-            border-radius: 3px;
+            top: 8px;
+            width: 50px;
+            height: 8px;
+            border-radius: 4px;
             background-color: #00A947;
         }
         &::after {
             content: "";
             position: absolute;
             left: 0;
-            top: 16px;
-            width: 25px;
-            height: 6px;
-            border-radius: 3px;
+            top: 20px;
+            width: 31px;
+            height: 8px;
+            border-radius: 4px;
             background-color: #00A947;
         }
     }
     h1 .line-third {
         position: absolute;
         left: 0;
-        top: 26px;
-        width: 35px;
-        height: 6px;
-        border-radius: 3px;
+        top: 33px;
+        width: 44px;
+        height: 8px;
+        border-radius: 4px;
         background-color: #00A947;
     }
 
     /* 右下角小字标签不变 */
     h1 div {
         position: absolute;
-        width: 50px;
-        height: 20px;
-        border-radius: 8px;
+        width: 63px;
+        height: 25px;
+        border-radius: 10px;
         background-color: #0a0a0a;
         color: #FDF9F0;
-        font-size: 10px;
+        font-size: 13px;
         display: flex;
         justify-content: center;
         align-items: center;
-        bottom: -5px;
-        right: -20px;
+        bottom: -6px;
+        right: -25px;
     }
 
     h2{
         position:relative;
-        top:60px;
+        top: 75px;
         font-family: sul-gbk6;
         overflow: hidden;
         div{
             width: 30%;
-            height: 4px;
-            border-radius: 2px;
+            height: 5px;
+            border-radius: 3px;
             background-color: #00A947;
         }
     }
@@ -103,7 +103,7 @@
     display: flex;
     flex-direction: column;
     justify-content: space-between;
-    padding: 12px 0;
+    padding: 15px 0;
 }
 
 /* ═══════════════════════════════════════════════════
@@ -113,14 +113,14 @@
     display: flex;
     align-items: center;
     justify-content: flex-end;
-    gap: 24px;
+    gap: 30px;
 }
 
 /* ── 按钮组 ── */
 .option-buttons {
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: 15px;
     flex-shrink: 0;
     overflow: hidden;
 }
@@ -129,13 +129,13 @@
 .pill-btn {
     display: inline-flex;
     align-items: center;
-    height: 38px;
-    padding: 0 18px;
+    height: 48px;
+    padding: 0 23px;
     border: none;
-    border-radius: 19px;
+    border-radius: 24px;
     background-color: var(--bg-primary);
     color: var(--text-secondary);
-    font-size: 13px;
+    font-size: 16px;
     font-family: inherit;
     cursor: pointer;
     transition: color 0.25s, background-color 0.25s;
@@ -153,19 +153,19 @@
 
 /* ── Home 按钮 ── */
 .home-btn {
-    gap: 7px;
+    gap: 9px;
 }
 
 .pill-icon {
-    width: 16px;
-    height: 16px;
+    width: 20px;
+    height: 20px;
     flex-shrink: 0;
 }
 
 /* ── 切换按钮 ── */
 .toggle-btn {
     position: relative;
-    width: 150px;
+    width: 188px;
     padding: 0;
     background-color: var(--bg-secondary);
     overflow: hidden;
@@ -175,17 +175,12 @@
     scale: 1; /* 切换按钮不缩放，避免影响内部定位 */
 }
 
-/* 切换至「回到个人中心」状态时，文字变为主题绿色 */
-.toggle-btn.toggled .label-logout.show {
-    color: var(--color-primary);
-}
-
 /* 文本标签 */
 .toggle-label {
     position: absolute;
     top: 50%;
     transform: translateY(-50%);
-    font-size: 13px;
+    font-size: 16px;
     pointer-events: none;
     transition: opacity 0.3s ease;
     opacity: 0;
@@ -197,11 +192,11 @@
 }
 
 .label-welcome {
-    left: 14px;
+    left: 18px;
 }
 
 .label-logout {
-    right: 14px;
+    right: 18px;
 }
 
 .label-logout.show {
@@ -216,10 +211,10 @@
 /* 滑动圆圈（后续用于放头像） */
 .toggle-circle {
     position: absolute;
-    top: 4px;
-    left: 4px;
-    width: 30px;
-    height: 30px;
+    top: 5px;
+    left: 5px;
+    width: 38px;
+    height: 38px;
     border-radius: 50%;
     background-color: var(--bg-tertiary);
     z-index: 1;
@@ -241,34 +236,34 @@
     align-items: center;
     gap: 0;
     flex-shrink: 0;
-    margin-left: 8px;
+    margin-left: 10px;
 }
 
 .data-item {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 2px;
-    padding: 0 16px;
+    gap: 3px;
+    padding: 0 20px;
 }
 
 .data-value {
     font-family: sul-gbk6, sans-serif;
-    font-size: 20px;
+    font-size: 25px;
     font-weight: 600;
     color: #0a0a0a;
     line-height: 1;
 }
 
 .data-label {
-    font-size: 11px;
+    font-size: 14px;
     color: var(--text-muted);
-    letter-spacing: 0.5px;
+    letter-spacing: 0.6px;
 }
 
 .data-divider {
     width: 1px;
-    height: 28px;
+    height: 35px;
     background-color: rgba(0, 0, 0, 0.12);
     flex-shrink: 0;
 }
@@ -278,7 +273,7 @@
    ═══════════════════════════════════════════════════ */
 .option-middle {
     flex: 1;
-    min-height: 40px;
+    min-height: 50px;
     /* 后续填充中部内容 */
 }
 
@@ -289,37 +284,37 @@
     display: flex;
     align-items: center;
     justify-content: flex-end;
-    gap: 28px;
-    min-height: 40px;
+    gap: 35px;
+    min-height: 50px;
 }
 
 /* 选项卡按钮 — 默认融入背景、无边框无色块 */
 .tab-item {
     display: inline-flex;
     align-items: center;
-    gap: 7px;
-    padding: 8px 14px;
+    gap: 9px;
+    padding: 10px 18px;
     border: none;
     background: transparent;
     color: var(--text-muted);
-    font-size: 15px;
+    font-size: 19px;
     font-family: inherit;
     cursor: pointer;
     transition: transform 0.3s ease, box-shadow 0.3s ease, color 0.25s;
-    border-radius: 8px;
+    border-radius: 10px;
 }
 
 .tab-item:hover {
     color: #0a0a0a;
-    transform: translateY(-2px);
-    box-shadow: 4px 6px 16px rgba(0, 0, 0, 0.12);
+    transform: translateY(-3px);
+    box-shadow: 5px 8px 20px rgba(0, 0, 0, 0.12);
 }
 
 /* 激活态 — 保持浮空 + 阴影 */
 .tab-item.active {
     color: #0a0a0a;
-    transform: translateY(-2px);
-    box-shadow: 4px 6px 16px rgba(0, 0, 0, 0.12);
+    transform: translateY(-3px);
+    box-shadow: 5px 8px 20px rgba(0, 0, 0, 0.12);
 }
 
 /* 点击瞬间 — 取消浮空，产生按下反馈 */
@@ -330,8 +325,8 @@
 }
 
 .tab-icon {
-    width: 20px;
-    height: 20px;
+    width: 25px;
+    height: 25px;
     flex-shrink: 0;
 }
 
@@ -347,7 +342,7 @@
 .n1_collapsedTabs {
     display: flex;
     align-items: center;
-    gap: 20px;
+    gap: 25px;
     width: 0;
     overflow: hidden;
     opacity: 0;
@@ -362,26 +357,26 @@
 .collapse-toggle-btn {
     position: absolute;
     bottom: -20px;
-    left: 65%;
+    left: 60%;
     /* transform: translateX(-50%); */
     display: inline-flex;
     align-items: center;
-    gap: 6px;
-    height: 40px;
-    padding: 0 14px;
+    gap: 8px;
+    height: 45px;
+    padding: 0 18px;
     border: 1px solid rgba(0, 0, 0, 0.12);
     border-radius: 15px;
     background-color: #FDF9F0;
     color: var(--text-muted);
-    font-size: 12px;
+    font-size: 15px;
     font-family: inherit;
     cursor: pointer;
     user-select: none;
     white-space: nowrap;
     z-index: 10;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.08);
     transition: color 0.2s, border-color 0.2s;
-    /* 初始 y: 12 + opacity: 0 由 GSAP set 控制，
+    /* 初始 y: 15 + opacity: 0 由 GSAP set 控制，
        此处设置一个贴近最终位置的无动画默认值，避免 JS 未加载时闪烁 */
 }
 
@@ -395,8 +390,8 @@
 }
 
 .collapse-icon {
-    width: 16px;
-    height: 16px;
+    width: 20px;
+    height: 20px;
     flex-shrink: 0;
 }
 
@@ -409,23 +404,23 @@
    ═══════════════════════════════════════════════════ */
 #num2z{
     width: 100%;
-    height: 50px;
+    height: 63px;
     padding: 0 5%;
     display: flex;
     justify-content: flex-end;
     align-items: flex-start;
-    gap: 20px;
+    gap: 25px;
 
-    /* ── 左栏：作品状态分类面板（左右布局，最大高度 50px） ── */
+    /* ── 左栏：作品状态分类面板（左右布局，最大高度 63px） ── */
     .n2_Lceb{
         position: relative;
         min-height: 50px;
-        margin-right: 20px;
-        border-radius: 12px;
+        margin-right: 25px;
+        border-radius: 15px;
         display: flex;
         flex-direction: row;
         align-items: center;
-        gap: 12px;
+        gap: 15px;
     }
 
     .n2_Lceb::after{
@@ -434,8 +429,8 @@
         left: 0;
         right: 0;
         top: 90%;
-        height: 2px;
-        border-radius: 2px;
+        height: 3px;
+        border-radius: 3px;
         background-color: #FDF9F0;
     }
 
@@ -443,30 +438,30 @@
     .status-header{
         display: flex;
         align-items: center;
-        gap: 8px;
+        gap: 10px;
         flex-shrink: 0;
     }
 
     .status-dot{
-        width: 8px;
-        height: 8px;
+        width: 10px;
+        height: 10px;
         border-radius: 50%;
         background-color: var(--color-primary);
         flex-shrink: 0;
     }
 
     .status-title{
-        font-size: 14px;
+        font-size: 18px;
         font-weight: 500;
         color: var(--text-primary);
-        letter-spacing: 0.5px;
+        letter-spacing: 0.6px;
         white-space: nowrap;
     }
 
     /* 竖分割线（标题与选项之间） */
     .status-divider{
         width: 1px;
-        height: 24px;
+        height: 30px;
         background-color: rgba(255, 255, 255, 0.10);
         flex-shrink: 0;
     }
@@ -475,7 +470,7 @@
     .status-options{
         display: flex;
         flex-direction: row;
-        gap: 2px;
+        gap: 3px;
         position: relative;
     }
 
@@ -484,7 +479,7 @@
         position: absolute;
         top: 0;
         height: 100%;
-        border-radius: 8px;
+        border-radius: 10px;
         background-color: #00A947;
         z-index: 0;
         pointer-events: none;
@@ -493,12 +488,12 @@
     .status-option{
         position: relative;
         z-index: 1;
-        padding: 6px 20px;
+        padding: 5px 25px;
         border: none;
-        border-radius: 8px;
+        border-radius: 10px;
         background: transparent;
         color: var(--text-secondary);
-        font-size: 13px;
+        font-size: 16px;
         font-family: inherit;
         cursor: pointer;
         transition: color 0.25s ease;
@@ -520,13 +515,13 @@
     /* ── 右栏：搜索栏 ── */
     .n2_Rceb{
         width: 30%;
-        min-width: 240px;
+        min-width: 300px;
         height: 50px;
         display: flex;
         align-items: center;
-        gap: 10px;
-        padding: 0 16px;
-        border-radius: 12px;
+        gap: 13px;
+        padding: 0 20px;
+        border-radius: 15px;
         background-color: #FDF9F0;
         border: 1px solid transparent;
         transition: border-color 0.25s ease, background-color 0.25s ease;
@@ -538,8 +533,8 @@
     }
 
     .search-icon{
-        width: 18px;
-        height: 18px;
+        width: 23px;
+        height: 23px;
         flex-shrink: 0;
         color: var(--text-muted);
         transition: color 0.25s ease;
@@ -553,7 +548,7 @@
         outline: none;
         background: transparent;
         color: #0a0a0a;
-        font-size: 14px;
+        font-size: 18px;
         font-family: inherit;
     }
 
@@ -565,8 +560,8 @@
         display: flex;
         align-items: center;
         justify-content: center;
-        width: 22px;
-        height: 22px;
+        width: 28px;
+        height: 28px;
         padding: 0;
         border: none;
         border-radius: 50%;
@@ -582,8 +577,8 @@
     }
 
     .search-clear svg{
-        width: 14px;
-        height: 14px;
+        width: 18px;
+        height: 18px;
     }
 }
 
@@ -592,9 +587,9 @@
     position: relative;
     display: flex;
     align-items: center;
-    height: 40px;
-    padding: 4px;
-    border-radius: 12px;
+    height: 50px;
+    padding: 5px;
+    border-radius: 15px;
     background-color: #0a0a0a;
     flex-shrink: 0;
     margin-right: auto;
@@ -604,9 +599,9 @@
 /* 亮色滑动高亮块 */
 .n2_batchPill .batch-highlight{
     position: absolute;
-    top: 4px;
-    height: calc(100% - 8px);
-    border-radius: 9px;
+    top: 5px;
+    height: calc(100% - 10px);
+    border-radius: 11px;
     background-color: rgba(255, 255, 255, 0.12);
     z-index: 0;
     pointer-events: none;
@@ -618,13 +613,13 @@
     z-index: 1;
     display: inline-flex;
     align-items: center;
-    gap: 6px;
-    padding: 6px 14px;
+    gap: 8px;
+    padding: 8px 18px;
     border: none;
-    border-radius: 9px;
+    border-radius: 11px;
     background: transparent;
     color: var(--text-secondary);
-    font-size: 13px;
+    font-size: 16px;
     font-family: inherit;
     cursor: pointer;
     white-space: nowrap;
@@ -644,8 +639,8 @@
 .n2_batchPill .batch-count{
     position: relative;
     z-index: 1;
-    padding: 6px 14px;
-    font-size: 13px;
+    padding: 8px 18px;
+    font-size: 16px;
     color: #00A947;
     white-space: nowrap;
     user-select: none;
@@ -654,15 +649,15 @@
 /* 分割线：已选数量与操作按钮之间 */
 .n2_batchPill .batch-divider{
     width: 1px;
-    height: 16px;
+    height: 20px;
     border-radius: 0.5px;
     background: rgba(255, 255, 255, 0.12);
     flex-shrink: 0;
 }
 
 .n2_batchPill .batch-segment svg{
-    width: 14px;
-    height: 14px;
+    width: 18px;
+    height: 18px;
 }
 
 /* 批量操作栏删除按钮悬停变红 */
@@ -681,12 +676,12 @@
 
 .n2-batch-enter-from{
     opacity: 0;
-    transform: translateX(-12px);
+    transform: translateX(-15px);
 }
 
 .n2-batch-leave-to{
     opacity: 0;
-    transform: translateX(-12px);
+    transform: translateX(-15px);
 }
 
 /* ═══════════════════════════════════════════════════
@@ -694,8 +689,8 @@
    ═══════════════════════════════════════════════════ */
 #num3z{
     width: 100%;
-    min-height: 400px;
-    padding: 44px 5% 60px;
+    min-height: 500px;
+    padding: 55px 5% 75px;
 }
 
 /* ── 加载 / 空状态 ── */
@@ -704,17 +699,17 @@
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    padding: 60px 20px;
+    padding: 75px 25px;
     color: var(--text-muted);
-    font-size: 14px;
-    gap: 12px;
+    font-size: 18px;
+    gap: 15px;
     text-align: center;
 }
 
 .n3_spinner{
-    width: 22px;
-    height: 22px;
-    border: 2px solid rgba(255, 255, 255, 0.1);
+    width: 28px;
+    height: 28px;
+    border: 3px solid rgba(255, 255, 255, 0.1);
     border-top-color: var(--color-primary);
     border-radius: 50%;
     animation: n3-spin 0.8s linear infinite;
@@ -725,20 +720,20 @@
 }
 
 .n3_emptyIcon{
-    width: 56px;
-    height: 56px;
+    width: 70px;
+    height: 70px;
     color: #2a2a2a;
-    margin-bottom: 8px;
+    margin-bottom: 10px;
 }
 
 .n3_emptyTitle{
-    font-size: 16px;
+    font-size: 20px;
     color: var(--text-tertiary);
     margin: 0;
 }
 
 .n3_emptyDesc{
-    font-size: 13px;
+    font-size: 16px;
     color: var(--text-muted);
     margin: 0;
 }
@@ -746,15 +741,15 @@
 /* ── 作品网格 ── */
 .n3_workGrid{
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-    gap: 16px;
+    grid-template-columns: repeat(auto-fill, minmax(275px, 1fr));
+    gap: 20px;
 }
 
 /* ── 作品卡片 ── */
 .n3_workCard{
     position: relative;
     background: #0a0a0a;
-    border-radius: 14px;
+    border-radius: 18px;
     overflow: hidden;
     box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.06);
     transition: box-shadow 0.5s ease;
@@ -781,23 +776,23 @@
 .n3_workCard.clickable:hover{
     box-shadow:
         0 0 0 1px rgba(255, 255, 255, 0.12),
-        0 6px 20px rgba(0, 0, 0, 0.5),
-        0 2px 6px rgba(0, 0, 0, 0.4);
+        0 8px 25px rgba(0, 0, 0, 0.5),
+        0 3px 8px rgba(0, 0, 0, 0.4);
 }
 
 /* 选中态 — 阴影加深 + 描边提亮，表达"按住"感 */
 .n3_workCard.selected{
     box-shadow:
         0 0 0 1px rgba(255, 255, 255, 0.18),
-        0 6px 20px rgba(0, 0, 0, 0.5),
-        0 2px 6px rgba(0, 0, 0, 0.4);
+        0 8px 25px rgba(0, 0, 0, 0.5),
+        0 3px 8px rgba(0, 0, 0, 0.4);
 }
 
 .n3_workCard.selected:hover{
     box-shadow:
         0 0 0 1px rgba(255, 255, 255, 0.25),
-        0 6px 20px rgba(0, 0, 0, 0.5),
-        0 2px 6px rgba(0, 0, 0, 0.4);
+        0 8px 25px rgba(0, 0, 0, 0.5),
+        0 3px 8px rgba(0, 0, 0, 0.4);
 }
 
 /* 缩略图 — full-bleed 背景层，置于 ::before 之上 */
@@ -833,14 +828,14 @@
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: 8px;
+    gap: 10px;
     background: linear-gradient(135deg, #111 0%, #1a1a1a 100%);
     z-index: 0;
 }
 
 .n3_thumbIcon{
-    width: 32px;
-    height: 32px;
+    width: 40px;
+    height: 40px;
     color: #444;
     opacity: 0.8;
 }
@@ -861,7 +856,7 @@
 }
 
 .n3_thumbText{
-    font-size: 12px;
+    font-size: 15px;
     color: #555;
     font-weight: 500;
 }
@@ -882,14 +877,14 @@
     right: -1px;
     bottom: -1px;
     z-index: 1;
-    padding: 10px 14px 12px;
+    padding: 13px 18px 15px;
     display: flex;
     flex-direction: column;
-    gap: 6px;
+    gap: 8px;
     background: rgba(10, 10, 10, 0.55);
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
-    box-shadow: 0 -12px 24px rgba(0, 0, 0, 0.4) inset;
+    backdrop-filter: blur(13px);
+    -webkit-backdrop-filter: blur(13px);
+    box-shadow: 0 -15px 30px rgba(0, 0, 0, 0.4) inset;
     transition: padding-top 0.5s cubic-bezier(0.4, 0, 0.2, 1);
     /* GPU 合成层 */
     transform: translateZ(0);
@@ -899,13 +894,13 @@
     will-change: padding-top;
 }
 
-/* 选中态 — 向上长高约 42px，覆盖图片下半部 */
+/* 选中态 — 向上长高约 52px，覆盖图片下半部 */
 .n3_workCard.selected .n3_cardInfo{
-    padding-top: 52px;
+    padding-top: 65px;
 }
 
 .n3_workTitle{
-    font-size: 14px;
+    font-size: 18px;
     font-weight: 500;
     color: #ffffff;
     overflow: hidden;
@@ -918,11 +913,11 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 8px;
+    gap: 10px;
 }
 
 .n3_workTime{
-    font-size: 12px;
+    font-size: 15px;
     color: var(--text-tertiary);
     flex-shrink: 0;
 }
@@ -931,48 +926,48 @@
 .n3_status{
     display: inline-flex;
     align-items: center;
-    gap: 6px;
+    gap: 8px;
     flex-shrink: 0;
 }
 
 .n3_statusDot{
-    width: 7px;
-    height: 7px;
+    width: 9px;
+    height: 9px;
     border-radius: 50%;
     flex-shrink: 0;
 }
 
 .n3_statusDot.status-approved{
     background-color: var(--color-success);
-    box-shadow: 0 0 6px rgba(42, 157, 106, 0.5);
+    box-shadow: 0 0 8px rgba(42, 157, 106, 0.5);
 }
 
 .n3_statusDot.status-pending{
     background-color: var(--color-warning);
-    box-shadow: 0 0 6px rgba(251, 191, 36, 0.5);
+    box-shadow: 0 0 8px rgba(251, 191, 36, 0.5);
 }
 
 .n3_statusDot.status-rejected{
     background-color: var(--color-danger);
-    box-shadow: 0 0 6px rgba(255, 77, 79, 0.4);
+    box-shadow: 0 0 8px rgba(255, 77, 79, 0.4);
 }
 
 .n3_statusLabel{
-    font-size: 12px;
+    font-size: 15px;
     color: var(--text-tertiary);
 }
 
 /* ── 选择框 ── */
 .n3_checkbox{
     position: absolute;
-    top: 10px;
-    left: 10px;
-    width: 22px;
-    height: 22px;
-    border-radius: 6px;
+    top: 13px;
+    left: 13px;
+    width: 28px;
+    height: 28px;
+    border-radius: 8px;
     border: 2px solid rgba(255, 255, 255, 0.3);
     background: rgba(0, 0, 0, 0.5);
-    backdrop-filter: blur(6px);
+    backdrop-filter: blur(8px);
     cursor: pointer;
     display: flex;
     align-items: center;
@@ -993,18 +988,18 @@
 }
 
 .n3_checkbox svg{
-    width: 12px;
-    height: 12px;
+    width: 15px;
+    height: 15px;
     color: #ffffff;
 }
 
 /* ── 操作按钮 ── */
 .n3_actions{
     position: absolute;
-    top: 10px;
-    right: 10px;
+    top: 13px;
+    right: 13px;
     display: flex;
-    gap: 4px;
+    gap: 5px;
     opacity: 0;
     transition: opacity 0.2s ease;
     z-index: 2;
@@ -1015,12 +1010,12 @@
 }
 
 .n3_actionBtn{
-    width: 28px;
-    height: 28px;
-    border-radius: 8px;
+    width: 35px;
+    height: 35px;
+    border-radius: 10px;
     border: none;
     background: rgba(0, 0, 0, 0.6);
-    backdrop-filter: blur(6px);
+    backdrop-filter: blur(8px);
     color: rgba(255, 255, 255, 0.8);
     cursor: pointer;
     display: flex;
@@ -1039,8 +1034,8 @@
 }
 
 .n3_actionBtn svg{
-    width: 14px;
-    height: 14px;
+    width: 18px;
+    height: 18px;
 }
 
 /* ═══════════════════════════════════════════════════
@@ -1051,9 +1046,9 @@
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    padding: 80px 20px;
+    padding: 100px 25px;
     text-align: center;
-    border-radius: 16px;
+    border-radius: 20px;
     background: rgba(255, 255, 255, 0.02);
     border: 1px dashed rgba(255, 255, 255, 0.08);
     transition: border-color 0.3s ease, background-color 0.3s ease;
@@ -1065,21 +1060,21 @@
 }
 
 .n3_placeholderIcon{
-    width: 40px;
-    height: 40px;
+    width: 50px;
+    height: 50px;
     color: #2a2a2a;
-    margin-bottom: 16px;
+    margin-bottom: 20px;
 }
 
 .n3_placeholderTitle{
     font-family: sul-gm1, sans-serif;
-    font-size: 18px;
+    font-size: 23px;
     color: var(--text-tertiary);
-    margin: 0 0 8px;
+    margin: 0 0 10px;
 }
 
 .n3_placeholderDesc{
-    font-size: 13px;
+    font-size: 16px;
     color: var(--text-muted);
     margin: 0;
 }
@@ -1091,8 +1086,8 @@
     position: fixed;
     inset: 0;
     background: rgba(0, 0, 0, 0.65);
-    backdrop-filter: blur(6px);
-    -webkit-backdrop-filter: blur(6px);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -1102,13 +1097,13 @@
 .n3_dialog{
     background: #0a0a0a;
     border: 1px solid #333;
-    border-radius: 16px;
-    padding: 28px 24px 24px;
-    width: 420px;
-    max-width: calc(100vw - 48px);
+    border-radius: 20px;
+    padding: 35px 30px 30px;
+    width: 525px;
+    max-width: calc(100vw - 60px);
     max-height: 75vh;
     overflow-y: auto;
-    box-shadow: 0 12px 48px rgba(0, 0, 0, 0.55);
+    box-shadow: 0 15px 60px rgba(0, 0, 0, 0.55);
     scrollbar-width: none;
 }
 
@@ -1117,28 +1112,28 @@
 }
 
 .n3_dialogWide{
-    width: 680px;
-    max-width: calc(100vw - 48px);
+    width: 850px;
+    max-width: calc(100vw - 60px);
 }
 
 .n3_dialogTitle{
     font-family: sul-gbo4, sans-serif;
-    font-size: 17px;
+    font-size: 21px;
     font-weight: 600;
     color: #ffffff;
-    margin: 0 0 20px;
+    margin: 0 0 25px;
 }
 
 .n3_dialogFooter{
     display: flex;
-    gap: 12px;
-    margin-top: 20px;
+    gap: 15px;
+    margin-top: 25px;
 }
 
 .n3_dialogFooter .n3_btn{
     flex: 1;
-    padding: 10px 20px;
-    border-radius: 10px;
+    padding: 13px 25px;
+    border-radius: 13px;
     font-weight: 500;
     justify-content: center;
 }
@@ -1150,15 +1145,15 @@
 /* ── 编辑弹窗左右布局 ── */
 .n3_editLayout{
     display: flex;
-    gap: 24px;
+    gap: 30px;
     align-items: flex-start;
 }
 
 .n3_editLeft{
-    flex: 0 0 260px;
+    flex: 0 0 325px;
     display: flex;
     flex-direction: column;
-    gap: 12px;
+    gap: 15px;
     align-items: center;
 }
 
@@ -1167,17 +1162,17 @@
     min-width: 0;
     display: flex;
     flex-direction: column;
-    gap: 14px;
+    gap: 18px;
 }
 
 .n3_editImageArea{
     width: 100%;
-    min-height: 140px;
+    min-height: 175px;
     display: flex;
     align-items: center;
     justify-content: center;
     background: #0d0d0d;
-    border-radius: 10px;
+    border-radius: 13px;
     overflow: hidden;
     cursor: pointer;
     border: 1px solid rgba(255, 255, 255, 0.06);
@@ -1190,7 +1185,7 @@
 
 .n3_editImage{
     width: 100%;
-    max-height: 220px;
+    max-height: 275px;
     object-fit: contain;
     display: block;
 }
@@ -1199,19 +1194,19 @@
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 10px;
+    gap: 13px;
     color: #555;
-    font-size: 13px;
-    padding: 40px 20px;
+    font-size: 16px;
+    padding: 50px 25px;
 }
 
 .n3_editImageEmpty svg{
-    width: 32px;
-    height: 32px;
+    width: 40px;
+    height: 40px;
 }
 
 .n3_editTip{
-    font-size: 12px;
+    font-size: 15px;
     color: #555;
     margin: 0;
 }
@@ -1220,11 +1215,11 @@
 .n3_formGroup{
     display: flex;
     flex-direction: column;
-    gap: 6px;
+    gap: 8px;
 }
 
 .n3_formLabel{
-    font-size: 13px;
+    font-size: 16px;
     color: #aaa;
     font-weight: 500;
 }
@@ -1232,13 +1227,13 @@
 .n3_formInput,
 .n3_formSelect{
     background: rgba(255, 255, 255, 0.05);
-    backdrop-filter: blur(8px);
-    -webkit-backdrop-filter: blur(8px);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
     border: 1px solid rgba(255, 255, 255, 0.1);
-    border-radius: 10px;
-    padding: 10px 14px;
+    border-radius: 13px;
+    padding: 13px 18px;
     color: #ffffff;
-    font-size: 14px;
+    font-size: 18px;
     font-family: inherit;
     transition: border-color 0.25s ease;
     outline: none;
@@ -1258,10 +1253,10 @@
 .n3_formSelect{
     cursor: pointer;
     appearance: none;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%237e7e7e' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='15' height='15' viewBox='0 0 24 24' fill='none' stroke='%237e7e7e' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
     background-repeat: no-repeat;
-    background-position: right 12px center;
-    padding-right: 36px;
+    background-position: right 15px center;
+    padding-right: 45px;
 }
 
 .n3_formSelect option{
@@ -1270,41 +1265,41 @@
 }
 
 .n3_formTip{
-    font-size: 12px;
+    font-size: 15px;
     color: #555;
 }
 
 /* ── 单选按钮组 ── */
 .n3_radioGroup{
     display: flex;
-    gap: 4px;
+    gap: 5px;
     background: rgba(255, 255, 255, 0.05);
     border: 1px solid rgba(255, 255, 255, 0.1);
-    border-radius: 10px;
-    padding: 4px;
+    border-radius: 13px;
+    padding: 5px;
     position: relative;
 }
 
 .n3_radioHighlight{
     position: absolute;
-    top: 4px;
-    height: calc(100% - 8px);
+    top: 5px;
+    height: calc(100% - 10px);
     color: #0a0a0a;
     background: #FDF9F0;
     border: 1px solid #0a0a0a;
-    border-radius: 8px;
+    border-radius: 10px;
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     z-index: 0;
 }
 
 .n3_radioBtn{
     flex: 1;
-    padding: 10px 16px;
-    border-radius: 8px;
+    padding: 13px 20px;
+    border-radius: 10px;
     border: none;
     background: transparent;
     color: #7e7e7e;
-    font-size: 13px;
+    font-size: 16px;
     font-family: inherit;
     cursor: pointer;
     transition: color 0.25s ease;
@@ -1323,18 +1318,18 @@
 
 /* ── 通用按钮（弹窗内） ── */
 .n3_btn{
-    padding: 8px 16px;
-    border-radius: 10px;
+    padding: 10px 20px;
+    border-radius: 13px;
     border: 1px solid rgba(255, 255, 255, 0.1);
     background: #1a1a1a;
     color: #cecece;
-    font-size: 13px;
+    font-size: 16px;
     font-family: inherit;
     cursor: pointer;
     transition: all 0.25s ease;
     display: inline-flex;
     align-items: center;
-    gap: 6px;
+    gap: 8px;
     white-space: nowrap;
 }
 
@@ -1344,8 +1339,8 @@
 }
 
 .n3_btn svg{
-    width: 14px;
-    height: 14px;
+    width: 18px;
+    height: 18px;
 }
 
 .n3_btnPrimary{
@@ -1366,9 +1361,9 @@
 }
 
 .n3_btnSm{
-    padding: 6px 12px;
-    font-size: 12px;
-    border-radius: 8px;
+    padding: 8px 15px;
+    font-size: 15px;
+    border-radius: 10px;
 }
 
 /* ═══════════════════════════════════════════════════
@@ -1376,8 +1371,8 @@
    ═══════════════════════════════════════════════════ */
 @media (max-width: 1024px) {
     .n3_workGrid{
-        grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-        gap: 12px;
+        grid-template-columns: repeat(auto-fill, minmax(225px, 1fr));
+        gap: 15px;
     }
 
     .n3_editLayout{
@@ -1394,9 +1389,9 @@
     #num2z{
         flex-direction: column;
         height: auto;
-        gap: 10px;
-        padding-top: 12px;
-        padding-bottom: 12px;
+        gap: 13px;
+        padding-top: 15px;
+        padding-bottom: 15px;
     }
 
     .n2_filterPill{
@@ -1404,8 +1399,8 @@
     }
 
     .pill-segment{
-        padding: 6px 12px;
-        font-size: 12px;
+        padding: 8px 15px;
+        font-size: 15px;
     }
 
     .n2_searchBar{
@@ -1414,12 +1409,12 @@
     }
 
     #num3z{
-        padding: 16px 4% 40px;
+        padding: 20px 4% 50px;
     }
 
     .n3_workGrid{
         grid-template-columns: repeat(2, 1fr);
-        gap: 10px;
+        gap: 13px;
     }
 
     .n3_dialogWide{
@@ -1433,11 +1428,11 @@
     }
 
     .n2_filterPill{
-        border-radius: 10px;
+        border-radius: 13px;
     }
 
     .pill-segment{
-        padding: 6px 10px;
-        font-size: 11px;
+        padding: 8px 13px;
+        font-size: 14px;
     }
 }

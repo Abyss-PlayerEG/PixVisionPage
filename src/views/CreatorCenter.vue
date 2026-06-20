@@ -343,7 +343,7 @@
                 </div>
 
                 <!-- 加载更多 -->
-                <div v-if="worksLoading && worksList.length > 0" class="n3_state" style="padding-top: 24px;">
+                <div v-if="worksLoading && worksList.length > 0" class="n3_state" style="padding-top: 30px;">
                     <div class="n3_spinner"></div>
                     <span>加载更多...</span>
                 </div>
@@ -406,7 +406,7 @@
                             </div>
                             <input ref="editFileInput" type="file" accept="image/jpeg,image/png" style="display:none;" @change="onEditFileSelect" />
                         </div>
-                        <div style="display:flex;gap:8px;justify-content:center;">
+                        <div style="display:flex;gap:10px;justify-content:center;">
                             <button class="n3_btn n3_btnSm" @click="$refs.editFileInput?.click()">更换图片</button>
                             <button v-if="editWorkForm.file" class="n3_btn n3_btnSm" @click="removeEditFile">撤销更换</button>
                         </div>
@@ -595,6 +595,34 @@ const userInfo = reactive({
 let ctx = null
 let collapseTl = null
 let num2zTweens = []
+
+// 作品卡片入场动画
+const hasPlayedWorkEntrance = ref(false)
+let workEntranceTween = null
+
+const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+
+const animateWorkCardsEntrance = () => {
+    if (hasPlayedWorkEntrance.value || prefersReducedMotion) return
+
+    nextTick(() => {
+        const cards = document.querySelectorAll('#num3z .n3_workCard')
+        if (!cards.length) return
+
+        hasPlayedWorkEntrance.value = true
+
+        if (workEntranceTween) workEntranceTween.kill()
+
+        workEntranceTween = gsap.from(cards, {
+            y: 10,
+            opacity: 0,
+            duration: 0.4,
+            stagger: 0.06,
+            ease: 'power2.out',
+            onComplete: () => { workEntranceTween = null },
+        })
+    })
+}
 
 // 原始尺寸缓存
 let _origNum1zHeight = null
@@ -785,14 +813,14 @@ const toggleCollapse = () => {
         tl.to(h2Ref.value, { top: 0, height: 0, opacity: 0, marginTop: 0, marginBottom: 0, paddingTop: 0, paddingBottom: 0, duration: 0.35 }, 0)
         tl.to(optionBottomRef.value, { height: 0, minHeight: 0, opacity: 0, marginTop: 0, marginBottom: 0, paddingTop: 0, paddingBottom: 0, duration: 0.35 }, 0.05)
         tl.to(optionButtonsRef.value, { width: 0, opacity: 0, marginLeft: 0, marginRight: 0, paddingLeft: 0, paddingRight: 0, gap: 0, overflow: 'hidden', duration: 0.35 }, 0.1)
-        tl.to(num1zRef.value, { height: 130, duration: 0.4 }, 0)
+        tl.to(num1zRef.value, { height: 163, duration: 0.4 }, 0)
         tl.to(collapsedTabsRef.value, { width: _origCollapsedTabsWidth, opacity: 1, pointerEvents: 'auto', overflow: 'visible', duration: 0.3 }, 0.2)
         tl.to('.collapse-icon', { rotation: 180, duration: 0.35 }, 0)
     } else {
         tl.to(num1zRef.value, { height: _origNum1zHeight, duration: 0.4 }, 0)
-        tl.to(h2Ref.value, { top: 60, height: _origH2Height, opacity: 1, marginTop: 0, marginBottom: 0, paddingTop: 0, paddingBottom: 0, duration: 0.35 }, 0.05)
-        tl.to(optionBottomRef.value, { height: _origBottomHeight, minHeight: 40, opacity: 1, marginTop: 0, marginBottom: 0, paddingTop: 0, paddingBottom: 0, duration: 0.35 }, 0.1)
-        tl.to(optionButtonsRef.value, { width: _origButtonsWidth, opacity: 1, marginLeft: 0, marginRight: 0, paddingLeft: 0, paddingRight: 0, gap: 12, overflow: 'hidden', duration: 0.35 }, 0.15)
+        tl.to(h2Ref.value, { top: 75, height: _origH2Height, opacity: 1, marginTop: 0, marginBottom: 0, paddingTop: 0, paddingBottom: 0, duration: 0.35 }, 0.05)
+        tl.to(optionBottomRef.value, { height: _origBottomHeight, minHeight: 50, opacity: 1, marginTop: 0, marginBottom: 0, paddingTop: 0, paddingBottom: 0, duration: 0.35 }, 0.1)
+        tl.to(optionButtonsRef.value, { width: _origButtonsWidth, opacity: 1, marginLeft: 0, marginRight: 0, paddingLeft: 0, paddingRight: 0, gap: 15, overflow: 'hidden', duration: 0.35 }, 0.15)
         tl.to(collapsedTabsRef.value, { width: 0, opacity: 0, pointerEvents: 'none', overflow: 'hidden', duration: 0.25 }, 0)
         tl.to('.collapse-icon', { rotation: 0, duration: 0.35 }, 0)
     }
@@ -827,7 +855,7 @@ const onN1MainEnter = () => {
 const onN1MainLeave = () => {
     if (!collapseBtnRef.value) return
     gsap.to(collapseBtnRef.value, {
-        y: 12,
+        y: 15,
         opacity: 0,
         duration: 0.25,
         ease: 'power2.in',
@@ -886,7 +914,7 @@ const animateNum2zEntrance = () => {
     if (lCeb) {
         // 状态栏整体从左滑入
         num2zTweens.push(gsap.from(lCeb, {
-            x: -24,
+            x: -30,
             autoAlpha: 0,
             duration: 0.45,
             ease: 'power2.out',
@@ -896,7 +924,7 @@ const animateNum2zEntrance = () => {
         const options = lCeb.querySelectorAll('.status-option')
         if (options.length) {
             num2zTweens.push(gsap.from(options, {
-                y: 8,
+                y: 10,
                 autoAlpha: 0,
                 duration: 0.3,
                 stagger: 0.06,
@@ -909,7 +937,7 @@ const animateNum2zEntrance = () => {
     if (rCeb) {
         // 搜索栏从右滑入，略微延迟形成节奏感
         num2zTweens.push(gsap.from(rCeb, {
-            x: 24,
+            x: 30,
             autoAlpha: 0,
             duration: 0.45,
             ease: 'power2.out',
@@ -928,7 +956,7 @@ onMounted(async () => {
     ctx = gsap.context(() => {
         const distance = getTravelDistance()
         gsap.set(circleRef.value, { x: distance })
-        gsap.set(collapseBtnRef.value, { y: 12, opacity: 0 })
+        gsap.set(collapseBtnRef.value, { y: 15, opacity: 0 })
     }, n1MainRef.value)
 
     // 初始化状态筛选滑块
@@ -953,25 +981,42 @@ onMounted(async () => {
     window.addEventListener('resize', handleResize)
 })
 
-// 监听 tab 切换以初始化滚动观察器 + 触发入场动画
+// 监听 tab 切换：初始化滚动观察器 + num2z 入场 + 作品卡片入场
 watch(activeTab, (tab) => {
     if (tab === 'works') {
+        // 重置入场标记，确保切换回来后动画重新播放
+        hasPlayedWorkEntrance.value = false
         initScrollObserver()
         nextTick(() => {
             updateStatusIndicator()
             animateNum2zEntrance()
         })
+        // 已有作品且不在加载中（本次不会触发 loadWorks）→ 直接播放动画
+        if (worksList.value.length > 0 && !worksLoading.value) {
+            animateWorkCardsEntrance()
+        }
     }
 })
 
-// 监听筛选条件变化 → 更新状态滑块位置
+// 状态筛选变化 → 重置入场标记 + 更新滑块（loadWorks 完成后 watcher 触发动画）
 watch(() => worksApprovalFilter.value, () => {
+    hasPlayedWorkEntrance.value = false
     nextTick(() => updateStatusIndicator())
+})
+
+// ═══════════════════════════════════════════════════
+// 作品卡片入场动画 — 加载完成后从下方 10px 上浮
+// ═══════════════════════════════════════════════════
+watch([() => worksList.value.length, worksLoading], ([len, loading]) => {
+    if (!loading && len > 0 && activeTab.value === 'works') {
+        animateWorkCardsEntrance()
+    }
 })
 
 onUnmounted(() => {
     if (ctx) ctx.revert()
     if (collapseTl) collapseTl.kill()
+    if (workEntranceTween) workEntranceTween.kill()
     num2zTweens.forEach(t => t.kill())
     window.removeEventListener('resize', handleResize)
     editWorkDialog.cleanup()
