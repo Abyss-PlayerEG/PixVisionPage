@@ -385,6 +385,46 @@ const goToRandomWork = async () => {
     } catch { return timeStr }
   }
 
+  // 评论区专用时间格式
+  const formatCommentTime = (timeStr) => {
+    if (!timeStr) return ''
+    try {
+      // 兼容时间戳（秒/毫秒）和日期字符串
+      let ts = timeStr
+      if (typeof ts === 'number' && ts < 1e12) ts *= 1000  // 秒 → 毫秒
+      const date = new Date(ts)
+      if (isNaN(date.getTime())) return ''
+
+      const now = new Date()
+      const pad = (n) => String(n).padStart(2, '0')
+      const hm = `${pad(date.getHours())}:${pad(date.getMinutes())}`
+
+      // 同一天 → "今天 HH:MM"
+      if (date.toDateString() === now.toDateString()) return `今天 ${hm}`
+
+      // 昨天 → "昨天 HH:MM"
+      const yesterday = new Date(now)
+      yesterday.setDate(yesterday.getDate() - 1)
+      if (date.toDateString() === yesterday.toDateString()) return `昨天 ${hm}`
+
+      // 计算相差天数
+      const diff = now.getTime() - date.getTime()
+      const days = Math.floor(diff / 86400000)
+
+      // 3-6 天前 → "X天前"
+      if (days < 7) return `${days}天前`
+
+      // ≥7 天 → "X月X日"
+      return `${date.getMonth() + 1}月${date.getDate()}日`
+    } catch { return '' }
+  }
+
+  // 判断评论是否为当前用户所发
+  const isOwnComment = (comment) => {
+    if (!currentUser.value || !comment) return false
+    return comment.user_id === currentUser.value.user_id
+  }
+
   // ========== 核心数据加载 ==========
   /** 加载作品核心数据（作品详情、评论、点赞/收藏状态、发布者信息） */
   const loadWorkData = async () => {
@@ -551,6 +591,8 @@ const goToRandomWork = async () => {
     loadComments,
     highlightComment,
     formatTime,
+    formatCommentTime,
+    isOwnComment,
     handleToggleLike,
     handleToggleStar,
     handleDownload,

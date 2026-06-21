@@ -426,9 +426,7 @@
   height: 80vh;
   max-height: 80vh;
   border-radius: 40px 40px 0 0;
-  background: rgba(0, 0, 0, 0.78);
-  backdrop-filter: blur(28px);
-  -webkit-backdrop-filter: blur(28px);
+  background: #000;
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -468,15 +466,20 @@
   color: var(--text-muted);
 }
 
-/* ── 评论列表（内部滚动）──────────────────────────────────── */
+/* ── 评论列表（内部滚动，隐藏滚动条）─────────────────────── */
 .wd-comments-body {
   flex: 1;
   min-height: 0;
   overflow-y: auto;
+  scrollbar-width: none;
   display: flex;
   flex-direction: column;
   gap: 0;
   padding: 8px 0 16px;
+}
+
+.wd-comments-body::-webkit-scrollbar {
+  display: none;
 }
 
 .wd-comments-empty {
@@ -498,23 +501,25 @@
 /* ── 单条评论 ──────────────────────────────────────────────── */
 .wd-comment-item {
   display: flex;
-  gap: 14px;
-  padding: 16px 0;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
-  transition: background 0.2s;
+  gap: 12px;
+  padding: 14px 16px;
+  margin-bottom: 8px;
+  border-radius: 12px;
+  background: #0a0a0a;
 }
 
 .wd-comment-item:last-child {
-  border-bottom: none;
+  margin-bottom: 0;
 }
 
 .wd-comment-avatar {
-  width: 40px;
-  height: 40px;
+  width: 36px;
+  height: 36px;
   border-radius: 50%;
   object-fit: cover;
   flex-shrink: 0;
   background: var(--bg-tertiary);
+  margin-top: 2px;
 }
 
 .wd-comment-body {
@@ -524,29 +529,230 @@
 
 .wd-comment-top {
   display: flex;
-  align-items: baseline;
-  gap: 10px;
-  margin-bottom: 6px;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 4px;
 }
 
 .wd-comment-author {
   font-size: 14px;
   font-weight: 600;
   color: var(--text-light);
+  flex: 1;
+}
+
+/* ── 删除评论按钮 ────────────────────────────────────────── */
+.wd-comment-delete {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  border: none;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.35);
+  cursor: pointer;
+  transition: color 0.2s, background 0.2s;
+  flex-shrink: 0;
+}
+
+.wd-comment-delete:hover {
+  color: #ff4444;
+  background: rgba(255, 68, 68, 0.1);
+}
+
+/* ── 评论正文 ────────────────────────────────────────────── */
+.wd-comment-text {
+  font-size: 14px;
+  color: var(--text-dim);
+  line-height: 1.6;
+  margin: 0 0 8px;
+  word-break: break-word;
+}
+
+/* ── 评论底部：时间 + 回复按钮 ───────────────────────────── */
+.wd-comment-bottom {
+  display: flex;
+  align-items: center;
+  gap: 16px;
 }
 
 .wd-comment-time {
   font-size: 12px;
   color: var(--text-muted);
-  flex-shrink: 0;
 }
 
-.wd-comment-text {
-  font-size: 14px;
-  color: var(--text-dim);
+.wd-comment-reply-btn {
+  font-size: 12px;
+  color: var(--text-muted);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  transition: color 0.2s;
+  font-family: inherit;
+}
+
+.wd-comment-reply-btn:hover {
+  color: var(--text-secondary);
+}
+
+/* ── 二级回复列表 ────────────────────────────────────────── */
+.wd-replies {
+  margin-top: 10px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.02);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.wd-reply-item {
+  font-size: 13px;
   line-height: 1.6;
-  margin: 0;
+  color: var(--text-dim);
+}
+
+.wd-reply-author {
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.wd-reply-to {
+  color: var(--text-muted);
+}
+
+.wd-reply-target {
+  color: var(--color-primary);
+}
+
+.wd-reply-colon {
+  color: var(--text-muted);
+}
+
+.wd-reply-text {
+  color: var(--text-dim);
   word-break: break-word;
+}
+
+.wd-reply-meta {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 4px;
+}
+
+.wd-reply-time {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.wd-reply-del {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 4px;
+  border: none;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.2);
+  cursor: pointer;
+  transition: color 0.2s, background 0.2s;
+  padding: 0;
+}
+
+.wd-reply-del:hover {
+  color: #ff4444;
+  background: rgba(255, 68, 68, 0.1);
+}
+
+.wd-reply-reply-btn {
+  font-size: 11px;
+  color: var(--text-muted);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  transition: color 0.2s;
+  font-family: inherit;
+}
+
+.wd-reply-reply-btn:hover {
+  color: var(--text-secondary);
+}
+
+/* ── 回复输入行 ──────────────────────────────────────────── */
+.wd-reply-row {
+  margin-top: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.wd-reply-row textarea {
+  width: 100%;
+  min-height: 36px;
+  max-height: 120px;
+  padding: 8px 12px;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--text-primary);
+  font-size: 13px;
+  outline: none;
+  resize: none;
+  scrollbar-width: none;
+  font-family: inherit;
+  line-height: 1.5;
+}
+
+.wd-reply-row textarea::-webkit-scrollbar {
+  display: none;
+}
+
+.wd-reply-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.wd-reply-cancel,
+.wd-reply-submit {
+  height: 32px;
+  padding: 0 16px;
+  border-radius: 8px;
+  border: none;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s, opacity 0.2s;
+  font-family: inherit;
+}
+
+.wd-reply-cancel {
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--text-secondary);
+}
+
+.wd-reply-cancel:hover {
+  background: rgba(255, 255, 255, 0.14);
+}
+
+.wd-reply-submit {
+  background: var(--color-primary);
+  color: #000;
+}
+
+.wd-reply-submit:hover:not(:disabled) {
+  background: #00c453;
+}
+
+.wd-reply-submit:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
 }
 
 /* ── 评论输入区（吸附评论区底部） ─────────────────────────── */
@@ -557,25 +763,24 @@
 }
 
 .wd-comments-input-wrapper {
+  position: relative;
   display: flex;
-  gap: 10px;
-  align-items: center;
 }
 
 .wd-comments-input-wrapper textarea {
-  flex: 1;
-  min-height: 48px;
-  max-height: 200px;
-  padding: 13px 18px;
-  border-radius: 24px;
+  width: 100%;
+  min-height: 56px;
+  max-height: 160px;
+  padding: 14px 90px 14px 18px;  /* 右侧留白给按钮 */
+  border-radius: 14px;
   border: 1px solid rgba(255, 255, 255, 0.1);
-  background: rgba(255, 255, 255, 0.04);
+  background: #0a0a0a;
   color: var(--text-primary);
   font-size: 14px;
   outline: none;
   resize: none;
   scrollbar-width: none;
-  transition: border-color 0.25s, background 0.25s;
+  transition: border-color 0.25s;
   font-family: inherit;
   line-height: 1.5;
 }
@@ -586,21 +791,38 @@
 
 .wd-comments-input-wrapper textarea:focus {
   border-color: rgba(255, 255, 255, 0.25);
-  background: rgba(255, 255, 255, 0.06);
 }
 
 .wd-comments-input-wrapper textarea::placeholder {
   color: var(--text-muted);
 }
 
+/* ── 字数计数器 ──────────────────────────────────────────── */
+.wd-char-count {
+  position: absolute;
+  left: 18px;
+  bottom: 10px;
+  font-size: 11px;
+  color: var(--text-muted);
+  pointer-events: none;
+}
+
+.wd-char-count--full {
+  color: #ff6b6b;
+}
+
+/* ── 发送按钮（白色，input 内部右下角） ──────────────────── */
 .wd-comments-submit-btn {
-  height: 48px;
-  padding: 0 28px;
-  border-radius: 24px;
+  position: absolute;
+  right: 8px;
+  bottom: 8px;
+  height: 34px;
+  padding: 0 18px;
+  border-radius: 10px;
   border: none;
-  background: var(--color-primary);
+  background: #fff;
   color: #000;
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 600;
   cursor: pointer;
   transition: background 0.2s, transform 0.15s ease, opacity 0.2s;
@@ -609,7 +831,7 @@
 }
 
 .wd-comments-submit-btn:hover:not(:disabled) {
-  background: #00c453;
+  background: #e6e6e6;
 }
 
 .wd-comments-submit-btn:active:not(:disabled) {
@@ -617,7 +839,7 @@
 }
 
 .wd-comments-submit-btn:disabled {
-  opacity: 0.35;
+  opacity: 0.25;
   cursor: not-allowed;
 }
 

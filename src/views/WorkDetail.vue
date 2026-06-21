@@ -35,6 +35,15 @@ const {
   commentSubmitting,
   handleSubmitComment,
   formatTime,
+  formatCommentTime,
+  isOwnComment,
+  // 回复
+  replyingTo, replyText, replySubmitting,
+  startReply, cancelReply, handleSubmitReply,
+  // 删除
+  handleDeleteComment,
+  // 用户
+  currentUser,
   // 方法
   handleBack,
   handleToggleLike,
@@ -50,16 +59,25 @@ const viewerRef = ref(null)
 const commentsInputRef = ref(null)
 const textareaRef = ref(null)
 
-// ── textarea 自动撑高 ───────────────────────────────────
-const autoResizeTextarea = () => {
+// ── textarea 输入处理：自动撑高 + 字数限制提示 ────────
+import { showInfo } from '@/utils/notification'
+const onCommentInput = () => {
   const el = textareaRef.value
   if (!el) return
+  // 自动撑高
   el.style.height = 'auto'
-  el.style.height = Math.min(el.scrollHeight, 200) + 'px'
+  el.style.height = Math.min(el.scrollHeight, 160) + 'px'
+  // 达到上限时提示
+  if (newComment.value.length >= 125) {
+    showInfo('已达到最大字数限制 (125字)')
+  }
 }
 // 评论提交后输入框清空，重置高度
 watch(newComment, (v) => {
-  if (!v) nextTick(() => autoResizeTextarea())
+  if (!v) nextTick(() => {
+    const el = textareaRef.value
+    if (el) { el.style.height = 'auto' }
+  })
 })
 
 // 查看作者主页
@@ -121,6 +139,16 @@ const publisherStats = computed(() => [
   { label: '点赞', value: publisher.value?.totalLikes || 0, icon: 'likes' },
   { label: '收藏', value: publisher.value?.totalStars || 0, icon: 'stars' },
 ])
+
+// 评论总数（含二级回复）
+const totalCommentCount = computed(() => {
+  let count = 0
+  for (const c of comments.value) {
+    count++
+    if (c.children?.length) count += c.children.length
+  }
+  return count
+})
 
 // ── 评论滚动：点击评论按钮 → 平滑滚动到输入区 ──────────
 const scrollToComments = () => {
@@ -324,8 +352,7 @@ watch(() => route.params.id, () => {
     </div><!-- /gallery-hero -->
 
     <!-- ═══════════════════════════════════════════════════════
-         评论区 — 全宽面板，max-height: 80vh，内部滚动
-         border-radius: 40px 40px 0 0 / 黑色毛玻璃
+         评论区 — 纯黑底，40px 顶部圆角，80vh 面板
          ═══════════════════════════════════════════════════════ -->
     <div class="wd-comments-section">
       <div class="wd-comments-inner">
@@ -333,7 +360,7 @@ watch(() => route.params.id, () => {
         <!-- 标题栏 -->
         <div class="wd-comments-header">
           <h2 class="wd-comments-title">评论</h2>
-          <span class="wd-comments-count" v-if="comments.length">{{ comments.length }} 条</span>
+          <span class="wd-comments-count" v-if="totalCommentCount">{{ totalCommentCount }} 条</span>
         </div>
 
         <!-- 评论列表 -->
@@ -344,16 +371,90 @@ watch(() => route.params.id, () => {
             </svg>
             <p>暂无评论，快来抢沙发吧~</p>
           </div>
-          <div v-for="comment in comments" :key="comment.comment_id" class="wd-comment-item">
-            <img class="wd-comment-avatar" :src="comment.avatar || publisher.avatar" loading="lazy" alt="" />
-            <div class="wd-comment-body">
-              <div class="wd-comment-top">
-                <span class="wd-comment-author">{{ comment.nickname || '匿名用户' }}</span>
-                <span class="wd-comment-time">{{ formatTime(comment.create_time) }}</span>
+
+          <!-- 一级评论 + 二级回复（API 返回 children 嵌套结构） -->
+          <template v-for="comment in comments" :key="comment.comment_id">
+            <!-- 一级评论 -->
+            <div class="wd-comment-item">
+              <img class="wd-comment-avatar" :src="comment.avatar || comment.avatarUrl || publisher.avatar" loading="lazy" alt="" />
+              <div class="wd-comment-body">
+                <div class="wd-comment-top">
+                  <span class="wd-comment-author">{{ comment.nickname || '匿名用户' }}</span>
+                  <button
+                    v-if="isOwnComment(comment)"
+                    class="wd-comment-delete"
+                    @click="handleDeleteComment(comment.comment_id)"
+                    title="删除评论"
+                  >
+                    <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+                    </svg>
+                  </button>
+                </div>
+                <p class="wd-comment-text">{{ comment.comment_text }}</p>
+                <div class="wd-comment-bottom">
+                  <span class="wd-comment-time">{{ formatCommentTime(comment.create_time || comment.createTime) || formatTime(comment.create_time || comment.createTime) }}</span>
+                  <button class="wd-comment-reply-btn" @click="startReply(comment)">回复</button>
+                </div>
+                <!-- 回复一级评论的输入框 -->
+                <div v-if="replyingTo && replyingTo.commentId === comment.comment_id" class="wd-reply-row">
+                  <textarea
+                    v-model="replyText"
+                    :placeholder="'回复 ' + replyingTo.nickname + '...'"
+                    @keydown.enter.exact.prevent="handleSubmitReply"
+                    maxlength="125"
+                    rows="1"
+                  />
+                  <div class="wd-reply-actions">
+                    <button class="wd-reply-cancel" @click="cancelReply">取消</button>
+                    <button class="wd-reply-submit" @click="handleSubmitReply" :disabled="replySubmitting || !replyText.trim()">回复</button>
+                  </div>
+                </div>
+
+                <!-- 二级回复列表 -->
+                <div v-if="comment.children && comment.children.length" class="wd-replies">
+                  <div
+                    v-for="reply in comment.children"
+                    :key="reply.comment_id"
+                    class="wd-reply-item"
+                  >
+                    <span class="wd-reply-author">{{ reply.nickname || '匿名用户' }}</span>
+                    <span v-if="reply.replied_nickname" class="wd-reply-to"> 回复 <span class="wd-reply-target">@{{ reply.replied_nickname }}</span></span>
+                    <span class="wd-reply-colon">：</span>
+                    <span class="wd-reply-text">{{ reply.comment_text }}</span>
+                    <div class="wd-reply-meta">
+                      <span class="wd-reply-time">{{ formatCommentTime(reply.create_time || reply.createTime) || formatTime(reply.create_time || reply.createTime) }}</span>
+                      <button
+                        v-if="isOwnComment(reply)"
+                        class="wd-reply-del"
+                        @click="handleDeleteComment(reply.comment_id)"
+                        title="删除"
+                      >
+                        <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                          <polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+                        </svg>
+                      </button>
+                      <button class="wd-reply-reply-btn" @click="startReply(reply, comment.comment_id, reply.user_id)">回复</button>
+                    </div>
+                    <!-- 回复二级评论的输入框 -->
+                    <div v-if="replyingTo && replyingTo.commentId === reply.comment_id" class="wd-reply-row">
+                      <textarea
+                        v-model="replyText"
+                        :placeholder="'回复 ' + replyingTo.nickname + '...'"
+                        @keydown.enter.exact.prevent="handleSubmitReply"
+                        maxlength="125"
+                        rows="1"
+                      />
+                      <div class="wd-reply-actions">
+                        <button class="wd-reply-cancel" @click="cancelReply">取消</button>
+                        <button class="wd-reply-submit" @click="handleSubmitReply" :disabled="replySubmitting || !replyText.trim()">回复</button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
               </div>
-              <p class="wd-comment-text">{{ comment.comment_text }}</p>
             </div>
-          </div>
+          </template>
         </div>
 
         <!-- 评论输入区 -->
@@ -364,10 +465,11 @@ watch(() => route.params.id, () => {
               v-model="newComment"
               placeholder="写下你的评论..."
               @keydown.enter.exact.prevent="handleSubmitComment"
-              @input="autoResizeTextarea"
-              maxlength="500"
+              @input="onCommentInput"
+              maxlength="125"
               rows="1"
             />
+            <span class="wd-char-count" :class="{ 'wd-char-count--full': newComment.length >= 125 }">{{ newComment.length }}/125</span>
             <button
               class="wd-comments-submit-btn"
               @click="handleSubmitComment"
