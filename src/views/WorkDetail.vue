@@ -1,5 +1,5 @@
 <script setup>
-import { computed } from 'vue'
+import { ref, computed } from 'vue'
 import { useWorkDetail } from '@/composables/useWorkDetail'
 
 // ═══════════════════════════════════════════════════════════════
@@ -7,9 +7,10 @@ import { useWorkDetail } from '@/composables/useWorkDetail'
 //
 // 三层结构：
 //   Layer 1 — 全屏毛玻璃模糊背景
-//   Layer 2 — 居中预览卡片
-//   Layer 3 — 底部导航控件栏
+//   Layer 2 — 居中预览卡片 + 右下角作品信息标签
+//   Layer 3 — 底部操作栏 + 导航栏 + 评论按钮
 //   Top-left — Pixel Vision 品牌药丸 + 返回按钮
+//   Right — 作者侧边栏（待重构）
 // ═══════════════════════════════════════════════════════════════
 
 const {
@@ -20,7 +21,14 @@ const {
   // 导航
   navLoading,
   // 计算属性
-  workTitle, workImgUrl,
+  workTitle, workImgUrl, workMeta,
+  // 发布者
+  publisher,
+  // 评论
+  comments, newComment,
+  commentSubmitting,
+  handleSubmitComment,
+  formatTime,
   // 方法
   handleBack,
   handleToggleLike,
@@ -30,10 +38,42 @@ const {
   goToNextWork,
 } = useWorkDetail()
 
+// ── 组件本地状态 ──────────────────────────────────────────
+const showComments = ref(false)
+
 // 模糊背景样式
 const bgStyle = computed(() => ({
   backgroundImage: workImgUrl.value ? `url(${workImgUrl.value})` : 'none',
 }))
+
+// 格式化日期：≤14天→X天前，>14天→YYYY年MM月DD日
+const formattedDate = computed(() => {
+  const t = workMeta.value?.createTime
+  if (!t) return ''
+  try {
+    const d = new Date(t)
+    const diff = Date.now() - d.getTime()
+    const days = Math.floor(diff / 86400000)
+    if (days < 1) return '今天'
+    if (days <= 14) return `${days}天前`
+    const y = d.getFullYear()
+    const m = String(d.getMonth() + 1).padStart(2, '0')
+    const dd = String(d.getDate()).padStart(2, '0')
+    return `${y}年${m}月${dd}日`
+  } catch { return '' }
+})
+
+const viewCount = computed(() => workMeta.value?.viewCount || 0)
+
+// 作者四个统计（右侧信息栏使用）
+const publisherStats = computed(() => [
+  { label: '作品', value: publisher.value?.works || 0, icon: 'works' },
+  { label: '浏览', value: publisher.value?.totalViews || 0, icon: 'views' },
+  { label: '点赞', value: publisher.value?.totalLikes || 0, icon: 'likes' },
+  { label: '收藏', value: publisher.value?.totalStars || 0, icon: 'stars' },
+])
+
+const toggleComments = () => { showComments.value = !showComments.value }
 </script>
 
 <template>
@@ -73,6 +113,20 @@ const bgStyle = computed(() => ({
           </svg>
           <span class="gallery-card--empty-text">暂无作品图片</span>
         </div>
+
+        <!-- 作品信息区 — 图片内部右下角，hover 隐藏 -->
+        <div v-if="!loading && workTitle" class="wd-info">
+          <h1 class="wd-info-title">{{ workTitle }}</h1>
+          <span class="wd-info-meta">发布于{{ formattedDate }}</span>
+          <span class="wd-info-sep">|</span>
+          <span class="wd-info-meta">
+            <svg class="wd-info-eye" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+              <circle cx="12" cy="12" r="3"/>
+            </svg>
+            {{ viewCount }} 次浏览
+          </span>
+        </div>
       </div>
     </div>
 
@@ -99,98 +153,85 @@ const bgStyle = computed(() => ({
     </div>
 
     <!-- ═══════════════════════════════════════════════════════
-         Layer 3 — 底部导航控件栏
+         底部区域 — 操作栏 + 导航栏 + 评论按钮
          ═══════════════════════════════════════════════════════ -->
-    <nav class="gallery-nav" aria-label="作品导航">
+    <div class="wd-bottom-bar">
 
-      <button class="nav-btn nav-btn--prev" :class="{ 'nav-btn--disabled': navLoading }" :disabled="navLoading" @click="goToPrevWork">
+      <!-- 操作栏 — 点赞 / 收藏 / 下载 -->
+      <div class="wd-action-bar">
+        <button class="wd-action-btn" :class="{ 'wd-action-btn--active': liked }" @click="handleToggleLike" :disabled="likePending">
+          <svg viewBox="0 0 1024 1024" width="18" height="18"><path d="M885.9 533.7c16.8-22.2 26.1-49.4 26.1-77.7 0-44.9-25.1-87.4-65.5-111.1a67.67 67.67 0 0 0-34.3-9.3H572.4l6-122.9c1.4-29.7-9.1-57.9-29.5-79.4-20.5-21.5-48.1-33.4-77.9-33.4-52 0-98 35-111.8 85.1l-85.9 311h-0.3v428h472.3c9.2 0 18.2-1.8 26.5-5.4 47.6-20.3 78.3-66.8 78.3-118.4 0-12.6-1.8-25-5.4-37 16.8-22.2 26.1-49.4 26.1-77.7-0.2-12.6-2-25.1-5.6-37.1zM112 528v364c0 17.7 14.3 32 32 32h65V496h-65c-17.7 0-32 14.3-32 32z" fill="currentColor"/></svg>
+          <span>{{ likeCount }}</span>
+        </button>
+        <button class="wd-action-btn" :class="{ 'wd-action-btn--active': starred }" @click="handleToggleStar" :disabled="starPending">
+          <svg viewBox="0 0 1024 1024" width="18" height="18"><path d="M565.273 34.627L677.369 272.17c8.706 18.32 25.411 31.051 44.823 33.996l250.776 38.081c48.698 7.411 68.225 70.046 32.934 105.98L824.407 635.164c-13.998 14.23-20.352 34.815-17.059 54.935l42.82 261.127c8.346 50.696-42.643 89.452-86.226 65.519L539.634 893.474c-17.286-9.526-37.992-9.526-55.278 0l-224.314 123.27c-43.583 23.934-94.572-14.822-86.22-65.518L216.638 690.1c3.32-20.12-3.089-40.705-17.087-54.935L18.11 450.227c-35.285-35.934-15.818-98.574 32.934-105.98l250.75-38.081c19.35-2.94 36.082-15.675 44.756-33.996L458.673 34.627c21.825-46.168 84.836-46.168 106.6 0z" fill="currentColor"/></svg>
+          <span>{{ starCount }}</span>
+        </button>
+        <button class="wd-action-btn wd-download-btn" @click="handleDownload" :disabled="downloadPending">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        </button>
+      </div>
+
+      <!-- 导航栏 -->
+      <nav class="gallery-nav" aria-label="作品导航">
+        <button class="nav-btn nav-btn--prev" :class="{ 'nav-btn--disabled': navLoading }" :disabled="navLoading" @click="goToPrevWork">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="15 18 9 12 15 6"/>
+          </svg>
+          <span>上一张</span>
+        </button>
+        <span class="nav-title">{{ workTitle }}</span>
+        <button class="nav-btn nav-btn--next" :class="{ 'nav-btn--disabled': navLoading }" :disabled="navLoading" @click="goToNextWork">
+          <span>下一张</span>
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="9 18 15 12 9 6"/>
+          </svg>
+        </button>
+      </nav>
+
+      <!-- 评论按钮 — 主题绿底黑字 -->
+      <button class="wd-comment-btn" @click="toggleComments" aria-label="查看评论">
         <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <polyline points="15 18 9 12 15 6"/>
+          <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
         </svg>
-        <span>上一张</span>
-      </button>
-
-      <span class="nav-title">{{ workTitle }}</span>
-
-      <button class="nav-btn nav-btn--next" :class="{ 'nav-btn--disabled': navLoading }" :disabled="navLoading" @click="goToNextWork">
-        <span>下一张</span>
-        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <polyline points="9 18 15 12 9 6"/>
-        </svg>
-      </button>
-    </nav>
-
-    <!-- ═══════════════════════════════════════════════════════
-         操作栏 — 点赞 / 收藏 / 下载
-         ═══════════════════════════════════════════════════════ -->
-    <div class="wd-action-bar">
-      <button class="wd-action-btn" :class="{ 'wd-action-btn--active': liked }" @click="handleToggleLike" :disabled="likePending">
-        <svg viewBox="0 0 1024 1024" width="20" height="20"><path d="M885.9 533.7c16.8-22.2 26.1-49.4 26.1-77.7 0-44.9-25.1-87.4-65.5-111.1a67.67 67.67 0 0 0-34.3-9.3H572.4l6-122.9c1.4-29.7-9.1-57.9-29.5-79.4-20.5-21.5-48.1-33.4-77.9-33.4-52 0-98 35-111.8 85.1l-85.9 311h-0.3v428h472.3c9.2 0 18.2-1.8 26.5-5.4 47.6-20.3 78.3-66.8 78.3-118.4 0-12.6-1.8-25-5.4-37 16.8-22.2 26.1-49.4 26.1-77.7-0.2-12.6-2-25.1-5.6-37.1zM112 528v364c0 17.7 14.3 32 32 32h65V496h-65c-17.7 0-32 14.3-32 32z" fill="currentColor"/></svg>
-        <span>{{ likeCount }}</span>
-      </button>
-      <button class="wd-action-btn" :class="{ 'wd-action-btn--active': starred }" @click="handleToggleStar" :disabled="starPending">
-        <svg viewBox="0 0 1024 1024" width="20" height="20"><path d="M565.273 34.627L677.369 272.17c8.706 18.32 25.411 31.051 44.823 33.996l250.776 38.081c48.698 7.411 68.225 70.046 32.934 105.98L824.407 635.164c-13.998 14.23-20.352 34.815-17.059 54.935l42.82 261.127c8.346 50.696-42.643 89.452-86.226 65.519L539.634 893.474c-17.286-9.526-37.992-9.526-55.278 0l-224.314 123.27c-43.583 23.934-94.572-14.822-86.22-65.518L216.638 690.1c3.32-20.12-3.089-40.705-17.087-54.935L18.11 450.227c-35.285-35.934-15.818-98.574 32.934-105.98l250.75-38.081c19.35-2.94 36.082-15.675 44.756-33.996L458.673 34.627c21.825-46.168 84.836-46.168 106.6 0z" fill="currentColor"/></svg>
-        <span>{{ starCount }}</span>
-      </button>
-      <button class="wd-action-btn wd-download-btn" @click="handleDownload" :disabled="downloadPending">
-        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        <span>评论</span>
       </button>
     </div>
 
-    <!--
-    ═══════════════════════════════════════════════════════════════
-    TODO: 作者信息 & 评论区 — 暂时注释，待图片预览效果确认后再恢复
-    ═══════════════════════════════════════════════════════════════
-
-    <aside class="wd-sidebar">
-      <div class="publisher-card">...</div>
-    </aside>
-
-    <section class="wd-comments">...</section>
-    -->
+    <!-- ═══════════════════════════════════════════════════════
+         评论区 遮罩弹窗
+         ═══════════════════════════════════════════════════════ -->
+    <div v-if="showComments" class="wd-comments-overlay" @click.self="toggleComments">
+      <div class="wd-comments-panel">
+        <div class="wd-comments-panel-header">
+          <h3 class="wd-comments-panel-title">评论</h3>
+          <button class="wd-comments-panel-close" @click="toggleComments" aria-label="关闭评论">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+              <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+            </svg>
+          </button>
+        </div>
+        <div class="wd-comments-panel-body">
+          <div v-if="comments.length === 0" class="wd-comments-empty">暂无评论，快来抢沙发吧~</div>
+          <div v-for="comment in comments" :key="comment.comment_id" class="wd-comment-item">
+            <img class="wd-comment-avatar" :src="comment.avatar || publisher.avatar" loading="lazy" />
+            <div class="wd-comment-body">
+              <p class="wd-comment-author">{{ comment.nickname || '匿名用户' }}</p>
+              <p class="wd-comment-text">{{ comment.comment_text }}</p>
+              <span class="wd-comment-time">{{ formatTime(comment.create_time) }}</span>
+            </div>
+          </div>
+        </div>
+        <div class="wd-comment-input-row">
+          <input v-model="newComment" type="text" placeholder="写下你的评论..." @keyup.enter="handleSubmitComment" />
+          <button class="wd-comment-submit-btn" @click="handleSubmitComment" :disabled="commentSubmitting">发送</button>
+        </div>
+      </div>
+    </div>
 
   </div>
 </template>
 
 <style>
-@import url(../assets/CSS/galleryViewer.css);
-
-/* ── 操作栏（点赞/收藏/下载） ─────────────────────────────── */
-.wd-action-bar {
-  position: absolute;
-  bottom: 112px;
-  left: 50%;
-  transform: translateX(-50%);
-  z-index: 2;
-  display: flex;
-  align-items: center;
-  gap: 24px;
-  padding: 10px 24px;
-  border-radius: 999px;
-  background: #0a0a0a;
-  box-shadow:
-    0 8px 32px rgba(0, 0, 0, 0.45),
-    inset 0 1px 0 rgba(255, 255, 255, 0.04);
-}
-
-.wd-action-btn {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 0;
-  border: none;
-  background: transparent;
-  color: var(--text-secondary);
-  font-size: 14px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: color 0.2s, transform 0.15s;
-}
-
-.wd-action-btn:hover { color: var(--text-primary); }
-.wd-action-btn:active { transform: scale(0.95); }
-.wd-action-btn:disabled { opacity: 0.4; cursor: wait; }
-.wd-action-btn--active { color: #4a9eff; }
-.wd-action-btn--active:hover { color: #66c0ff; }
-.wd-download-btn { margin-left: auto; }
+@import url(../assets/CSS/workDetail.css);
 </style>
