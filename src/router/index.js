@@ -83,6 +83,12 @@ const router = createRouter({
             name: 'pixelArchive',
             component: () => import('../views/PixelArchive.vue'),
         },
+        // 了解像素 AboutPixel
+        {
+            path: '/about',
+            name: 'aboutPixel',
+            component: () => import('../views/AboutPixel.vue'),
+        },
         // 404页面 - 捕获所有未匹配的路径
         {
             path: '/:pathMatch(.*)*',

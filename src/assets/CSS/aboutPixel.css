@@ -1,0 +1,513 @@
+/* ═══════════════════════════════════════════════════════════════
+   AboutPixel — 了解像素页面
+   命名规范: ap-* 前缀，BEM-like -- 修饰符
+   注意: 品牌 & 返回样式从 workDetail.css 复制，不复用继承
+   ═══════════════════════════════════════════════════════════════ */
+
+/* ── 页面容器（全视口滚动容器，滚动条贯穿头部）─── */
+.ap-page {
+  position: fixed;
+  inset: 0;
+  background: #000000;
+  color: #ffffff;
+  overflow-y: auto;
+  overflow-x: hidden;
+  font-family: 'Gilroy', 'Noto Sans SC', sans-serif;
+}
+/* 滚动条 - 极简，贯穿全高度 */
+.ap-page::-webkit-scrollbar { width: 4px; }
+.ap-page::-webkit-scrollbar-track { background: transparent; }
+.ap-page::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.1); border-radius: 2px; }
+
+/* ── Top Sticky Bar（毛玻璃横条，sticky 跟随滚动容器）── */
+.ap-topbar {
+  position: sticky;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 64px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 0 24px;
+  z-index: 100;
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+/* ── 品牌文字（无药丸底，纯文字）─────────────────── */
+.ap-brand {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: default;
+  flex-shrink: 0;
+  position: relative;
+}
+
+.ap-brand--text {
+  font-family: "华文琥珀", sans-serif;
+  font-size: 18px;
+  color: #ffffff;
+  white-space: nowrap;
+  margin: 0;
+  line-height: 1;
+}
+
+/* ── 返回按钮（复制 pill-back 样式到 ap-* 作用域）─── */
+.ap-back-btn {
+  width: 40px;
+  height: 40px;
+  border-radius: 999px;
+  background: #0f0f0f;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+  cursor: pointer;
+  color: #ffffff;
+  padding: 0;
+  flex-shrink: 0;
+  transition: color 0.25s ease;
+}
+.ap-back-btn:hover {
+  color: var(--color-primary);
+}
+
+/* ── Tab 胶囊切换器 ────────────────────────────────── */
+.ap-tab-capsule {
+  position: relative;
+  height: 38px;
+  width: 340px;
+  border-radius: 999px;
+  background: #0f0f0f;
+  display: flex;
+  align-items: center;
+  overflow: hidden;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+  flex-shrink: 0;
+}
+.ap-tab-item {
+  position: relative;
+  z-index: 2;
+  flex: 1 1 0;
+  min-width: 0;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 14px;
+  padding: 0 24px;
+  white-space: nowrap;
+  transition: color 0.25s ease;
+  user-select: none;
+  text-align: center;
+}
+.ap-tab-item--active {
+  color: #000000;
+  font-weight: 600;
+}
+.ap-tab-slider {
+  position: absolute;
+  z-index: 1;
+  top: 3px;
+  bottom: 3px;
+  border-radius: 999px;
+  background: var(--color-primary);
+  transition: left 0.35s cubic-bezier(0.4, 0, 0.2, 1),
+              width 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ── 内容区 ────────────────────────────────────────── */
+.ap-content {
+  position: relative;
+}
+
+/* ── 面板叠层容器（绝对定位上下文）────────────────── */
+.ap-panels-wrap {
+  position: relative;
+  width: 100%;
+}
+
+/* ── 面板通用（全部 absolute 叠放，opacity 切换）─── */
+.ap-panel {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  opacity: 0;
+  pointer-events: none;
+}
+.ap-panel--on {
+  position: relative;
+  opacity: 1;
+  pointer-events: auto;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   Panel 1 — 关于我们  (文字 + 图片深度交错)
+
+   深度层级:
+     z-0: img1 美学 (底层)         ← 被标题压住
+     z-1: .ap-about--title 标题    ← 压 img1，被 img2 压
+     z-2: .ap-about--body 正文     ← 被 img3 压
+     z-3: img2 面包 (中层)         ← 压标题，被 img3 压
+     z-4: img3 bro (顶层)          ← 压正文 + 面包
+   ═══════════════════════════════════════════════════════════════ */
+.ap-about {
+  padding: 80px 5% 48px;
+}
+.ap-about--layout {
+  position: relative;
+  max-width: 1200px;
+  margin: 0 auto;
+  /* 图片可溢出此容器 */
+  overflow: visible;
+}
+.ap-about--text {
+  position: relative;
+  z-index: auto;
+  max-width: 58%;
+  padding-top: 20px;
+}
+
+/* 标题 — sul-gbk6 纯白，z-1 压在 img1 上方 */
+.ap-about--title {
+  font-family: "sul-gbk6", sans-serif;
+  font-size: 64px;
+  line-height: 1.1;
+  color: #ffffff;
+  margin: 0 0 16px;
+  position: relative;
+  z-index: 1;
+}
+.ap-about--subtitle {
+  font-size: 15px;
+  color: rgba(255, 255, 255, 0.3);
+  margin: 0 0 48px;
+  font-style: italic;
+  letter-spacing: 1px;
+  position: relative;
+  z-index: 2;
+}
+.ap-about--body {
+  font-size: 15px;
+  line-height: 2;
+  color: rgba(255, 255, 255, 0.7);
+  position: relative;
+  z-index: 2;
+}
+.ap-about--body p {
+  margin: 0 0 14px;
+}
+
+/* 图片 — 绝对定位，大尺寸大面积交错 */
+.ap-about--img {
+  position: absolute;
+  border-radius: 14px;
+  object-fit: cover;
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.65);
+  pointer-events: none;
+}
+/* z-0: 底图 — 美学，右上方大幅，被标题局部压住 */
+.ap-about--img1 {
+  z-index: 0;
+  top: -50px;
+  right: -30px;
+  width: 560px;
+  height: 360px;
+  transform: rotate(-2.5deg);
+}
+/* z-3: 中图 — 面包，纵长压入标题区，被 bro 压 */
+.ap-about--img2 {
+  z-index: 3;
+  top: 30px;
+  left: 38%;
+  width: 320px;
+  height: 450px;
+  transform: rotate(2deg);
+}
+/* z-4: 顶图 — bro，偏右下压住正文 + 面包边缘 */
+.ap-about--img3 {
+  z-index: 4;
+  top: 220px;
+  left: 48%;
+  width: 380px;
+  height: 290px;
+  transform: rotate(-3.5deg);
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   Panel 2 — 创作条例  (条约列表，居中)
+   ═══════════════════════════════════════════════════════════════ */
+.ap-guide {
+  padding: 64px 5%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.ap-guide--inner {
+  max-width: 750px;
+  width: 100%;
+}
+.ap-guide--quote {
+  font-size: 18px;
+  color: var(--color-primary);
+  margin: 0 0 16px;
+  font-weight: 600;
+  border-left: 3px solid var(--color-primary);
+  padding-left: 16px;
+  /* GSAP 初始态: opacity 0, y 20（由 JS set） */
+}
+.ap-guide--preamble {
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.4);
+  margin: 0 0 48px;
+  line-height: 1.8;
+}
+.ap-guide--rules {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.ap-guide--rule {
+  padding: 24px 28px;
+  /* background: rgba(255, 255, 255, 0.03); */
+  border-radius: 14px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  /* GSAP 初始态: opacity 0, y 20 */
+}
+.ap-guide--rule-num {
+  font-size: 13px;
+  color: var(--color-primary);
+  margin: 0 0 6px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.ap-guide--rule-title {
+  font-size: 17px;
+  color: #ffffff;
+  margin: 0 0 10px;
+  font-weight: 600;
+}
+.ap-guide--rule-body {
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.6);
+  line-height: 1.85;
+  margin: 0;
+}
+.ap-guide--rule-body + .ap-guide--rule-body {
+  margin-top: 8px;
+}
+.ap-guide--closing {
+  margin: 48px 0 0;
+  padding: 24px;
+  text-align: center;
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.35);
+  font-style: italic;
+  line-height: 1.8;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  /* GSAP 初始态: opacity 0, y 20 */
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   Panel 3 — 订阅  (居中叙事)
+   ═══════════════════════════════════════════════════════════════ */
+.ap-subscribe {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: calc(100vh - 64px);
+  text-align: center;
+  padding: 48px 5%;
+}
+.ap-subscribe--inner {
+  max-width: 520px;
+  width: 100%;
+}
+.ap-subscribe--quote {
+  font-size: 20px;
+  color: #ffffff;
+  margin: 0 0 24px;
+  line-height: 1.5;
+}
+.ap-subscribe--body {
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.5);
+  line-height: 1.9;
+  margin: 0 0 40px;
+}
+.ap-subscribe--body p {
+  margin: 0 0 10px;
+}
+
+/* 邮件留资 */
+.ap-subscribe--input-row {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  margin: 0 0 28px;
+}
+.ap-subscribe--input {
+  width: 280px;
+  height: 44px;
+  border-radius: 22px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  background: rgba(255, 255, 255, 0.06);
+  color: #fff;
+  padding: 0 20px;
+  font-size: 14px;
+  outline: none;
+  transition: border-color 0.25s;
+}
+.ap-subscribe--input:focus {
+  border-color: var(--color-primary);
+}
+.ap-subscribe--input::placeholder {
+  color: rgba(255, 255, 255, 0.25);
+}
+.ap-subscribe--submit {
+  height: 44px;
+  padding: 0 28px;
+  border-radius: 22px;
+  background: var(--color-primary);
+  color: #000;
+  font-weight: 600;
+  font-size: 14px;
+  border: none;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.ap-subscribe--submit:hover {
+  background: #00c957;
+}
+
+/* 权益列表 */
+.ap-subscribe--benefits {
+  margin: 0 auto 40px;
+  text-align: left;
+  list-style: none;
+  padding: 0;
+  display: inline-flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.ap-subscribe--benefit-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.55);
+}
+.ap-subscribe--benefit-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--color-primary);
+  flex-shrink: 0;
+}
+
+/* 子面板切换按钮 */
+.ap-subscribe--toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 36px;
+  padding: 0 24px;
+  border-radius: 18px;
+  background: #0f0f0f;
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 13px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  cursor: pointer;
+  transition: all 0.25s;
+}
+.ap-subscribe--toggle:hover {
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+}
+
+/* 支持者名单 */
+.ap-subscribe--supporters {
+  margin-top: 40px;
+  padding: 48px 0;
+  width: 100%;
+  max-width: 400px;
+  margin-left: auto;
+  margin-right: auto;
+}
+.ap-subscribe--empty {
+  font-size: 15px;
+  color: rgba(255, 255, 255, 0.2);
+  font-style: italic;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   Responsive
+   ═══════════════════════════════════════════════════════════════ */
+@media (max-width: 768px) {
+  .ap-topbar {
+    height: 56px;
+    padding: 0 12px;
+    gap: 10px;
+  }
+  .ap-brand--text {
+    font-size: 15px;
+  }
+  .ap-tab-item {
+    font-size: 12px;
+    padding: 0 16px;
+  }
+  .ap-tab-capsule {
+    height: 34px;
+    width: 280px;
+  }
+  .ap-content {
+    min-height: calc(100vh - 56px);
+  }
+  .ap-about {
+    padding: 48px 20px 32px;
+  }
+  .ap-about--text {
+    max-width: 100%;
+  }
+  .ap-about--title {
+    font-size: 36px;
+  }
+  .ap-about--img1 {
+    width: 320px;
+    height: 200px;
+    top: -20px;
+    right: -10px;
+  }
+  .ap-about--img2 {
+    width: 180px;
+    height: 260px;
+    top: 60px;
+    left: 25%;
+  }
+  .ap-about--img3 {
+    width: 220px;
+    height: 170px;
+    top: 180px;
+    left: 35%;
+  }
+  .ap-guide,
+  .ap-subscribe {
+    padding: 32px 20px;
+  }
+  .ap-subscribe {
+    min-height: calc(100vh - 56px);
+  }
+  .ap-guide--rule {
+    padding: 18px 20px;
+  }
+}

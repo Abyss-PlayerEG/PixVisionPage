@@ -193,7 +193,7 @@ onUnmounted(() => {
 
       <!-- 跳转卡片 -->
       <div class="n1_linkcard">
-        <div class="link-card-item">
+        <div class="link-card-item" @click="router.push('/about#subscribe')">
           <svg
             class="card-icon"
             viewBox="0 0 1024 1024"
@@ -213,7 +213,7 @@ onUnmounted(() => {
           <span class="card-title">订阅</span>
           <p class="card-desc">支持我们，优享特权</p>
         </div>
-        <div class="link-card-item">
+        <div class="link-card-item" @click="router.push('/about#about')">
           <svg
             class="card-icon"
             viewBox="0 0 1024 1024"
@@ -233,7 +233,7 @@ onUnmounted(() => {
           <span class="card-title">俯瞰像素视觉</span>
           <p class="card-desc">站在巨人的肩膀上，追求视觉的质感</p>
         </div>
-        <div class="link-card-item">
+        <div class="link-card-item" @click="router.push('/about#guide')">
           <svg
             class="card-icon"
             viewBox="0 0 1024 1024"
@@ -455,7 +455,7 @@ onUnmounted(() => {
       <div class="n7_showCont">
 
         <div class="n7_showContBtnZone">
-          <div class="n7item_btn">
+          <div class="n7item_btn" @click="router.push('/about#guide')">
             参与像素创作者计划
           </div>
           <div class="n7item_self">

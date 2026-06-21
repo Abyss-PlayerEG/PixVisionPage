@@ -63,10 +63,10 @@ const siteNavItems = computed(() => {
     // 需登录
     { label: '个人中心', route: '/profile/me', show: isLoggedIn.value },
     { label: '消息中心', route: '/messages', show: isLoggedIn.value },
-    // 待补全页面
-    { label: '订阅', route: '/subscribe', show: true },
-    { label: '像素创作者邀请', route: '/creator-invite', show: true },
-    { label: '关于我们', route: '/about', show: true },
+    // 了解像素页（hash 锚点入口）
+    { label: '订阅', route: '/about#subscribe', show: true },
+    { label: '像素创作者邀请', route: '/about#guide', show: true },
+    { label: '关于我们', route: '/about#about', show: true },
     // 权限控制（置底）
     { label: '创作者中心', route: '/creatorT', show: isLoggedIn.value && (role === 22 || role === 77) },
     { label: '管理员面板', route: '/admin', show: isLoggedIn.value && (role === 55 || role === 77) },
@@ -506,6 +506,12 @@ onUnmounted(() => {
                         <p class="pending-text">更多功能<br/>开发中···</p>
                     </div>
                 </div>
+            </div>
+            <!-- 关于我们：简介 + 跳转按钮 -->
+            <div v-else-if="activeMenuIndex === 2" class="dropdown-content about-dropdown">
+                <p class="about-dropdown--tagline">像素是起点，不是限制。</p>
+                <p class="about-dropdown--body">第三维度团队打造的视觉分享平台。<br>每一帧像素，从数据变成表达。<br>没有大厂规格，只有一群想把"好看"当成信仰的人。</p>
+                <button class="about-dropdown--btn" @click="navToRoute('/about#about')">了解像素视觉</button>
             </div>
             <!-- 其他菜单：纯文本内容 -->
             <div v-else class="dropdown-content">
@@ -1018,5 +1024,53 @@ onUnmounted(() => {
     text-align: center;
     line-height: 1.8;
     margin: 0;
+}
+
+/* ── 关于我们下拉 ────────────────────────────────── */
+.about-dropdown {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 120px 48px;
+    gap: 16px;
+    position: relative;
+    overflow: hidden;
+}
+.about-dropdown--tagline {
+    font-family: sul-gbk6, sans-serif;
+    font-size: 22px;
+    color: #ffffff;
+    margin: 0;
+    position: relative;
+    z-index: 2;
+}
+.about-dropdown--body {
+    font-size: 13px;
+    color: rgba(255, 255, 255, 0.5);
+    line-height: 1.9;
+    margin: 0;
+    max-width: 320px;
+    position: relative;
+    z-index: 2;
+}
+.about-dropdown--btn {
+    margin-top: 8px;
+    height: 38px;
+    padding: 0 32px;
+    border-radius: 999px;
+    background: var(--color-primary);
+    color: #000;
+    font-weight: 600;
+    font-size: 14px;
+    border: none;
+    cursor: pointer;
+    position: relative;
+    z-index: 2;
+    transition: background 0.2s;
+}
+.about-dropdown--btn:hover {
+    background: #00c957;
 }
 </style>
