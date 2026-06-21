@@ -99,6 +99,8 @@ const props = defineProps({
   isLoading: { type: Boolean, default: false },
   /** 列间距，默认 8px */
   gap: { type: Number, default: 8 },
+  /** 固定列数（传 0 则自适应）；不传或传 0 走响应式自动计算 */
+  columns: { type: Number, default: 0 },
   /** 是否为编辑模式 */
   isEditing: { type: Boolean, default: false },
   /** 选中的项目 ID 集合 */
@@ -142,6 +144,7 @@ const onImageError = (img) => {
 
 // ── 响应式列数 ──
 const calcColumnCount = () => {
+  if (props.columns > 0) return props.columns
   const w = window.innerWidth
   if (w < 640) return 2
   if (w < 1024) return 3
