@@ -1,5 +1,6 @@
 <script setup>
 import { ref, computed, watch, nextTick, onMounted, onUnmounted } from 'vue'
+import { useRoute } from 'vue-router'
 import { useWorkDetail } from '@/composables/useWorkDetail'
 
 // ═══════════════════════════════════════════════════════════════
@@ -11,6 +12,11 @@ import { useWorkDetail } from '@/composables/useWorkDetail'
 //   Layer 3 — 底部操作栏 + 导航栏 + 评论按钮
 //   Top-left — Pixel Vision 品牌药丸 + 返回按钮
 //   Card overlay — 图片右上角信息卡（作者行 + 统计区 + 查看主页按钮）
+//
+// 评论区：
+//   Hero position:sticky 吸附顶部，评论区 z-index 更高自然滚动覆盖
+//   全宽 100%，左上/右上 40px 圆角，min-height 100vh
+//   点击评论按钮 → 平滑滚动到评论输入区
 // ═══════════════════════════════════════════════════════════════
 
 const {
@@ -40,7 +46,21 @@ const {
 } = useWorkDetail()
 
 // ── 组件本地状态 ──────────────────────────────────────────
-const showComments = ref(false)
+const viewerRef = ref(null)
+const commentsInputRef = ref(null)
+const textareaRef = ref(null)
+
+// ── textarea 自动撑高 ───────────────────────────────────
+const autoResizeTextarea = () => {
+  const el = textareaRef.value
+  if (!el) return
+  el.style.height = 'auto'
+  el.style.height = Math.min(el.scrollHeight, 200) + 'px'
+}
+// 评论提交后输入框清空，重置高度
+watch(newComment, (v) => {
+  if (!v) nextTick(() => autoResizeTextarea())
+})
 
 // 查看作者主页
 const handleViewProfile = () => {
@@ -102,11 +122,35 @@ const publisherStats = computed(() => [
   { label: '收藏', value: publisher.value?.totalStars || 0, icon: 'stars' },
 ])
 
-const toggleComments = () => { showComments.value = !showComments.value }
+// ── 评论滚动：点击评论按钮 → 平滑滚动到输入区 ──────────
+const scrollToComments = () => {
+  nextTick(() => {
+    if (!viewerRef.value || !commentsInputRef.value) return
+    const container = viewerRef.value
+    const input = commentsInputRef.value
+    const containerRect = container.getBoundingClientRect()
+    const inputRect = input.getBoundingClientRect()
+    const targetScroll = container.scrollTop + (inputRect.top - containerRect.top) - 120
+    container.scrollTo({ top: targetScroll, behavior: 'smooth' })
+  })
+}
+
+// ── 路由切换时重置滚动位置到顶部 ──────────────────────
+const route = useRoute()
+watch(() => route.params.id, () => {
+  nextTick(() => {
+    if (viewerRef.value) viewerRef.value.scrollTop = 0
+  })
+})
 </script>
 
 <template>
-  <div class="gallery-viewer">
+  <div class="gallery-viewer" ref="viewerRef">
+
+    <!-- ═══════════════════════════════════════════════════════
+         Hero — 全屏画廊首屏
+         ═══════════════════════════════════════════════════════ -->
+    <div class="gallery-hero">
 
     <!-- ═══════════════════════════════════════════════════════
          Layer 1 — 底层全屏背景
@@ -269,7 +313,7 @@ const toggleComments = () => { showComments.value = !showComments.value }
       </nav>
 
       <!-- 评论按钮 — 主题绿底黑字 -->
-      <button class="wd-comment-btn" @click="toggleComments" aria-label="查看评论">
+      <button class="wd-comment-btn" @click="scrollToComments" aria-label="查看评论">
         <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
         </svg>
@@ -277,34 +321,63 @@ const toggleComments = () => { showComments.value = !showComments.value }
       </button>
     </div>
 
+    </div><!-- /gallery-hero -->
+
     <!-- ═══════════════════════════════════════════════════════
-         评论区 遮罩弹窗
+         评论区 — 全宽面板，max-height: 80vh，内部滚动
+         border-radius: 40px 40px 0 0 / 黑色毛玻璃
          ═══════════════════════════════════════════════════════ -->
-    <div v-if="showComments" class="wd-comments-overlay" @click.self="toggleComments">
-      <div class="wd-comments-panel">
-        <div class="wd-comments-panel-header">
-          <h3 class="wd-comments-panel-title">评论</h3>
-          <button class="wd-comments-panel-close" @click="toggleComments" aria-label="关闭评论">
-            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
-              <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
-            </svg>
-          </button>
+    <div class="wd-comments-section">
+      <div class="wd-comments-inner">
+
+        <!-- 标题栏 -->
+        <div class="wd-comments-header">
+          <h2 class="wd-comments-title">评论</h2>
+          <span class="wd-comments-count" v-if="comments.length">{{ comments.length }} 条</span>
         </div>
-        <div class="wd-comments-panel-body">
-          <div v-if="comments.length === 0" class="wd-comments-empty">暂无评论，快来抢沙发吧~</div>
+
+        <!-- 评论列表 -->
+        <div class="wd-comments-body">
+          <div v-if="comments.length === 0" class="wd-comments-empty">
+            <svg viewBox="0 0 24 24" width="40" height="40" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" opacity="0.3">
+              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+            </svg>
+            <p>暂无评论，快来抢沙发吧~</p>
+          </div>
           <div v-for="comment in comments" :key="comment.comment_id" class="wd-comment-item">
-            <img class="wd-comment-avatar" :src="comment.avatar || publisher.avatar" loading="lazy" />
+            <img class="wd-comment-avatar" :src="comment.avatar || publisher.avatar" loading="lazy" alt="" />
             <div class="wd-comment-body">
-              <p class="wd-comment-author">{{ comment.nickname || '匿名用户' }}</p>
+              <div class="wd-comment-top">
+                <span class="wd-comment-author">{{ comment.nickname || '匿名用户' }}</span>
+                <span class="wd-comment-time">{{ formatTime(comment.create_time) }}</span>
+              </div>
               <p class="wd-comment-text">{{ comment.comment_text }}</p>
-              <span class="wd-comment-time">{{ formatTime(comment.create_time) }}</span>
             </div>
           </div>
         </div>
-        <div class="wd-comment-input-row">
-          <input v-model="newComment" type="text" placeholder="写下你的评论..." @keyup.enter="handleSubmitComment" />
-          <button class="wd-comment-submit-btn" @click="handleSubmitComment" :disabled="commentSubmitting">发送</button>
+
+        <!-- 评论输入区 -->
+        <div class="wd-comments-input-row" ref="commentsInputRef">
+          <div class="wd-comments-input-wrapper">
+            <textarea
+              ref="textareaRef"
+              v-model="newComment"
+              placeholder="写下你的评论..."
+              @keydown.enter.exact.prevent="handleSubmitComment"
+              @input="autoResizeTextarea"
+              maxlength="500"
+              rows="1"
+            />
+            <button
+              class="wd-comments-submit-btn"
+              @click="handleSubmitComment"
+              :disabled="commentSubmitting || !newComment.trim()"
+            >
+              发送
+            </button>
+          </div>
         </div>
+
       </div>
     </div>
 

@@ -2,13 +2,25 @@
    WorkDetail — 作品浏览页面（独立样式，不继承 galleryViewer.css）
    ═══════════════════════════════════════════════════════════════ */
 
-/* ── 全屏容器 ────────────────────────────────────────────────── */
+/* ── 全屏滚动容器 ────────────────────────────────────────────── */
 .gallery-viewer {
   position: fixed;
   inset: 0;
   z-index: 2000;
   background: var(--bg-primary);
+  overflow-y: auto;
+  overflow-x: hidden;
+  scroll-behavior: smooth;
+}
+
+/* ── Hero 首屏（sticky 吸附于滚动容器顶部，同时为 absolute 子元素提供定位上下文）── */
+.gallery-hero {
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  width: 100%;
   overflow: hidden;
+  z-index: 1;
 }
 
 /* ── Layer 1: 底层全屏模糊背景 ──────────────────────────────── */
@@ -404,162 +416,210 @@
 }
 
 /* ═══════════════════════════════════════════════════════════════
-   评论区遮罩层
+   评论区 — 全宽面板，max-height 80vh，内部滚动，40px 顶部圆角
    ═══════════════════════════════════════════════════════════════ */
-.wd-comments-overlay {
-  position: fixed;
-  inset: 0;
-  z-index: 3000;
-  background: rgba(0, 0, 0, 0.7);
-  backdrop-filter: blur(8px);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.wd-comments-panel {
-  width: 480px;
-  max-width: 90vw;
+/* z-index: 10 > hero 的 z-index: 1，保证评论区滚动时覆盖 hero */
+.wd-comments-section {
+  position: relative;
+  z-index: 10;
+  width: 100%;
+  height: 80vh;
   max-height: 80vh;
-  border-radius: 20px;
-  background: #1a1a1a;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.6);
+  border-radius: 40px 40px 0 0;
+  background: rgba(0, 0, 0, 0.78);
+  backdrop-filter: blur(28px);
+  -webkit-backdrop-filter: blur(28px);
   display: flex;
   flex-direction: column;
   overflow: hidden;
 }
 
-.wd-comments-panel-header {
+.wd-comments-inner {
+  max-width: 720px;
+  width: 100%;
+  margin: 0 auto;
+  padding: 48px 40px 0;
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 16px 20px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+}
+
+/* ── 评论标题栏 ────────────────────────────────────────────── */
+.wd-comments-header {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  padding-bottom: 24px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  margin-bottom: 8px;
   flex-shrink: 0;
 }
 
-.wd-comments-panel-title {
-  font-size: 16px;
-  font-weight: 600;
+.wd-comments-title {
+  font-size: 22px;
+  font-weight: 700;
   color: var(--text-primary);
   margin: 0;
 }
 
-.wd-comments-panel-close {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 32px;
-  height: 32px;
-  border-radius: 8px;
-  border: none;
-  background: transparent;
-  color: var(--text-secondary);
-  cursor: pointer;
-  transition: background 0.2s, color 0.2s;
+.wd-comments-count {
+  font-size: 13px;
+  color: var(--text-muted);
 }
 
-.wd-comments-panel-close:hover {
-  background: rgba(255, 255, 255, 0.08);
-  color: var(--text-primary);
-}
-
-.wd-comments-panel-body {
+/* ── 评论列表（内部滚动）──────────────────────────────────── */
+.wd-comments-body {
   flex: 1;
+  min-height: 0;
   overflow-y: auto;
-  padding: 16px 20px;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 0;
+  padding: 8px 0 16px;
 }
 
 .wd-comments-empty {
-  text-align: center;
-  padding: 40px 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  padding: 48px 0;
   color: var(--text-muted);
   font-size: 14px;
+  flex: 1;
 }
 
-/* ── 评论项 ─────────────────────────────────────────────────── */
+.wd-comments-empty p {
+  margin: 0;
+}
+
+/* ── 单条评论 ──────────────────────────────────────────────── */
 .wd-comment-item {
   display: flex;
-  gap: 10px;
-  padding: 12px;
-  border-radius: 10px;
-  background: rgba(255, 255, 255, 0.03);
+  gap: 14px;
+  padding: 16px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
   transition: background 0.2s;
 }
 
-.wd-comment-item:hover { background: rgba(255, 255, 255, 0.06); }
+.wd-comment-item:last-child {
+  border-bottom: none;
+}
 
 .wd-comment-avatar {
-  width: 32px;
-  height: 32px;
+  width: 40px;
+  height: 40px;
   border-radius: 50%;
   object-fit: cover;
   flex-shrink: 0;
   background: var(--bg-tertiary);
 }
 
-.wd-comment-body { flex: 1; min-width: 0; }
+.wd-comment-body {
+  flex: 1;
+  min-width: 0;
+}
+
+.wd-comment-top {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  margin-bottom: 6px;
+}
 
 .wd-comment-author {
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 600;
   color: var(--text-light);
-  margin: 0 0 3px;
+}
+
+.wd-comment-time {
+  font-size: 12px;
+  color: var(--text-muted);
+  flex-shrink: 0;
 }
 
 .wd-comment-text {
-  font-size: 13px;
+  font-size: 14px;
   color: var(--text-dim);
-  line-height: 1.5;
-  margin: 0 0 4px;
+  line-height: 1.6;
+  margin: 0;
   word-break: break-word;
 }
 
-.wd-comment-time { font-size: 11px; color: var(--text-muted); }
-
-/* ── 评论输入区 ─────────────────────────────────────────────── */
-.wd-comment-input-row {
-  display: flex;
-  gap: 8px;
-  padding: 12px 20px;
-  border-top: 1px solid rgba(255, 255, 255, 0.08);
+/* ── 评论输入区（吸附评论区底部） ─────────────────────────── */
+.wd-comments-input-row {
   flex-shrink: 0;
+  padding: 16px 0 24px;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
 }
 
-.wd-comment-input-row input {
+.wd-comments-input-wrapper {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.wd-comments-input-wrapper textarea {
   flex: 1;
-  padding: 8px 12px;
-  border-radius: 8px;
+  min-height: 48px;
+  max-height: 200px;
+  padding: 13px 18px;
+  border-radius: 24px;
   border: 1px solid rgba(255, 255, 255, 0.1);
   background: rgba(255, 255, 255, 0.04);
   color: var(--text-primary);
-  font-size: 13px;
+  font-size: 14px;
   outline: none;
-  transition: border-color 0.2s;
+  resize: none;
+  scrollbar-width: none;
+  transition: border-color 0.25s, background 0.25s;
   font-family: inherit;
+  line-height: 1.5;
 }
 
-.wd-comment-input-row input:focus { border-color: rgba(255, 255, 255, 0.25); }
-.wd-comment-input-row input::placeholder { color: var(--text-muted); }
+.wd-comments-input-wrapper textarea::-webkit-scrollbar {
+  display: none;
+}
 
-.wd-comment-submit-btn {
-  padding: 8px 16px;
-  border-radius: 8px;
+.wd-comments-input-wrapper textarea:focus {
+  border-color: rgba(255, 255, 255, 0.25);
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.wd-comments-input-wrapper textarea::placeholder {
+  color: var(--text-muted);
+}
+
+.wd-comments-submit-btn {
+  height: 48px;
+  padding: 0 28px;
+  border-radius: 24px;
   border: none;
   background: var(--color-primary);
   color: #000;
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 600;
   cursor: pointer;
-  transition: background 0.2s;
+  transition: background 0.2s, transform 0.15s ease, opacity 0.2s;
   flex-shrink: 0;
+  font-family: inherit;
 }
 
-.wd-comment-submit-btn:hover { background: #00c453; }
+.wd-comments-submit-btn:hover:not(:disabled) {
+  background: #00c453;
+}
+
+.wd-comments-submit-btn:active:not(:disabled) {
+  transform: scale(0.95);
+}
+
+.wd-comments-submit-btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
 
 /* ═══════════════════════════════════════════════════════════════
    Right Panel — 右侧信息栏（图片右上角覆盖层）
@@ -746,6 +806,9 @@
    Reduced Motion
    ═══════════════════════════════════════════════════════════════ */
 @media (prefers-reduced-motion: reduce) {
+  .gallery-viewer {
+    scroll-behavior: auto;
+  }
   .gallery-card,
   .gallery-nav,
   .gallery-top-left,
@@ -753,7 +816,9 @@
   .wd-info,
   .wd-bottom-bar,
   .wd-right-panel,
-  .wd-profile-btn {
+  .wd-profile-btn,
+  .wd-comments-section,
+  .wd-comments-submit-btn {
     animation: none !important;
     transition: none !important;
   }
