@@ -509,7 +509,8 @@ const onPanelMouseLeave = () => {
 // 作品点击 → 跳转详情
 const handleWorkClick = (img) => {
   if (!img.workId) return
-  router.push(`/work/${img.workId}?img=${encodeURIComponent(img.imgUrl || img.src)}&title=${encodeURIComponent(img.workTitle || '')}`)
+  const uid = userInfo.value?.userId
+  router.push(`/work/${img.workId}?img=${encodeURIComponent(img.imgUrl || img.src)}&title=${encodeURIComponent(img.workTitle || '')}${uid ? `&userId=${uid}` : ''}`)
 }
 
 // 合集点击 → 跳转 Gallery 预览

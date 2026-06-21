@@ -150,7 +150,7 @@
               :key="work.work_id"
               class="cp-work-card"
               :class="{ clickable: work.approval_status === 10 }"
-              @click="work.approval_status === 10 && goToWorkDetail(work.work_id)"
+              @click="work.approval_status === 10 && goToWorkDetail(work.work_id, work.user_id)"
             >
               <!-- 选择框 -->
               <div
@@ -754,9 +754,9 @@ const {
 
 const router = useRouter()
 
-// 跳转到作品详情页
-const goToWorkDetail = (workId) => {
-  router.push(`/work/${workId}`)
+// 跳转到作品详情页（携带 userId 限定作品范围）
+const goToWorkDetail = (workId, userId) => {
+  router.push(`/work/${workId}${userId ? `?userId=${userId}` : ''}`)
 }
 
 // ==================== 指示器别名（方便模板使用） ====================

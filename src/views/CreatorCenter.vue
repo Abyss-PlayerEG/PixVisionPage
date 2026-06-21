@@ -381,7 +381,7 @@
                             selected: selectedWorkIds.includes(work.work_id)
                         }"
                         :data-work-id="work.work_id"
-                        @click="work.approval_status === 10 && goToWorkDetail(work.work_id)"
+                        @click="work.approval_status === 10 && goToWorkDetail(work.work_id, work.user_id)"
                     >
                         <!-- 选择框 -->
                         <div
@@ -1683,8 +1683,8 @@ const switchTab = (tab) => {
     }
 }
 
-const goToWorkDetail = (workId) => {
-    router.push(`/work/${workId}`)
+const goToWorkDetail = (workId, userId) => {
+    router.push(`/work/${workId}${userId ? `?userId=${userId}` : ''}`)
 }
 
 // ═══════════════════════════════════════════════════

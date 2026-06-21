@@ -6,7 +6,7 @@
 import { ref, watch, onMounted, onUnmounted, computed, nextTick } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { getWorkImageUrl, getAvatarUrl } from '@/config/api'
-import { fetchWorkDetail, fetchCommentList, addComment, deleteComment, toggleLike, toggleStar, fetchLikeStatus, fetchStarStatus, fetchPublisherInfo, getLastWorkId, fetchRandomWork } from '@/api/workApi'
+import { fetchWorkDetail, fetchWorkPage, fetchCommentList, addComment, deleteComment, toggleLike, toggleStar, fetchLikeStatus, fetchStarStatus, fetchPublisherInfo, getLastWorkId, fetchRandomWork } from '@/api/workApi'
 import { getCurrentUser } from '@/api/profileApi'
 import { showSuccess, showError, showInfo } from '@/utils/notification'
 import { showConfirm } from '@/utils/confirmDialog'
@@ -42,6 +42,61 @@ export const useWorkDetail = () => {
   const randomLoading = ref(false)
   const lastWorkId = ref(0)
   const navPrefetched = ref(null)
+
+  // 用户范围：从 route query 读取，限制作品导航只在该用户的作品内
+  const scopeUserId = computed(() => {
+    const q = route.query.userId
+    return q ? Number(q) : null
+  })
+
+  /**
+   * 用户范围内所有作品 ID 列表（按 ID 降序 = 最新在前）
+   * 仅在 scopeUserId 存在时加载，用于 O(1) 无限轮播
+   */
+  const scopedWorkIds = ref([])
+
+  const loadScopedWorkIds = async () => {
+    const uid = scopeUserId.value
+    if (!uid) { scopedWorkIds.value = []; return }
+    try {
+      const result = await fetchWorkPage({ userId: uid, current: 1, size: 500 })
+      if (result.success && result.data?.records) {
+        scopedWorkIds.value = result.data.records
+          .map(r => r.work_id)
+          .sort((a, b) => b - a) // 降序：最新在前
+      } else {
+        scopedWorkIds.value = []
+      }
+    } catch {
+      scopedWorkIds.value = []
+    }
+  }
+
+  /**
+   * 在用户范围内查找上/下一个作品 ID（数组导航，O(1)，支持无限轮播）
+   * @param {'prev'|'next'} dir — prev=上一张(更新的), next=下一张(更旧的)
+   */
+  const findScopedWorkId = (currentId, dir) => {
+    const ids = scopedWorkIds.value
+    if (!ids.length) return null
+    const idx = ids.indexOf(Number(currentId))
+    if (idx === -1) return null
+    if (dir === 'prev') {
+      // 上一张：往列表前面走（更新的，ID 更大）
+      const newIdx = idx <= 0 ? ids.length - 1 : idx - 1
+      return { id: ids[newIdx] }
+    } else {
+      // 下一张：往列表后面走（更旧的，ID 更小）
+      const newIdx = idx >= ids.length - 1 ? 0 : idx + 1
+      return { id: ids[newIdx] }
+    }
+  }
+
+  /**
+   * 全局模式：逐 ID 查找有效作品
+   * @param {number} startId — 起始 ID
+   * @param {'next'|'prev'} direction — 'next'=更大ID(更新), 'prev'=更小ID(更旧)
+   */
   const findValidWorkId = async (startId, direction) => {
     const maxAttempts = 50
     let candidate = direction === 'next' ? startId + 1 : startId - 1
@@ -49,41 +104,78 @@ export const useWorkDetail = () => {
       if (candidate <= 0) return null
       if (direction === 'next' && lastWorkId.value > 0 && candidate > lastWorkId.value) return null
       const result = await fetchWorkDetail(candidate)
-      if (result.success) return { id: candidate, detail: result.data }
+      if (result.success && result.data) {
+        return { id: candidate, detail: result.data }
+      }
       candidate += direction === 'next' ? 1 : -1
     }
     return null
   }
 
+  /**
+   * 上一张 → 往列表前面（更新的作品）
+   */
   const goToPrevWork = async () => {
     if (navLoading.value) return
     const current = Number(workId.value)
     if (!current) return
     navLoading.value = true
-    const found = await findValidWorkId(current, 'prev')
-    navLoading.value = false
-    if (found) {
-      navPrefetched.value = found
-      window.scrollTo({ top: 0, behavior: 'smooth' })
-      router.push({ name: 'workDetail', params: { id: found.id } })
-    } else {
-      showInfo('已经是第一个作品了')
+    try {
+      let found
+      if (scopeUserId.value) {
+        // 用户范围模式：数组导航（即时、无限轮播）
+        found = findScopedWorkId(current, 'prev')
+        if (found) {
+          // 预取详情供 loadWorkData 使用
+          const detailResult = await fetchWorkDetail(found.id)
+          if (detailResult.success) found.detail = detailResult.data
+          else found = null
+        }
+      } else {
+        // 全局模式：逐 ID 查找
+        found = await findValidWorkId(current, 'next')
+      }
+      if (found) {
+        navPrefetched.value = found
+        window.scrollTo({ top: 0, behavior: 'smooth' })
+        router.replace({ name: 'workDetail', params: { id: found.id }, query: scopeUserId.value ? { userId: scopeUserId.value } : {} })
+      } else {
+        showInfo(scopeUserId.value ? '未找到更多作品' : '已经是第一个作品了')
+      }
+    } finally {
+      navLoading.value = false
     }
   }
 
+  /**
+   * 下一张 → 往列表后面（更旧的作品）
+   */
   const goToNextWork = async () => {
     if (navLoading.value) return
     const current = Number(workId.value)
     if (!current) return
     navLoading.value = true
-    const found = await findValidWorkId(current, 'next')
-    navLoading.value = false
-    if (found) {
-      navPrefetched.value = found
-      window.scrollTo({ top: 0, behavior: 'smooth' })
-      router.push({ name: 'workDetail', params: { id: found.id } })
-    } else {
-      showInfo('已经是最后一个作品了')
+    try {
+      let found
+      if (scopeUserId.value) {
+        found = findScopedWorkId(current, 'next')
+        if (found) {
+          const detailResult = await fetchWorkDetail(found.id)
+          if (detailResult.success) found.detail = detailResult.data
+          else found = null
+        }
+      } else {
+        found = await findValidWorkId(current, 'prev')
+      }
+      if (found) {
+        navPrefetched.value = found
+        window.scrollTo({ top: 0, behavior: 'smooth' })
+        router.replace({ name: 'workDetail', params: { id: found.id }, query: scopeUserId.value ? { userId: scopeUserId.value } : {} })
+      } else {
+        showInfo(scopeUserId.value ? '未找到更多作品' : '已经是最后一个作品了')
+      }
+    } finally {
+      navLoading.value = false
     }
   }
 
@@ -102,7 +194,7 @@ const goToRandomWork = async () => {
   if (detailResult.success && detailResult.data) {
     navPrefetched.value = { id: randomResult.data, detail: detailResult.data }
     window.scrollTo({ top: 0, behavior: 'smooth' })
-    router.push({ name: 'workDetail', params: { id: randomResult.data } })
+    router.replace({ name: 'workDetail', params: { id: randomResult.data }, query: scopeUserId.value ? { userId: scopeUserId.value } : {} })
   } else {
     showError(detailResult.message || '获取作品详情失败')
   }
@@ -376,6 +468,7 @@ const goToRandomWork = async () => {
     timeTimer = setInterval(() => { now.value = Date.now() }, 30000)
     const lastIdResult = await getLastWorkId()
     if (lastIdResult.success) lastWorkId.value = lastIdResult.data
+    await loadScopedWorkIds()
     await loadWorkData()
   })
 
