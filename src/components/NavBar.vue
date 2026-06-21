@@ -57,7 +57,7 @@ const siteNavItems = computed(() => {
   const items = [
     // 公开入口
     { label: '首页', route: '/', show: true },
-    { label: '搜索发现', route: '/search', show: true },
+    { label: '像素档案馆', route: '/pixel', show: true },
     // 登录（仅未登录时显示）
     { label: '登录', route: '/login', show: !isLoggedIn.value },
     // 需登录
@@ -134,15 +134,15 @@ const onSearchIconClick = () => {
 
 const onSearchSubmit = () => {
   if (searchQuery.value.trim()) {
-    // 跳转到搜索页面，并携带搜索关键词
+    // 跳转到像素档案馆，并携带搜索关键词
     router.push({
-      name: 'search',
+      name: 'pixelArchive',
       query: { q: searchQuery.value.trim() }
     })
     searchQuery.value = ''
   } else {
-    // 没有输入关键词，直接跳转到搜索页面
-    router.push({ name: 'search' })
+    // 没有输入关键词，直接跳转到像素档案馆
+    router.push({ name: 'pixelArchive' })
   }
 }
 
@@ -158,7 +158,7 @@ const shouldShowBg = computed(() => {
 // 菜单配置 - 包含高度信息
 const menuItems = [
   { label: '资源总览', content: '这里是资源总览的内容区域', height: '600px' }, // 最高
-  { label: '创作中心', content: '这里是创作中心的内容区域', height: '400px' }, // 保持当前高度
+  { label: '创作中心', content: '内测阶段暂未开放', height: '400px' }, // 保持当前高度
   { label: '关于我们', content: '这里是关于我们的内容区域', height: '500px' } // 中等高度
 ];
 
