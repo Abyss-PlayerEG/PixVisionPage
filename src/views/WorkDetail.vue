@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, watch, nextTick, onMounted, onUnmounted } from 'vue'
 import { useWorkDetail } from '@/composables/useWorkDetail'
 
 // ═══════════════════════════════════════════════════════════════
@@ -10,7 +10,7 @@ import { useWorkDetail } from '@/composables/useWorkDetail'
 //   Layer 2 — 居中预览卡片 + 右下角作品信息标签
 //   Layer 3 — 底部操作栏 + 导航栏 + 评论按钮
 //   Top-left — Pixel Vision 品牌药丸 + 返回按钮
-//   Right — 作者侧边栏（待重构）
+//   Card overlay — 图片右上角信息卡（作者行 + 统计区 + 查看主页按钮）
 // ═══════════════════════════════════════════════════════════════
 
 const {
@@ -23,7 +23,7 @@ const {
   // 计算属性
   workTitle, workImgUrl, workMeta,
   // 发布者
-  publisher,
+  publisher, workDetail,
   // 评论
   comments, newComment,
   commentSubmitting,
@@ -36,10 +36,39 @@ const {
   handleDownload,
   goToPrevWork,
   goToNextWork,
+  goToProfile,
 } = useWorkDetail()
 
 // ── 组件本地状态 ──────────────────────────────────────────
 const showComments = ref(false)
+
+// 查看作者主页
+const handleViewProfile = () => {
+  const userId = workDetail.value?.user_id
+  const username = publisher.value?.username
+  if (userId) goToProfile(userId, username)
+}
+
+// 信息卡重叠检测：图片过窄时，右下角信息栏移至顶部
+const infoAtTop = ref(false)
+const checkInfoOverlap = () => {
+  nextTick(() => {
+    const inner = document.querySelector('.gallery-card--inner')
+    const rightPanel = document.querySelector('.wd-right-panel')
+    const infoBar = document.querySelector('.wd-info')
+    if (!inner || !rightPanel || !infoBar) return
+    const available = inner.getBoundingClientRect().width
+    const rightW = rightPanel.getBoundingClientRect().width
+    const infoW = infoBar.getBoundingClientRect().width
+    infoAtTop.value = (rightW + infoW + 16) > available
+  })
+}
+// 初始加载完成 / 无图占位时触发
+watch(loading, (v) => { if (!v) nextTick(() => setTimeout(checkInfoOverlap, 100)) })
+// 作品间导航时 workDetail 变更触发（兜底，主触发是 img @load）
+watch(workDetail, () => nextTick(() => setTimeout(checkInfoOverlap, 50)))
+onMounted(() => window.addEventListener('resize', checkInfoOverlap))
+onUnmounted(() => window.removeEventListener('resize', checkInfoOverlap))
 
 // 模糊背景样式
 const bgStyle = computed(() => ({
@@ -90,6 +119,54 @@ const toggleComments = () => { showComments.value = !showComments.value }
          Layer 2 — 中层预览卡片
          ═══════════════════════════════════════════════════════ -->
     <div class="gallery-card">
+
+      <!-- 右侧信息栏 — 图片右上角 -->
+      <div v-if="!loading" class="wd-right-panel">
+
+        <!-- 作者信息行：头像 + 昵称/@id + 查看主页按钮 -->
+        <div class="wd-author-row">
+          <img class="wd-author-avatar" :src="publisher.avatar" alt="" />
+          <div class="wd-author-body">
+            <span class="wd-author-name">{{ publisher.displayName || '未知作者' }}</span>
+            <span class="wd-author-uid">@{{ publisher.username || 'unknown' }}</span>
+          </div>
+          <button class="wd-profile-btn" @click.stop="handleViewProfile">查看主页</button>
+        </div>
+
+        <!-- 内部分隔线 -->
+        <div class="wd-panel-divider"></div>
+
+        <!-- 统计信息区 — 横向排列 -->
+        <div class="wd-stats-bar">
+          <template v-for="(stat, i) in publisherStats" :key="stat.icon">
+            <div class="wd-stat-item">
+              <!-- 作品数 — 图片/画廊图标 -->
+              <svg v-if="stat.icon === 'works'" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+                <circle cx="8.5" cy="8.5" r="1.5"/>
+                <polyline points="21 15 16 10 5 21"/>
+              </svg>
+              <!-- 浏览数 — 眼睛图标 -->
+              <svg v-else-if="stat.icon === 'views'" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                <circle cx="12" cy="12" r="3"/>
+              </svg>
+              <!-- 点赞数 — 心形图标 -->
+              <svg v-else-if="stat.icon === 'likes'" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+              </svg>
+              <!-- 收藏数 — 星形图标 -->
+              <svg v-else-if="stat.icon === 'stars'" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+              </svg>
+              <span class="wd-stat-value">{{ stat.value }}</span>
+            </div>
+            <!-- 分隔符 — 非最后一项显示 -->
+            <span v-if="i < publisherStats.length - 1" class="wd-stat-sep"></span>
+          </template>
+        </div>
+      </div>
+
       <div class="gallery-card--inner">
         <!-- 加载中 -->
         <div v-if="loading && initialLoading" class="gallery-card--placeholder">
@@ -103,6 +180,8 @@ const toggleComments = () => { showComments.value = !showComments.value }
           :alt="workTitle"
           class="gallery-card--img"
           draggable="false"
+          @load="checkInfoOverlap"
+          @error="checkInfoOverlap"
         />
         <!-- 无图片 -->
         <div v-else class="gallery-card--placeholder">
@@ -115,7 +194,7 @@ const toggleComments = () => { showComments.value = !showComments.value }
         </div>
 
         <!-- 作品信息区 — 图片内部右下角，hover 隐藏 -->
-        <div v-if="!loading && workTitle" class="wd-info">
+        <div v-if="!loading && workTitle" class="wd-info" :class="{ 'wd-info--top': infoAtTop }">
           <h1 class="wd-info-title">{{ workTitle }}</h1>
           <span class="wd-info-meta">发布于{{ formattedDate }}</span>
           <span class="wd-info-sep">|</span>
