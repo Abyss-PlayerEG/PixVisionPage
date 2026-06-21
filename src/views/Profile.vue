@@ -512,9 +512,11 @@ const handleWorkClick = (img) => {
   router.push(`/work/${img.workId}?img=${encodeURIComponent(img.imgUrl || img.src)}&title=${encodeURIComponent(img.workTitle || '')}`)
 }
 
-// 合集点击 → todo
+// 合集点击 → 跳转 Gallery 预览
 const handleSeriesClick = (series) => {
-  console.log('[Profile] 合集点击:', series)
+  if (series?.seriesId) {
+    router.push({ path: '/gallery', query: { seriesId: series.seriesId, title: series.title || '' } })
+  }
 }
 
 // 监听 userId + activeMenu，首次激活时自动加载

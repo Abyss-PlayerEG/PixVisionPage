@@ -27,7 +27,7 @@ const {
   seriesList, seriesLoading, seriesHasMore,
   userList, userLoading, userHasMore,
 
-  formatCount, handleAvatarError, handleWorkClick, goToProfile,
+  formatCount, handleAvatarError, handleWorkClick, handleSeriesClick, goToProfile,
   getAvatarUrl,
 } = usePixelArchive()
 
@@ -132,22 +132,33 @@ onUnmounted(() => window.removeEventListener('scroll', onPageScroll))
           :key="s.series_id"
           class="series-card"
           :style="{ height: (s.randHeight || 180) + 'px' }"
+          @click="handleSeriesClick(s)"
         >
           <img
             v-if="s.coverUrl"
             :src="s.coverUrl"
             :alt="s.series_title"
             loading="lazy"
-            :style="{ height: ((s.randHeight || 180) - 48) + 'px' }"
           />
-          <div v-else class="series-card--placeholder" :style="{ height: ((s.randHeight || 180) - 48) + 'px' }">
+          <div v-else class="series-card--placeholder">
             <svg viewBox="0 0 24 24" width="32" height="32" fill="none" stroke="var(--text-muted)" stroke-width="1.5">
               <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>
             </svg>
           </div>
           <div class="series-card--info">
-            <div class="series-card--title">{{ s.series_title || '未命名合集' }}</div>
-            <div class="series-card--desc" v-if="s.about_text">{{ s.about_text }}</div>
+            <div class="series-card--text">
+              <div class="series-card--title">{{ s.series_title || '未命名合集' }}</div>
+              <div class="series-card--desc" v-if="s.about_text">{{ s.about_text }}</div>
+            </div>
+            <div class="series-card--creator" v-if="s.nickname || s.user_id">
+              <img
+                v-if="s.avatar_url"
+                :src="getAvatarUrl(s.avatar_url)"
+                class="series-card--creator-avatar"
+                @error="(e) => e.target.style.display = 'none'"
+              />
+              <span class="series-card--creator-id">{{ s.nickname || s.username || '@' + s.user_id }}</span>
+            </div>
           </div>
         </div>
         <div v-if="seriesLoading" class="n2_empty"><p>加载中...</p></div>

@@ -263,10 +263,11 @@ const handleWorkClick = (work) => {
   }
 }
 
-// 合集点击处理
+// 合集点击 → 跳转 Gallery 预览
 const handleSeriesClick = (series) => {
-  console.log('点击合集:', series)
-  // TODO: 可以跳转到合集详情页或显示合集内作品
+  if (series?.series_id) {
+    router.push({ path: '/gallery', query: { seriesId: series.series_id, title: series.series_title || '' } })
+  }
 }
 
 // GSAP动画

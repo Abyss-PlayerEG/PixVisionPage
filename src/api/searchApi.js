@@ -107,7 +107,7 @@ export const searchSeries = async (params) => {
  * @param {number} userId - 用户ID
  * @returns {Promise<Object|null>} 用户详细信息或null
  */
-const fetchUserDetail = async (userId) => {
+export const fetchUserDetail = async (userId) => {
   try {
     const url = `${SEARCH_API.USER_DETAIL}?userId=${userId}`
     const response = await fetch(url, { method: 'GET', headers: { 'Content-Type': 'application/json' } })

@@ -69,6 +69,13 @@ watch(isLoading, (loading) => {
 })
 
 // --- Handlers ---
+// 合集卡片点击 → 跳转 Gallery 预览
+const handleSeriesClick = (series) => {
+  if (series?.series_id) {
+    router.push({ path: '/gallery', query: { seriesId: series.series_id, title: series.series_title || '' } })
+  }
+}
+
 // 瀑布流图片点击 → 携带作品信息跳转详情页
 // 传递 imgUrl（全尺寸图）用于详情页展示，src（缩略图）用于快速预览
 const handleImageClick = (imgData) => {
@@ -306,7 +313,7 @@ onUnmounted(() => {
           </div>
           
           <!-- 系列数据 -->
-          <div v-else-if="seriesList.length > 0" v-for="series in seriesList" :key="series.series_id" class="swiper-slide">
+          <div v-else-if="seriesList.length > 0" v-for="series in seriesList" :key="series.series_id" class="swiper-slide" @click="handleSeriesClick(series)">
             <div class="slide-card">
               <div class="placeholder-card">
                 <img v-if="series.coverUrl" :src="series.coverUrl" :alt="series.series_title" />

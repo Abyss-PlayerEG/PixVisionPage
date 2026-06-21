@@ -494,6 +494,7 @@
                         :class="{ 'n3_seriesCard--editing': editingSeriesId === series.series_id }"
                         @mouseenter="onSeriesCardEnter"
                         @mouseleave="onSeriesCardLeave"
+                        @click="handleViewSeries(series)"
                     >
                         <!-- ═══ 左侧标题区（flex:1 自动撑满） ═══ -->
                         <div class="n3_seriesLeft">

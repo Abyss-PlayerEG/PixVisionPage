@@ -166,13 +166,11 @@ export const useGalleryViewer = (props, emit) => {
   })
 
   // ═══════════════════════════════════════════════════════════
-  // 关闭 / 返回
+  // 关闭 / 返回 — 利用浏览器历史栈回到来源页
   // ═══════════════════════════════════════════════════════════
   const handleClose = () => {
     emit('close')
-    if (resolvedSeriesId.value) {
-      router.replace({ name: 'creatorT', query: { tab: 'collections' } })
-    } else if (window.history.length > 1) {
+    if (window.history.length > 1) {
       router.back()
     } else {
       router.replace({ name: 'creatorT' })

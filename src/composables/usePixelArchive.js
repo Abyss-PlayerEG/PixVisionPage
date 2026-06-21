@@ -9,6 +9,7 @@ import {
   searchWorks,
   searchSeries,
   searchUsers,
+  fetchUserDetail,
   transformWorksToWaterfallFormat,
 } from '@/api/searchApi'
 import { getAvatarUrl, getWorkImageUrl } from '@/config/api'
@@ -100,6 +101,25 @@ export const usePixelArchive = () => {
   const seriesPageSize = 30
   const seriesHasMore = ref(true)
 
+  /** 批量补全合集记录的创作者信息（nickname + avatar_url） */
+  const enrichCreatorInfo = async (records) => {
+    const uniqueUserIds = [...new Set(records.map(s => s.user_id).filter(Boolean))]
+    const userCache = {}
+    await Promise.all(uniqueUserIds.map(async (uid) => {
+      const detail = await fetchUserDetail(uid)
+      if (detail) {
+        userCache[uid] = {
+          nickname: detail.nickname || null,
+          avatar_url: detail.avatar_url || null,
+        }
+      }
+    }))
+    return records.map(s => {
+      const info = userCache[s.user_id] || {}
+      return { ...s, nickname: info.nickname, avatar_url: info.avatar_url }
+    })
+  }
+
   /** 为每个合集生成随机高度 (400–800px)，写入 localStorage 避免刷新变动 */
   const SERIES_HEIGHT_KEY = 'pa_series_h'
   const withRandomHeight = (records) => {
@@ -149,7 +169,8 @@ export const usePixelArchive = () => {
     })
 
     if (result.success && result.data) {
-      const enriched = withRandomHeight(result.data.records || [])
+      let enriched = withRandomHeight(result.data.records || [])
+      enriched = await enrichCreatorInfo(enriched)
       if (reset) {
         seriesList.value = enriched
       } else {
@@ -260,6 +281,12 @@ export const usePixelArchive = () => {
     if (work?.id) router.push(`/work/${work.id}`)
   }
 
+  const handleSeriesClick = (series) => {
+    if (series?.series_id) {
+      router.push({ path: '/gallery', query: { seriesId: series.series_id, title: series.series_title || '' } })
+    }
+  }
+
   const goToProfile = (user) => {
     router.push(`/profile/${user.username || user.user_id}`)
   }
@@ -282,6 +309,6 @@ export const usePixelArchive = () => {
 
     // shared
     currentLoading,
-    formatCount, handleAvatarError, handleWorkClick, goToProfile, getAvatarUrl, getWorkImageUrl,
+    formatCount, handleAvatarError, handleWorkClick, handleSeriesClick, goToProfile, getAvatarUrl, getWorkImageUrl,
   }
 }
