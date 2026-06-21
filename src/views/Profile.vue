@@ -507,10 +507,22 @@ const onPanelMouseLeave = () => {
 }
 
 // 作品点击 → 跳转详情
+// 携带 source 参数告知 WorkDetail 导航上下文，确保上下页在正确的列表中轮播
 const handleWorkClick = (img) => {
   if (!img.workId) return
   const uid = userInfo.value?.userId
-  router.push(`/work/${img.workId}?img=${encodeURIComponent(img.imgUrl || img.src)}&title=${encodeURIComponent(img.workTitle || '')}${uid ? `&userId=${uid}` : ''}`)
+  const query = {
+    img: encodeURIComponent(img.imgUrl || img.src),
+    title: encodeURIComponent(img.workTitle || ''),
+  }
+  if (uid) query.userId = uid
+  // 根据当前活跃菜单传递导航来源，使 WorkDetail 使用对应的 API 构建导航列表
+  const menu = activeMenu.value
+  if (menu === 'likes') query.source = 'likes'
+  else if (menu === 'favorites') query.source = 'favorites'
+  else if (menu === 'history') query.source = 'history'
+  else if (menu === 'works') query.source = 'works'
+  router.push({ name: 'workDetail', params: { id: img.workId }, query })
 }
 
 // 合集点击 → 跳转 Gallery 预览

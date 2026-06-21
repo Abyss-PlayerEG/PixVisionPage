@@ -6,7 +6,8 @@
 import { ref, watch, onMounted, onUnmounted, computed, nextTick } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { getWorkImageUrl, getAvatarUrl } from '@/config/api'
-import { fetchWorkDetail, fetchWorkPage, fetchCommentList, addComment, deleteComment, toggleLike, toggleStar, fetchLikeStatus, fetchStarStatus, fetchPublisherInfo, getLastWorkId, fetchRandomWork } from '@/api/workApi'
+import { fetchWorkDetail, fetchWorkPage, fetchCommentList, addComment, deleteComment, toggleLike, toggleStar, fetchLikeStatus, fetchStarStatus, fetchPublisherInfo, getLastWorkId, fetchRandomWork, fetchUserLikedWorks, fetchUserStarredWorks } from '@/api/workApi'
+import { fetchUserHistory } from '@/api/historyApi'
 import { getCurrentUser } from '@/api/profileApi'
 import { showSuccess, showError, showInfo } from '@/utils/notification'
 import { showConfirm } from '@/utils/confirmDialog'
@@ -49,6 +50,9 @@ export const useWorkDetail = () => {
     return q ? Number(q) : null
   })
 
+  // 导航来源：区分个人作品/点赞/收藏/浏览历史，决定使用哪个 API 构建导航列表
+  const scopeSource = computed(() => route.query.source || null)
+
   /**
    * 用户范围内所有作品 ID 列表（按 ID 降序 = 最新在前）
    * 仅在 scopeUserId 存在时加载，用于 O(1) 无限轮播
@@ -57,9 +61,23 @@ export const useWorkDetail = () => {
 
   const loadScopedWorkIds = async () => {
     const uid = scopeUserId.value
-    if (!uid) { scopedWorkIds.value = []; return }
+    const source = scopeSource.value
+
+    // 无 userId 且非 history 来源 → 无范围限制，使用全局模式
+    if (!uid && source !== 'history') { scopedWorkIds.value = []; return }
+
     try {
-      const result = await fetchWorkPage({ userId: uid, current: 1, size: 500 })
+      let result
+      if (source === 'likes') {
+        result = await fetchUserLikedWorks({ userId: uid, current: 1, size: 500 })
+      } else if (source === 'favorites') {
+        result = await fetchUserStarredWorks({ userId: uid, current: 1, size: 500 })
+      } else if (source === 'history') {
+        result = await fetchUserHistory({ current: 1, size: 500 })
+      } else {
+        // source === 'works' 或无 source → 用户发布的作品（保持向后兼容）
+        result = await fetchWorkPage({ userId: uid, current: 1, size: 500 })
+      }
       if (result.success && result.data?.records) {
         scopedWorkIds.value = result.data.records
           .map(r => r.work_id)
@@ -122,8 +140,9 @@ export const useWorkDetail = () => {
     navLoading.value = true
     try {
       let found
-      if (scopeUserId.value) {
-        // 用户范围模式：数组导航（即时、无限轮播）
+      // 有 scopeUserId 或来源为 history 时使用范围导航
+      if (scopeUserId.value || scopeSource.value === 'history') {
+        // 用户范围/来源模式：数组导航（即时、无限轮播）
         found = findScopedWorkId(current, 'prev')
         if (found) {
           // 预取详情供 loadWorkData 使用
@@ -138,9 +157,12 @@ export const useWorkDetail = () => {
       if (found) {
         navPrefetched.value = found
         window.scrollTo({ top: 0, behavior: 'smooth' })
-        router.replace({ name: 'workDetail', params: { id: found.id }, query: scopeUserId.value ? { userId: scopeUserId.value } : {} })
+        const query = {}
+        if (scopeUserId.value) query.userId = scopeUserId.value
+        if (scopeSource.value) query.source = scopeSource.value
+        router.replace({ name: 'workDetail', params: { id: found.id }, query })
       } else {
-        showInfo(scopeUserId.value ? '未找到更多作品' : '已经是第一个作品了')
+        showInfo(scopeUserId.value || scopeSource.value === 'history' ? '未找到更多作品' : '已经是第一个作品了')
       }
     } finally {
       navLoading.value = false
@@ -157,7 +179,8 @@ export const useWorkDetail = () => {
     navLoading.value = true
     try {
       let found
-      if (scopeUserId.value) {
+      // 有 scopeUserId 或来源为 history 时使用范围导航
+      if (scopeUserId.value || scopeSource.value === 'history') {
         found = findScopedWorkId(current, 'next')
         if (found) {
           const detailResult = await fetchWorkDetail(found.id)
@@ -170,9 +193,12 @@ export const useWorkDetail = () => {
       if (found) {
         navPrefetched.value = found
         window.scrollTo({ top: 0, behavior: 'smooth' })
-        router.replace({ name: 'workDetail', params: { id: found.id }, query: scopeUserId.value ? { userId: scopeUserId.value } : {} })
+        const query = {}
+        if (scopeUserId.value) query.userId = scopeUserId.value
+        if (scopeSource.value) query.source = scopeSource.value
+        router.replace({ name: 'workDetail', params: { id: found.id }, query })
       } else {
-        showInfo(scopeUserId.value ? '未找到更多作品' : '已经是最后一个作品了')
+        showInfo(scopeUserId.value || scopeSource.value === 'history' ? '未找到更多作品' : '已经是最后一个作品了')
       }
     } finally {
       navLoading.value = false
@@ -194,7 +220,10 @@ const goToRandomWork = async () => {
   if (detailResult.success && detailResult.data) {
     navPrefetched.value = { id: randomResult.data, detail: detailResult.data }
     window.scrollTo({ top: 0, behavior: 'smooth' })
-    router.replace({ name: 'workDetail', params: { id: randomResult.data }, query: scopeUserId.value ? { userId: scopeUserId.value } : {} })
+    const query = {}
+    if (scopeUserId.value) query.userId = scopeUserId.value
+    if (scopeSource.value) query.source = scopeSource.value
+    router.replace({ name: 'workDetail', params: { id: randomResult.data }, query })
   } else {
     showError(detailResult.message || '获取作品详情失败')
   }
