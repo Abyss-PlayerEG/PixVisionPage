@@ -44,6 +44,9 @@ const {
   handleDeleteComment,
   // 用户
   currentUser,
+  // 评论辅助
+  goLogin,
+  highlightComment,
   // 方法
   handleBack,
   handleToggleLike,
@@ -365,7 +368,7 @@ watch(() => route.params.id, () => {
 
         <!-- 评论列表 -->
         <div class="wd-comments-body">
-          <div v-if="comments.length === 0" class="wd-comments-empty">
+          <div v-if="comments.length === 0 && !loading" class="wd-comments-empty">
             <svg viewBox="0 0 24 24" width="40" height="40" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" opacity="0.3">
               <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
             </svg>
@@ -375,11 +378,16 @@ watch(() => route.params.id, () => {
           <!-- 一级评论 + 二级回复（API 返回 children 嵌套结构） -->
           <template v-for="comment in comments" :key="comment.comment_id">
             <!-- 一级评论 -->
-            <div class="wd-comment-item">
+            <div class="wd-comment-item" :data-comment-id="comment.comment_id">
               <img class="wd-comment-avatar" :src="comment.avatar || comment.avatarUrl || publisher.avatar" loading="lazy" alt="" />
               <div class="wd-comment-body">
                 <div class="wd-comment-top">
-                  <span class="wd-comment-author">{{ comment.nickname || '匿名用户' }}</span>
+                  <span class="wd-comment-author wd-author-link" @click.stop="goToProfile(comment.user_id, comment.username)">{{ comment.nickname || '匿名用户' }}</span>
+                </div>
+                <p class="wd-comment-text">{{ comment.comment_text }}</p>
+                <div class="wd-comment-bottom">
+                  <span class="wd-comment-time">{{ formatCommentTime(comment.time) || formatTime(comment.time) }}</span>
+                  <button class="wd-comment-reply-btn" @click="startReply(comment)">回复</button>
                   <button
                     v-if="isOwnComment(comment)"
                     class="wd-comment-delete"
@@ -390,11 +398,6 @@ watch(() => route.params.id, () => {
                       <polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
                     </svg>
                   </button>
-                </div>
-                <p class="wd-comment-text">{{ comment.comment_text }}</p>
-                <div class="wd-comment-bottom">
-                  <span class="wd-comment-time">{{ formatCommentTime(comment.create_time || comment.createTime) || formatTime(comment.create_time || comment.createTime) }}</span>
-                  <button class="wd-comment-reply-btn" @click="startReply(comment)">回复</button>
                 </div>
                 <!-- 回复一级评论的输入框 -->
                 <div v-if="replyingTo && replyingTo.commentId === comment.comment_id" class="wd-reply-row">
@@ -417,13 +420,15 @@ watch(() => route.params.id, () => {
                     v-for="reply in comment.children"
                     :key="reply.comment_id"
                     class="wd-reply-item"
+                    :data-comment-id="reply.comment_id"
                   >
                     <span class="wd-reply-author">{{ reply.nickname || '匿名用户' }}</span>
-                    <span v-if="reply.replied_nickname" class="wd-reply-to"> 回复 <span class="wd-reply-target">@{{ reply.replied_nickname }}</span></span>
+                    <span v-if="reply.replied_nickname && reply.parent_comment_id !== reply.in_comment_id" class="wd-reply-to"> 回复 <span class="wd-reply-target wd-reply-mention" @click.stop="highlightComment(reply.parent_comment_id)">@{{ reply.replied_nickname }}</span></span>
                     <span class="wd-reply-colon">：</span>
                     <span class="wd-reply-text">{{ reply.comment_text }}</span>
                     <div class="wd-reply-meta">
-                      <span class="wd-reply-time">{{ formatCommentTime(reply.create_time || reply.createTime) || formatTime(reply.create_time || reply.createTime) }}</span>
+                      <span class="wd-reply-time">{{ formatCommentTime(reply.time) || formatTime(reply.time) }}</span>
+                      <button class="wd-reply-reply-btn" @click="startReply(reply, reply.comment_id, reply.user_id)">回复</button>
                       <button
                         v-if="isOwnComment(reply)"
                         class="wd-reply-del"
@@ -434,7 +439,6 @@ watch(() => route.params.id, () => {
                           <polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
                         </svg>
                       </button>
-                      <button class="wd-reply-reply-btn" @click="startReply(reply, comment.comment_id, reply.user_id)">回复</button>
                     </div>
                     <!-- 回复二级评论的输入框 -->
                     <div v-if="replyingTo && replyingTo.commentId === reply.comment_id" class="wd-reply-row">
@@ -457,25 +461,32 @@ watch(() => route.params.id, () => {
           </template>
         </div>
 
-        <!-- 评论输入区 -->
+        <!-- 评论输入区 (登录后可见) -->
         <div class="wd-comments-input-row" ref="commentsInputRef">
-          <div class="wd-comments-input-wrapper">
+          <div v-if="currentUser" class="wd-comments-input-wrapper">
             <textarea
               ref="textareaRef"
               v-model="newComment"
-              placeholder="写下你的评论..."
+              placeholder="写下你的想法..."
               @keydown.enter.exact.prevent="handleSubmitComment"
               @input="onCommentInput"
               maxlength="125"
               rows="1"
             />
-            <span class="wd-char-count" :class="{ 'wd-char-count--full': newComment.length >= 125 }">{{ newComment.length }}/125</span>
             <button
               class="wd-comments-submit-btn"
               @click="handleSubmitComment"
               :disabled="commentSubmitting || !newComment.trim()"
             >
-              发送
+              发布
+            </button>
+            <span class="wd-char-count" :class="{ 'wd-char-count--full': newComment.length >= 125 }">{{ newComment.length }}/125</span>
+          </div>
+          <div v-else class="wd-login-prompt">
+            <p>登录后即可发表评论</p>
+            <button class="wd-login-btn" @click="goLogin">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="16" height="16"><path d="M15 3h4a2 2 0 012 2v14a2 2 0 01-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>
+              登录 / 注册
             </button>
           </div>
         </div>
