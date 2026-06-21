@@ -34,7 +34,7 @@ const {
 </script>
 
 <template>
-  <div class="gallery-viewer" ref="containerRef">
+  <div class="gallery-viewer gv-page" ref="containerRef">
 
     <!-- ═══════════════════════════════════════════════════════
          Layer 1 — 底层全屏背景

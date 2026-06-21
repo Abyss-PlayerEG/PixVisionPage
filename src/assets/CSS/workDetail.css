@@ -336,6 +336,8 @@
 
 /* ── 底部导航栏 ─────────────────────────────────────────────── */
 .gallery-nav {
+  position: static;    /* 防御：覆盖 galleryViewer.css 的 position: absolute */
+  transform: none;     /* 防御：覆盖 galleryViewer.css 的 translateX(-50%) */
   display: flex;
   align-items: center;
   height: 48px;
