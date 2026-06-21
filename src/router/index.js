@@ -77,6 +77,12 @@ const router = createRouter({
             name: 'gallery',
             component: () => import('../views/GalleryViewer.vue'),
         },
+        // 像素档案馆 PixelArchive
+        {
+            path: '/pixel',
+            name: 'pixelArchive',
+            component: () => import('../views/PixelArchive.vue'),
+        },
         // 404页面 - 捕获所有未匹配的路径
         {
             path: '/:pathMatch(.*)*',

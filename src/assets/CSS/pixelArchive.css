@@ -1,0 +1,229 @@
+/* ═══════════════════════════════════════════════════════════════
+   PixelArchive — 像素档案馆
+   命名规范: #numXz > .nX_xxx > .descriptive-name
+   ═══════════════════════════════════════════════════════════════ */
+
+/* ── 页面容器 ────────────────────────────────────────────────── */
+.pixel-archive {
+  position: fixed;
+  inset: 0;
+  z-index: 1500;
+  background: var(--bg-primary);
+  overflow: hidden;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   #num1z — 顶部导航栏 (100% × 12vh)
+   ═══════════════════════════════════════════════════════════════ */
+
+#num1z {
+  width: 100%;
+  height: 10vh;
+  position: relative;
+  z-index: 2;
+}
+
+.n1_topbar {
+  position: absolute;
+  top: 50%;
+  left: 24px;
+  right: 24px;
+  transform: translateY(-50%);
+  display: flex;
+  align-items: center;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   Pill 基础样式（照搬 GalleryViewer，标准组件保留原类名）
+   ═══════════════════════════════════════════════════════════════ */
+
+.pill {
+  height: 40px;
+  border-radius: 999px;
+  background: #0a0a0a;
+  display: flex;
+  align-items: center;
+  border: none;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+}
+
+/* Pill 1: Pixel Vision 品牌药丸 */
+.pill-brand {
+  width: 160px;
+  position: relative;
+  cursor: default;
+  gap: 4px;
+  justify-content: center;
+}
+
+.pill-brand--text {
+  margin: 0;
+  font-family: "华文琥珀", sans-serif;
+  font-size: 18px;
+  line-height: 40px;
+  white-space: nowrap;
+  background: linear-gradient(to right, #19b859 0%, #6EC597 49.5%, #fff 50.5%, #fff 100%);
+  background-size: 200% 100%;
+  background-position-x: 100%;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  position: relative;
+  z-index: 2;
+}
+
+.pill-brand--svg {
+  position: absolute;
+  z-index: 1;
+}
+
+.pill-brand--svg1 { top: 11px; left: 17px; }
+.pill-brand--svg2 { top: 6px;  left: 64px; z-index: 3; }
+.pill-brand--svg3 { top: 12px; left: 122px; }
+
+/* Pill 2: 返回按钮 */
+.pill-back {
+  margin-left: 20px;
+  width: 40px;
+  padding: 0;
+  justify-content: center;
+  cursor: pointer;
+  color: #ffffff;
+  transition: color 0.25s ease;
+}
+
+.pill-back:hover {
+  color: var(--color-primary);
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   n1_filters — 类型筛选按钮组
+   ═══════════════════════════════════════════════════════════════ */
+
+.n1_filters {
+  display: flex;
+  align-items: center;
+  width: 200px;
+  margin-left: 140px;
+  justify-content: space-between;
+}
+
+/* 三级: 单个筛选按钮（纯文字 + ::after 下划线动画） */
+.filter-btn {
+  position: relative;
+  width: 36px;
+  height: 40px;
+  padding: 0;
+  border: none;
+  background: none;
+  color: var(--text-tertiary);
+  font-family: 'Noto Sans SC', sans-serif;
+  font-size: 15px;
+  font-weight: 500;
+  line-height: 40px;
+  text-align: justify;
+  text-align-last: justify;
+  text-justify: inter-character;
+  cursor: pointer;
+  transition: color 0.25s ease;
+}
+
+.filter-btn:hover {
+  color: var(--text-secondary);
+}
+
+.filter-btn.active {
+  color: var(--text-primary);
+}
+
+/* ::after — 圆角长条矩形下划线，从左到右平滑展开 */
+.filter-btn::after {
+  content: '';
+  position: absolute;
+  bottom: 2px;
+  left: 0;
+  width: 100%;
+  height: 4px;
+  border-radius: 2px;
+  background: var(--color-primary);
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.filter-btn.active::after {
+  transform: scaleX(1);
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   n1_search — 搜索药丸容器
+   ═══════════════════════════════════════════════════════════════ */
+
+.n1_search {
+  flex: 1;
+  min-width: 0;
+  padding: 0 6px 0 18px;
+  gap: 10px;
+  justify-content: flex-start;
+  margin-left: 32px;
+  transition: box-shadow 0.3s ease;
+}
+
+.n1_search:focus-within {
+  box-shadow:
+    0 0 0 2px var(--color-primary),
+    0 4px 20px rgba(0, 0, 0, 0.4);
+}
+
+/* 三级: 搜索图标 */
+.search-icon {
+  flex-shrink: 0;
+  color: var(--text-muted);
+  transition: color 0.25s ease;
+}
+
+.n1_search:focus-within .search-icon {
+  color: var(--color-primary);
+}
+
+/* 三级: 搜索输入框 */
+.search-input {
+  flex: 1;
+  height: 100%;
+  border: none;
+  outline: none;
+  background: transparent;
+  color: var(--text-primary);
+  font-family: 'Noto Sans SC', sans-serif;
+  font-size: 14px;
+  min-width: 0;
+}
+
+.search-input::placeholder {
+  color: var(--text-muted);
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   #num2z — 内容区域 (100% × 88vh，后续阶段预留)
+   ═══════════════════════════════════════════════════════════════ */
+
+#num2z {
+  width: 100%;
+  height: 88vh;
+  position: relative;
+  z-index: 1;
+  overflow-y: auto;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   Reduced Motion
+   ═══════════════════════════════════════════════════════════════ */
+
+@media (prefers-reduced-motion: reduce) {
+  .filter-btn::after,
+  .pill-back,
+  .n1_search,
+  .search-icon {
+    transition: none !important;
+  }
+}
