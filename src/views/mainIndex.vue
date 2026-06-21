@@ -572,7 +572,21 @@ onUnmounted(() => {
       </div>
     </div>
 
-    <div class="n8z2"></div>
+    <div class="n8z2">
+      <div class="n8_footer">
+        <div class="n8_footer-brand">
+          <h1>Pixel - Vision</h1>
+        </div>
+        <div class="n8_footer-divider"></div>
+        <div class="n8_footer-bottom">
+          <div class="n8_footer-links">
+            <a @click="router.push('/about')">关于像素</a>
+            <a @click="router.push('/pixel')">像素档案馆</a>
+          </div>
+          <span class="n8_footer-slogan">Art comes first</span>
+        </div>
+      </div>
+    </div>
   </section>
   
 </template>

@@ -1216,7 +1216,7 @@
 #num8z{
     width: 100%;
     min-height: 150vh;
-    background-color: #090909;
+    background-color: #000000;
     position: relative;
     z-index: 9;
     border-radius: 80px 80px 0 0;
@@ -1316,4 +1316,67 @@
             }
         }
     }
+}
+
+/* ========================================
+   #num8z — Footer 尾页
+   ======================================== */
+.n8z2{
+    width: 100%;
+    height: 50vh;
+    display: flex;
+    align-items: flex-end;
+    padding-bottom: 48px;
+}
+
+.n8_footer{
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 40px;
+}
+
+.n8_footer-brand h1{
+    font-family: sul-gbk6;
+    font-size: 56px;
+    font-weight: bold;
+    letter-spacing: 2px;
+    color: var(--color-accent);
+}
+
+.n8_footer-divider{
+    width: 100%;
+    height: 1px;
+    background: rgba(255,255,255,0.08);
+}
+
+.n8_footer-bottom{
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.n8_footer-links{
+    display: flex;
+    gap: 48px;
+}
+
+.n8_footer-links a{
+    color: var(--color-accent);
+    font-size: 16px;
+    opacity: 0.7;
+    cursor: pointer;
+    transition: opacity 0.2s;
+    text-decoration: none;
+}
+
+.n8_footer-links a:hover{
+    opacity: 1;
+}
+
+.n8_footer-slogan{
+    font-size: 16px;
+    color: var(--color-accent);
+    opacity: 0.5;
+    font-style: italic;
 }
