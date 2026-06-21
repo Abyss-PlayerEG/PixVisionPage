@@ -14,14 +14,14 @@ import {
 } from '@/api/searchApi'
 import { getAvatarUrl, getWorkImageUrl } from '@/config/api'
 
-export const usePixelArchive = () => {
+export const usePixelArchive = (initialQuery = '') => {
   const router = useRouter()
 
   // ═══════════════════════════════════════════════════════════════
   // num1z — 搜索 & Tab
   // ═══════════════════════════════════════════════════════════════
 
-  const searchQuery = ref('')
+  const searchQuery = ref(initialQuery)
   const activeTab = ref('works')
   const tabs = [
     { key: 'works', label: '作品' },

@@ -22,7 +22,7 @@ import {
 import { useWorkWaterfall } from '@/composables/useWorkWaterfall.js'
 import { useSeriesData } from '@/composables/useSeriesData.js'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
-import { showError } from '@/utils/notification'
+import { showError, showSuccess } from '@/utils/notification'
 
 const router = useRouter()
 
@@ -74,6 +74,16 @@ const handleSeriesClick = (series) => {
   if (series?.series_id) {
     router.push({ path: '/gallery', query: { seriesId: series.series_id, title: series.series_title || '' } })
   }
+}
+
+// 加入我们 → 已登录则提示并阻止跳转
+const handleJoinUs = () => {
+  const token = localStorage.getItem('token')
+  if (token) {
+    showSuccess('您已登录，无需重复登录')
+    return
+  }
+  router.push('/login')
 }
 
 // 瀑布流图片点击 → 携带作品信息跳转详情页
@@ -187,7 +197,7 @@ onUnmounted(() => {
             ></path>
           </svg>
         </div>
-        <p>我们为什么要制作&nbsp;</p>
+        <p @click="router.push('/about')">我们为什么要制作&nbsp;</p>
         <p>pixel - vision</p>
       </div>
 
@@ -213,7 +223,7 @@ onUnmounted(() => {
           <span class="card-title">订阅</span>
           <p class="card-desc">支持我们，优享特权</p>
         </div>
-        <div class="link-card-item" @click="router.push('/about#about')">
+        <div class="link-card-item" @click="router.push('/pixel')">
           <svg
             class="card-icon"
             viewBox="0 0 1024 1024"
@@ -233,7 +243,7 @@ onUnmounted(() => {
           <span class="card-title">俯瞰像素视觉</span>
           <p class="card-desc">站在巨人的肩膀上，追求视觉的质感</p>
         </div>
-        <div class="link-card-item" @click="router.push('/about#guide')">
+        <div class="link-card-item" @click="handleJoinUs">
           <svg
             class="card-icon"
             viewBox="0 0 1024 1024"
@@ -270,7 +280,7 @@ onUnmounted(() => {
   </section>
 
   <section id="num2z_2">
-    <div class="view-more-btn" @click="router.push('/search')">
+    <div class="view-more-btn" @click="router.push('/pixel')">
       <span>查看更多</span>
       <svg
         class="arrow-icon"

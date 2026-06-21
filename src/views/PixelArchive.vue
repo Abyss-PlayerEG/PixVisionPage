@@ -1,5 +1,6 @@
 <script setup>
 import { onMounted, onUnmounted } from 'vue'
+import { useRoute } from 'vue-router'
 import { usePixelArchive } from '@/composables/usePixelArchive'
 import VerticalWaterfall from '@/components/VerticalWaterfall.vue'
 import '@/assets/CSS/pixelArchive.css'
@@ -18,6 +19,8 @@ import '@/assets/CSS/pixelArchive.css'
 //   - 用户: 100% 宽长条卡片
 // ═══════════════════════════════════════════════════════════════
 
+const route = useRoute()
+
 const {
   pageRef, topBarRef,
   searchQuery, activeTab, tabs,
@@ -29,7 +32,7 @@ const {
 
   formatCount, handleAvatarError, handleWorkClick, handleSeriesClick, goToProfile,
   getAvatarUrl,
-} = usePixelArchive()
+} = usePixelArchive(route.query.q || '')
 
 // ── 滚动加载（页面级滚动条） ──
 const onScroll = () => {
@@ -47,7 +50,9 @@ const onPageScroll = () => {
   if (sh - st - ch < 300) onScroll()
 }
 
-onMounted(() => window.addEventListener('scroll', onPageScroll))
+onMounted(() => {
+  window.addEventListener('scroll', onPageScroll)
+})
 onUnmounted(() => window.removeEventListener('scroll', onPageScroll))
 </script>
 
@@ -126,42 +131,46 @@ onUnmounted(() => window.removeEventListener('scroll', onPageScroll))
       </div>
 
       <!-- 合集 · 随机高度 CSS columns 网格 -->
-      <div v-else-if="activeTab === 'series'" class="n2_series">
-        <div
-          v-for="s in seriesList"
-          :key="s.series_id"
-          class="series-card"
-          :style="{ height: (s.randHeight || 180) + 'px' }"
-          @click="handleSeriesClick(s)"
-        >
-          <img
-            v-if="s.coverUrl"
-            :src="s.coverUrl"
-            :alt="s.series_title"
-            loading="lazy"
-          />
-          <div v-else class="series-card--placeholder">
-            <svg viewBox="0 0 24 24" width="32" height="32" fill="none" stroke="var(--text-muted)" stroke-width="1.5">
-              <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>
-            </svg>
-          </div>
-          <div class="series-card--info">
-            <div class="series-card--text">
-              <div class="series-card--title">{{ s.series_title || '未命名合集' }}</div>
-              <div class="series-card--desc" v-if="s.about_text">{{ s.about_text }}</div>
+      <div v-else-if="activeTab === 'series'">
+        <!-- 有数据或加载中 → 网格容器 -->
+        <div v-if="seriesList.length > 0 || seriesLoading" class="n2_series">
+          <div
+            v-for="s in seriesList"
+            :key="s.series_id"
+            class="series-card"
+            :style="{ height: (s.randHeight || 180) + 'px' }"
+            @click="handleSeriesClick(s)"
+          >
+            <img
+              v-if="s.coverUrl"
+              :src="s.coverUrl"
+              :alt="s.series_title"
+              loading="lazy"
+            />
+            <div v-else class="series-card--placeholder">
+              <svg viewBox="0 0 24 24" width="32" height="32" fill="none" stroke="var(--text-muted)" stroke-width="1.5">
+                <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>
+              </svg>
             </div>
-            <div class="series-card--creator" v-if="s.nickname || s.user_id">
-              <img
-                v-if="s.avatar_url"
-                :src="getAvatarUrl(s.avatar_url)"
-                class="series-card--creator-avatar"
-                @error="(e) => e.target.style.display = 'none'"
-              />
-              <span class="series-card--creator-id">{{ s.nickname || s.username || '@' + s.user_id }}</span>
+            <div class="series-card--info">
+              <div class="series-card--text">
+                <div class="series-card--title">{{ s.series_title || '未命名合集' }}</div>
+                <div class="series-card--desc" v-if="s.about_text">{{ s.about_text }}</div>
+              </div>
+              <div class="series-card--creator" v-if="s.nickname || s.user_id">
+                <img
+                  v-if="s.avatar_url"
+                  :src="getAvatarUrl(s.avatar_url)"
+                  class="series-card--creator-avatar"
+                  @error="(e) => e.target.style.display = 'none'"
+                />
+                <span class="series-card--creator-id">{{ s.nickname || s.username || '@' + s.user_id }}</span>
+              </div>
             </div>
           </div>
+          <div v-if="seriesLoading" class="n2_empty"><p>加载中...</p></div>
         </div>
-        <div v-if="seriesLoading" class="n2_empty"><p>加载中...</p></div>
+        <!-- 无数据空状态（在 columns 容器外，避免多列布局拆散） -->
         <div v-if="!seriesLoading && seriesList.length === 0" class="n2_empty">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
             <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>
