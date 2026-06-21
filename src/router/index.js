@@ -42,14 +42,16 @@ const router = createRouter({
             component: () => import('../views/Admin.vue'),
             meta: { requiresAuth: true },
         },
-        // // 创作者面板
+
+        // // 【old】创作者面板
         // {
         //     path: '/creator',
         //     name: 'creator',
         //     component: () => import('../views/CreatorPanel.vue'),
         //     meta: { requiresAuth: true },
         // },
-        // test创作者面板
+
+        // 【Reset】创作者面板
         {
             path: '/creatorT',
             name: 'creatorT',
@@ -75,7 +77,7 @@ const router = createRouter({
             name: 'gallery',
             component: () => import('../views/GalleryViewer.vue'),
         },
-        // 404页面 - 捕获所有未匹配的路径（必须放在最后）
+        // 404页面 - 捕获所有未匹配的路径
         {
             path: '/:pathMatch(.*)*',
             name: 'notFound',
