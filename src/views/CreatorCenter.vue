@@ -1938,20 +1938,21 @@ const fetchUserStats = async () => {
     if (cached) {
         try {
             const parsed = JSON.parse(cached)
-            userInfo.workCount = parsed.workCount ?? 0
-            userInfo.totalViews = parsed.totalViews ?? 0
-            userInfo.totalLikes = parsed.totalLikes ?? 0
-            userInfo.totalStars = parsed.totalStars ?? 0
+            userInfo.workCount = parsed.work_count ?? parsed.workCount ?? 0
+            userInfo.totalViews = parsed.total_views ?? parsed.totalViews ?? 0
+            userInfo.totalLikes = parsed.total_likes ?? parsed.totalLikes ?? 0
+            userInfo.totalStars = parsed.total_stars ?? parsed.totalStars ?? 0
         } catch { /* ignore parse error */ }
     }
 
     const result = await getUserProfile()
     if (result.success && result.data) {
         const d = result.data
-        userInfo.workCount = d.workCount ?? 0
-        userInfo.totalViews = d.totalViews ?? 0
-        userInfo.totalLikes = d.totalLikes ?? 0
-        userInfo.totalStars = d.totalStars ?? 0
+        // 兼容下划线和驼峰两种命名
+        userInfo.workCount = d.work_count ?? d.workCount ?? 0
+        userInfo.totalViews = d.total_views ?? d.totalViews ?? 0
+        userInfo.totalLikes = d.total_likes ?? d.totalLikes ?? 0
+        userInfo.totalStars = d.total_stars ?? d.totalStars ?? 0
 
         if (d.avatar_url) {
             avatarUrl.value = getAvatarUrl(d.avatar_url)
