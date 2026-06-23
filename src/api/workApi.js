@@ -2,7 +2,7 @@
  * 作品相关 API 调用
  */
 
-import { WORK_API, COMMENT_API, LIKE_API, STAR_API, SERIES_API, getWorkImageUrl, getAvatarUrl } from '../config/api';
+import { WORK_API, COMMENT_API, LIKE_API, STAR_API, SERIES_API, USER_API, getWorkImageUrl, getAvatarUrl } from '../config/api';
 import { getUserInfoByUsernameOrUuid } from './profileApi';
 import { getUserDataList } from './userDataApi';
 
@@ -541,10 +541,17 @@ export const fetchPublisherInfo = async (userId) => {
     console.log('[API] 获取发布者信息: userId=', userId);
 
     // 并行获取用户基本资料和拓展数据（联系方式）
-    const [profileResult, contactResult] = await Promise.all([
-      getUserInfoByUsernameOrUuid({ userId }),
+    // 使用 userId 查询用户信息（公开接口）
+    const profileUrl = `${USER_API.PROFILE_INFO}?userId=${userId}`
+    const [profileResponse, contactResult] = await Promise.all([
+      fetch(profileUrl, { method: 'GET', headers: { 'Content-Type': 'application/json' } }).then(r => r.json()),
       getUserDataList(userId),
     ]);
+
+    const profileResult = {
+      success: (profileResponse.code || profileResponse.recode) === 200 && profileResponse.data,
+      data: profileResponse.data
+    }
 
     const userData = profileResult.success ? profileResult.data : null;
     const contactData = contactResult.success ? contactResult.data : [];

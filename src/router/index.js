@@ -42,15 +42,6 @@ const router = createRouter({
             component: () => import('../views/Admin.vue'),
             meta: { requiresAuth: true },
         },
-
-        // // 【old】创作者面板
-        // {
-        //     path: '/creator',
-        //     name: 'creator',
-        //     component: () => import('../views/CreatorPanel.vue'),
-        //     meta: { requiresAuth: true },
-        // },
-
         // 【Reset】创作者面板
         {
             path: '/creatorT',
@@ -126,6 +117,13 @@ const router = createRouter({
                 path: '/demo/series-grid',
                 name: 'seriesGridDemo',
                 component: () => import('../views/demo/SeriesGridDemo.vue'),
+            },
+            // 【old】创作者面板
+            {
+                path: '/old/creator',
+                name: 'creator',
+                component: () => import('../views/CreatorPanel.vue'),
+                meta: { requiresAuth: true },
             },
         ] : []),
     ],
