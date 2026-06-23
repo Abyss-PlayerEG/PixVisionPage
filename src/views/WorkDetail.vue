@@ -25,7 +25,7 @@ const {
   liked, starred, likeCount, starCount,
   likePending, starPending, downloadPending,
   // 导航
-  navLoading,
+  navLoading, randomLoading,
   // 计算属性
   workTitle, workThumbUrl, workImgUrl, fullImageLoaded, workMeta,
   // 发布者
@@ -54,6 +54,7 @@ const {
   handleDownload,
   goToPrevWork,
   goToNextWork,
+  goToRandomWork,
   goToProfile,
 } = useWorkDetail()
 
@@ -357,6 +358,25 @@ watch(() => route.params.id, () => {
           </svg>
         </button>
       </nav>
+
+      <!-- 随机按钮 — 主题绿底黑字，骰子图标 -->
+      <button 
+        class="wd-random-btn" 
+        :class="{ 'wd-random-btn--loading': randomLoading }"
+        :disabled="randomLoading" 
+        @click="goToRandomWork" 
+        aria-label="随机浏览"
+      >
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="2" y="2" width="20" height="20" rx="3" ry="3"/>
+          <circle cx="8.5" cy="8.5" r="1.5"/>
+          <circle cx="15.5" cy="8.5" r="1.5"/>
+          <circle cx="8.5" cy="15.5" r="1.5"/>
+          <circle cx="15.5" cy="15.5" r="1.5"/>
+          <circle cx="12" cy="12" r="1.5"/>
+        </svg>
+        <span>随机</span>
+      </button>
 
       <!-- 评论按钮 — 主题绿底黑字 -->
       <button class="wd-comment-btn" @click="scrollToComments" aria-label="查看评论">
