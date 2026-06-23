@@ -370,14 +370,13 @@
   display: flex;
   align-items: center;
   height: 48px;
+  width: 256px;
   padding: 0 8px;
   border-radius: 999px;
   background: #0a0a0a;
   box-shadow:
     0 8px 32px rgba(0, 0, 0, 0.55),
     inset 0 1px 0 rgba(255, 255, 255, 0.04);
-  min-width: 360px;
-  max-width: 60vw;
 }
 
 .nav-btn {
@@ -446,33 +445,34 @@
   height: 16px;
 }
 
-/* ── 随机按钮 — 右侧，主题绿底黑字，与评论按钮风格一致 ────────── */
+/* ── 随机按钮 — 导航栏中间，有区分度的背景 ────────── */
 .wd-random-btn {
   display: flex;
   align-items: center;
-  gap: 6px;
-  height: 40px;
-  padding: 0 20px;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  padding: 0;
   border: none;
   border-radius: 999px;
-  background: var(--color-primary);
-  color: #000;
-  font-size: 14px;
-  font-weight: 600;
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--text-secondary);
   cursor: pointer;
-  transition: background 0.2s ease, transform 0.15s ease;
-  white-space: nowrap;
+  transition: color 0.2s ease, background 0.2s ease, transform 0.15s ease;
   flex-shrink: 0;
-  box-shadow: 0 4px 16px rgba(0, 169, 71, 0.3);
+  margin: 0 auto;
 }
 
-.wd-random-btn:hover { background: #00c453; }
-.wd-random-btn:active { transform: scale(0.95); }
-.wd-random-btn:disabled { opacity: 0.6; cursor: wait; }
+.wd-random-btn:hover {
+  color: var(--text-primary);
+  background: rgba(255, 255, 255, 0.18);
+}
+.wd-random-btn:active { transform: scale(0.93); }
+.wd-random-btn:disabled { opacity: 0.25; cursor: default; }
 
 .wd-random-btn svg {
-  width: 16px;
-  height: 16px;
+  width: 18px;
+  height: 18px;
 }
 
 /* 加载中旋转动画 */
