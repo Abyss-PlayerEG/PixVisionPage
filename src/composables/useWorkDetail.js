@@ -236,12 +236,34 @@ const goToRandomWork = async () => {
 
   // ========== 视图计算属性 ==========
   const workTitle = computed(() => workDetail.value?.work_title || route.query.title || '未命名作品')
+  
+  // 缩略图 URL（快速加载）
+  const workThumbUrl = computed(() => {
+    if (workDetail.value) return getWorkImageUrl(workDetail.value.thumb_url || '')
+    return ''
+  })
+  
+  // 原图 URL（高清）
   const workImgUrl = computed(() => {
     if (workDetail.value) return getWorkImageUrl(workDetail.value.img_url || '')
     if (route.query.img) return route.query.img
     if (route.query.filePath) return getWorkImageUrl(route.query.filePath)
     return ''
   })
+  
+  // 原图是否加载完成
+  const fullImageLoaded = ref(false)
+  
+  // 预加载原图
+  const preloadFullImage = () => {
+    if (!workImgUrl.value) { fullImageLoaded.value = true; return }
+    fullImageLoaded.value = false
+    const img = new Image()
+    img.onload = () => { fullImageLoaded.value = true }
+    img.onerror = () => { fullImageLoaded.value = true }  // 加载失败也显示（降级）
+    img.src = workImgUrl.value
+  }
+  
   const workMeta = computed(() => {
     if (!workDetail.value) return {}
     return { likeCount: likeCount.value, starCount: starCount.value, viewCount: workDetail.value.view_count || 0, createTime: workDetail.value.create_time || '' }
@@ -433,50 +455,63 @@ const goToRandomWork = async () => {
     if (initialLoading.value) loading.value = true
     replyingTo.value = null
     replyText.value = ''
-    let detailResult
-    if (navPrefetched.value && navPrefetched.value.id === id) {
-      detailResult = { success: true, data: navPrefetched.value.detail }
-      navPrefetched.value = null
-    } else {
-      detailResult = await fetchWorkDetail(id)
-    }
-    // 作品不存在时跳转到 404
-    if (!detailResult.success || !detailResult.data) {
+    
+    try {
+      let detailResult
+      if (navPrefetched.value && navPrefetched.value.id === id) {
+        detailResult = { success: true, data: navPrefetched.value.detail }
+        navPrefetched.value = null
+      } else {
+        detailResult = await fetchWorkDetail(id)
+      }
+      // 作品不存在时跳转到 404
+      if (!detailResult.success || !detailResult.data) {
+        loading.value = false
+        initialLoading.value = false
+        router.push({ name: 'notFound' })
+        return
+      }
+      const [commentResult] = await Promise.all([fetchCommentList(id, 'newest')])
+      if (detailResult.success) {
+        workDetail.value = detailResult.data
+        likeCount.value = detailResult.data.like_count || 0
+        starCount.value = detailResult.data.star_count || 0
+      } else {
+        workDetail.value = null
+        likeCount.value = 0
+        starCount.value = 0
+      }
+      if (commentResult.success) comments.value = commentResult.data
+      else comments.value = []
+      if (currentUser.value) {
+        const [likeStatus, starStatus] = await Promise.all([fetchLikeStatus(id), fetchStarStatus(id)])
+        if (likeStatus.success) liked.value = likeStatus.data
+        else liked.value = false
+        if (starStatus.success) starred.value = starStatus.data
+        else starred.value = false
+      } else {
+        liked.value = false
+        starred.value = false
+      }
+      if (detailResult.success && detailResult.data.user_id) {
+        const pubResult = await fetchPublisherInfo(detailResult.data.user_id)
+        publisher.value = pubResult.data
+      } else {
+        publisher.value = { avatar: getAvatarUrl(''), displayName: '', username: '', bio: '', works: 0, totalViews: 0, totalLikes: 0, totalStars: 0, contactItems: [] }
+      }
+    } catch (error) {
+      console.error('加载作品数据失败:', error)
+      // 确保即使出错也能显示基本内容
+      if (!publisher.value.displayName) {
+        publisher.value = { avatar: getAvatarUrl(''), displayName: '加载失败', username: '', bio: '', works: 0, totalViews: 0, totalLikes: 0, totalStars: 0, contactItems: [] }
+      }
+    } finally {
       loading.value = false
       initialLoading.value = false
-      router.push({ name: 'notFound' })
-      return
+      
+      // 开始预加载原图
+      preloadFullImage()
     }
-    const [commentResult] = await Promise.all([fetchCommentList(id, 'newest')])
-    if (detailResult.success) {
-      workDetail.value = detailResult.data
-      likeCount.value = detailResult.data.like_count || 0
-      starCount.value = detailResult.data.star_count || 0
-    } else {
-      workDetail.value = null
-      likeCount.value = 0
-      starCount.value = 0
-    }
-    if (commentResult.success) comments.value = commentResult.data
-    else comments.value = []
-    if (currentUser.value) {
-      const [likeStatus, starStatus] = await Promise.all([fetchLikeStatus(id), fetchStarStatus(id)])
-      if (likeStatus.success) liked.value = likeStatus.data
-      else liked.value = false
-      if (starStatus.success) starred.value = starStatus.data
-      else starred.value = false
-    } else {
-      liked.value = false
-      starred.value = false
-    }
-    if (detailResult.success && detailResult.data.user_id) {
-      const pubResult = await fetchPublisherInfo(detailResult.data.user_id)
-      publisher.value = pubResult.data
-    } else {
-      publisher.value = { avatar: getAvatarUrl(''), displayName: '', username: '', bio: '', works: 0, totalViews: 0, totalLikes: 0, totalStars: 0, contactItems: [] }
-    }
-    loading.value = false
-    initialLoading.value = false
   }
 
   // ========== 点赞/收藏 ==========
@@ -576,7 +611,9 @@ const goToRandomWork = async () => {
     replySubmitting,
     // 计算属性
     workTitle,
+    workThumbUrl,
     workImgUrl,
+    fullImageLoaded,
     workMeta,
     // 方法
     handleBack,

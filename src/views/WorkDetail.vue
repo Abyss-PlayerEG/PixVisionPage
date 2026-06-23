@@ -27,7 +27,7 @@ const {
   // 导航
   navLoading,
   // 计算属性
-  workTitle, workImgUrl, workMeta,
+  workTitle, workThumbUrl, workImgUrl, fullImageLoaded, workMeta,
   // 发布者
   publisher, workDetail,
   // 评论
@@ -111,10 +111,11 @@ watch(workDetail, () => nextTick(() => setTimeout(checkInfoOverlap, 50)))
 onMounted(() => window.addEventListener('resize', checkInfoOverlap))
 onUnmounted(() => window.removeEventListener('resize', checkInfoOverlap))
 
-// 模糊背景样式
-const bgStyle = computed(() => ({
-  backgroundImage: workImgUrl.value ? `url(${workImgUrl.value})` : 'none',
-}))
+// 模糊背景样式（使用缩略图，经过 blur(64px) 模糊后视觉无差异，加载更快）
+const bgStyle = computed(() => {
+  const img = workThumbUrl.value || workImgUrl.value
+  return { backgroundImage: img ? `url(${img})` : 'none' }
+})
 
 // 格式化日期：≤14天→X天前，>14天→YYYY年MM月DD日
 const formattedDate = computed(() => {
@@ -248,16 +249,30 @@ watch(() => route.params.id, () => {
           <div class="gallery-card--spinner"></div>
           <span class="gallery-card--loading-text">加载中...</span>
         </div>
-        <!-- 图片展示 -->
-        <img
-          v-else-if="workImgUrl"
-          :src="workImgUrl"
-          :alt="workTitle"
-          class="gallery-card--img"
-          draggable="false"
-          @load="checkInfoOverlap"
-          @error="checkInfoOverlap"
-        />
+        <!-- 图片展示（渐进式加载：双层叠加） -->
+        <template v-else-if="workImgUrl || workThumbUrl">
+          <!-- 底层：缩略图（快速显示，模糊效果填满容器） -->
+          <img
+            v-if="workThumbUrl"
+            :src="workThumbUrl"
+            :alt="workTitle"
+            class="gallery-card--img gallery-card--thumb"
+            :class="{ 'gallery-card--thumb-hidden': fullImageLoaded }"
+            draggable="false"
+            @load="checkInfoOverlap"
+            @error="checkInfoOverlap"
+          />
+          <!-- 顶层：原图（加载完成后通过 opacity 显示） -->
+          <img
+            :src="workImgUrl"
+            :alt="workTitle"
+            class="gallery-card--img gallery-card--full"
+            :class="{ 'gallery-card--full-loaded': fullImageLoaded }"
+            draggable="false"
+            @load="checkInfoOverlap"
+            @error="checkInfoOverlap"
+          />
+        </template>
         <!-- 无图片 -->
         <div v-else class="gallery-card--placeholder">
           <svg viewBox="0 0 24 24" width="48" height="48" fill="none" stroke="var(--text-muted)" stroke-width="1" stroke-linecap="round">
