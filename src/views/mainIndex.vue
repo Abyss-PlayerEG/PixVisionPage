@@ -110,8 +110,8 @@ onMounted(() => {
   loadWorks({ reset: true })
   
   // 加载系列数据（用于n3_showIMG合集部分）
-  // 这里使用一个示例用户ID，实际应该从用户状态或路由参数获取
-  loadSeries({ userId: 1, size: 9, reset: true })
+  // 不传userId，查询所有用户的系列
+  loadSeries({ size: 9, reset: true })
 
   // 延迟 500ms 初始化 num3z 动画 —— Waterfall 的 ScrollTrigger 在 ~300ms 后创建，
   // 需要等它完成后再注册新的 ScrollTrigger，避免多个 trigger 同时计算导致位置争夺

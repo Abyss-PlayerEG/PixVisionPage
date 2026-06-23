@@ -118,7 +118,6 @@ const skeletonItems = Array.from({ length: 8 }, (_, i) => {
 // ── 数据获取 ──
 const fetchSeries = async ({ reset = false, size = 10 } = {}) => {
   if (isLoading.value) return
-  if (!props.userId) return
 
   if (reset) {
     _currentPage = 1
@@ -130,10 +129,11 @@ const fetchSeries = async ({ reset = false, size = 10 } = {}) => {
     isLoading.value = true
 
     const queryParams = new URLSearchParams()
+    if (props.userId) queryParams.append('userId', props.userId)
     if (props.keyword) queryParams.append('keyword', props.keyword)
     if (props.orderBy) queryParams.append('orderBy', props.orderBy)
     const qs = queryParams.toString()
-    const url = `${SERIES_API.PAGE}/${props.userId}/${_currentPage}/${size}${qs ? '?' + qs : ''}`
+    const url = `${SERIES_API.PAGE}/${_currentPage}/${size}${qs ? '?' + qs : ''}`
 
     console.log('[SeriesGrid] 请求:', url)
     const response = await fetch(url, {
@@ -204,8 +204,8 @@ watch(() => props.orderBy, () => {
 })
 
 // ── 监听 userId 变化 ──
-watch(() => props.userId, (newVal) => {
-  if (newVal) refresh()
+watch(() => props.userId, () => {
+  refresh()
 })
 
 // ── IntersectionObserver ──
@@ -235,7 +235,7 @@ watch(() => seriesList.value.length, () => {
 
 onMounted(() => {
   setupObserver()
-  if (props.userId) fetchSeries({ reset: true })
+  fetchSeries({ reset: true })
 })
 
 onUnmounted(() => {

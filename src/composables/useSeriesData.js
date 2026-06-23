@@ -19,18 +19,13 @@ export const useSeriesData = () => {
   /**
    * 加载系列数据
    * @param {Object} options - 加载选项
-   * @param {number} options.userId - 用户ID，必填
+   * @param {number} [options.userId] - 用户ID，可选，不传则查询所有用户
    * @param {number} [options.current=1] - 当前页码
    * @param {number} [options.size=10] - 每页数量
    * @param {string} [options.keyword] - 搜索关键词，可选
    * @param {boolean} [options.reset=false] - 是否重置当前列表
    */
-  const loadSeries = async ({ userId, current = 1, size = 10, keyword, reset = false } = {}) => {
-    if (!userId) {
-      error.value = '用户ID不能为空'
-      return
-    }
-
+  const loadSeries = async ({ userId = null, current = 1, size = 10, keyword, reset = false } = {}) => {
     if (isLoading.value) return
 
     try {
@@ -74,10 +69,10 @@ export const useSeriesData = () => {
 
   /**
    * 刷新系列数据
-   * @param {number} userId - 用户ID
+   * @param {number} [userId] - 用户ID，可选
    * @param {number} [size=10] - 每页数量
    */
-  const refreshSeries = (userId, size = 10) => {
+  const refreshSeries = (userId = null, size = 10) => {
     loadSeries({ userId, size, reset: true })
   }
 

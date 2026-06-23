@@ -117,7 +117,7 @@ export const STAR_API = {
 
 // 作品系列相关接口
 export const SERIES_API = {
-  PAGE: `${API_BASE_URL}/api/work/series/page`, // GET，路径后拼 /userId/current/size
+  PAGE: `${API_BASE_URL}/api/work/series/page`, // GET，路径后拼 /current/size，userId为可选查询参数
   ...CREATOR_SERIES_API, // 展开创作者系列管理接口
 };
 
@@ -162,8 +162,8 @@ export const SEARCH_API = {
   WORK_PAGE: (current, size) => `${API_BASE_URL}/api/work/page/${current}/${size}`,
   
   // 合集搜索（公开接口）
-  // GET /api/work/series/page/{userId}/{current}/{size}?keyword=xxx
-  SERIES_PAGE: (userId, current, size) => `${API_BASE_URL}/api/work/series/page/${userId}/${current}/${size}`,
+  // GET /api/work/series/page/{current}/{size}?userId=xxx&keyword=xxx
+  SERIES_PAGE: (current, size) => `${API_BASE_URL}/api/work/series/page/${current}/${size}`,
   
   // 用户搜索（公开接口）
   // GET /api/user/profile/page/{current}/{size}?keyword=xxx

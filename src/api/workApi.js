@@ -402,18 +402,19 @@ export const fetchUserStarredWorks = async ({ userId, current = 1, size = 20, or
 /**
  * 获取用户作品系列分页列表（公开接口）
  * @param {Object} params
- * @param {number} params.userId - 用户 ID，必填
+ * @param {number} [params.userId] - 用户 ID，可选，不传则查询所有用户
  * @param {number} [params.current=1] - 当前页码
  * @param {number} [params.size=10] - 每页大小，范围 1-500
  * @param {string} [params.keyword] - 搜索关键词，可选
  * @returns {Promise<Object>} { success, data: { records, total, ... }, message }
  */
-export const fetchUserSeries = async ({ userId, current = 1, size = 10, keyword } = {}) => {
+export const fetchUserSeries = async ({ userId = null, current = 1, size = 10, keyword } = {}) => {
   try {
     const queryParams = new URLSearchParams()
+    if (userId) queryParams.append('userId', userId)
     if (keyword) queryParams.append('keyword', keyword)
     const qs = queryParams.toString()
-    const url = `${SERIES_API.PAGE}/${userId}/${current}/${size}${qs ? '?' + qs : ''}`
+    const url = `${SERIES_API.PAGE}/${current}/${size}${qs ? '?' + qs : ''}`
     console.log('[API] 请求用户系列列表:', url)
     const response = await fetch(url, {
       method: 'GET',

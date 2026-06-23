@@ -56,27 +56,23 @@ export const searchWorks = async (params) => {
 /**
  * 搜索合集列表
  * @param {Object} params - 搜索参数
- * @param {number} params.userId - 用户ID（必填）
+ * @param {number} [params.userId] - 用户ID（可选，不传则查询所有用户）
  * @param {number} params.current - 当前页码（从1开始）
  * @param {number} params.size - 每页大小（1-500）
  * @param {string} [params.keyword] - 搜索关键词（可选，同时匹配标题和描述）
  * @returns {Promise<{success: boolean, data?: Object, message?: string}>}
  */
 export const searchSeries = async (params) => {
-  const { userId, current = 1, size = 20, keyword } = params
-
-  if (!userId) {
-    console.error('❌ 搜索合集需要提供userId')
-    return { success: false, message: '缺少用户ID参数' }
-  }
+  const { userId = null, current = 1, size = 20, keyword } = params
 
   try {
     // 构建查询参数
     const queryParams = new URLSearchParams()
+    if (userId) queryParams.append('userId', userId)
     if (keyword) queryParams.append('keyword', keyword)
 
     const qs = queryParams.toString()
-    const url = `${SEARCH_API.SERIES_PAGE(userId, current, size)}${qs ? '?' + qs : ''}`
+    const url = `${SEARCH_API.SERIES_PAGE(current, size)}${qs ? '?' + qs : ''}`
 
     console.log('🔍 搜索合集:', url, '参数:', { userId, current, size, keyword: keyword || '(无)' })
 

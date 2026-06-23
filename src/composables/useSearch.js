@@ -131,24 +131,6 @@ export const useSearch = () => {
     if (seriesLoading.value) return
     if (!reset && !seriesHasMore.value) return
 
-    // 合集搜索需要userId，尝试获取当前登录用户
-    const userInfo = localStorage.getItem('userInfo')
-    let userId = null
-    if (userInfo) {
-      try {
-        const user = JSON.parse(userInfo)
-        userId = user.user_id || user.userId
-      } catch (e) {
-        console.warn('解析用户信息失败:', e)
-      }
-    }
-
-    if (!userId) {
-      console.warn('⚠️ 合集搜索需要登录，请先登录')
-      seriesHasMore.value = false
-      return
-    }
-
     seriesLoading.value = true
     if (reset) {
       seriesPage.value = 1
@@ -157,7 +139,6 @@ export const useSearch = () => {
     }
 
     const result = await searchSeries({
-      userId: userId,
       current: seriesPage.value,
       size: seriesPageSize.value,
       keyword: searchQuery.value || undefined
