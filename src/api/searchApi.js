@@ -198,7 +198,7 @@ export const transformWorksToWaterfallFormat = (works) => {
 
   return works.map(work => ({
     id: work.work_id || work.workId,
-    src: getWorkImageUrl(work.img_url || work.imgUrl),
+    src: getWorkImageUrl(work.thumb_url || work.thumbUrl || work.img_url || work.imgUrl),
     title: work.work_title || work.workTitle || '未命名作品',
     width: work.img_width || work.imgWidth || 400,
     height: work.img_height || work.imgHeight || 300,

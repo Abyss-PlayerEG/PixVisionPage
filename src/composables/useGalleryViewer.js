@@ -71,7 +71,7 @@ export const useGalleryViewer = (props, emit) => {
   const currentWork = computed(() => works.value[currentIndex.value] || null)
 
   const currentImage = computed(() => {
-    if (currentWork.value) return currentWork.value.imgUrl || ''
+    if (currentWork.value) return currentWork.value.thumbUrl || currentWork.value.imgUrl || ''
     if (props.imagePath) {
       return props.imagePath.startsWith('http') ? props.imagePath : getWorkImageUrl(props.imagePath)
     }
