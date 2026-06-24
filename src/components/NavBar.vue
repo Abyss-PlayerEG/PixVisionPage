@@ -232,8 +232,15 @@ const scrollToTop = () => {
 
 // 处理菜单项点击
 const handleMenuClick = (index) => {
+  // 创作中心（index 1）：直接跳转，不唤出下拉菜单
+  if (index === 1) {
+    closeDropdown()
+    router.push({ name: 'creatorT' })
+    return
+  }
+
   const menuItem = menuItems[index];
-  
+
   if (!isDropdownVisible.value) {
     // 首次打开：播放展开动画
     activeMenuIndex.value = index;
@@ -247,6 +254,13 @@ const handleMenuClick = (index) => {
       dropdownContent.value = menuItem.content;
     }
   }
+
+  // TODO: 后续完善创作中心下拉菜单时，删除上面 index===1 的提前返回
+  // 并恢复下方注释的逻辑：
+  // if (index === 1) {
+  //   // 创作中心下拉菜单逻辑（待完善）
+  //   // ...
+  // }
 };
 
 // 关闭下拉菜单

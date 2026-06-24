@@ -169,10 +169,10 @@
   justify-content: center;
 }
 
-/* Pill 1 — Pixel Vision 品牌药丸 */
+/* Pill 1 — Pixel Vision 品牌药丸，点击回首页 */
 .pill-brand {
   position: relative;
-  cursor: default;
+  cursor: pointer;
   gap: 4px;
 }
 
@@ -369,9 +369,12 @@
   transform: none;     /* 防御：覆盖 galleryViewer.css 的 translateX(-50%) */
   display: flex;
   align-items: center;
+  gap: 4px;
   height: 48px;
-  width: 256px;
-  padding: 0 8px;
+  width: auto;         /* 自适应内容宽度，避免按钮贴边 */
+  min-width: 256px;
+  max-width: 56vw;     /* 防止作品名过长撑满屏幕 */
+  padding: 0 14px;
   border-radius: 999px;
   background: #0a0a0a;
   box-shadow:
@@ -445,39 +448,82 @@
   height: 16px;
 }
 
-/* ── 随机按钮 — 导航栏中间，有区分度的背景 ────────── */
+/* ── 随机按钮 — 药丸长条：SVG + "随机" 文字，导航栏中间 ── */
 .wd-random-btn {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 34px;
+  gap: 6px;
   height: 34px;
-  padding: 0;
+  padding: 0 16px;
   border: none;
   border-radius: 999px;
-  background: rgba(255, 255, 255, 0.1);
+  background: #0F0F0F;
   color: var(--text-secondary);
   cursor: pointer;
   transition: color 0.2s ease, background 0.2s ease, transform 0.15s ease;
   flex-shrink: 0;
-  margin: 0 auto;
+  font-size: 13px;
+  font-weight: 500;
+  font-family: inherit;
 }
 
 .wd-random-btn:hover {
   color: var(--text-primary);
-  background: rgba(255, 255, 255, 0.18);
+  background: #0a0a0a;
 }
 .wd-random-btn:active { transform: scale(0.93); }
-.wd-random-btn:disabled { opacity: 0.25; cursor: default; }
+.wd-random-btn:disabled { opacity: 0.4; cursor: default; }
 
-.wd-random-btn svg {
-  width: 18px;
-  height: 18px;
+/* 图标容器 — 相对定位，让两个 SVG 叠在同一位置做 crossfade */
+.wd-random-btn--icon-wrap {
+  position: relative;
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
 }
 
-/* 加载中旋转动画 */
-.wd-random-btn--loading svg {
+/* 两个图标共用绝对定位，叠放 */
+.wd-random-btn--spinner,
+.wd-random-btn--dice {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 20px;
+  height: 20px;
+  transition: opacity 0.3s ease;
+}
+
+/* 默认：骰子可见，齿轮隐藏 */
+.wd-random-btn--dice {
+  opacity: 1;
+}
+.wd-random-btn--spinner {
+  opacity: 0;
+}
+
+/* 加载中：齿轮旋转 + 淡入，骰子淡出 */
+.wd-random-btn--loading .wd-random-btn--spinner {
+  opacity: 1;
   animation: wd-spin 0.8s linear infinite;
+}
+.wd-random-btn--loading .wd-random-btn--dice {
+  opacity: 0;
+}
+
+/* ── 个人范围模式：导航栏中间显示作品标题 ── */
+.wd-nav-title {
+  flex: 1;
+  text-align: center;
+  color: var(--text-primary);
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1.4;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  padding: 0 12px;
+  min-width: 0;
 }
 
 /* ═══════════════════════════════════════════════════════════════

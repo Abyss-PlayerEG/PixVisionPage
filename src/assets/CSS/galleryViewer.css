@@ -126,10 +126,10 @@
   justify-content: center;
 }
 
-/* Pill 1 — Pixel Vision 品牌药丸 */
+/* Pill 1 — Pixel Vision 品牌药丸，点击回首页 */
 .gv-page .pill-brand {
   position: relative;
-  cursor: default;
+  cursor: pointer;
   gap: 4px;
 }
 

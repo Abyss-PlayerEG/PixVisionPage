@@ -53,6 +53,10 @@ export const useWorkDetail = () => {
   // 导航来源：区分个人作品/点赞/收藏/浏览历史，决定使用哪个 API 构建导航列表
   const scopeSource = computed(() => route.query.source || null)
 
+  // 是否显示随机按钮：仅在全局浏览模式下显示（无 scopeUserId 且无 scopeSource）
+  // 从个人中心（作品/历史/收藏/点赞）进入时显示作品标题
+  const showRandomBtn = computed(() => !scopeUserId.value && !scopeSource.value)
+
   /**
    * 用户范围内所有作品 ID 列表（按 ID 降序 = 最新在前）
    * 仅在 scopeUserId 存在时加载，用于 O(1) 无限轮播
@@ -605,6 +609,7 @@ const goToRandomWork = async () => {
     // 导航
     navLoading,
     randomLoading,
+    showRandomBtn,
     // 回复
     replyingTo,
     replyText,
