@@ -134,7 +134,7 @@ export const useGalleryViewer = (props, emit) => {
       )
       .fromTo(cardRef.value,
         { scale: 0.92, opacity: 0 },
-        { scale: 1, opacity: 1, duration: 0.5, ease: 'expo.out' },
+        { scale: 1, opacity: 1, duration: 0.5, ease: 'expo.out', clearProps: 'transform' },
         0.08
       )
       .fromTo(topLeftRef.value,
@@ -156,7 +156,13 @@ export const useGalleryViewer = (props, emit) => {
     nextTick(() => {
       gsap.fromTo(cardRef.value,
         { opacity: 0, scale: 0.97 },
-        { opacity: 1, scale: 1, duration: 0.3, ease: 'power2.out' }
+        {
+          opacity: 1,
+          scale: 1,
+          duration: 0.3,
+          ease: 'power2.out',
+          clearProps: 'transform',
+        }
       )
     })
   })

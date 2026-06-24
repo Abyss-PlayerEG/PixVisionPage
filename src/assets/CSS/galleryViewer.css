@@ -36,7 +36,7 @@
   position: absolute;
   top: 50%;
   left: 50%;
-  transform: translate(-50%, -50%);
+  translate: -50% -50%;
   z-index: 1;
   max-width: 82vw; /* 使用 max-width 让容器收缩到图片大小 */
   max-height: 74vh;
