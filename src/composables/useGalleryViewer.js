@@ -71,7 +71,10 @@ export const useGalleryViewer = (props, emit) => {
   const currentWork = computed(() => works.value[currentIndex.value] || null)
 
   const currentImage = computed(() => {
-    if (currentWork.value) return currentWork.value.thumbUrl || currentWork.value.imgUrl || ''
+    if (currentWork.value) {
+      // 全屏预览优先使用原图，没有原图才回退到缩略图
+      return currentWork.value.imgUrl || currentWork.value.thumbUrl || ''
+    }
     if (props.imagePath) {
       return props.imagePath.startsWith('http') ? props.imagePath : getWorkImageUrl(props.imagePath)
     }

@@ -38,7 +38,7 @@
   left: 50%;
   transform: translate(-50%, -50%);
   z-index: 1;
-  max-width: 82vw;
+  max-width: 82vw; /* 使用 max-width 让容器收缩到图片大小 */
   max-height: 74vh;
   border-radius: 24px;
   overflow: hidden;
@@ -52,11 +52,14 @@
 }
 
 .gv-page .gallery-card--inner {
+  position: relative;
   display: flex;
   align-items: center;
   justify-content: center;
   min-width: 120px;
   min-height: 120px;
+  overflow: hidden;
+  border-radius: 24px;
 }
 
 .gv-page .gallery-card--img {
