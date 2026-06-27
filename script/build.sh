@@ -40,6 +40,11 @@ echo "[STEP] 开始构建..."
 pnpm build
 echo ""
 
+# 复制 serve_spa.py 到 dist
+echo "[STEP] 复制 serve_spa.py 到 dist..."
+cp "$PROJECT_DIR/serve_spa.py" "$PROJECT_DIR/dist/"
+echo ""
+
 # 打包 zip
 echo "[STEP] 打包 dist → pix-vision-pages.zip..."
 cd "$PROJECT_DIR/dist"
@@ -52,4 +57,5 @@ echo "=========================================="
 echo "  构建完成！"
 echo "  产物目录: dist/"
 echo "  压缩包:   pix-vision-pages.zip"
+echo "  启动命令: cd dist && python3 serve_spa.py 1990"
 echo "=========================================="

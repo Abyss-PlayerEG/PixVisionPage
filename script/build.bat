@@ -51,6 +51,11 @@ if %errorlevel% neq 0 (
 )
 echo.
 
+REM 复制 serve_spa.py 到 dist
+echo [STEP] 复制 serve_spa.py 到 dist...
+copy /y "serve_spa.py" "dist\serve_spa.py" >nul
+echo.
+
 REM 打包 zip
 echo [STEP] 打包 dist -^> pix-vision-pages.zip...
 if exist "pix-vision-pages.zip" del /f /q "pix-vision-pages.zip"
@@ -67,6 +72,7 @@ echo ==========================================
 echo   构建完成！
 echo   产物目录: dist\
 echo   压缩包:   pix-vision-pages.zip
+echo   启动命令: cd dist ^&^& python3 serve_spa.py 1990
 echo ==========================================
 
 endlocal
