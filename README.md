@@ -123,7 +123,7 @@ PixVisionPage/
 ## 作者
 
 - PlayerEG — gaster@vip.playereg.top
-- 贡献者：blue_sky_ks
+- 贡献者：blue_sky_ks、suliusu
 
 ## 许可证
 
