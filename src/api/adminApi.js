@@ -689,17 +689,17 @@ export const fetchSeriesList = async (params = {}) => {
     const token = localStorage.getItem('token')
     if (!token) return { success: false, message: '未登录' }
 
-    const { current = 1, size = 20, keyword = '', orderBy = 'newest', status, userId, isDelete } = params
+    const { current = 1, size = 20, keyword = '', orderBy = 'newest', status, userId, is_delete } = params
     const queryParts = []
     if (keyword) queryParts.push(`keyword=${encodeURIComponent(keyword)}`)
     queryParts.push(`orderBy=${orderBy}`)
     if (status !== undefined && status !== '') queryParts.push(`status=${status}`)
     if (userId !== undefined && userId !== '') queryParts.push(`userId=${userId}`)
-    if (isDelete !== undefined) queryParts.push(`isDelete=${isDelete}`)
+    if (is_delete !== undefined) queryParts.push(`is_delete=${is_delete}`)
     let url = ADMIN_API.SERIES_LIST(current, size)
     if (queryParts.length > 0) url += '?' + queryParts.join('&')
 
-    console.log('📋 获取合集列表:', url, '参数:', { current, size, keyword: keyword || '(无)', orderBy, status, userId, isDelete })
+    console.log('📋 获取合集列表:', url, '参数:', { current, size, keyword: keyword || '(无)', orderBy, status, userId, is_delete })
     const response = await fetch(url, {
       method: 'GET',
       headers: { 'Authorization': `Bearer ${token}` },
