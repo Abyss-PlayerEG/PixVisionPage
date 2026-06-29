@@ -566,18 +566,17 @@
 }
 
 .n4_GridLayout{
-    flex: 1;
     width: 100%;
-    min-height: 0;
     display: grid;
     grid-template-columns: repeat(4, 1fr);
-    grid-template-rows: repeat(4, minmax(140px, 1fr));
+    grid-template-rows: repeat(4, minmax(120px, 160px));
     gap: 16px;
+    flex-shrink: 0;
 
     .grid-card {
         border-radius: 16px;
         overflow: hidden;
-        cursor: pointer;
+        cursor: default;
         min-width: 0;
         min-height: 0;
         transition: transform 0.35s ease, box-shadow 0.35s ease;
@@ -588,30 +587,16 @@
         }
     }
 
-    .grid-card__skeleton {
+    .grid-card__image {
         width: 100%;
         height: 100%;
         display: block;
-        position: relative;
-        overflow: hidden;
+        object-fit: cover;
+        transition: transform 0.45s ease;
+    }
 
-        &::after {
-            content: "";
-            position: absolute;
-            top: 0;
-            left: -100%;
-            width: 60%;
-            height: 100%;
-            background: linear-gradient(
-                90deg,
-                transparent 0%,
-                rgba(255, 255, 255, 0.02) 40%,
-                rgba(255, 255, 255, 0.04) 50%,
-                rgba(255, 255, 255, 0.02) 60%,
-                transparent 100%
-            );
-            animation: shimmerLeft 2.4s ease-in-out infinite;
-        }
+    .grid-card:hover .grid-card__image {
+        transform: scale(1.05);
     }
 
     /*
@@ -637,20 +622,8 @@
     .grid-card--7 { grid-column: 4 / 5; grid-row: 3 / 4; }
     .grid-card--8 { grid-column: 1 / 5; grid-row: 4 / 5; }
 
-    /* 骨架屏底色微差 */
-    .grid-card--1 .grid-card__skeleton  { background: var(--bg-secondary); }
-    .grid-card--2 .grid-card__skeleton  { background: #1d1d1d; }
-    .grid-card--3 .grid-card__skeleton  { background: #1c1c1c; }
-    .grid-card--4 .grid-card__skeleton  { background: #1e1e1e; }
-    .grid-card--5 .grid-card__skeleton  { background: #1d1d1d; }
-    .grid-card--6 .grid-card__skeleton  { background: var(--bg-secondary); }
-    .grid-card--7 .grid-card__skeleton  { background: #1c1c1c; }
-    .grid-card--8 .grid-card__skeleton  { background: #1e1e1e; }
-}
-
-@keyframes shimmerLeft {
-    0%   { left: -100%; }
-    100% { left: 160%; }
+    /* 卡片默认底色 —— 图片加载前显示 */
+    .grid-card { background: var(--bg-secondary); }
 }
 
 /* --- 响应式: 平板 (≤1024px) --- */

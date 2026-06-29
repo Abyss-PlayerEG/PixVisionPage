@@ -5,6 +5,16 @@ import { useRouter } from 'vue-router'
 import NavBar from '@/components/NavBar.vue'
 import Waterfall from '@/components/Waterfall.vue'
 
+// num4z 精彩集锦图片
+import n4Img1 from '@/assets/IMG/num4z/coffee.jpg'
+import n4Img2 from '@/assets/IMG/num4z/cup.jpg'
+import n4Img3 from '@/assets/IMG/num4z/flower.jpg'
+import n4Img4 from '@/assets/IMG/num4z/马克龙.jpg'
+import n4Img5 from '@/assets/IMG/num4z/蓝莓.jpg'
+import n4Img6 from '@/assets/IMG/num4z/烤肉.jpg'
+import n4Img7 from '@/assets/IMG/num4z/森林3.jpg'
+import n4Img8 from '@/assets/IMG/num4z/餐厅.jpg'
+
 import {
   useCopyAnimation,
   useArrowAnimation,
@@ -45,6 +55,18 @@ const { initNum7zAnimation, cleanupNum7zAnimation, mockNum7zQA, mockNum7zFAQ, n7
 const { initSwiper, cleanupSwiper } = useSwiper(swiperContainer)
 const { waterfallImages, isLoading, error, loadWorks } = useWorkWaterfall()
 const { seriesList, isLoading: seriesLoading, error: seriesError, loadSeries } = useSeriesData()
+
+// num4z 精彩集锦图片数据
+const num4zImages = [
+  { src: n4Img1, alt: 'Coffee' },
+  { src: n4Img2, alt: 'Cup' },
+  { src: n4Img3, alt: 'Flower' },
+  { src: n4Img4, alt: 'Macaron' },
+  { src: n4Img5, alt: 'Blueberry' },
+  { src: n4Img6, alt: 'Barbecue' },
+  { src: n4Img7, alt: 'Forest' },
+  { src: n4Img8, alt: 'Restaurant' },
+]
 
 // --- Watchers ---
 // API 异常 → 弹出通知提示
@@ -357,12 +379,17 @@ onUnmounted(() => {
     </div>
     <div class="n4_GridLayout">
       <div
-        v-for="item in 8"
-        :key="item"
+        v-for="(img, index) in num4zImages"
+        :key="index"
         class="grid-card"
-        :class="'grid-card--' + item"
+        :class="'grid-card--' + (index + 1)"
       >
-        <div class="grid-card__skeleton"></div>
+        <img
+          :src="img.src"
+          :alt="img.alt"
+          class="grid-card__image"
+          loading="lazy"
+        />
       </div>
     </div>
   </section>
