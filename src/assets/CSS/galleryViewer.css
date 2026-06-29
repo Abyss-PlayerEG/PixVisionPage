@@ -3,7 +3,9 @@
    所有规则嵌套在 .gv-page 下，防止泄漏到 WorkDetail 等页面
    ═══════════════════════════════════════════════════════════════ */
 
-.gv-page {
+/* 使用链式选择器 .gallery-viewer.gv-page（特异性 0,2,0），
+   防御 workDetail.css 中 .gallery-viewer（0,1,0）的 overflow-y: auto 泄漏 */
+.gallery-viewer.gv-page {
   position: fixed;
   inset: 0;
   z-index: 2000;
@@ -36,7 +38,9 @@
   position: absolute;
   top: 50%;
   left: 50%;
-  translate: -50% -50%;
+  /* 使用 transform 而非 translate 属性：.gv-page .gallery-card（0,2,0）特异性高于
+     workDetail.css 的 .gallery-card（0,1,0），覆盖其 transform 防止双重重置 */
+  transform: translate(-50%, -50%);
   z-index: 1;
   max-width: 82vw; /* 使用 max-width 让容器收缩到图片大小 */
   max-height: 74vh;
