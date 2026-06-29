@@ -51,9 +51,15 @@
 .pill-brand {
   width: 160px;
   position: relative;
-  cursor: default;
+  cursor: pointer;
   gap: 4px;
   justify-content: center;
+  transition: all 0.25s ease;
+}
+
+.pill-brand:hover {
+  background: rgba(255, 255, 255, 0.08);
+  transform: translateY(-2px);
 }
 
 .pill-brand--text {

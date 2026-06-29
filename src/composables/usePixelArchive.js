@@ -126,13 +126,15 @@ export const usePixelArchive = (initialQuery = '') => {
     let cache = {}
     try { cache = JSON.parse(localStorage.getItem(SERIES_HEIGHT_KEY) || '{}') } catch {}
     let dirty = false
-    const enriched = records.map((s) => {
+    // 过滤掉没有封面图的合集
+    const filtered = records.filter((s) => !!s.thumb_url)
+    const enriched = filtered.map((s) => {
       const id = s.series_id
       if (!cache[id]) { cache[id] = Math.floor(Math.random() * 401) + 400; dirty = true }
       return {
         ...s,
         randHeight: cache[id],
-        coverUrl: s.thumb_url ? getWorkImageUrl(s.thumb_url) : null,
+        coverUrl: getWorkImageUrl(s.thumb_url),
       }
     })
     if (dirty) localStorage.setItem(SERIES_HEIGHT_KEY, JSON.stringify(cache))
@@ -143,17 +145,6 @@ export const usePixelArchive = (initialQuery = '') => {
     if (seriesLoading.value) return
     if (!reset && !seriesHasMore.value) return
 
-    const userInfo = localStorage.getItem('userInfo')
-    let userId = null
-    if (userInfo) {
-      try { userId = JSON.parse(userInfo).user_id || JSON.parse(userInfo).userId } catch {}
-    }
-    if (!userId) {
-      seriesList.value = []
-      seriesHasMore.value = false
-      return
-    }
-
     seriesLoading.value = true
     if (reset) {
       seriesPage.value = 1
@@ -161,8 +152,8 @@ export const usePixelArchive = (initialQuery = '') => {
       seriesHasMore.value = true
     }
 
+    // 不传 userId，查询所有用户的合集
     const result = await searchSeries({
-      userId,
       current: seriesPage.value,
       size: seriesPageSize,
       keyword: searchQuery.value || undefined,

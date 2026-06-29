@@ -442,9 +442,9 @@
               <tbody>
                 <tr v-for="m in messageList" :key="m.message_id">
                   <td class="ap-cell-id">#{{ m.message_id }}</td>
-                  <td>{{ m.sender_nickname || m.sender_username || '—' }}</td>
-                  <td>{{ m.receiver_nickname || m.receiver_username || '—' }}</td>
-                  <td class="ap-cell-text">{{ m.decrypted_content || m.encrypted_content || '—' }}</td>
+                  <td>{{ m.from_nickname || m.from_username || '—' }}</td>
+                  <td>{{ m.to_nickname || m.to_username || '—' }}</td>
+                  <td class="ap-cell-text">{{ m.message || '—' }}</td>
                   <td>{{ formatTime(m.create_time) }}</td>
                 </tr>
               </tbody>

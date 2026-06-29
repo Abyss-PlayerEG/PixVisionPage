@@ -27,6 +27,10 @@ export const fetchWorkDetail = async (workId) => {
     if (statusCode === 200 && result.data) {
       return { success: true, data: result.data };
     }
+    // 公开接口：401 不暴露错误信息给游客
+    if (statusCode === 401) {
+      return { success: false, message: '作品不存在或已删除' };
+    }
     return { success: false, message: result.message || '作品不存在或已删除' };
   } catch (error) {
     console.error('[API] 作品详情请求失败:', error);
@@ -103,6 +107,10 @@ export const fetchCommentList = async (workId, orderBy = 'newest') => {
     if (statusCode === 200 && result.data) {
       const comments = result.data.map(transformComment);
       return { success: true, data: comments };
+    }
+    // 公开接口：401 视为空评论，不暴露给游客
+    if (statusCode === 401) {
+      return { success: true, data: [] };
     }
     return { success: false, message: result.message || '获取评论失败' };
   } catch (error) {
@@ -326,6 +334,10 @@ export const fetchWorkPage = async ({ current = 1, size = 10, workTitle, userId,
     if (statusCode === 200 && result.data) {
       return { success: true, data: result.data, message: result.message };
     }
+    // 公开接口：401 视为空数据，不暴露给游客
+    if (statusCode === 401) {
+      return { success: true, data: { records: [], total: 0 } };
+    }
     return { success: false, message: result.message || '获取作品列表失败' };
   } catch (error) {
     console.error('获取作品列表失败:', error);
@@ -431,6 +443,10 @@ export const fetchUserSeries = async ({ userId = null, current = 1, size = 10, k
         }))
       }
       return { success: true, data: result.data, message: result.message }
+    }
+    // 公开接口：401 视为空数据，不暴露给游客
+    if (statusCode === 401) {
+      return { success: true, data: { records: [], total: 0 } }
     }
     return { success: false, message: result.message || '获取系列列表失败' }
   } catch (error) {
