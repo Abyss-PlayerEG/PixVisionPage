@@ -43,10 +43,13 @@ export const searchWorks = async (params) => {
     if (statusCode === 200 && result.data) {
       console.log('✅ 作品搜索成功，记录数:', result.data.records?.length || 0)
       return { success: true, data: result.data }
-    } else {
-      console.error('❌ 作品搜索失败:', result.message)
-      return { success: false, message: result.message || '搜索作品失败' }
     }
+    // 公开接口：401 视为空数据，不暴露给游客
+    if (statusCode === 401) {
+      return { success: true, data: { records: [], total: 0 } }
+    }
+    console.error('❌ 作品搜索失败:', result.message)
+    return { success: false, message: result.message || '搜索作品失败' }
   } catch (error) {
     console.error('❌ 网络请求失败:', error)
     return { success: false, message: '网络错误，请稍后重试' }
@@ -88,10 +91,12 @@ export const searchSeries = async (params) => {
     if (statusCode === 200 && result.data) {
       console.log('✅ 合集搜索成功，记录数:', result.data.records?.length || 0)
       return { success: true, data: result.data }
-    } else {
-      console.error('❌ 合集搜索失败:', result.message)
-      return { success: false, message: result.message || '搜索合集失败' }
     }
+    if (statusCode === 401) {
+      return { success: true, data: { records: [], total: 0 } }
+    }
+    console.error('❌ 合集搜索失败:', result.message)
+    return { success: false, message: result.message || '搜索合集失败' }
   } catch (error) {
     console.error('❌ 网络请求失败:', error)
     return { success: false, message: '网络错误，请稍后重试' }
@@ -178,10 +183,12 @@ export const searchUsers = async (params) => {
           records: enrichedRecords
         }
       }
-    } else {
-      console.error('❌ 用户搜索失败:', result.message)
-      return { success: false, message: result.message || '搜索用户失败' }
     }
+    if (statusCode === 401) {
+      return { success: true, data: { records: [], total: 0 } }
+    }
+    console.error('❌ 用户搜索失败:', result.message)
+    return { success: false, message: result.message || '搜索用户失败' }
   } catch (error) {
     console.error('❌ 网络请求失败:', error)
     return { success: false, message: '网络错误，请稍后重试' }
