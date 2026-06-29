@@ -368,14 +368,15 @@ onUnmounted(() => {
         class="grid-card"
         :class="'grid-card--' + item"
       >
-        <img
-          v-if="gridImages[index]"
-          :src="gridImages[index].src"
-          :alt="gridImages[index].alt || ''"
-          class="grid-card__img"
-          loading="lazy"
-        />
-        <div v-else class="grid-card__skeleton"></div>
+        <div class="grid-card__skeleton">
+          <img
+            v-if="gridImages[index]"
+            :src="gridImages[index].src"
+            :alt="gridImages[index].alt || ''"
+            class="grid-card__img"
+            loading="lazy"
+          />
+        </div>
       </div>
     </div>
   </section>
