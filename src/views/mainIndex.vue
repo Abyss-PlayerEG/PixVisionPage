@@ -49,6 +49,9 @@ const { seriesList, isLoading: seriesLoading, error: seriesError, loadSeries } =
 // 过滤掉没有封面的合集
 const filteredSeriesList = computed(() => seriesList.value.filter(s => s.coverUrl))
 
+// n4 网格：取前 8 张作品缩略图
+const gridImages = computed(() => waterfallImages.value.slice(0, 8))
+
 // --- Watchers ---
 // API 异常 → 弹出通知提示
 watch(error, (newError) => {
@@ -360,12 +363,20 @@ onUnmounted(() => {
     </div>
     <div class="n4_GridLayout">
       <div
-        v-for="item in 8"
+        v-for="(item, index) in 8"
         :key="item"
         class="grid-card"
         :class="'grid-card--' + item"
       >
-        <div class="grid-card__skeleton"></div>
+        <div class="grid-card__skeleton">
+          <img
+            v-if="gridImages[index]"
+            :src="gridImages[index].src"
+            :alt="gridImages[index].alt || ''"
+            class="grid-card__img"
+            loading="lazy"
+          />
+        </div>
       </div>
     </div>
   </section>
