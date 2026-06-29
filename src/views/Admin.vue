@@ -154,7 +154,7 @@
               <tbody>
                 <tr v-for="w in workList" :key="w.work_id">
                   <td class="ap-cell-id">#{{ w.work_id }}</td>
-                  <td><AuthImage :url="getWorkImgSrc(w.img_url)" class-name="ap-thumb" @mouseenter="(e) => showPreview(e, getWorkImgSrc(w.img_url))" @mouseleave="hidePreview" @click="openFullscreen(getWorkImgSrc(w.img_url))" /></td>
+                  <td><AuthImage :url="getWorkImgSrc(w.thumb_url || w.img_url)" class-name="ap-thumb" @mouseenter="(e) => showPreview(e, getWorkImgSrc(w.img_url))" @mouseleave="hidePreview" @click="openFullscreen(getWorkImgSrc(w.img_url))" /></td>
                   <td><span class="ap-link" @click="$router.push(`/work/${w.work_id}`)">{{ w.work_title || '未命名' }}</span></td>
                   <td><span class="ap-link" @click="$router.push(`/profile/${w.username}`)">{{ w.nickname || w.username || ('用户 #' + w.user_id) }}</span></td>
                   <td><span class="ap-badge" :class="approvalBadge(w.approval_status)">{{ approvalLabel(w.approval_status) }}</span></td>
