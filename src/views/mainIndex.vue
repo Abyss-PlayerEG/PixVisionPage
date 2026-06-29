@@ -56,6 +56,9 @@ const { initSwiper, cleanupSwiper } = useSwiper(swiperContainer)
 const { waterfallImages, isLoading, error, loadWorks } = useWorkWaterfall()
 const { seriesList, isLoading: seriesLoading, error: seriesError, loadSeries } = useSeriesData()
 
+// 过滤掉没有封面的合集
+const filteredSeriesList = computed(() => seriesList.value.filter(s => s.coverUrl))
+
 // num4z 精彩集锦图片数据
 const num4zImages = [
   { src: n4Img1, alt: 'Coffee' },
@@ -345,7 +348,7 @@ onUnmounted(() => {
           </div>
           
           <!-- 系列数据 -->
-          <div v-else-if="seriesList.length > 0" v-for="series in seriesList" :key="series.series_id" class="swiper-slide" @click="handleSeriesClick(series)">
+          <div v-else-if="filteredSeriesList.length > 0" v-for="series in filteredSeriesList" :key="series.series_id" class="swiper-slide" @click="handleSeriesClick(series)">
             <div class="slide-card">
               <div class="placeholder-card">
                 <img v-if="series.coverUrl" :src="series.coverUrl" :alt="series.series_title" />
