@@ -1,5 +1,5 @@
 <script setup>
-import { onMounted, onUnmounted, watch, ref } from 'vue'
+import { onMounted, onUnmounted, watch, ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
 
 import NavBar from '@/components/NavBar.vue'
@@ -45,6 +45,9 @@ const { initNum7zAnimation, cleanupNum7zAnimation, mockNum7zQA, mockNum7zFAQ, n7
 const { initSwiper, cleanupSwiper } = useSwiper(swiperContainer)
 const { waterfallImages, isLoading, error, loadWorks } = useWorkWaterfall()
 const { seriesList, isLoading: seriesLoading, error: seriesError, loadSeries } = useSeriesData()
+
+// 过滤掉没有封面的合集
+const filteredSeriesList = computed(() => seriesList.value.filter(s => s.coverUrl))
 
 // --- Watchers ---
 // API 异常 → 弹出通知提示
@@ -323,7 +326,7 @@ onUnmounted(() => {
           </div>
           
           <!-- 系列数据 -->
-          <div v-else-if="seriesList.length > 0" v-for="series in seriesList" :key="series.series_id" class="swiper-slide" @click="handleSeriesClick(series)">
+          <div v-else-if="filteredSeriesList.length > 0" v-for="series in filteredSeriesList" :key="series.series_id" class="swiper-slide" @click="handleSeriesClick(series)">
             <div class="slide-card">
               <div class="placeholder-card">
                 <img v-if="series.coverUrl" :src="series.coverUrl" :alt="series.series_title" />
