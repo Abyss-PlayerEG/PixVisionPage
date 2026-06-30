@@ -80,14 +80,25 @@
           </div>
         </div>
 
+        <div v-if="selectedUserIds.size > 0" class="ap-batch-bar">
+          <span class="ap-batch-count">已选 {{ selectedUserIds.size }} 项</span>
+          <button class="ap-btn ap-btn-sm ap-btn-warn" @click="handleBatchBanUsers">批量封禁</button>
+          <button class="ap-btn ap-btn-sm ap-btn-danger" @click="handleBatchDeleteUsers">批量删除</button>
+          <button class="ap-btn ap-btn-sm" @click="clearUserSelection">取消选择</button>
+        </div>
+
         <div class="ap-content">
           <div v-if="userLoading && userList.length === 0" class="ap-skeleton"><div v-for="n in 8" :key="n" class="ap-skeleton-row"></div></div>
           <div v-else-if="!userLoading && userList.length === 0" class="ap-empty">暂无用户数据</div>
           <div v-else class="ap-table-wrap">
             <table class="ap-table">
-              <thead><tr><th>ID</th><th>头像</th><th>用户名</th><th>昵称</th><th>角色</th><th>状态</th><th>注册时间</th><th>操作</th></tr></thead>
+              <thead><tr>
+                <th class="ap-cell-check"><input type="checkbox" :checked="selectedUserIds.size === userList.length && userList.length > 0" @change="toggleAllUsers" /></th>
+                <th>ID</th><th>头像</th><th>用户名</th><th>昵称</th><th>角色</th><th>状态</th><th>注册时间</th><th>操作</th>
+              </tr></thead>
               <tbody>
-                <tr v-for="u in userList" :key="u.user_id">
+                <tr v-for="u in userList" :key="u.user_id" :class="{ 'ap-row-selected': selectedUserIds.has(u.user_id) }">
+                  <td class="ap-cell-check"><input type="checkbox" :checked="selectedUserIds.has(u.user_id)" @change="toggleUserSelect(u.user_id)" /></td>
                   <td class="ap-cell-id">#{{ u.user_id }}</td>
                   <td><img :src="getAvatarSrc(u.avatar_url)" class="ap-avatar" @error="(e) => e.target.style.display='none'" @mouseenter="(e) => showPreview(e, getAvatarSrc(u.avatar_url))" @mouseleave="hidePreview" /></td>
                   <td><span class="ap-link" @click="$router.push(`/profile/${u.username}`)">{{ u.username }}</span></td>
@@ -97,7 +108,7 @@
                   <td>{{ formatTime(u.create_time) }}</td>
                   <td>
                     <div class="ap-actions">
-                      <button v-if="u.status !== 30" class="ap-btn ap-btn-sm ap-btn-freeze" @click="handleBanUser(u)">{{ u.status === 20 ? '解冻' : '冻结' }}</button>
+                      <button v-if="u.status !== 30" class="ap-btn ap-btn-sm ap-btn-freeze" @click="handleFreezeUser(u)">{{ u.status === 20 ? '解冻' : '冻结' }}</button>
                       <button class="ap-btn ap-btn-sm ap-btn-warn" @click="handleBanUser(u)">{{ u.status === 30 ? '解封' : '封禁' }}</button>
                       <button class="ap-btn ap-btn-sm" @click="handleResetPwd(u)">重置密码</button>
                       <button class="ap-btn ap-btn-sm" @click="openChangeRoleDialog(u)">改权限</button>
@@ -109,6 +120,7 @@
             </table>
           </div>
           <div v-if="userLoading && userList.length > 0" class="ap-loading">加载中...</div>
+          <div ref="sentinelRef" class="ap-sentinel"></div>
         </div>
       </section>
 
@@ -145,14 +157,26 @@
           </div>
         </div>
 
+        <div v-if="selectedWorkIds.size > 0" class="ap-batch-bar">
+          <span class="ap-batch-count">已选 {{ selectedWorkIds.size }} 项</span>
+          <button class="ap-btn ap-btn-sm ap-btn-approve" @click="handleBatchApproveWorks(10)">批量通过</button>
+          <button class="ap-btn ap-btn-sm ap-btn-danger" @click="handleBatchApproveWorks(30)">批量不通过</button>
+          <button class="ap-btn ap-btn-sm ap-btn-warn" @click="handleBatchDeleteWorks">批量删除</button>
+          <button class="ap-btn ap-btn-sm" @click="selectedWorkIds.clear()">取消选择</button>
+        </div>
+
         <div class="ap-content">
           <div v-if="workLoading && workList.length === 0" class="ap-skeleton"><div v-for="n in 8" :key="n" class="ap-skeleton-row"></div></div>
           <div v-else-if="!workLoading && workList.length === 0" class="ap-empty">暂无作品数据</div>
           <div v-else class="ap-table-wrap">
             <table class="ap-table">
-              <thead><tr><th>ID</th><th>缩略图</th><th>标题</th><th>作者</th><th>审核状态</th><th>上传时间</th><th>操作</th></tr></thead>
+              <thead><tr>
+                <th class="ap-cell-check"><input type="checkbox" :checked="selectedWorkIds.size === workList.length && workList.length > 0" @change="toggleAllWorks" /></th>
+                <th>ID</th><th>缩略图</th><th>标题</th><th>作者</th><th>审核状态</th><th>上传时间</th><th>操作</th>
+              </tr></thead>
               <tbody>
-                <tr v-for="w in workList" :key="w.work_id">
+                <tr v-for="w in workList" :key="w.work_id" :class="{ 'ap-row-selected': selectedWorkIds.has(w.work_id) }">
+                  <td class="ap-cell-check"><input type="checkbox" :checked="selectedWorkIds.has(w.work_id)" @change="toggleWorkSelect(w.work_id)" /></td>
                   <td class="ap-cell-id">#{{ w.work_id }}</td>
                   <td><AuthImage :url="getWorkImgSrc(w.thumb_url || w.img_url)" class-name="ap-thumb" @mouseenter="(e) => showPreview(e, getWorkImgSrc(w.img_url))" @mouseleave="hidePreview" @click="openFullscreen(getWorkImgSrc(w.img_url))" /></td>
                   <td><span class="ap-link" @click="$router.push(`/work/${w.work_id}`)">{{ w.work_title || '未命名' }}</span></td>
@@ -171,6 +195,7 @@
             </table>
           </div>
           <div v-if="workLoading && workList.length > 0" class="ap-loading">加载中...</div>
+          <div ref="sentinelRef" class="ap-sentinel"></div>
         </div>
       </section>
 
@@ -205,14 +230,25 @@
             </select>
           </div>
         </div>
+        <div v-if="selectedCommentIds.size > 0" class="ap-batch-bar">
+          <span class="ap-batch-count">已选 {{ selectedCommentIds.size }} 项</span>
+          <button class="ap-btn ap-btn-sm ap-btn-approve" @click="handleBatchApproveComments(10)">批量通过</button>
+          <button class="ap-btn ap-btn-sm ap-btn-danger" @click="handleBatchApproveComments(30)">批量不通过</button>
+          <button class="ap-btn ap-btn-sm ap-btn-warn" @click="handleBatchDeleteComments">批量删除</button>
+          <button class="ap-btn ap-btn-sm" @click="selectedCommentIds.clear()">取消选择</button>
+        </div>
         <div class="ap-content">
           <div v-if="commentLoading && commentList.length === 0" class="ap-skeleton"><div v-for="n in 6" :key="n" class="ap-skeleton-row"></div></div>
           <div v-else-if="!commentLoading && commentList.length === 0" class="ap-empty">暂无评论数据</div>
           <div v-else class="ap-table-wrap">
             <table class="ap-table">
-              <thead><tr><th>ID</th><th>评论内容</th><th>评论者</th><th>审核状态</th><th>评论时间</th><th>操作</th></tr></thead>
+              <thead><tr>
+                <th class="ap-cell-check"><input type="checkbox" :checked="selectedCommentIds.size === commentList.length && commentList.length > 0" @change="toggleAllComments" /></th>
+                <th>ID</th><th>评论内容</th><th>评论者</th><th>审核状态</th><th>评论时间</th><th>操作</th>
+              </tr></thead>
               <tbody>
-                <tr v-for="c in commentList" :key="c.comment_id">
+                <tr v-for="c in commentList" :key="c.comment_id" :class="{ 'ap-row-selected': selectedCommentIds.has(c.comment_id) }">
+                  <td class="ap-cell-check"><input type="checkbox" :checked="selectedCommentIds.has(c.comment_id)" @change="toggleCommentSelect(c.comment_id)" /></td>
                   <td class="ap-cell-id">#{{ c.comment_id }}</td>
                   <td class="ap-cell-text">{{ c.comment_text || '—' }}</td>
                   <td><span class="ap-link" @click="$router.push(`/profile/${c.username}`)">{{ c.nickname || c.username || ('用户 #' + c.user_id) }}</span></td>
@@ -230,6 +266,7 @@
             </table>
           </div>
           <div v-if="commentLoading && commentList.length > 0" class="ap-loading">加载中...</div>
+          <div ref="sentinelRef" class="ap-sentinel"></div>
         </div>
       </section>
 
@@ -264,14 +301,25 @@
             </select>
           </div>
         </div>
+        <div v-if="selectedSeriesIds.size > 0" class="ap-batch-bar">
+          <span class="ap-batch-count">已选 {{ selectedSeriesIds.size }} 项</span>
+          <button class="ap-btn ap-btn-sm ap-btn-approve" @click="handleBatchApproveSeries(10)">批量通过</button>
+          <button class="ap-btn ap-btn-sm ap-btn-danger" @click="handleBatchApproveSeries(30)">批量不通过</button>
+          <button class="ap-btn ap-btn-sm ap-btn-warn" @click="handleBatchDeleteSeries">批量删除</button>
+          <button class="ap-btn ap-btn-sm" @click="selectedSeriesIds.clear()">取消选择</button>
+        </div>
         <div class="ap-content">
           <div v-if="seriesLoading && seriesList.length === 0" class="ap-skeleton"><div v-for="n in 6" :key="n" class="ap-skeleton-row"></div></div>
           <div v-else-if="!seriesLoading && seriesList.length === 0" class="ap-empty">暂无合集数据</div>
           <div v-else class="ap-table-wrap">
             <table class="ap-table">
-              <thead><tr><th>ID</th><th>标题</th><th>描述</th><th>作者</th><th>审核状态</th><th>创建时间</th><th>操作</th></tr></thead>
+              <thead><tr>
+                <th class="ap-cell-check"><input type="checkbox" :checked="selectedSeriesIds.size === seriesList.length && seriesList.length > 0" @change="toggleAllSeries" /></th>
+                <th>ID</th><th>标题</th><th>描述</th><th>作者</th><th>审核状态</th><th>创建时间</th><th>操作</th>
+              </tr></thead>
               <tbody>
-                <tr v-for="s in seriesList" :key="s.series_id">
+                <tr v-for="s in seriesList" :key="s.series_id" :class="{ 'ap-row-selected': selectedSeriesIds.has(s.series_id) }">
+                  <td class="ap-cell-check"><input type="checkbox" :checked="selectedSeriesIds.has(s.series_id)" @change="toggleSeriesSelect(s.series_id)" /></td>
                   <td class="ap-cell-id">#{{ s.series_id }}</td>
                   <td class="ap-cell-bold">{{ s.series_title || '未命名' }}</td>
                   <td class="ap-cell-text">{{ s.about_text || '—' }}</td>
@@ -291,6 +339,7 @@
             </table>
           </div>
           <div v-if="seriesLoading && seriesList.length > 0" class="ap-loading">加载中...</div>
+          <div ref="sentinelRef" class="ap-sentinel"></div>
         </div>
       </section>
 
@@ -347,6 +396,7 @@
             </table>
           </div>
           <div v-if="auditLoading && auditList.length > 0" class="ap-loading">加载中...</div>
+          <div ref="sentinelRef" class="ap-sentinel"></div>
         </div>
       </section>
 
@@ -397,6 +447,7 @@
             </table>
           </div>
           <div v-if="changeLoading && changeList.length > 0" class="ap-loading">加载中...</div>
+          <div ref="sentinelRef" class="ap-sentinel"></div>
         </div>
       </section>
 
@@ -451,6 +502,7 @@
             </table>
           </div>
           <div v-if="messageLoading && messageList.length > 0" class="ap-loading">加载中...</div>
+          <div ref="sentinelRef" class="ap-sentinel"></div>
         </div>
       </section>
 
@@ -484,6 +536,7 @@
             </table>
           </div>
           <div v-if="logLoading && logList.length > 0" class="ap-loading">加载中...</div>
+          <div ref="sentinelRef" class="ap-sentinel"></div>
         </div>
       </section>
     </main>
@@ -558,7 +611,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, onUnmounted, watch, nextTick } from 'vue'
 import { useAdmin } from '@/composables/useAdmin'
 import { API_BASE_URL, AVATAR_API, WORK_IMAGE_API, WORK_IMAGE_ADMIN_API, AVATAR_ADMIN_API } from '@/config/api'
 import { fetchAuthImage } from '@/utils/adminHelpers'
@@ -601,12 +654,20 @@ const {
   showCreateUserDialog, createUserForm, createUserErrors, openCreateUserDialog, handleCreateUser,
   showChangeRoleDialog, changeRoleForm, openChangeRoleDialog, handleChangeRole,
   isRefreshingCache, handleRefreshPermissionCache,
-  loadUsers, handleSearchUsers, handleBanUser, handleResetPwd, handleInitAvatarNickname,
+  loadUsers, handleSearchUsers, handleBanUser, handleFreezeUser, handleResetPwd, handleInitAvatarNickname,
+  selectedUserIds, toggleUserSelect, toggleAllUsers, clearUserSelection,
+  handleBatchDeleteUsers, handleBatchBanUsers,
   loadWorks, handleSearchWorks, handleDeleteWork, handleApproveWork,
+  selectedWorkIds, toggleWorkSelect, toggleAllWorks,
+  handleBatchDeleteWorks, handleBatchApproveWorks,
   loadComments, handleSearchComments, handleDeleteComment, handleApproveComment,
+  selectedCommentIds, toggleCommentSelect, toggleAllComments,
+  handleBatchDeleteComments, handleBatchApproveComments,
   loadAudits, loadChanges, handleApproveChange, loadLogs,
   loadMessages, handleSearchMessages, handleRotateKeys,
   loadSeries, handleSearchSeries, handleDeleteSeries, handleApproveSeries,
+  selectedSeriesIds, toggleSeriesSelect, toggleAllSeries,
+  handleBatchDeleteSeries, handleBatchApproveSeries,
   showEditSeriesDialog, editSeriesForm, openEditSeriesDialog, handleEditSeries,
   switchTab, handleLogout,
 } = useAdmin()
@@ -662,6 +723,46 @@ const getWorkImgSrc = (filePath) => {
   if (!filePath) return ''
   return `${WORK_IMAGE_ADMIN_API}?filePath=${encodeURIComponent(filePath)}`
 }
+
+const sentinelRef = ref(null)
+let loadMoreObserver = null
+
+const loadingMap = () => ({
+  users: userLoading.value, works: workLoading.value,
+  comments: commentLoading.value, audits: auditLoading.value,
+  changes: changeLoading.value, logs: logLoading.value,
+  series: seriesLoading.value, messages: messageLoading.value,
+})
+
+const loadMore = () => {
+  const tab = activeTab.value
+  if (loadingMap()[tab] || !hasMore(tab)) return
+  const loaders = {
+    users: loadUsers, works: loadWorks, comments: loadComments,
+    audits: loadAudits, changes: loadChanges, logs: loadLogs,
+    series: loadSeries, messages: loadMessages,
+  }
+  loaders[tab]?.()
+}
+
+onMounted(() => {
+  switchTab('users')
+  loadMoreObserver = new IntersectionObserver(
+    (entries) => { if (entries[0].isIntersecting) loadMore() },
+    { rootMargin: '300px', threshold: 0 }
+  )
+  nextTick(() => { if (sentinelRef.value) loadMoreObserver.observe(sentinelRef.value) })
+})
+
+watch(activeTab, async () => {
+  await nextTick()
+  if (loadMoreObserver) {
+    loadMoreObserver.disconnect()
+    if (sentinelRef.value) loadMoreObserver.observe(sentinelRef.value)
+  }
+})
+
+onUnmounted(() => { if (loadMoreObserver) loadMoreObserver.disconnect() })
 
 onMounted(() => {
   switchTab('users')

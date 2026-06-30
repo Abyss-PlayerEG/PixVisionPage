@@ -820,3 +820,41 @@
   border-radius: 8px;
   cursor: default;
 }
+
+/* 批量操作栏 */
+.ap-batch-bar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 16px;
+  background: rgba(0, 169, 71, 0.08);
+  border: 1px solid rgba(0, 169, 71, 0.2);
+  border-radius: 8px;
+  margin-bottom: 12px;
+}
+.ap-batch-count {
+  font-size: 13px;
+  color: #00A947;
+  font-weight: 500;
+}
+.ap-cell-check {
+  width: 36px;
+  text-align: center;
+  padding: 0 !important;
+}
+.ap-cell-check input[type="checkbox"] {
+  width: 15px;
+  height: 15px;
+  cursor: pointer;
+  accent-color: #00A947;
+}
+.ap-row-selected {
+  background: rgba(0, 169, 71, 0.05) !important;
+}
+.ap-row-selected:hover {
+  background: rgba(0, 169, 71, 0.1) !important;
+}
+.ap-sentinel {
+  width: 100%;
+  height: 1px;
+}
